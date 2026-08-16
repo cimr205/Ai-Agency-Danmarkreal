@@ -1,0 +1,18 @@
+[submodule "scraper/google-maps-scraper"]
+	path = scraper/google-maps-scraper
+	url = https://github.com/omkarcloud/google-maps-scraper.git
+[submodule "lead-engine/vendors/ts-email-scraper"]
+	path = lead-engine/vendors/ts-email-scraper
+	url = https://github.com/eneiromatos/TS-email-scraper.git
+[submodule "lead-engine/vendors/crawlee"]
+	path = lead-engine/vendors/crawlee
+	url = https://github.com/apify/crawlee.git
+[submodule "lead-engine/vendors/crawl4ai"]
+	path = lead-engine/vendors/crawl4ai
+	url = https://github.com/unclecode/crawl4ai.git
+[submodule "lead-engine/vendors/email-scraper"]
+	path = lead-engine/vendors/email-scraper
+	url = https://github.com/web-scraping-tools/email-scraper.git
+[submodule "lead-engine/vendors/email-verifier"]
+	path = lead-engine/vendors/email-verifier
+	url = https://github.com/AfterShip/email-verifier.git

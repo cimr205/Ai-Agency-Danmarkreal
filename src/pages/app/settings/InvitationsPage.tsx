@@ -1,0 +1,214 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { Enums } from '@/integrations/supabase/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/lib/i18n';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Mail, Copy, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useParams } from 'react-router-dom';
+
+type Invitation = {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  token: string;
+};
+
+export default function InvitationsPage() {
+  const { t } = useI18n();
+  const { isAdmin } = useAuth();
+  const { locale } = useParams();
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<string>('employee');
+  const [creating, setCreating] = useState(false);
+
+  const loadInvitations = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('invitations')
+      .select('id, email, role, status, created_at, expires_at, token')
+      .order('created_at', { ascending: false });
+    setInvitations((data || []) as Invitation[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadInvitations(); }, []);
+
+  const handleCreate = async () => {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
+      toast.error(t('auth.email') + ' required');
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.rpc('create_invitation', {
+        invite_email: newEmail.trim(),
+        invite_role: newRole as Enums<'app_role'>,
+      });
+      if (error) throw error;
+      toast.success(`Invitation sent to ${newEmail}`);
+      setNewEmail('');
+      setNewRole('employee');
+      setIsCreateOpen(false);
+      await loadInvitations();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not create invitation');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    try {
+      const { error } = await supabase.rpc('revoke_invitation', { invitation_id: id });
+      if (error) throw error;
+      toast.success('Invitation revoked');
+      await loadInvitations();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not revoke invitation');
+    }
+  };
+
+  const copyLink = (token: string) => {
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/${locale || 'en'}/invite?token=${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Invitation link copied!');
+  };
+
+  const statusBadge = (status: string, expiresAt: string) => {
+    const isExpired = new Date(expiresAt) < new Date();
+    if (status === 'accepted') return <Badge className="bg-success/15 text-success"><CheckCircle2 className="h-3 w-3 mr-1" />Accepted</Badge>;
+    if (status === 'revoked') return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Revoked</Badge>;
+    if (isExpired) return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
+    return <Badge className="bg-warning/15 text-warning"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">{t('common.adminOnly')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Invitations</h1>
+          <p className="text-muted-foreground">Manage team invitations</p>
+        </div>
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="h-4 w-4 mr-2" />Invite member</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite team member</DialogTitle>
+              <DialogDescription>Send an invitation link via email</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t('auth.email')} *</Label>
+                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={newRole} onValueChange={setNewRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="employee">{t('roles.employee')}</SelectItem>
+                    <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+                    <SelectItem value="company_admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleCreate} disabled={creating} className="w-full">
+                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                {creating ? t('common.loading') : t('settings.sendInvitation')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Pending</p><p className="text-2xl font-bold text-warning">{invitations.filter(i => i.status === 'pending' && new Date(i.expires_at) > new Date()).length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Accepted</p><p className="text-2xl font-bold text-success">{invitations.filter(i => i.status === 'accepted').length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{invitations.length}</p></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>All invitations</CardTitle>
+          <CardDescription>View and manage sent invitations</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Mail className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>No invitations sent yet</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('auth.email')}</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invitations.map((inv) => (
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-medium">{inv.email}</TableCell>
+                    <TableCell><Badge variant="outline">{inv.role}</Badge></TableCell>
+                    <TableCell>{statusBadge(inv.status, inv.expires_at)}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center gap-1 justify-end">
+                        {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title="Copy link">
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title="Revoke">
+                              <XCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,0 +1,11 @@
+{% load i18n basefilters %}
+{% is_manager_of request.user instance as can_manage %}
+{% if perms.attendance.change_attendance or can_manage %}
+    <a href='{% url "validate-this-attendance" instance.id %}' hx-target="#updateAttendanceBody"
+        onclick="return confirm(`{% trans 'Do you want to validate this attendance?'%}`)"
+        data-req="/attendance/request-attendance-view/?id={{instance.id}}"
+        onclick="event.stopPropagation(); {% if instance.is_validate_request %}  event.preventDefault(); showApproveAlert($(this).data('req')); {% endif %}"
+        class="oh-btn oh-btn--info">
+        {% trans "Validate" %}
+    </a>
+{% endif %}

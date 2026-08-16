@@ -1,0 +1,88 @@
+project_id = "inyrwsygghdjhmqejgwk"
+
+[functions.google-auth-proxy]
+verify_jwt = false
+
+[functions.lead-ai-recommend]
+verify_jwt = false
+
+[functions.csv-import-leads]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
+
+[functions.meta-ads-ai]
+verify_jwt = false
+
+[functions.meta-oauth-callback]
+verify_jwt = false
+
+[functions.meta-disconnect]
+verify_jwt = false
+
+[functions.ai-generate]
+verify_jwt = false
+
+[functions.gmail-auth]
+verify_jwt = false
+
+[functions.gmail-oauth-callback]
+verify_jwt = false
+
+[functions.gmail-sync]
+verify_jwt = false
+
+[functions.gmail-send]
+verify_jwt = false
+
+[functions.companies-house-search]
+verify_jwt = false
+
+[functions.registry-ai-analyze]
+verify_jwt = false
+
+[functions.lead-generation-chat]
+verify_jwt = false
+
+[functions.phone-provision]
+verify_jwt = false
+
+[functions.phone-release]
+verify_jwt = false
+
+[functions.process-email-queue]
+verify_jwt = true
+
+[functions.cold-caller]
+verify_jwt = false
+
+[functions.cvr-search]
+verify_jwt = false
+
+[functions.deal-coach]
+verify_jwt = false
+
+[functions.ai-email-writer]
+verify_jwt = false
+
+[functions.meeting-summary]
+verify_jwt = false
+
+[functions.voice-agent-connect-openai]
+verify_jwt = false
+
+[functions.voice-agent-call]
+verify_jwt = false
+
+[functions.voice-agent-twiml]
+verify_jwt = false
+
+[functions.voice-agent-status]
+verify_jwt = false
+
+[functions.mcp-server]
+verify_jwt = false
+
+[functions.autopilot-agent]
+verify_jwt = false

@@ -1,0 +1,653 @@
+{
+  "users": [
+    {
+      "id": "32255f2f-bd48-4ba2-8822-2ece8c656bff",
+      "email": "test@example.com",
+      "passwordHash": "$2a$12$y2B57gOJjRzfF4L9Hwtqxu94T5rDSoviYQQcvZzABX7wRFLEphkvO",
+      "createdAt": "2026-01-18T11:30:43.942Z",
+      "role": "user"
+    },
+    {
+      "id": "0ddb457d-1de1-46c1-8ce2-945e8e8ec619",
+      "email": "test+1768735881@example.com",
+      "passwordHash": "$2a$12$Sbaq5Ku0T1RNGCZdPC/sTuWHEVFSVxyiAidhrBYiDw4hFxUco1qVy",
+      "createdAt": "2026-01-18T11:31:22.032Z",
+      "role": "user"
+    },
+    {
+      "id": "203150e1-1019-4dc2-aea6-6c5403036ad6",
+      "email": "test+1768735896@example.com",
+      "passwordHash": "$2a$12$.0X1JaDqYh0QSSFPxucemO59bZO16HFh.Zqvim1QfeWiSOoAcNJ1m",
+      "createdAt": "2026-01-18T11:31:37.298Z",
+      "role": "user"
+    },
+    {
+      "id": "cd72b9fd-2957-4730-b701-35c8ad77581e",
+      "email": "test+1768735913@example.com",
+      "passwordHash": "$2a$12$dyuQ1GJPRrKr/o7.6EbzSOCqnhSxVy/ZZ/k8Eja3RULkyqFAGmoYu",
+      "createdAt": "2026-01-18T11:31:53.719Z",
+      "role": "user"
+    },
+    {
+      "id": "6a9aa598-ba68-4d08-b9d0-1993c84ef6bc",
+      "email": "test+1768735953@example.com",
+      "passwordHash": "$2a$12$YZmJHJ4s9x/owGRxGV8F7OV8LTi4vYlRZy4fv4YUwKb6lg4tDdXrO",
+      "createdAt": "2026-01-18T11:32:33.927Z",
+      "emailVerifiedAt": "2026-01-18T11:32:33.932Z",
+      "role": "user"
+    },
+    {
+      "id": "c91c36ed-b4d4-4f0e-afd4-1e39964c555e",
+      "name": "Owner Admin",
+      "email": "admin+1768925362@example.com",
+      "passwordHash": "$2a$12$j9DJWmAHRoxyHJbccDIdTe4hB1SS0pV4HJjSfOXMXr6mW2V00pB9W",
+      "role": "admin",
+      "companyId": "cabd639a-bdf2-443d-99d4-4a91bd26753c",
+      "createdAt": "2026-01-20T16:09:23.419Z",
+      "emailVerifiedAt": "2026-01-20T16:09:23.434Z"
+    },
+    {
+      "id": "31f8fe2d-074b-49e2-b3fe-35a5b7408a7d",
+      "name": "Owner Admin",
+      "email": "admin+1768925413@example.com",
+      "passwordHash": "$2a$12$INOrlJ9dTBYcPZ6RXTuux.x96QFPpfZIJwQ7U4xIriJ60/q6KAlKm",
+      "role": "admin",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "createdAt": "2026-01-20T16:10:13.833Z",
+      "emailVerifiedAt": "2026-01-20T16:10:13.838Z"
+    },
+    {
+      "id": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "name": "Team Member",
+      "email": "member+1768925413@example.com",
+      "passwordHash": "$2a$12$BEm4JBo6Ij4AskMxKwgnWu8dJHfK7J67nOaxe/QAl5SmfZvk6pvYW",
+      "role": "user",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "createdAt": "2026-01-20T16:10:14.349Z",
+      "emailVerifiedAt": "2026-01-20T16:10:14.351Z"
+    },
+    {
+      "id": "10ad470b-a5ea-436b-b671-f86dae431ac0",
+      "name": "Owner Admin",
+      "email": "admin+1768926854_1@example.com",
+      "passwordHash": "$2a$12$SwJW87qzBAaTcjOzH12ZV.8PKqYVtv5aT2lTZbQ28ni3x.hye2xLS",
+      "role": "admin",
+      "companyId": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "createdAt": "2026-01-20T16:34:14.492Z",
+      "emailVerifiedAt": "2026-01-20T16:34:14.496Z"
+    },
+    {
+      "id": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "name": "Team Member",
+      "email": "member+1768926854_1@example.com",
+      "passwordHash": "$2a$12$5qNarscH13DN9nZfM2WZKOv/2aDTKqB.ukH6HSqqkbV3QMR6kLch6",
+      "role": "user",
+      "companyId": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "createdAt": "2026-01-20T16:34:15.005Z",
+      "emailVerifiedAt": "2026-01-20T16:34:15.007Z"
+    },
+    {
+      "id": "720563af-ef3b-4ef6-b763-2d1871d9a284",
+      "name": "Owner Admin",
+      "email": "admin+1768926855_2@example.com",
+      "passwordHash": "$2a$12$jMtJcQ4DgU73dKLQi9/XGuL.NAkgXjR5J7/b53l0Iv75boOCSVyrG",
+      "role": "admin",
+      "companyId": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "createdAt": "2026-01-20T16:34:15.525Z",
+      "emailVerifiedAt": "2026-01-20T16:34:15.527Z"
+    },
+    {
+      "id": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "name": "Team Member",
+      "email": "member+1768926855_2@example.com",
+      "passwordHash": "$2a$12$XHIbdVxXrxki24rZ85vEled3NBq0.BqSb1lvYJnxkKkmLIqrHedW2",
+      "role": "user",
+      "companyId": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "createdAt": "2026-01-20T16:34:16.033Z",
+      "emailVerifiedAt": "2026-01-20T16:34:16.035Z"
+    },
+    {
+      "id": "cc8eacf8-cd56-424e-9b0e-a696c6a99b02",
+      "name": "Owner Admin",
+      "email": "admin+1768926856_3@example.com",
+      "passwordHash": "$2a$12$rH1oWlshB3//cpt99KsjjObCjnjVx7wDG/PgrgFa/KIkZfy9eRGqS",
+      "role": "admin",
+      "companyId": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "createdAt": "2026-01-20T16:34:16.545Z",
+      "emailVerifiedAt": "2026-01-20T16:34:16.546Z"
+    },
+    {
+      "id": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "name": "Team Member",
+      "email": "member+1768926856_3@example.com",
+      "passwordHash": "$2a$12$uoCZ/MkCEHmhFpd2YC55F.AMBcuRiB8quJHByxse1otoe0zavIGaG",
+      "role": "user",
+      "companyId": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "createdAt": "2026-01-20T16:34:17.055Z",
+      "emailVerifiedAt": "2026-01-20T16:34:17.058Z"
+    },
+    {
+      "id": "1ff31fdd-684f-4e76-9147-fcb0ec5e4910",
+      "name": "Owner Admin",
+      "email": "admin+1768926857_4@example.com",
+      "passwordHash": "$2a$12$vr6newA/Gz1h67NUsdsLv.ihz.nU7rDZA2ABT3Jm1yUZEXcf2jBqK",
+      "role": "admin",
+      "companyId": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "createdAt": "2026-01-20T16:34:17.571Z",
+      "emailVerifiedAt": "2026-01-20T16:34:17.573Z"
+    },
+    {
+      "id": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "name": "Team Member",
+      "email": "member+1768926857_4@example.com",
+      "passwordHash": "$2a$12$u8TGVKHBiDx.srg1BKPqT.xrcydCQHxGQQ8tUDKPyEYRMVgJHAzte",
+      "role": "user",
+      "companyId": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "createdAt": "2026-01-20T16:34:18.084Z",
+      "emailVerifiedAt": "2026-01-20T16:34:18.086Z"
+    }
+  ],
+  "companies": [
+    {
+      "id": "cabd639a-bdf2-443d-99d4-4a91bd26753c",
+      "name": "Acme 1768925362",
+      "ownerUserId": "c91c36ed-b4d4-4f0e-afd4-1e39964c555e",
+      "createdAt": "2026-01-20T16:09:23.093Z"
+    },
+    {
+      "id": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "name": "Acme 1768925413",
+      "ownerUserId": "31f8fe2d-074b-49e2-b3fe-35a5b7408a7d",
+      "createdAt": "2026-01-20T16:10:13.571Z"
+    },
+    {
+      "id": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "name": "Acme 1768926854_1",
+      "ownerUserId": "10ad470b-a5ea-436b-b671-f86dae431ac0",
+      "createdAt": "2026-01-20T16:34:14.219Z"
+    },
+    {
+      "id": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "name": "Acme 1768926855_2",
+      "ownerUserId": "720563af-ef3b-4ef6-b763-2d1871d9a284",
+      "createdAt": "2026-01-20T16:34:15.273Z"
+    },
+    {
+      "id": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "name": "Acme 1768926856_3",
+      "ownerUserId": "cc8eacf8-cd56-424e-9b0e-a696c6a99b02",
+      "createdAt": "2026-01-20T16:34:16.295Z"
+    },
+    {
+      "id": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "name": "Acme 1768926857_4",
+      "ownerUserId": "1ff31fdd-684f-4e76-9147-fcb0ec5e4910",
+      "createdAt": "2026-01-20T16:34:17.319Z"
+    }
+  ],
+  "oauthStates": [],
+  "invitations": [],
+  "messages": [
+    {
+      "id": "3da96424-ff63-4f0c-a9de-6401d2a1b158",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "senderUserId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "recipientUserId": "31f8fe2d-074b-49e2-b3fe-35a5b7408a7d",
+      "subject": "Status",
+      "body": "Vi har oprettet første lead og deal.",
+      "createdAt": "2026-01-20T16:10:14.615Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "2f32856c-dc6f-49fb-9bd1-a289f5a13d71",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "userId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "title": "New lead created",
+      "body": "Lead One (Acme)",
+      "createdAt": "2026-01-20T16:10:14.606Z"
+    },
+    {
+      "id": "2a525677-c9b0-4001-b8bb-b9138b2342f4",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "userId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "title": "New deal created",
+      "body": "Deal One (5000)",
+      "createdAt": "2026-01-20T16:10:14.608Z"
+    },
+    {
+      "id": "9ebf6936-da94-44c1-903f-dd5f2d74794b",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "userId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "title": "New task created",
+      "body": "Ring tilbage",
+      "createdAt": "2026-01-20T16:10:14.610Z"
+    },
+    {
+      "id": "78812fb7-17c5-4016-994e-c6cceba1edfc",
+      "companyId": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "userId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "title": "New lead created",
+      "body": "Lead One (Acme)",
+      "createdAt": "2026-01-20T16:34:15.262Z"
+    },
+    {
+      "id": "963e6240-4319-455b-9810-5d99bac13dee",
+      "companyId": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "userId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "title": "New deal created",
+      "body": "Deal One (5000)",
+      "createdAt": "2026-01-20T16:34:15.267Z"
+    },
+    {
+      "id": "cc04ba8c-0d44-487a-924a-6fa6fe353aee",
+      "companyId": "4479ef7f-f293-4a1e-b4f8-e145a5cd09b4",
+      "userId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "title": "New task created",
+      "body": "Ring tilbage",
+      "createdAt": "2026-01-20T16:34:15.269Z"
+    },
+    {
+      "id": "b402ae5b-338c-49f9-b022-fc589844c488",
+      "companyId": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "userId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "title": "New lead created",
+      "body": "Lead One (Acme)",
+      "createdAt": "2026-01-20T16:34:16.289Z"
+    },
+    {
+      "id": "a664399c-13d3-496d-b1af-a0e2af6eb9fc",
+      "companyId": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "userId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "title": "New deal created",
+      "body": "Deal One (5000)",
+      "createdAt": "2026-01-20T16:34:16.290Z"
+    },
+    {
+      "id": "f261c5e6-e7ab-467f-bb9c-25f336fa9aeb",
+      "companyId": "afe011f0-547a-490c-9560-acf88fa49a7b",
+      "userId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "title": "New task created",
+      "body": "Ring tilbage",
+      "createdAt": "2026-01-20T16:34:16.291Z"
+    },
+    {
+      "id": "92cd5678-7fab-475f-a8b9-2ff931695c91",
+      "companyId": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "userId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "title": "New lead created",
+      "body": "Lead One (Acme)",
+      "createdAt": "2026-01-20T16:34:17.312Z"
+    },
+    {
+      "id": "e83da131-097f-48c7-a9cc-8b2acbfecd96",
+      "companyId": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "userId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "title": "New deal created",
+      "body": "Deal One (5000)",
+      "createdAt": "2026-01-20T16:34:17.314Z"
+    },
+    {
+      "id": "81bab8a6-e2a7-4b54-98ac-0574fe6d5567",
+      "companyId": "661b3615-c6b4-4a29-b3af-b892f35112f7",
+      "userId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "title": "New task created",
+      "body": "Ring tilbage",
+      "createdAt": "2026-01-20T16:34:17.316Z"
+    },
+    {
+      "id": "030bfd9c-5ecc-443c-a539-8681d94b8627",
+      "companyId": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "userId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "title": "New lead created",
+      "body": "Lead One (Acme)",
+      "createdAt": "2026-01-20T16:34:18.340Z"
+    },
+    {
+      "id": "dc3a9d41-338f-40f8-9dcd-577f3a00cbb7",
+      "companyId": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "userId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "title": "New deal created",
+      "body": "Deal One (5000)",
+      "createdAt": "2026-01-20T16:34:18.341Z"
+    },
+    {
+      "id": "901effc2-214d-49a7-875e-2f43d104b913",
+      "companyId": "54cdc2af-d65e-4a9a-ac59-f75c84b928d3",
+      "userId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "title": "New task created",
+      "body": "Ring tilbage",
+      "createdAt": "2026-01-20T16:34:18.343Z"
+    }
+  ],
+  "calendarEvents": [
+    {
+      "id": "131fa225-49ed-47de-8912-95d0e4f9b054",
+      "companyId": "5b03f7db-f518-47ae-b956-b6e7452dd497",
+      "ownerUserId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "title": "Sales sync",
+      "description": "Ugentligt salgsmøde",
+      "startAt": "2026-01-21T09:00:00.000Z",
+      "endAt": "2026-01-21T09:30:00.000Z",
+      "participantUserIds": [
+        "31f8fe2d-074b-49e2-b3fe-35a5b7408a7d"
+      ],
+      "createdAt": "2026-01-20T16:10:14.617Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "3f292857-e487-45d7-b300-21cf9648c8a7",
+      "userId": "6a9aa598-ba68-4d08-b9d0-1993c84ef6bc",
+      "createdAt": "2026-01-18T11:32:34.194Z",
+      "expiresAt": "2026-02-17T11:32:34.194Z"
+    },
+    {
+      "id": "42590f8b-f26a-4850-9e27-78d97c7de997",
+      "userId": "c91c36ed-b4d4-4f0e-afd4-1e39964c555e",
+      "createdAt": "2026-01-20T16:09:23.694Z",
+      "expiresAt": "2026-02-19T16:09:23.694Z"
+    },
+    {
+      "id": "c19d9f12-3f5c-45e9-9049-cb858d89416d",
+      "userId": "31f8fe2d-074b-49e2-b3fe-35a5b7408a7d",
+      "createdAt": "2026-01-20T16:10:14.091Z",
+      "expiresAt": "2026-02-19T16:10:14.091Z"
+    },
+    {
+      "id": "74360367-3673-42de-9676-605e09032229",
+      "userId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "createdAt": "2026-01-20T16:10:14.604Z",
+      "expiresAt": "2026-02-19T16:10:14.604Z"
+    },
+    {
+      "id": "2ecf80a4-c57f-4556-93d2-b7574d5bb91e",
+      "userId": "10ad470b-a5ea-436b-b671-f86dae431ac0",
+      "createdAt": "2026-01-20T16:34:14.749Z",
+      "expiresAt": "2026-02-19T16:34:14.749Z"
+    },
+    {
+      "id": "01fede57-18d2-44e1-b42e-01719fc146c3",
+      "userId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "createdAt": "2026-01-20T16:34:15.259Z",
+      "expiresAt": "2026-02-19T16:34:15.259Z"
+    },
+    {
+      "id": "ece31805-abb4-44be-8981-cd6396565b3c",
+      "userId": "720563af-ef3b-4ef6-b763-2d1871d9a284",
+      "createdAt": "2026-01-20T16:34:15.780Z",
+      "expiresAt": "2026-02-19T16:34:15.780Z"
+    },
+    {
+      "id": "0458bfa5-8d50-4792-bec6-5a7eb2590903",
+      "userId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "createdAt": "2026-01-20T16:34:16.287Z",
+      "expiresAt": "2026-02-19T16:34:16.287Z"
+    },
+    {
+      "id": "781540c6-99ac-4d08-b689-f2effc9c3a7f",
+      "userId": "cc8eacf8-cd56-424e-9b0e-a696c6a99b02",
+      "createdAt": "2026-01-20T16:34:16.800Z",
+      "expiresAt": "2026-02-19T16:34:16.800Z"
+    },
+    {
+      "id": "9576829c-a2d0-42ad-a8c6-ce258e92227e",
+      "userId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "createdAt": "2026-01-20T16:34:17.310Z",
+      "expiresAt": "2026-02-19T16:34:17.310Z"
+    },
+    {
+      "id": "68caeb76-05bf-4eec-920d-539d83aef7b4",
+      "userId": "1ff31fdd-684f-4e76-9147-fcb0ec5e4910",
+      "createdAt": "2026-01-20T16:34:17.831Z",
+      "expiresAt": "2026-02-19T16:34:17.831Z"
+    },
+    {
+      "id": "b9711ca3-4028-467a-98a6-e674b232c13f",
+      "userId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "createdAt": "2026-01-20T16:34:18.338Z",
+      "expiresAt": "2026-02-19T16:34:18.338Z"
+    }
+  ],
+  "emailVerifications": [
+    {
+      "id": "9928cc57-6cf0-4993-aa10-82c15faf460c",
+      "userId": "32255f2f-bd48-4ba2-8822-2ece8c656bff",
+      "token": "ec154ed7-bafd-4af7-b18f-038a483c2333",
+      "createdAt": "2026-01-18T11:30:43.949Z",
+      "expiresAt": "2026-01-19T11:30:43.949Z"
+    },
+    {
+      "id": "28f8ac2a-aedc-4c1e-a328-2eb101907e06",
+      "userId": "0ddb457d-1de1-46c1-8ce2-945e8e8ec619",
+      "token": "97ced309-1de7-4c10-b035-65ce2c276ac1",
+      "createdAt": "2026-01-18T11:31:22.033Z",
+      "expiresAt": "2026-01-19T11:31:22.033Z"
+    },
+    {
+      "id": "ca4ee579-ae70-47c6-b210-fef5539ecbfb",
+      "userId": "203150e1-1019-4dc2-aea6-6c5403036ad6",
+      "token": "af718a4e-358a-44a6-a68d-f7d8eaa72066",
+      "createdAt": "2026-01-18T11:31:37.299Z",
+      "expiresAt": "2026-01-19T11:31:37.299Z"
+    },
+    {
+      "id": "f00fc68d-645a-406a-ad13-d5aa2660edfb",
+      "userId": "cd72b9fd-2957-4730-b701-35c8ad77581e",
+      "token": "1a57b606-ac12-41de-8746-a954c7ddc1ec",
+      "createdAt": "2026-01-18T11:31:53.720Z",
+      "expiresAt": "2026-01-19T11:31:53.720Z"
+    }
+  ],
+  "leads": [
+    {
+      "id": "77bd0cf0-5862-4883-9050-a149d4210bac",
+      "ownerUserId": "6a9aa598-ba68-4d08-b9d0-1993c84ef6bc",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-18T11:32:34.196Z",
+      "updatedAt": "2026-01-18T11:32:34.196Z"
+    },
+    {
+      "id": "99ac11d1-ca14-4f43-b7f4-8ef5fcc22a78",
+      "ownerUserId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-20T16:10:14.606Z",
+      "updatedAt": "2026-01-20T16:10:14.606Z"
+    },
+    {
+      "id": "60158fad-3987-4627-a1e9-1d4aa13c70f1",
+      "ownerUserId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-20T16:34:15.262Z",
+      "updatedAt": "2026-01-20T16:34:15.262Z"
+    },
+    {
+      "id": "57457762-6945-4747-b357-0e7f3bbc0653",
+      "ownerUserId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-20T16:34:16.288Z",
+      "updatedAt": "2026-01-20T16:34:16.288Z"
+    },
+    {
+      "id": "53c6b8ea-c629-4226-99d7-dc08f4a129bb",
+      "ownerUserId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-20T16:34:17.312Z",
+      "updatedAt": "2026-01-20T16:34:17.312Z"
+    },
+    {
+      "id": "a1ab6a4f-558d-4ac4-ad8c-5bba712f3385",
+      "ownerUserId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "name": "Lead One",
+      "phone": "+4512345678",
+      "email": "lead1@example.com",
+      "company": "Acme",
+      "status": "cold",
+      "leadScore": 1,
+      "createdAt": "2026-01-20T16:34:18.340Z",
+      "updatedAt": "2026-01-20T16:34:18.340Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "d3c4b1cb-6c43-4b72-8331-c846befac649",
+      "ownerUserId": "6a9aa598-ba68-4d08-b9d0-1993c84ef6bc",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "77bd0cf0-5862-4883-9050-a149d4210bac",
+      "createdAt": "2026-01-18T11:32:34.203Z",
+      "updatedAt": "2026-01-18T11:32:34.203Z"
+    },
+    {
+      "id": "cf076363-123f-46d3-a02c-eb03f1aa949d",
+      "ownerUserId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "99ac11d1-ca14-4f43-b7f4-8ef5fcc22a78",
+      "createdAt": "2026-01-20T16:10:14.610Z",
+      "updatedAt": "2026-01-20T16:10:14.610Z"
+    },
+    {
+      "id": "d97dba42-2b5f-48be-8ad0-dd60fb17eea1",
+      "ownerUserId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "60158fad-3987-4627-a1e9-1d4aa13c70f1",
+      "createdAt": "2026-01-20T16:34:15.269Z",
+      "updatedAt": "2026-01-20T16:34:15.269Z"
+    },
+    {
+      "id": "e0c11c3f-cb71-465d-886f-ae926ec593ea",
+      "ownerUserId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "57457762-6945-4747-b357-0e7f3bbc0653",
+      "createdAt": "2026-01-20T16:34:16.291Z",
+      "updatedAt": "2026-01-20T16:34:16.291Z"
+    },
+    {
+      "id": "4634f291-d742-4e86-99dc-2d1d643011cb",
+      "ownerUserId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "53c6b8ea-c629-4226-99d7-dc08f4a129bb",
+      "createdAt": "2026-01-20T16:34:17.316Z",
+      "updatedAt": "2026-01-20T16:34:17.316Z"
+    },
+    {
+      "id": "33b3d9fe-23d5-4269-ac3b-105c77960ce9",
+      "ownerUserId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "type": "Følg op",
+      "title": "Ring tilbage",
+      "status": "open",
+      "dueAt": "2026-01-20T09:00:00.000Z",
+      "leadId": "a1ab6a4f-558d-4ac4-ad8c-5bba712f3385",
+      "createdAt": "2026-01-20T16:34:18.342Z",
+      "updatedAt": "2026-01-20T16:34:18.342Z"
+    }
+  ],
+  "deals": [
+    {
+      "id": "bbd108cd-3f07-4290-a17e-e091220d0a6f",
+      "ownerUserId": "6a9aa598-ba68-4d08-b9d0-1993c84ef6bc",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "contacted",
+      "stageEnteredAt": "2026-01-18T11:32:34.202Z",
+      "leadId": "77bd0cf0-5862-4883-9050-a149d4210bac",
+      "createdAt": "2026-01-18T11:32:34.200Z",
+      "updatedAt": "2026-01-18T11:32:34.202Z"
+    },
+    {
+      "id": "b08df381-0d54-4696-916f-58a307aed6dd",
+      "ownerUserId": "523adb99-865e-4358-80c8-69c86cce5f81",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "new_lead",
+      "stageEnteredAt": "2026-01-20T16:10:14.608Z",
+      "leadId": "99ac11d1-ca14-4f43-b7f4-8ef5fcc22a78",
+      "createdAt": "2026-01-20T16:10:14.608Z",
+      "updatedAt": "2026-01-20T16:10:14.608Z"
+    },
+    {
+      "id": "2aff9134-45cd-4729-9dfc-aeb3413feac3",
+      "ownerUserId": "86e35592-5cfa-4d5a-bcdc-75e85c24caf2",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "new_lead",
+      "stageEnteredAt": "2026-01-20T16:34:15.267Z",
+      "leadId": "60158fad-3987-4627-a1e9-1d4aa13c70f1",
+      "createdAt": "2026-01-20T16:34:15.267Z",
+      "updatedAt": "2026-01-20T16:34:15.267Z"
+    },
+    {
+      "id": "aa96cd1b-d9b7-4eaa-9b32-9319ebcd56a8",
+      "ownerUserId": "8e94d4bf-c506-4c46-a41a-bfa6ff847ef2",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "new_lead",
+      "stageEnteredAt": "2026-01-20T16:34:16.290Z",
+      "leadId": "57457762-6945-4747-b357-0e7f3bbc0653",
+      "createdAt": "2026-01-20T16:34:16.290Z",
+      "updatedAt": "2026-01-20T16:34:16.290Z"
+    },
+    {
+      "id": "65d9f5c6-13da-4d3c-a1d6-6fc6d292b9ff",
+      "ownerUserId": "1adfd97e-cb4d-44f0-8f44-2c636c1530e9",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "new_lead",
+      "stageEnteredAt": "2026-01-20T16:34:17.314Z",
+      "leadId": "53c6b8ea-c629-4226-99d7-dc08f4a129bb",
+      "createdAt": "2026-01-20T16:34:17.314Z",
+      "updatedAt": "2026-01-20T16:34:17.314Z"
+    },
+    {
+      "id": "ce9d64b1-7673-4158-8a04-032fbfcca1ac",
+      "ownerUserId": "e53efb88-6c9d-4367-9deb-024a632cc86a",
+      "title": "Deal One",
+      "value": 5000,
+      "stageId": "new_lead",
+      "stageEnteredAt": "2026-01-20T16:34:18.341Z",
+      "leadId": "a1ab6a4f-558d-4ac4-ad8c-5bba712f3385",
+      "createdAt": "2026-01-20T16:34:18.341Z",
+      "updatedAt": "2026-01-20T16:34:18.341Z"
+    }
+  ],
+  "activities": []
+}
