@@ -7,6 +7,7 @@ import { isLocale, useI18n } from '@/lib/i18n';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { loginSchema } from '@/lib/validations';
+import { describeAuthError } from '@/lib/authErrors';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -42,7 +43,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.loginFailed'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.loginFailed'), description: describeAuthError(err, t) });
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ export default function LoginPage() {
     try {
       await loginWithGoogle();
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.loginFailed'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.loginFailed'), description: describeAuthError(err, t) });
       setLoading(false);
     }
   };

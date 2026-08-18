@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.15"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -491,7 +516,9 @@ export type Database = {
         Row: {
           activation_code: string | null
           address: string | null
+          applicant_role: string | null
           automation_rules: Json | null
+          billing_mode: string
           company_size: string | null
           compliance_checklist: Json | null
           created_at: string
@@ -520,7 +547,9 @@ export type Database = {
         Insert: {
           activation_code?: string | null
           address?: string | null
+          applicant_role?: string | null
           automation_rules?: Json | null
+          billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
           created_at?: string
@@ -549,7 +578,9 @@ export type Database = {
         Update: {
           activation_code?: string | null
           address?: string | null
+          applicant_role?: string | null
           automation_rules?: Json | null
+          billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
           created_at?: string
@@ -576,6 +607,44 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      company_module_seats: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          module: string
+          seat_count: number
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          module: string
+          seat_count: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          module?: string
+          seat_count?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_module_seats_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consent_logs: {
         Row: {
@@ -645,12 +714,15 @@ export type Database = {
       }
       customers: {
         Row: {
+          accounting_synced_at: string | null
           address: string | null
           company_id: string
           country: string | null
           created_at: string
           created_by: string
           customer_type: string | null
+          dinero_contact_guid: string | null
+          economic_customer_number: number | null
           email: string
           id: string
           name: string
@@ -659,12 +731,15 @@ export type Database = {
           vat_number: string | null
         }
         Insert: {
+          accounting_synced_at?: string | null
           address?: string | null
           company_id: string
           country?: string | null
           created_at?: string
           created_by: string
           customer_type?: string | null
+          dinero_contact_guid?: string | null
+          economic_customer_number?: number | null
           email: string
           id?: string
           name: string
@@ -673,12 +748,15 @@ export type Database = {
           vat_number?: string | null
         }
         Update: {
+          accounting_synced_at?: string | null
           address?: string | null
           company_id?: string
           country?: string | null
           created_at?: string
           created_by?: string
           customer_type?: string | null
+          dinero_contact_guid?: string | null
+          economic_customer_number?: number | null
           email?: string
           id?: string
           name?: string
@@ -881,6 +959,124 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      dinero_connections: {
+        Row: {
+          access_token: string
+          company_id: string
+          connected_at: string
+          connected_by: string | null
+          created_at: string
+          dinero_organization_id: string
+          dinero_organization_name: string | null
+          disconnected_at: string | null
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          refresh_token: string
+          status: string
+          token_expires_at: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          company_id: string
+          connected_at?: string
+          connected_by?: string | null
+          created_at?: string
+          dinero_organization_id: string
+          dinero_organization_name?: string | null
+          disconnected_at?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          refresh_token: string
+          status?: string
+          token_expires_at: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          company_id?: string
+          connected_at?: string
+          connected_by?: string | null
+          created_at?: string
+          dinero_organization_id?: string
+          dinero_organization_name?: string | null
+          disconnected_at?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          refresh_token?: string
+          status?: string
+          token_expires_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dinero_connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      economic_connections: {
+        Row: {
+          agreement_grant_token: string
+          agreement_number: number | null
+          company_id: string
+          company_name: string | null
+          connected_at: string
+          connected_by: string | null
+          created_at: string
+          disconnected_at: string | null
+          id: string
+          last_sync_error: string | null
+          last_synced_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agreement_grant_token: string
+          agreement_number?: number | null
+          company_id: string
+          company_name?: string | null
+          connected_at?: string
+          connected_by?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agreement_grant_token?: string
+          agreement_number?: number | null
+          company_id?: string
+          company_name?: string | null
+          connected_at?: string
+          connected_by?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          last_sync_error?: string | null
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "economic_connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1576,6 +1772,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          accounting_synced_at: string | null
           amount: number
           company_id: string
           created_at: string
@@ -1583,7 +1780,9 @@ export type Database = {
           customer_country: string | null
           customer_id: string
           customer_type: string | null
+          dinero_voucher_guid: string | null
           due_date: string | null
+          economic_invoice_number: number | null
           id: string
           invoice_number: string
           issued_at: string | null
@@ -1598,6 +1797,7 @@ export type Database = {
           vat_rate: number | null
         }
         Insert: {
+          accounting_synced_at?: string | null
           amount: number
           company_id: string
           created_at?: string
@@ -1605,7 +1805,9 @@ export type Database = {
           customer_country?: string | null
           customer_id: string
           customer_type?: string | null
+          dinero_voucher_guid?: string | null
           due_date?: string | null
+          economic_invoice_number?: number | null
           id?: string
           invoice_number: string
           issued_at?: string | null
@@ -1620,6 +1822,7 @@ export type Database = {
           vat_rate?: number | null
         }
         Update: {
+          accounting_synced_at?: string | null
           amount?: number
           company_id?: string
           created_at?: string
@@ -1627,7 +1830,9 @@ export type Database = {
           customer_country?: string | null
           customer_id?: string
           customer_type?: string | null
+          dinero_voucher_guid?: string | null
           due_date?: string | null
+          economic_invoice_number?: number | null
           id?: string
           invoice_number?: string
           issued_at?: string | null
@@ -2399,6 +2604,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "notifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_states: {
+        Row: {
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          metadata: Json | null
+          provider: string
+        }
+        Insert: {
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          metadata?: Json | null
+          provider: string
+        }
+        Update: {
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          metadata?: Json | null
+          provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_states_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -3709,6 +3955,10 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
       activate_company: { Args: { _company_id: string }; Returns: boolean }
+      bootstrap_company_admin: {
+        Args: { _company_id: string }
+        Returns: undefined
+      }
       check_usage_quota: {
         Args: { _company_id: string; _quota_type: string }
         Returns: boolean
@@ -3721,11 +3971,6 @@ export type Database = {
         }
         Returns: string
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
       emit_workspace_event: {
         Args: {
           _actor: string
@@ -3737,10 +3982,6 @@ export type Database = {
           _type: string
         }
         Returns: string
-      }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
       }
       generate_activation_code: { Args: never; Returns: string }
       generate_employee_id: {
@@ -3838,6 +4079,20 @@ export type Database = {
           token: string
         }[]
       }
+      get_company_by_activation_code: {
+        Args: { _code: string }
+        Returns: { id: string; name: string }[]
+      }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          expires_at: string
+          company_name: string
+        }[]
+      }
       join_company_by_code: { Args: { _code: string }; Returns: string }
       log_activity: {
         Args: {
@@ -3850,23 +4105,6 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
-      }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       regenerate_activation_code: {
         Args: { _company_id: string }
@@ -4041,6 +4279,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: [

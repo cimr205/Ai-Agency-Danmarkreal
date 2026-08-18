@@ -8,6 +8,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { signupSchema } from '@/lib/validations';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
+import { describeAuthError } from '@/lib/authErrors';
 
 export default function SignupPage() {
   const { signup, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -45,10 +46,14 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await signup(email, password, fullName);
-      toast({ title: t('auth.accountCreated'), description: t('auth.welcomeAboard') });
+      const { needsEmailConfirmation } = await signup(email, password, fullName);
+      if (needsEmailConfirmation) {
+        toast({ title: t('auth.checkEmail'), description: t('auth.checkEmailConfirm') });
+      } else {
+        toast({ title: t('auth.accountCreated'), description: t('auth.welcomeAboard') });
+      }
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.registerFailed'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.registerFailed'), description: describeAuthError(err, t) });
     } finally {
       setLoading(false);
     }
@@ -59,7 +64,7 @@ export default function SignupPage() {
     try {
       await loginWithGoogle();
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.error'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.error'), description: describeAuthError(err, t) });
       setLoading(false);
     }
   };

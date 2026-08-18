@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
 
 export interface UserProfile {
   id: string;
@@ -20,7 +19,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSystemAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, fullName: string) => Promise<void>;
+  signup: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -97,6 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('pending_company_code');
         localStorage.removeItem('pending_company_id');
       }
+
+      const pendingInviteToken = localStorage.getItem('pending_invite_token');
+      if (pendingInviteToken) {
+        try {
+          await supabase.rpc('accept_invitation', { invite_token: pendingInviteToken });
+        } catch (e) {}
+        localStorage.removeItem('pending_invite_token');
+      }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -150,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (email: string, password: string, fullName: string) => {
     const pathParts = window.location.pathname.split('/');
     const locale = pathParts[1] && ['en', 'da', 'de'].includes(pathParts[1]) ? pathParts[1] : 'en';
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -159,15 +166,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (error) throw new Error(error.message);
+    return { needsEmailConfirmation: !data.session };
   };
 
   const loginWithGoogle = async () => {
     const pathParts = window.location.pathname.split('/');
     const locale = pathParts[1] && ['en', 'da', 'de'].includes(pathParts[1]) ? pathParts[1] : 'en';
-    const { error } = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: `${window.location.origin}/${locale}/auth/callback`,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/${locale}/auth/callback`,
+      },
     });
-    if (error) throw new Error(error instanceof Error ? error.message : 'Google sign-in failed');
+    if (error) throw new Error(error.message);
   };
 
   const logout = async () => {

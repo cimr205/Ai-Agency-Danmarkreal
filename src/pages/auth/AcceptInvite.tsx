@@ -6,7 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types";
+
+type InvitationPreview = {
+  email: string;
+  role: string;
+  status: string;
+  expires_at: string;
+  company_name: string;
+};
 
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
@@ -16,7 +23,7 @@ export default function AcceptInvite() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [status, setStatus] = useState<"loading" | "ready" | "accepting" | "success" | "error">("loading");
-  const [invitation, setInvitation] = useState<Tables<"invitations"> | null>(null);
+  const [invitation, setInvitation] = useState<InvitationPreview | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   // Fetch invitation details
@@ -28,35 +35,37 @@ export default function AcceptInvite() {
     }
 
     supabase
-      .from("invitations")
-      .select("id, email, role, status, expires_at, company_id, companies(name)")
-      .eq("token", token)
-      .single()
+      .rpc("get_invitation_by_token", { _token: token })
       .then(({ data, error }) => {
-        if (error || !data) {
+        const inv = data?.[0];
+        if (error || !inv) {
           setStatus("error");
           setErrorMsg("Ugyldigt invitation-link.");
           return;
         }
-        if (data.status !== "pending") {
+        if (inv.status !== "pending") {
           setStatus("error");
           setErrorMsg("Denne invitation er allerede brugt eller tilbagekaldt.");
           return;
         }
-        if (new Date(data.expires_at) < new Date()) {
+        if (new Date(inv.expires_at) < new Date()) {
           setStatus("error");
           setErrorMsg("Denne invitation er udløbet.");
           return;
         }
-        setInvitation(data);
+        setInvitation(inv);
         setStatus("ready");
       });
   }, [token]);
 
-  // If not authenticated, redirect to signup with return URL
+  // If not authenticated, redirect to signup. The new account won't have a
+  // live session until its email is confirmed, so the return trip through
+  // /auth/callback can't carry a query param — stash the token and let
+  // AuthContext accept it on the next real sign-in instead.
   useEffect(() => {
     if (authLoading || status === "loading") return;
-    if (!isAuthenticated && status === "ready") {
+    if (!isAuthenticated && status === "ready" && token) {
+      localStorage.setItem('pending_invite_token', token);
       const returnUrl = `/${locale || "en"}/invite?token=${token}`;
       navigate(`/${locale || "en"}/auth/signup?redirect=${encodeURIComponent(returnUrl)}`);
     }
@@ -88,7 +97,7 @@ export default function AcceptInvite() {
     );
   }
 
-  const companyName = invitation?.companies?.name || "Virksomheden";
+  const companyName = invitation?.company_name || "Virksomheden";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

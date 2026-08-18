@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Mail, Copy, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
+import { getErrorMessage } from '@/lib/errors';
 
 type Invitation = {
   id: string;
@@ -50,7 +51,7 @@ export default function InvitationsPage() {
 
   const handleCreate = async () => {
     if (!newEmail.trim() || !newEmail.includes('@')) {
-      toast.error(t('auth.email') + ' required');
+      toast.error(t('invitations.emailRequired'));
       return;
     }
     setCreating(true);
@@ -60,13 +61,13 @@ export default function InvitationsPage() {
         invite_role: newRole as Enums<'app_role'>,
       });
       if (error) throw error;
-      toast.success(`Invitation sent to ${newEmail}`);
+      toast.success(t('invitations.invitationSentTo').replace('{email}', newEmail));
       setNewEmail('');
       setNewRole('employee');
       setIsCreateOpen(false);
       await loadInvitations();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not create invitation');
+      toast.error(getErrorMessage(err) || t('invitations.couldNotCreate'));
     } finally {
       setCreating(false);
     }
@@ -76,10 +77,10 @@ export default function InvitationsPage() {
     try {
       const { error } = await supabase.rpc('revoke_invitation', { invitation_id: id });
       if (error) throw error;
-      toast.success('Invitation revoked');
+      toast.success(t('invitations.invitationRevoked'));
       await loadInvitations();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not revoke invitation');
+      toast.error(getErrorMessage(err) || t('invitations.couldNotRevoke'));
     }
   };
 
@@ -87,15 +88,15 @@ export default function InvitationsPage() {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/${locale || 'en'}/invite?token=${token}`;
     navigator.clipboard.writeText(link);
-    toast.success('Invitation link copied!');
+    toast.success(t('invitations.invitationLinkCopied'));
   };
 
   const statusBadge = (status: string, expiresAt: string) => {
     const isExpired = new Date(expiresAt) < new Date();
-    if (status === 'accepted') return <Badge className="bg-success/15 text-success"><CheckCircle2 className="h-3 w-3 mr-1" />Accepted</Badge>;
-    if (status === 'revoked') return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Revoked</Badge>;
-    if (isExpired) return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Expired</Badge>;
-    return <Badge className="bg-warning/15 text-warning"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+    if (status === 'accepted') return <Badge className="bg-success/15 text-success"><CheckCircle2 className="h-3 w-3 mr-1" />{t('invitations.accepted')}</Badge>;
+    if (status === 'revoked') return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t('invitations.revoked')}</Badge>;
+    if (isExpired) return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />{t('invitations.expired')}</Badge>;
+    return <Badge className="bg-warning/15 text-warning"><Clock className="h-3 w-3 mr-1" />{t('invitations.pending')}</Badge>;
   };
 
   if (!isAdmin) {
@@ -110,17 +111,17 @@ export default function InvitationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Invitations</h1>
-          <p className="text-muted-foreground">Manage team invitations</p>
+          <h1 className="text-2xl font-bold text-foreground">{t('invitations.title')}</h1>
+          <p className="text-muted-foreground">{t('invitations.subtitle')}</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Invite member</Button>
+            <Button><Plus className="h-4 w-4 mr-2" />{t('invitations.inviteMember')}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Invite team member</DialogTitle>
-              <DialogDescription>Send an invitation link via email</DialogDescription>
+              <DialogTitle>{t('invitations.inviteTeamMember')}</DialogTitle>
+              <DialogDescription>{t('invitations.inviteDesc')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -128,13 +129,13 @@ export default function InvitationsPage() {
                 <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
               </div>
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>{t('invitations.roleLabel')}</Label>
                 <Select value={newRole} onValueChange={setNewRole}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="employee">{t('roles.employee')}</SelectItem>
                     <SelectItem value="manager">{t('roles.manager')}</SelectItem>
-                    <SelectItem value="company_admin">Admin</SelectItem>
+                    <SelectItem value="company_admin">{t('invitations.adminRole')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -148,15 +149,15 @@ export default function InvitationsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Pending</p><p className="text-2xl font-bold text-warning">{invitations.filter(i => i.status === 'pending' && new Date(i.expires_at) > new Date()).length}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Accepted</p><p className="text-2xl font-bold text-success">{invitations.filter(i => i.status === 'accepted').length}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{invitations.length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.pending')}</p><p className="text-2xl font-bold text-warning">{invitations.filter(i => i.status === 'pending' && new Date(i.expires_at) > new Date()).length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.accepted')}</p><p className="text-2xl font-bold text-success">{invitations.filter(i => i.status === 'accepted').length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.total')}</p><p className="text-2xl font-bold">{invitations.length}</p></CardContent></Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All invitations</CardTitle>
-          <CardDescription>View and manage sent invitations</CardDescription>
+          <CardTitle>{t('invitations.allInvitations')}</CardTitle>
+          <CardDescription>{t('invitations.allInvitationsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -166,18 +167,18 @@ export default function InvitationsPage() {
           ) : invitations.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Mail className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>No invitations sent yet</p>
+              <p>{t('invitations.noInvitationsYet')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('auth.email')}</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('invitations.roleCol')}</TableHead>
+                  <TableHead>{t('invitations.statusCol')}</TableHead>
+                  <TableHead>{t('invitations.createdCol')}</TableHead>
+                  <TableHead>{t('invitations.expiresCol')}</TableHead>
+                  <TableHead className="text-right">{t('invitations.actionsCol')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -192,10 +193,10 @@ export default function InvitationsPage() {
                       <div className="flex items-center gap-1 justify-end">
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
                           <>
-                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title="Copy link">
+                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title={t('invitations.copyLink')}>
                               <Copy className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title="Revoke">
+                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
                               <XCircle className="h-3.5 w-3.5" />
                             </Button>
                           </>

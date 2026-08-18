@@ -7,6 +7,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+import { describeAuthError } from '@/lib/authErrors';
 
 export default function JoinCompanyPage() {
   const params = useParams();
@@ -60,9 +61,9 @@ export default function JoinCompanyPage() {
         return;
       }
 
-      const { data: company } = await supabase.from('companies').select('name').eq('id', data).single();
+      const { data: companyRows } = await supabase.rpc('get_company_by_activation_code', { _code: companyCode.trim() });
       setCompanyId(data as string);
-      setCompanyName(company?.name || t('auth.unknownCompany'));
+      setCompanyName(companyRows?.[0]?.name || t('auth.unknownCompany'));
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -75,7 +76,7 @@ export default function JoinCompanyPage() {
 
       setStep('signup');
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.error'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.error'), description: describeAuthError(err, t) });
     } finally {
       setLoading(false);
     }
@@ -103,7 +104,7 @@ export default function JoinCompanyPage() {
 
       setStep('done');
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.error'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.error'), description: describeAuthError(err, t) });
     } finally {
       setLoading(false);
     }
