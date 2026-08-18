@@ -3959,6 +3959,10 @@ export type Database = {
         Args: { _company_id: string }
         Returns: undefined
       }
+      bootstrap_company_profile: {
+        Args: { _company_id: string; _full_name: string }
+        Returns: undefined
+      }
       check_usage_quota: {
         Args: { _company_id: string; _quota_type: string }
         Returns: boolean

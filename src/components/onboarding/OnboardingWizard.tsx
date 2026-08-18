@@ -105,14 +105,10 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
       if (companyError) throw new Error(companyError.message);
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          company_id: companyId,
-          full_name: fullName,
-          onboarding_completed: true,
-        })
-        .eq('user_id', user.user_id);
+      const { error: profileError } = await supabase.rpc('bootstrap_company_profile', {
+        _company_id: companyId,
+        _full_name: fullName,
+      });
 
       if (profileError) throw new Error(profileError.message);
 
