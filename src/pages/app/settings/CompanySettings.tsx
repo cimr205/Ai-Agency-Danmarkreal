@@ -11,12 +11,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Copy, RefreshCw, KeyRound, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+import { AccountingConnections } from '@/components/settings/AccountingConnections';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function CompanySettingsPage() {
   const { t, locale } = useI18n();
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
-  const [company, setCompany] = useState<Tables<'companies'> | null>(null);
+  // Admins get the full row via select('*'); non-admins get the narrower
+  // get_company_for_user() RPC shape, so the state must tolerate either.
+  const [company, setCompany] = useState<Partial<Tables<'companies'>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -62,7 +66,7 @@ export default function CompanySettingsPage() {
       setCompany({ ...company, activation_code: data });
       sonnerToast.success(t('companySettings.codeRegenerated'));
     } catch (err) {
-      sonnerToast.error((err instanceof Error ? err.message : t('companySettings.codeRegenerateError')));
+      sonnerToast.error((getErrorMessage(err) || t('companySettings.codeRegenerateError')));
     } finally {
       setRegenerating(false);
     }
@@ -134,6 +138,8 @@ export default function CompanySettingsPage() {
         </Card>
       )}
 
+      {isAdmin && <AccountingConnections />}
+
       {/* Company Code Section - Only for admins/owners */}
       {isAdmin && (
         <Card className="border-primary/20">
@@ -176,8 +182,8 @@ export default function CompanySettingsPage() {
           <div><div className="text-xs text-muted-foreground mb-1">{t('companySettings.website')}</div><Input value={company.website || ''} onChange={(e) => setCompany({ ...company, website: e.target.value })} /></div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.status')}</div><Badge variant={company.status === 'active' ? 'default' : 'secondary'}>{company.status || 'setup'}</Badge></div>
-          <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.mode')}</div><Badge variant="outline">{company.mode || 'setup'}</Badge></div>
+          <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.status')}</div><Badge variant={company.status === 'active' ? 'default' : 'secondary'}>{t(`companySettings.status${(company.status || 'setup').replace(/^./, c => c.toUpperCase())}`)}</Badge></div>
+          <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.mode')}</div><Badge variant="outline">{t(`companySettings.mode${(company.mode || 'setup').replace(/^./, c => c.toUpperCase())}`)}</Badge></div>
         </div>
         {isAdmin && (
           <Button onClick={handleSave} disabled={saving}>{saving ? t('common.loading') : t('settings.updateCta')}</Button>

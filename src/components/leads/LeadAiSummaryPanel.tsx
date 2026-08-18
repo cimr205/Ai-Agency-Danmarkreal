@@ -7,6 +7,7 @@ import { Brain, Clock, AlertCircle, RefreshCw, Sparkles, ArrowRight } from 'luci
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { useLeadAiRecommendation, type LeadAiSummary } from '@/hooks/api/usePipeline';
+import { getErrorMessage } from '@/lib/errors';
 
 interface LeadAiSummaryPanelProps {
   leadId: string;
@@ -22,7 +23,7 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
       const res = await aiRecommend.mutateAsync(leadId);
       setSummary(res);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('common.error'));
+      toast.error(getErrorMessage(e) || t('common.error'));
     }
   };
 
@@ -45,13 +46,13 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
             <Brain className="h-8 w-8 text-primary" />
             <Sparkles className="h-3.5 w-3.5 text-primary absolute -top-1 -right-1 animate-pulse" />
           </div>
-          <h3 className="font-semibold text-sm mb-1">AI Relationship Summary</h3>
+          <h3 className="font-semibold text-sm mb-1">{t('leadAi.title')}</h3>
           <p className="text-xs text-muted-foreground mb-3 max-w-[220px]">
-            Get the history, open promises, and stall risk without scrolling through notes.
+            {t('leadAi.description')}
           </p>
           <Button size="sm" onClick={analyze} className="gap-2">
             <Brain className="h-3.5 w-3.5" />
-            Summarize relationship
+            {t('leadAi.summarizeCta')}
           </Button>
         </CardContent>
       </Card>
@@ -64,7 +65,7 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary animate-pulse" />
-            Analyzing history…
+            {t('leadAi.analyzing')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -84,7 +85,7 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" />
-            AI Relationship Summary
+            {t('leadAi.title')}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={analyze} className="h-7 w-7 p-0">
             <RefreshCw className="h-3.5 w-3.5" />
@@ -104,14 +105,14 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
           <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <p className="text-foreground/90">{summary.last_contact_summary}</p>
-            <p className="text-xs text-muted-foreground">{summary.days_since_contact} days since last activity</p>
+            <p className="text-xs text-muted-foreground">{summary.days_since_contact} {t('leadAi.daysSinceContact')}</p>
           </div>
         </div>
 
         {summary.open_promises.length > 0 && (
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-              Open promises
+              {t('leadAi.openPromises')}
             </h4>
             <div className="space-y-2">
               {summary.open_promises.map((p, i) => (

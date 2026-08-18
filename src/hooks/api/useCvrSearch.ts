@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/lib/errors';
 
 export type CvrCompanyResult = {
   name: string | null;
@@ -77,7 +78,7 @@ export function useCvrSearch() {
       setResults(searchRes.results);
       setTotal(searchRes.total);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Noget gik galt');
+      setError(getErrorMessage(e) || 'Noget gik galt');
       setResults([]);
       setTotal(0);
     } finally {

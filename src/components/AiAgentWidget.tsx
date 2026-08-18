@@ -206,7 +206,7 @@ export default function AiAgentWidget() {
       const imageFiles = attachedFiles.filter(f => f.type.startsWith('image/'));
       const contentParts: ChatContentPart[] = [
         { type: "text", text: prompt || "Analysér dette billede" },
-        ...imageFiles.map(f => ({ type: "image_url", image_url: { url: f.dataUrl } })),
+        ...imageFiles.map(f => ({ type: "image_url" as const, image_url: { url: f.dataUrl } })),
       ];
       chatMessages[lastIdx] = { role: 'user', content: contentParts };
     }

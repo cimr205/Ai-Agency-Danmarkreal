@@ -22,7 +22,7 @@ export default function LeavePage() {
   const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newLeave, setNewLeave] = useState({ employee_profile_id: '', type: 'vacation' as const, start_date: '', end_date: '' });
+  const [newLeave, setNewLeave] = useState<{ employee_profile_id: string; type: Enums<'leave_type'>; start_date: string; end_date: string }>({ employee_profile_id: '', type: 'vacation', start_date: '', end_date: '' });
 
   const statusLabels: Record<string, string> = { pending: t('hr.pending'), approved: t('hr.approved'), rejected: t('hr.rejected') };
   const typeLabels: Record<string, string> = { vacation: t('hr.typeVacation'), sick: t('hr.typeSick'), personal: t('hr.typePersonal'), other: t('hr.typeOther') };

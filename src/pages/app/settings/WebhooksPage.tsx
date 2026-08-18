@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/lib/i18n";
 import type { Tables } from "@/integrations/supabase/types";
+import { getErrorMessage } from '@/lib/errors';
 
 type WebhookRow = Tables<'webhooks'>;
 
@@ -61,7 +62,7 @@ export default function WebhooksPage() {
       setShowCreate(false);
       setForm({ name: "", url: "", event: "", secret_key: "" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(getErrorMessage(e) || String(e));
     }
   };
 
@@ -76,7 +77,7 @@ export default function WebhooksPage() {
       if (status === "success") toast.success("Test webhook delivered successfully!");
       else toast.error("Test webhook failed — check logs for details");
     } catch (e) {
-      toast.error("Test failed: " + (e instanceof Error ? e.message : String(e)));
+      toast.error("Test failed: " + (getErrorMessage(e) || String(e)));
     }
   };
 

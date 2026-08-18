@@ -6,6 +6,7 @@ import { useCreateTask } from "@/hooks/api/useTasks";
 import { fireWebhookEvent } from "@/hooks/api/useWebhooks";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { getErrorMessage } from '@/lib/errors';
 
 interface Props {
   customer: { id: string; name: string };
@@ -59,7 +60,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
       setTitle("");
       setOpen(false);
     } catch (e) {
-      toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
     }
   };
 
@@ -76,7 +77,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
       toast({ title: "Automation kørt", description: a.label });
       setOpen(false);
     } catch (e) {
-      toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
     } finally {
       setBusy(null);
     }

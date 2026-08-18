@@ -820,7 +820,7 @@ async function aiQualifyLeads(
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-lite",
+            model: "llama3.2:3b",
             messages: [
               {
                 role: "system",
@@ -957,8 +957,8 @@ serve(async (req) => {
         : [...new Set([category, ...expandedTerms.slice(0, maxQueryVariants)])].slice(0, maxQueryVariants + 1);
 
       const locationLower = (location || "").toLowerCase().trim();
-      let regionCities = REGION_CITIES[locationLower];
-      let isRegion = !!regionCities;
+      const regionCities = REGION_CITIES[locationLower];
+      const isRegion = !!regionCities;
 
       // STRICT: No auto-expansion to nearby cities. Only search the exact location the user requested.
 
@@ -1118,7 +1118,7 @@ serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "llama3.2:3b",
         messages: [
           {
             role: "system",

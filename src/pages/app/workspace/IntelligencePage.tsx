@@ -162,7 +162,7 @@ function ActionRow({ log, delay }: { log: LogRow; delay: number }) {
         <div className="text-sm text-foreground/95 leading-snug">{log.description}</div>
         {log.metadata?.tool && (
           <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed font-mono">
-            {log.metadata.tool}({Object.keys(log.metadata.input ?? {}).join(", ")})
+            {String(log.metadata.tool)}({Object.keys((log.metadata.input as Record<string, unknown>) ?? {}).join(", ")})
           </div>
         )}
       </div>

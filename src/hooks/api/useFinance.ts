@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables, Json, Enums } from '@/integrations/supabase/types';
+import type { Tables, Json, Enums, Database } from '@/integrations/supabase/types';
 
 export type Customer = Tables<'customers'>;
-export type Company = Tables<'companies'>;
+// useCompanyInfo() always goes through the get_company_for_user() RPC (a
+// deliberately narrower "safe" column set than the full companies table),
+// so Company must match that RPC's actual return shape, not Tables<'companies'>.
+export type Company = Database['public']['Functions']['get_company_for_user']['Returns'][number];
 
 export interface InvoiceWithCustomer extends Tables<'invoices'> {
   customers: Pick<Customer, 'name' | 'email' | 'country' | 'customer_type' | 'vat_number'> | null;

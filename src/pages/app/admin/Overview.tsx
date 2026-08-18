@@ -13,6 +13,7 @@ import {
 import { Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 interface OwnerInfo {
   user_id: string;
@@ -101,7 +102,7 @@ export default function AdminOverviewPage() {
 
       setCompanies(result);
     } catch (err) {
-      toast.error('Kunne ikke hente data: ' + (err instanceof Error ? err.message : 'Ukendt fejl'));
+      toast.error('Kunne ikke hente data: ' + (getErrorMessage(err) || 'Ukendt fejl'));
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ export default function AdminOverviewPage() {
       setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, disabled: !currentDisabled } : c));
       toast.success(!currentDisabled ? 'Virksomhed deaktiveret' : 'Virksomhed aktiveret');
     } catch (err) {
-      toast.error('Kunne ikke ændre status: ' + (err instanceof Error ? err.message : 'Ukendt fejl'));
+      toast.error('Kunne ikke ændre status: ' + (getErrorMessage(err) || 'Ukendt fejl'));
     }
     setTogglingIds(prev => { const s = new Set(prev); s.delete(companyId); return s; });
   };

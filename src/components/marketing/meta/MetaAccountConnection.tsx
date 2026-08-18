@@ -6,6 +6,7 @@ import { Link2, CheckCircle2, RefreshCw, AlertCircle, XCircle, Loader2 } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { getErrorMessage } from '@/lib/errors';
 
 const META_APP_ID = "1461822492213512";
 const SCOPES = "ads_read,ads_management,business_management";
@@ -112,7 +113,7 @@ export function MetaAccountConnection() {
       toast({ title: "Meta Ads forbundet!", description: `${data.ad_accounts_count} annonce-konti fundet.` });
       await fetchConnection();
     } catch (err) {
-      toast({ title: "Forbindelse fejlede", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+      toast({ title: "Forbindelse fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export function MetaAccountConnection() {
       toast({ title: "Meta Ads afbrudt" });
       await fetchConnection();
     } catch (err) {
-      toast({ title: "Afbrydelse fejlede", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+      toast({ title: "Afbrydelse fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
     } finally {
       setDisconnecting(false);
     }

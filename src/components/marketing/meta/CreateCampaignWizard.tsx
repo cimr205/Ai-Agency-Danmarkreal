@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { getErrorMessage } from '@/lib/errors';
 
 type WizardMode = "simple" | "advanced" | "ai";
 type BudgetLevel = "campaign" | "adset";
@@ -255,7 +256,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
       setActiveVariantIdx(0);
       setStep(1);
     } catch (err) {
-      toast({ title: "AI fejl", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+      toast({ title: "AI fejl", description: getErrorMessage(err) || String(err), variant: "destructive" });
     } finally {
       setAiGenerating(false);
     }
@@ -277,7 +278,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
         toast({ title: "Billede genereret!" });
       }
     } catch (err) {
-      toast({ title: "Billedgenerering fejlede", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
+      toast({ title: "Billedgenerering fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
     } finally {
       setAiImageGenerating(false);
     }
@@ -367,7 +368,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
       });
       handleClose();
     } catch (err) {
-      let msg = err instanceof Error ? err.message : "Ukendt fejl";
+      let msg = getErrorMessage(err) || "Ukendt fejl";
       msg = msg
         .replace(/Campaign creation failed:\s*/i, "Kampagne kunne ikke oprettes: ")
         .replace(/Ad Set creation failed:\s*/i, "Annonce-sæt kunne ikke oprettes: ")

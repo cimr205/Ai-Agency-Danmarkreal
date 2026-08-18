@@ -7,6 +7,7 @@ import { isLocale, useI18n } from '@/lib/i18n';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Lock } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function ResetPasswordPage() {
   const params = useParams();
@@ -35,7 +36,7 @@ export default function ResetPasswordPage() {
       toast({ title: t('auth.passwordUpdated'), description: t('auth.passwordUpdatedDesc') });
       navigate(`/${locale}/auth/login`);
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.error'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.error'), description: getErrorMessage(err) || t('auth.unknownError') });
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import { isLocale, useI18n } from '@/lib/i18n';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function ForgotPasswordPage() {
   const params = useParams();
@@ -28,7 +29,7 @@ export default function ForgotPasswordPage() {
       if (error) throw error;
       setSent(true);
     } catch (err) {
-      toast({ variant: 'destructive', title: t('auth.error'), description: err instanceof Error ? err.message : t('auth.unknownError') });
+      toast({ variant: 'destructive', title: t('auth.error'), description: getErrorMessage(err) || t('auth.unknownError') });
     } finally {
       setLoading(false);
     }

@@ -23,7 +23,8 @@ import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables, Enums } from '@/integrations/supabase/types';
+import { getErrorMessage } from '@/lib/errors';
 
 type Lead = Tables<'leads'>;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -234,7 +235,7 @@ export default function LeadsPage() {
     } catch { toast.error(t('pages.leads.created_error')); }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: Enums<'lead_status'>) => {
     try {
       await updateLead.mutateAsync({ id, data: { status } });
       if (selectedLead?.id === id) setSelectedLead({ ...selectedLead, status });
@@ -392,7 +393,7 @@ export default function LeadsPage() {
         { duration: 5000 }
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Auto-import fejlede');
+      toast.error(getErrorMessage(err) || 'Auto-import fejlede');
     } finally {
       setAutoImporting(false);
       setAutoImportProgress('');
@@ -832,7 +833,7 @@ export default function LeadsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{lead.company_name || '–'}</TableCell>
                     <TableCell onClick={e => e.stopPropagation()}>
-                      <Select value={lead.status} onValueChange={v => handleStatusChange(lead.id, v)}>
+                      <Select value={lead.status} onValueChange={(v: Enums<'lead_status'>) => handleStatusChange(lead.id, v)}>
                         <SelectTrigger className="h-7 w-auto border-0 p-0">
                           <Badge className={statusColors[lead.status] || 'bg-muted text-muted-foreground'}>
                             {statusLabels[lead.status] || lead.status}
@@ -1005,7 +1006,7 @@ export default function LeadsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.leads.status')}</Label>
-                    <Select value={selectedLead.status} onValueChange={v => handleStatusChange(selectedLead.id, v)}>
+                    <Select value={selectedLead.status} onValueChange={(v: Enums<'lead_status'>) => handleStatusChange(selectedLead.id, v)}>
                       <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}

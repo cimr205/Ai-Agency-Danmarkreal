@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
-import type { Enums } from '@/integrations/supabase/types';
+import type { Enums, Json } from '@/integrations/supabase/types';
 
 export const LEADS_PAGE_SIZE = 100;
 
@@ -62,7 +62,7 @@ export function useSavedLeadFilters() {
 export function useCreateSavedFilter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; filters: Record<string, unknown> }) => {
+    mutationFn: async (input: { name: string; filters: Json }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
       const { data: profile } = await supabase

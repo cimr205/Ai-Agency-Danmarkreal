@@ -11,6 +11,7 @@ import { Play, Square, Clock, Calendar, Timer, TrendingUp, AlertCircle } from 'l
 import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { getErrorMessage } from '@/lib/errors';
 
 function BigTimer({ checkIn }: { checkIn: string }) {
   const [display, setDisplay] = useState('0:00:00');
@@ -87,7 +88,7 @@ export default function TimeTrackingPage() {
       await clockIn.mutateAsync(targetId);
       toast.success(t('workforce.clockedIn'));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Clock-in fejlede';
+      const msg = getErrorMessage(err) || 'Clock-in fejlede';
       setActionError(msg);
       toast.error(msg);
     }
@@ -105,7 +106,7 @@ export default function TimeTrackingPage() {
       await clockOut.mutateAsync(session.id);
       toast.success(t('workforce.clockedOut'));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Clock-out fejlede';
+      const msg = getErrorMessage(err) || 'Clock-out fejlede';
       setActionError(msg);
       toast.error(msg);
     }
@@ -153,7 +154,7 @@ export default function TimeTrackingPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 text-destructive">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm">Fejl ved indlæsning af session: {sessionError instanceof Error ? sessionError.message : 'Ukendt fejl'}</p>
+              <p className="text-sm">Fejl ved indlæsning af session: {getErrorMessage(sessionError) || 'Ukendt fejl'}</p>
             </div>
           </CardContent>
         </Card>

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { getErrorMessage } from '@/lib/errors';
 
 type Lead = Tables<'leads'>;
 
@@ -238,7 +239,7 @@ export default function ColdCallerPage() {
       setDispositionHistory([]);
       toast({ title: "Session startet", description: "Klar til at ringe!" });
     } catch (e) {
-      toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
     }
   }, [startSession]);
 
@@ -263,7 +264,7 @@ export default function ColdCallerPage() {
       await makeCall.mutateAsync({ to: callTo, from: selectedFromNumber, leadId: leadId || currentLead?.id, leadName: leadName || currentLead?.name });
       setCallStatus("connected");
     } catch (e) {
-      toast({ title: "Opkald fejlede", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Opkald fejlede", description: getErrorMessage(e) || String(e), variant: "destructive" });
       setCallStatus("idle");
     }
   }, [currentLead, selectedFromNumber, makeCall, dialerMode, manualNumber]);
@@ -334,7 +335,7 @@ export default function ColdCallerPage() {
       if (data?.error) throw new Error(data.error);
       setAiScript(data.script);
     } catch (e) {
-      toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
       setAiScript("");
     } finally {
       setAiScriptLoading(false);
@@ -453,7 +454,7 @@ export default function ColdCallerPage() {
             )}
           >
             {startSession.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : isSessionActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isSessionActive ? "Stop session" : "Start session"}
+            {isSessionActive ? "Stop session" : "Start opkald"}
           </Button>
         </div>
       </div>
@@ -625,7 +626,7 @@ export default function ColdCallerPage() {
                         await saveCredentials.mutateAsync({ accountSid: setupSid, authToken: setupToken });
                         setSetupSid(""); setSetupToken("");
                         toast({ title: "Twilio forbundet!", description: "Din konto er nu aktiv. Du er klar til at ringe!" });
-                      } catch (e) { toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" }); }
+                      } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
                     }}
                   >
                     {saveCredentials.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -1115,7 +1116,7 @@ export default function ColdCallerPage() {
                               try {
                                 await releaseNumber.mutateAsync({ numberSid: n.sid });
                                 toast({ title: "Nummer frigivet", description: n.phone_number });
-                              } catch (e) { toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" }); }
+                              } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
                             }}
                           >
                             <PhoneOff className="h-3 w-3" />
@@ -1214,7 +1215,7 @@ export default function ColdCallerPage() {
                             if (!res.numbers?.length) {
                               toast({ title: "Ingen numre fundet", description: res.warning || "Prøv et andet land eller type." });
                             }
-                          } catch (e) { toast({ title: "Søgefejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" }); }
+                          } catch (e) { toast({ title: "Søgefejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
                         }}
                       >
                         {searchNumbers.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Phone className="h-4 w-4" />}
@@ -1240,7 +1241,7 @@ export default function ColdCallerPage() {
                                     await buyNumber.mutateAsync({ phoneNumber: n.phone_number, country: numberSearchCountry });
                                     setSearchResults(prev => prev.filter(x => x.phone_number !== n.phone_number));
                                     toast({ title: "Nummer købt! 🎉", description: `${n.phone_number} er nu klar til brug.` });
-                                  } catch (e) { toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" }); }
+                                  } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
                                   setBuyingNumber(null);
                                 }}
                               >
@@ -1297,7 +1298,7 @@ export default function ColdCallerPage() {
                         await connectDefaultTwilio.mutateAsync();
                         toast({ title: "Twilio forbundet!", description: "Standardforbindelsen er nu aktiv for din virksomhed." });
                       } catch (e) {
-                        toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+                        toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
                       }
                     }}
                   >
@@ -1326,7 +1327,7 @@ export default function ColdCallerPage() {
                         await saveCredentials.mutateAsync({ accountSid: setupSid, authToken: setupToken });
                         setSetupSid(""); setSetupToken("");
                         toast({ title: "Twilio forbundet!", description: "Din konto er nu aktiv." });
-                      } catch (e) { toast({ title: "Fejl", description: e instanceof Error ? e.message : String(e), variant: "destructive" }); }
+                      } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
                     }}
                   >
                     {saveCredentials.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}

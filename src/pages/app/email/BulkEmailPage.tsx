@@ -18,6 +18,7 @@ import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { getErrorMessage } from '@/lib/errors';
 
 type Recipient = { email: string; name: string; firstName: string; lastName: string; verified?: boolean | null; verifyReason?: string };
 type Attachment = { filename: string; content_type: string; data: string; size: number };
@@ -434,7 +435,7 @@ export default function BulkEmailPage() {
         toast.success(locale === 'da' ? 'Alle emails verificeret ✓' : 'All emails verified ✓');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Verification failed');
+      toast.error(getErrorMessage(err) || 'Verification failed');
     } finally {
       setVerifying(false);
     }
@@ -537,7 +538,7 @@ export default function BulkEmailPage() {
 
         try {
           const personalSubject = personalizeText(subject, r);
-          let personalBody = personalizeText(body, r);
+          const personalBody = personalizeText(body, r);
 
           // Build HTML with tracking pixel
           const trackingPixelUrl = `${SUPABASE_URL}/functions/v1/email-track?rid=${recipientId}`;
@@ -573,7 +574,7 @@ export default function BulkEmailPage() {
         } catch (err) {
           await supabase.from('bulk_email_recipients').update({
             status: 'error',
-            error_message: err instanceof Error ? err.message : 'Unknown error',
+            error_message: getErrorMessage(err) || 'Unknown error',
           }).eq('id', recipientId);
           errors++;
         }

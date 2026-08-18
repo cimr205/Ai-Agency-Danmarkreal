@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useGmailAccount, useConnectGmail, useDisconnectGmail, useSyncEmails, useEmails, useSendEmail, useUpdateEmail } from '@/hooks/api/useEmail';
 import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
+import { getErrorMessage } from '@/lib/errors';
 
 type Email = Tables<'emails'>;
 
@@ -142,7 +143,7 @@ export default function EmailsPage() {
       const result = await connectGmail.mutateAsync();
       if (result.auth_url) window.location.href = result.auth_url;
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('pages.email.gmailConnectError'));
+      toast.error(getErrorMessage(err) || t('pages.email.gmailConnectError'));
     }
   }, [connectGmail, t]);
 
@@ -161,7 +162,7 @@ export default function EmailsPage() {
       const result = await syncEmails.mutateAsync(30);
       toast.success(t('pages.email.emailsSynced').replace('{count}', String(result.synced)));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('pages.email.syncError'));
+      toast.error(getErrorMessage(err) || t('pages.email.syncError'));
     }
   }, [syncEmails, t]);
 
@@ -520,7 +521,7 @@ export default function EmailsPage() {
                         setReplyOpen(false);
                         setReplyBody('');
                       } catch (err) {
-                        toast.error(err instanceof Error ? err.message : t('pages.email.replyError'));
+                        toast.error(getErrorMessage(err) || t('pages.email.replyError'));
                       } finally {
                         setSendingReply(false);
                       }

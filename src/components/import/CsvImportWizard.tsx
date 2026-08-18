@@ -11,6 +11,7 @@ import { Upload, FileSpreadsheet, ArrowRight, CheckCircle, AlertTriangle, Sparkl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 interface CsvImportWizardProps {
   open: boolean;
@@ -148,7 +149,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
       setStep('done');
       onSuccess?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('csvImport.importFailed'));
+      toast.error(getErrorMessage(err) || t('csvImport.importFailed'));
       setStep('preview');
     }
   };

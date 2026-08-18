@@ -8,6 +8,7 @@ import { Lock, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { isLocale } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function AdminGatePage() {
   const [accessCode, setAccessCode] = useState('');
@@ -33,7 +34,7 @@ export default function AdminGatePage() {
       sessionStorage.setItem('admin_code', accessCode.trim());
       navigate(`/${locale}/admin/overview`);
     } catch (err) {
-      toast.error((err instanceof Error ? err.message : 'Fejl ved verifikation'));
+      toast.error((getErrorMessage(err) || 'Fejl ved verifikation'));
     } finally {
       setLoading(false);
     }

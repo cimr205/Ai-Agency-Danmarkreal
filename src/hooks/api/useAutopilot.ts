@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface WorkspaceEvent {
   id: string;
@@ -159,7 +160,7 @@ export function useExecuteAction() {
 
       const { error } = await supabase
         .from("autopilot_actions")
-        .update({ status: "executed", executed_at: new Date().toISOString(), result })
+        .update({ status: "executed", executed_at: new Date().toISOString(), result: result as Json })
         .eq("id", action.id);
       if (error) throw error;
       return result;

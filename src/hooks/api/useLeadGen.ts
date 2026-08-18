@@ -120,6 +120,16 @@ type RawLeadGenResult = Partial<LeadGenResult> & Record<string, unknown> & { sou
 function normalizeResult(r: RawLeadGenResult): LeadGenResult {
   return {
     ...r,
+    id: r.id || crypto.randomUUID(),
+    session_id: r.session_id || '',
+    company_name: r.company_name || '',
+    website: r.website || null,
+    phone: r.phone || null,
+    city: r.city || null,
+    active_status: r.active_status || "uncertain",
+    lead_score: r.lead_score || 0,
+    imported: r.imported || false,
+    created_at: r.created_at || new Date().toISOString(),
     email: r.email || r.business_email || null,
     business_email: r.business_email || r.email || null,
     email_status: r.email_status || "missing",

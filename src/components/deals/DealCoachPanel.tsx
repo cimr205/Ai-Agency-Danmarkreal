@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, AlertTriangle, CheckCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 interface DealCoachAnalysis {
   win_probability: number;
@@ -36,7 +37,7 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
       if (data?.error) throw new Error(data.error);
       setAnalysis(data);
     } catch (e) {
-      toast.error((e instanceof Error ? e.message : t('dealCoach.analyzeError')));
+      toast.error((getErrorMessage(e) || t('dealCoach.analyzeError')));
     } finally {
       setLoading(false);
     }

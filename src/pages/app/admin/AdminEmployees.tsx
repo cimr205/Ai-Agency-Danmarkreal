@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Copy, Users, Key, Shield, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function AdminEmployees() {
   const { isAdmin, profile } = useAuth();
@@ -39,7 +40,7 @@ export default function AdminEmployees() {
       setEmail('');
       await loadInvitations();
     } catch (err) {
-      toast.error((err instanceof Error ? err.message : 'Kunne ikke oprette invitation'));
+      toast.error((getErrorMessage(err) || 'Kunne ikke oprette invitation'));
     } finally {
       setCreating(false);
     }

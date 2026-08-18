@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
+import { getErrorMessage } from '@/lib/errors';
 
 const EVENT_LABELS: Record<string, string> = {
   "lead.created": "Lead oprettet",
@@ -79,7 +80,7 @@ export default function WorkflowsPage() {
       // Refetch workflows if AI likely created/modified one
       refetch();
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : "Noget gik galt";
+      const errorMsg = getErrorMessage(e) || "Noget gik galt";
       toast.error(errorMsg);
       setMessages(prev => [...prev, { role: "assistant", content: `❌ ${errorMsg}` }]);
     } finally {

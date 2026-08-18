@@ -26,6 +26,7 @@ import { useI18n, type Locale } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTemplate, type InvoicePdfData } from '@/lib/invoicePdf';
 import type { Tables } from '@/integrations/supabase/types';
+import { getErrorMessage } from '@/lib/errors';
 
 type Lead = Tables<'leads'>;
 
@@ -716,7 +717,7 @@ export default function InvoicesPage() {
                                 await deleteInvoice.mutateAsync(invoice.id);
                                 toast.success(t('common.deleted') || 'Slettet');
                               } catch (err) {
-                                toast.error(err instanceof Error ? err.message : t('common.error'));
+                                toast.error(getErrorMessage(err) || t('common.error'));
                               }
                             }}
                           >
@@ -971,7 +972,7 @@ export default function InvoicesPage() {
                       const editTotal = editSubtotal + editVatAmount;
 
                       const { error } = await supabase.from('invoices').update({
-                        lines: editLines,
+                        lines: editLines as unknown as Tables<'invoices'>['lines'],
                         subtotal: editSubtotal,
                         vat_amount: editVatAmount,
                         amount: editTotal,
@@ -984,7 +985,7 @@ export default function InvoicesPage() {
                       setSelectedInvoice(null);
                       window.location.reload();
                     } catch (err) {
-                      toast.error(err instanceof Error ? err.message : t('common.error'));
+                      toast.error(getErrorMessage(err) || t('common.error'));
                     } finally {
                       setSavingEdit(false);
                     }

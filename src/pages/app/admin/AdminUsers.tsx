@@ -12,6 +12,7 @@ import type { Enums } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Shield, Users, Loader2, Crown, UserCog, User, Eye, Mail, Copy, Clock, XCircle, CheckCircle2, Send } from "lucide-react";
 import { ROLE_LABELS, ROLE_HIERARCHY, canManageRole } from "@/lib/auth";
+import { getErrorMessage } from '@/lib/errors';
 
 interface UserWithRole {
   user_id: string;
@@ -121,7 +122,7 @@ export default function AdminUsers() {
       setInviteEmail("");
       fetchInvitations();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Kunne ikke oprette invitation");
+      toast.error(getErrorMessage(error) || "Kunne ikke oprette invitation");
     } finally {
       setInviting(false);
     }
@@ -134,7 +135,7 @@ export default function AdminUsers() {
       toast.success("Invitation tilbagekaldt");
       fetchInvitations();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Kunne ikke tilbagekalde invitation");
+      toast.error(getErrorMessage(error) || "Kunne ikke tilbagekalde invitation");
     }
   };
 

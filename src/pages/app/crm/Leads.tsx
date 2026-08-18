@@ -47,7 +47,7 @@ export default function LeadsPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [editNotes, setEditNotes] = useState('');
-  const [editStatus, setEditStatus] = useState('');
+  const [editStatus, setEditStatus] = useState<Enums<'lead_status'>>('new');
 
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout>();
   const handleSearchChange = useCallback((value: string) => {
@@ -104,7 +104,7 @@ export default function LeadsPage() {
     } catch { toast.error(t('pages.leads.created_error')); }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: Enums<'lead_status'>) => {
     try {
       await updateLead.mutateAsync({ id, data: { status } });
       toast.success(t('common.saved'));
@@ -445,7 +445,7 @@ export default function LeadsPage() {
                 {/* Status */}
                 <div className="space-y-2">
                   <Label>{t('pages.leads.status')}</Label>
-                  <Select value={editStatus} onValueChange={(v) => { setEditStatus(v); handleStatusChange(selectedLead.id, v); }}>
+                  <Select value={editStatus} onValueChange={(v: Enums<'lead_status'>) => { setEditStatus(v); handleStatusChange(selectedLead.id, v); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}

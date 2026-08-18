@@ -7,7 +7,7 @@ export interface TwilioPhoneNumber {
   sid: string;
   phone_number: string;
   friendly_name?: string;
-  capabilities?: unknown;
+  capabilities?: { voice?: boolean; sms?: boolean; mms?: boolean };
 }
 
 export interface TwilioAccountInfo {
@@ -135,7 +135,7 @@ export function useColdCallerUsage() {
 export function useStartSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => callColdCaller("start-session"),
+    mutationFn: () => callColdCaller<Tables<'cold_caller_usage'>>("start-session"),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cold-caller-usage"] }),
   });
 }

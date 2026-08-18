@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function ProfilePage() {
   const { t, locale } = useI18n();
@@ -51,7 +52,7 @@ export default function ProfilePage() {
       await refreshProfile();
       toast.success(t('common.saved'));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('common.error'));
+      toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -74,7 +75,7 @@ export default function ProfilePage() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('common.error'));
+      toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
       setChangingPassword(false);
     }
@@ -119,7 +120,7 @@ export default function ProfilePage() {
 
       toast.success(isDa ? 'Data eksporteret' : 'Data exported');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('common.error'));
+      toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
       setExporting(false);
     }
@@ -147,7 +148,7 @@ export default function ProfilePage() {
         ? 'Anmodning om datasletning modtaget. Vi behandler den inden for 30 dage.'
         : 'Data deletion request received. We will process it within 30 days.');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('common.error'));
+      toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
       setRequestingDeletion(false);
     }
@@ -155,11 +156,11 @@ export default function ProfilePage() {
 
   const roleLabels: Record<string, string> = {
     system_admin: 'System Admin',
-    company_admin: 'Company Admin',
-    owner: 'Owner',
-    manager: 'Manager',
-    employee: 'Employee',
-    readonly: 'Read Only',
+    company_admin: 'Virksomhedsadmin',
+    owner: 'Ejer',
+    manager: 'Leder',
+    employee: 'Medarbejder',
+    readonly: 'Kun læsning',
     partner: 'Partner',
   };
 

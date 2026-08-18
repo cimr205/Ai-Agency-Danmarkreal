@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sparkles, Copy, Send, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 interface AIEmailWriterProps {
   open: boolean;
@@ -36,7 +37,7 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
       if (data?.error) throw new Error(data.error);
       setResult(data);
     } catch (e) {
-      toast.error((e instanceof Error ? e.message : t('aiEmail.generateError')));
+      toast.error((getErrorMessage(e) || t('aiEmail.generateError')));
     } finally {
       setLoading(false);
     }

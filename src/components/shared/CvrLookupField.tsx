@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Search, Loader2, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/lib/errors';
 
 interface CvrLookupFieldProps {
   onResult: (result: { name: string; address: string; cvr: string }) => void;
@@ -53,7 +54,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       onResult({ name: company.name || '', address, cvr: company.cvr || clean });
       toast.success(`Fandt: ${company.name}`);
     } catch (e) {
-      toast.error((e instanceof Error ? e.message : 'Kunne ikke slå CVR op'));
+      toast.error((getErrorMessage(e) || 'Kunne ikke slå CVR op'));
     } finally {
       setLoading(false);
     }

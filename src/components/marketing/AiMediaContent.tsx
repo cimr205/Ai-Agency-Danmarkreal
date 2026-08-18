@@ -16,6 +16,7 @@ import {
   XCircle, Eye, Wand2, Upload, Paintbrush, X,
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function AiMediaContent() {
   const { t } = useI18n();
@@ -72,7 +73,7 @@ export default function AiMediaContent() {
       setReferenceFileName(null);
       setActiveTab('gallery');
     } catch (err) {
-      toast.error((err instanceof Error ? err.message : t('common.error')));
+      toast.error((getErrorMessage(err) || t('common.error')));
     }
   };
 

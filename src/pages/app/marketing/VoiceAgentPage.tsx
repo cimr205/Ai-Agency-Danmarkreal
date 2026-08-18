@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { getErrorMessage } from '@/lib/errors';
 
 interface OpenAIAccount { id: string; status: string; last_tested_at: string | null; last_error: string | null; }
 interface TwilioAccount { account_sid: string; }
@@ -216,7 +217,7 @@ export default function VoiceAgentPage() {
       setOpenai({ id: 'pending', status: 'connected', last_tested_at: new Date().toISOString(), last_error: null });
       await loadAll();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to save key');
+      toast.error(getErrorMessage(e) || 'Failed to save key');
     } finally {
       setSavingKey(false);
     }
@@ -229,7 +230,7 @@ export default function VoiceAgentPage() {
       toast.success('OpenAI disconnected');
       setOpenai(null);
       loadAll();
-    } catch (e) { toast.error(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { toast.error(getErrorMessage(e) || String(e)); }
   };
 
   const createAgent = async () => {
@@ -262,7 +263,7 @@ export default function VoiceAgentPage() {
       setSelectedCallId(data.callId);
       loadAll();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Call failed');
+      toast.error(getErrorMessage(e) || 'Call failed');
     } finally {
       setCalling(false);
     }
@@ -286,36 +287,36 @@ export default function VoiceAgentPage() {
             {canCall ? (
               <Badge variant="default" className="gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Twilio connected · {twilioPhoneNumbers.length} number{twilioPhoneNumbers.length === 1 ? '' : 's'} ready
+                {t('voiceAgent.twilioConnected')} · {twilioPhoneNumbers.length} {twilioPhoneNumbers.length === 1 ? t('voiceAgent.numberSingular') : t('voiceAgent.numberPlural')} {t('voiceAgent.readySuffix')}
               </Badge>
             ) : isReady ? (
               <Badge variant="outline" className="gap-1.5 border-amber-500/40 text-amber-300 bg-amber-500/10">
                 <AlertCircle className="h-3.5 w-3.5" />
-                Twilio connected — buy a number in Power Dialer to start calls
+                {t('voiceAgent.twilioConnectedNoNumber')}
               </Badge>
             ) : (
               <Badge variant="outline" className="gap-1.5 border-destructive/40 text-destructive bg-destructive/10">
                 <XCircle className="h-3.5 w-3.5" />
-                Twilio not connected
+                {t('voiceAgent.twilioNotConnected')}
               </Badge>
             )}
             {!isReady && (
               <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
                 <Link to={`/${locale}/app/marketing/cold-caller`}>
-                  Connect in Power Dialer <ExternalLink className="h-3 w-3" />
+                  {t('voiceAgent.connectInPowerDialer')} <ExternalLink className="h-3 w-3" />
                 </Link>
               </Button>
             )}
             {isReady && !hasTwilioNumber && (
               <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
                 <Link to={`/${locale}/app/marketing/cold-caller`}>
-                  Buy a number <ExternalLink className="h-3 w-3" />
+                  {t('voiceAgent.buyNumber')} <ExternalLink className="h-3 w-3" />
                 </Link>
               </Button>
             )}
             {lastStatusChange && (
               <span className="text-xs text-muted-foreground">
-                Last change {formatDistanceToNow(new Date(lastStatusChange.at), { addSuffix: true })}
+                {t('voiceAgent.lastChange')} {formatDistanceToNow(new Date(lastStatusChange.at), { addSuffix: true })}
               </span>
             )}
           </div>
@@ -344,15 +345,15 @@ export default function VoiceAgentPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2"><Phone className="h-5 w-5" /> Twilio</CardTitle>
-                    {twilio ? <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" />Connected</Badge>
-                            : <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Not connected</Badge>}
+                    {twilio ? <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" />{t('voiceAgent.connected')}</Badge>
+                            : <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />{t('voiceAgent.notConnected')}</Badge>}
                   </div>
-                  <CardDescription>Phone calls are placed using your tenant's Twilio account.</CardDescription>
+                  <CardDescription>{t('voiceAgent.twilioCardDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {twilio ? (
                     <div className="text-sm space-y-2">
-                      <div className="text-muted-foreground">Account SID</div>
+                      <div className="text-muted-foreground">{t('voiceAgent.accountSid')}</div>
                       <code className="text-xs">{twilio.account_sid.slice(0, 12)}…{twilio.account_sid.slice(-4)}</code>
                       {!hasTwilioNumber && (
                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
@@ -363,7 +364,7 @@ export default function VoiceAgentPage() {
                   ) : (
                     <Button asChild variant="outline" className="w-full gap-2">
                       <Link to={`/${locale}/app/marketing/cold-caller`}>
-                        Connect Twilio in Power Dialer <ExternalLink className="h-4 w-4" />
+                        {t('voiceAgent.connectTwilioInPowerDialer')} <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>
                   )}
@@ -374,12 +375,12 @@ export default function VoiceAgentPage() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> OpenAI <span className="text-xs font-normal text-muted-foreground">(optional)</span></CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> OpenAI <span className="text-xs font-normal text-muted-foreground">({t('voiceAgent.optional')})</span></CardTitle>
                     {openai?.status === 'connected'
-                      ? <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" />Your key</Badge>
-                      : <Badge variant="secondary" className="gap-1">Platform AI</Badge>}
+                      ? <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" />{t('voiceAgent.yourKey')}</Badge>
+                      : <Badge variant="secondary" className="gap-1">{t('voiceAgent.platformAi')}</Badge>}
                   </div>
-                  <CardDescription>By default we use the built-in AI gateway. Add your own OpenAI key to use GPT-4o + Whisper instead.</CardDescription>
+                  <CardDescription>{t('voiceAgent.openaiCardDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {openai?.last_error && (
@@ -390,12 +391,12 @@ export default function VoiceAgentPage() {
                   )}
                   {openai ? (
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setOpenaiDialog(true)}>Replace key</Button>
-                      <Button variant="ghost" size="sm" onClick={disconnectOpenAI}>Disconnect</Button>
+                      <Button variant="outline" size="sm" onClick={() => setOpenaiDialog(true)}>{t('voiceAgent.replaceKey')}</Button>
+                      <Button variant="ghost" size="sm" onClick={disconnectOpenAI}>{t('voiceAgent.disconnect')}</Button>
                     </div>
                   ) : (
                     <Button onClick={() => setOpenaiDialog(true)} className="w-full gap-2">
-                      <Plus className="h-4 w-4" /> Connect OpenAI
+                      <Plus className="h-4 w-4" /> {t('voiceAgent.connectOpenai')}
                     </Button>
                   )}
                 </CardContent>
@@ -417,22 +418,22 @@ export default function VoiceAgentPage() {
         {/* AGENTS */}
         <TabsContent value="agents" className="space-y-4">
           <div className="flex justify-end">
-            <Button onClick={() => setAgentDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> New Agent</Button>
+            <Button onClick={() => setAgentDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> {t('voiceAgent.newAgent')}</Button>
           </div>
           {agents.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">No agents yet. Create your first AI voice agent.</CardContent></Card>
+            <Card><CardContent className="py-12 text-center text-muted-foreground">{t('voiceAgent.noAgentsYet')}</CardContent></Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {agents.map(a => (
                 <Card key={a.id}>
                   <CardHeader>
                     <CardTitle className="text-base">{a.name}</CardTitle>
-                    <CardDescription>Voice: {a.voice} · {a.language.toUpperCase()}</CardDescription>
+                    <CardDescription>{t('voiceAgent.voiceLabel')}: {a.voice} · {a.language.toUpperCase()}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <p className="text-xs text-muted-foreground line-clamp-3">{a.greeting}</p>
                     <Button size="sm" variant="outline" className="w-full gap-2" onClick={() => { setCallAgentId(a.id); setCallDialog(true); }}>
-                      <Play className="h-3 w-3" /> Test call
+                      <Play className="h-3 w-3" /> {t('voiceAgent.testCall')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -445,9 +446,9 @@ export default function VoiceAgentPage() {
         <TabsContent value="live" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="md:col-span-1">
-              <CardHeader><CardTitle className="text-base">Recent calls</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{t('voiceAgent.recentCalls')}</CardTitle></CardHeader>
               <CardContent className="space-y-1 max-h-96 overflow-y-auto">
-                {calls.length === 0 ? <p className="text-sm text-muted-foreground">No calls yet.</p> : calls.slice(0, 20).map(c => (
+                {calls.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.noCallsYet')}</p> : calls.slice(0, 20).map(c => (
                   <button key={c.id} onClick={() => setSelectedCallId(c.id)}
                     className={`w-full text-left p-2 rounded text-sm hover:bg-muted ${selectedCallId === c.id ? 'bg-muted' : ''}`}>
                     <div className="flex items-center justify-between">
@@ -460,22 +461,22 @@ export default function VoiceAgentPage() {
               </CardContent>
             </Card>
             <Card className="md:col-span-2">
-              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Mic className="h-4 w-4" /> Call timeline</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Mic className="h-4 w-4" /> {t('voiceAgent.callTimeline')}</CardTitle></CardHeader>
               <CardContent>
-                {!selectedCallId ? <p className="text-sm text-muted-foreground">Select a call to view its live timeline and recording.</p> : (
+                {!selectedCallId ? <p className="text-sm text-muted-foreground">{t('voiceAgent.selectCallPrompt')}</p> : (
                   <div className="space-y-3">
                     {(() => { const c = calls.find(x => x.id === selectedCallId); return c?.recording_url ? (
                       <div className="rounded-lg border p-3 bg-muted/30">
-                        <div className="text-xs font-medium mb-2">Recording</div>
+                        <div className="text-xs font-medium mb-2">{t('voiceAgent.recording')}</div>
                         <audio controls className="w-full" src={c.recording_url} />
                       </div>
                     ) : null; })()}
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {events.length === 0 ? <p className="text-sm text-muted-foreground">Waiting for events…</p> : events.map(e => (
+                      {events.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.waitingForEvents')}</p> : events.map(e => (
                         <div key={e.id} className="flex gap-3 text-sm border-l-2 border-border pl-3 py-1">
                           <div className="text-xs text-muted-foreground min-w-20">{new Date(e.created_at).toLocaleTimeString()}</div>
                           <div className="flex-1">
-                            <Badge variant="outline" className="text-xs mr-2">{e.speaker || 'system'}</Badge>
+                            <Badge variant="outline" className="text-xs mr-2">{e.speaker || t('voiceAgent.systemLabel')}</Badge>
                             <span className="text-muted-foreground text-xs mr-2">{e.event_type}</span>
                             {e.content && <div className="mt-1">{e.content}</div>}
                           </div>
@@ -493,7 +494,7 @@ export default function VoiceAgentPage() {
         <TabsContent value="history">
           <Card>
             <CardContent className="pt-6">
-              {calls.length === 0 ? <p className="text-sm text-muted-foreground">No calls yet.</p> : (
+              {calls.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.noCallsYet')}</p> : (
                 <div className="space-y-2">
                   {calls.map(c => (
                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -516,19 +517,19 @@ export default function VoiceAgentPage() {
       <Dialog open={openaiDialog} onOpenChange={setOpenaiDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Connect OpenAI</DialogTitle>
-            <DialogDescription>Paste your OpenAI API key (starts with sk-). Stored encrypted, only used by your company.</DialogDescription>
+            <DialogTitle>{t('voiceAgent.connectOpenai')}</DialogTitle>
+            <DialogDescription>{t('voiceAgent.connectOpenaiDialogDesc')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Label>API Key</Label>
+            <Label>{t('voiceAgent.apiKeyLabel')}</Label>
             <Input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-..." />
             <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-xs text-primary inline-flex items-center gap-1">
-              Get a key from OpenAI <ExternalLink className="h-3 w-3" />
+              {t('voiceAgent.getKeyFromOpenai')} <ExternalLink className="h-3 w-3" />
             </a>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenaiDialog(false)}>Cancel</Button>
-            <Button onClick={saveOpenAIKey} disabled={savingKey || !apiKey.trim()}>{savingKey ? 'Validating…' : 'Connect'}</Button>
+            <Button variant="outline" onClick={() => setOpenaiDialog(false)}>{t('voiceAgent.cancel')}</Button>
+            <Button onClick={saveOpenAIKey} disabled={savingKey || !apiKey.trim()}>{savingKey ? t('voiceAgent.validating') : t('voiceAgent.connectCta')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -536,33 +537,33 @@ export default function VoiceAgentPage() {
       {/* New Agent Dialog */}
       <Dialog open={agentDialog} onOpenChange={setAgentDialog}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New Voice Agent</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('voiceAgent.newVoiceAgentTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Name</Label><Input value={agentName} onChange={e => setAgentName(e.target.value)} placeholder="Sales Agent NL" /></div>
+            <div><Label>{t('voiceAgent.nameLabel')}</Label><Input value={agentName} onChange={e => setAgentName(e.target.value)} placeholder="Sales Agent NL" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Voice</Label>
+              <div><Label>{t('voiceAgent.voiceLabel')}</Label>
                 <Select value={agentVoice} onValueChange={setAgentVoice}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{VOICES.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Language</Label>
+              <div><Label>{t('voiceAgent.languageLabel')}</Label>
                 <Select value={agentLanguage} onValueChange={setAgentLanguage}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.v} value={l.v}>{l.l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label>Greeting (first thing the AI says)</Label>
+            <div><Label>{t('voiceAgent.greetingLabel')}</Label>
               <Textarea value={agentGreeting} onChange={e => setAgentGreeting(e.target.value)} rows={2} />
             </div>
-            <div><Label>System prompt</Label>
+            <div><Label>{t('voiceAgent.systemPromptLabel')}</Label>
               <Textarea value={agentPrompt} onChange={e => setAgentPrompt(e.target.value)} rows={4} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAgentDialog(false)}>Cancel</Button>
-            <Button onClick={createAgent} disabled={!agentName.trim()}>Create</Button>
+            <Button variant="outline" onClick={() => setAgentDialog(false)}>{t('voiceAgent.cancel')}</Button>
+            <Button onClick={createAgent} disabled={!agentName.trim()}>{t('voiceAgent.createCta')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -570,21 +571,21 @@ export default function VoiceAgentPage() {
       {/* Call Dialog */}
       <Dialog open={callDialog} onOpenChange={setCallDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Start AI Call</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('voiceAgent.startAiCallTitle')}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Agent</Label>
+            <div><Label>{t('voiceAgent.agentLabel')}</Label>
               <Select value={callAgentId} onValueChange={setCallAgentId}>
-                <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('voiceAgent.selectAgent')} /></SelectTrigger>
                 <SelectContent>{agents.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Phone number (E.164, e.g. +4512345678)</Label>
+            <div><Label>{t('voiceAgent.phoneNumberLabel')}</Label>
               <Input value={callTo} onChange={e => setCallTo(e.target.value)} placeholder="+45..." />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCallDialog(false)}>Cancel</Button>
-            <Button onClick={startCall} disabled={calling || !callAgentId || !callTo}>{calling ? 'Calling…' : 'Call'}</Button>
+            <Button variant="outline" onClick={() => setCallDialog(false)}>{t('voiceAgent.cancel')}</Button>
+            <Button onClick={startCall} disabled={calling || !callAgentId || !callTo}>{calling ? t('voiceAgent.callingLabel') : t('voiceAgent.callCta')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

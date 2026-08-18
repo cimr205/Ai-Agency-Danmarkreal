@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useWorkflows } from "@/hooks/api/useWorkflows";
 import { supabase } from "@/integrations/supabase/client";
+import { getErrorMessage } from '@/lib/errors';
 
 type StepKind = "trigger" | "filter" | "ai" | "action";
 
@@ -62,7 +63,7 @@ export default function WorkflowStudioPage() {
       setTrace((data as { trace?: Trace[] } | null)?.trace ?? []);
       toast.success(mode === "test" ? "Test-kørsel fuldført" : "Workflow kørt live");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Kørsel fejlede");
+      toast.error(getErrorMessage(e) || "Kørsel fejlede");
     } finally {
       setRunning(false);
     }

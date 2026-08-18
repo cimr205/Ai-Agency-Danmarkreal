@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { getErrorMessage } from '@/lib/errors';
 
 const FEATURES = [
   'Ubegrænsede leads & deals',
@@ -27,7 +28,7 @@ export default function SubscriptionPage() {
     try {
       await startCheckout();
     } catch (e) {
-      toast.error((e instanceof Error ? e.message : 'Kunne ikke starte checkout'));
+      toast.error((getErrorMessage(e) || 'Kunne ikke starte checkout'));
     }
   };
 
@@ -35,7 +36,7 @@ export default function SubscriptionPage() {
     try {
       await openPortal();
     } catch (e) {
-      toast.error((e instanceof Error ? e.message : 'Kunne ikke åbne portal'));
+      toast.error((getErrorMessage(e) || 'Kunne ikke åbne portal'));
     }
   };
 

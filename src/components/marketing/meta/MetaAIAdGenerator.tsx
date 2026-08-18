@@ -9,6 +9,7 @@ import { Sparkles, Copy, Check, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
+import { getErrorMessage } from '@/lib/errors';
 
 type AdOutput = {
   headlines: string[];
@@ -55,7 +56,7 @@ export function MetaAIAdGenerator() {
 
       setOutput(data as AdOutput);
     } catch (e) {
-      const msg = (e instanceof Error ? e.message : (isDa ? "Generering fejlede" : "Generation failed"));
+      const msg = (getErrorMessage(e) || (isDa ? "Generering fejlede" : "Generation failed"));
       setError(msg);
       toast({ title: isDa ? "AI-genereringsfejl" : "AI Generation Error", description: msg, variant: "destructive" });
     } finally {

@@ -7,6 +7,7 @@ import { Bot, Send, User, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
+import { getErrorMessage } from '@/lib/errors';
 
 export function MetaQuickAnalyst() {
   const { locale } = useI18n();
@@ -48,7 +49,7 @@ export function MetaQuickAnalyst() {
 
       setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
     } catch (e) {
-      const msg = (e instanceof Error ? e.message : (isDa ? "Kunne ikke få svar" : "Failed to get answer"));
+      const msg = (getErrorMessage(e) || (isDa ? "Kunne ikke få svar" : "Failed to get answer"));
       setMessages((prev) => [...prev, { role: "assistant", text: `${isDa ? 'Fejl' : 'Error'}: ${msg}` }]);
       toast({ title: isDa ? "AI-analytikerfejl" : "AI Analyst Error", description: msg, variant: "destructive" });
     } finally {

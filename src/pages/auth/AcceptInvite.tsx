@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from '@/lib/errors';
 
 type InvitationPreview = {
   email: string;
@@ -85,7 +86,7 @@ export default function AcceptInvite() {
       }, 2000);
     } catch (error) {
       setStatus("error");
-      setErrorMsg((error instanceof Error ? error.message : "Kunne ikke acceptere invitationen."));
+      setErrorMsg((getErrorMessage(error) || "Kunne ikke acceptere invitationen."));
     }
   };
 

@@ -14,7 +14,7 @@ interface ExtendedAuth {
   isSystemAdmin: boolean;
   roles: { role: string }[];
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, fullName: string) => Promise<void>;
+  signup: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;

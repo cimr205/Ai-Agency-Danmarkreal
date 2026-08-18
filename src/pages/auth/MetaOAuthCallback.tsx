@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { getErrorMessage } from '@/lib/errors';
 
 /**
  * Handles the Meta OAuth redirect at /auth/meta/callback
@@ -50,7 +51,7 @@ export default function MetaOAuthCallbackPage() {
       // Redirect to Meta Ads page
       navigate("/en/app/marketing/meta-ads", { replace: true });
     } catch (err) {
-      setError((err instanceof Error ? err.message : "Ukendt fejl"));
+      setError((getErrorMessage(err) || "Ukendt fejl"));
     }
   };
 

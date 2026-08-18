@@ -16,6 +16,7 @@ import {
   Loader2, Download, Trash2, Clock, CheckCircle2,
   XCircle, Eye, Wand2,
 } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function AiMediaPage() {
   const [prompt, setPrompt] = useState('');
@@ -45,7 +46,7 @@ export default function AiMediaPage() {
       setPrompt('');
       setActiveTab('gallery');
     } catch (err) {
-      toast.error((err instanceof Error ? err.message : 'Generering fejlede'));
+      toast.error((getErrorMessage(err) || 'Generering fejlede'));
     }
   };
 
