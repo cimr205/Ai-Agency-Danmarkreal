@@ -889,7 +889,7 @@ async function aiQualifyLeads(
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "llama3.2:3b",
+            model: "google/gemini-2.5-flash-lite",
             messages: [
               {
                 role: "system",
@@ -1187,7 +1187,7 @@ serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           {
             role: "system",

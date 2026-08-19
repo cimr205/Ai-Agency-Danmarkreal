@@ -50,11 +50,14 @@ export function useCreateEmployee() {
       // link the new employee record to their account so they show up as
       // themselves everywhere (shift assignment, "who am I" lookups, etc.)
       // instead of becoming an orphaned HR-only record.
+      // ilike's pattern arg treats % and _ as wildcards — escape them so an
+      // email like "john_doe@co.dk" can't match a different user's account.
+      const escapedEmail = input.email.replace(/[%_\\]/g, (c) => `\\${c}`);
       const { data: matchingProfile } = await supabase
         .from('profiles')
         .select('user_id')
         .eq('company_id', profile.company_id)
-        .ilike('email', input.email)
+        .ilike('email', escapedEmail)
         .maybeSingle();
 
       const { data, error } = await supabase

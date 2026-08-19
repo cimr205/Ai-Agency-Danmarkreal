@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "llama3.2:3b",
+            model: "google/gemini-2.5-flash",
             messages: [
               { role: "system", content: "Du er et workflow-AI-trin. Svar kort og konkret." },
               { role: "user", content: `${ai_prompt}\n\nPayload: ${JSON.stringify(payload)}` },

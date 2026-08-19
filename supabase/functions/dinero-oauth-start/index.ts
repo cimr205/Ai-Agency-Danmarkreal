@@ -1,10 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "../_shared/cors.ts";
+import { requireCompanyAuth } from "../_shared/auth.ts";
 
 const DINERO_AUTHORIZE_URL = "https://connect.visma.com/connect/authorize";
 const DINERO_SCOPES = "dineropublicapi:read dineropublicapi:write offline_access";
@@ -23,34 +18,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing auth" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: profile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
-    const company_id = profile?.company_id;
-    if (!company_id) {
-      return new Response(JSON.stringify({ error: "No company associated" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const ctx = await requireCompanyAuth(req);
+    if (ctx instanceof Response) return ctx;
+    const { supabase, user, companyId: company_id } = ctx;
 
     const clientId = Deno.env.get("DINERO_CLIENT_ID");
     if (!clientId) throw new Error("DINERO_CLIENT_ID not configured");

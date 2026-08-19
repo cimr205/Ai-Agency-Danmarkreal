@@ -268,11 +268,21 @@ export function useApplyToShift() {
       if (error) throw error;
 
       if (user?.company_id) {
-        // Notify managers/admins in the company.
-        const { data: managers } = await supabase
-          .from('user_roles')
+        // Notify managers/admins in the company. user_roles has no company_id
+        // column, so scope through profiles first — otherwise this would
+        // notify managers/admins of every company in the database.
+        const { data: companyProfiles } = await supabase
+          .from('profiles')
           .select('user_id')
-          .in('role', ['company_admin', 'owner', 'system_admin', 'manager']);
+          .eq('company_id', user.company_id);
+        const companyUserIds = (companyProfiles ?? []).map(p => p.user_id);
+        const { data: managers } = companyUserIds.length
+          ? await supabase
+              .from('user_roles')
+              .select('user_id')
+              .in('user_id', companyUserIds)
+              .in('role', ['company_admin', 'owner', 'manager'])
+          : { data: [] as { user_id: string }[] };
         await Promise.all(
           (managers ?? []).map(m => notify(
             user.company_id!, m.user_id, 'application_pending',

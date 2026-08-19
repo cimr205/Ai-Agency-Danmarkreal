@@ -329,7 +329,7 @@ async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: "google/gemini-3-flash-preview",
         messages: [
           {
             role: "system",

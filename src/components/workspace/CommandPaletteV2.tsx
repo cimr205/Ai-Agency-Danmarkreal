@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/command";
 import { DESTINATIONS, PINNED, MODES } from "./modes";
 import { Building2, Briefcase, FileText, Target, ArrowRight } from "lucide-react";
+import { useMyBlockedModules, pathToModule } from "@/hooks/api/useModuleAccess";
 
 interface Props {
   open: boolean;
@@ -20,6 +21,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
   const base = `/${locale}/app`;
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const blockedModules = useMyBlockedModules();
 
   // Global keyboard
   useEffect(() => {
@@ -60,9 +62,14 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
     return [...DESTINATIONS, ...PINNED].filter(d => {
       if (seen.has(d.path)) return false;
       seen.add(d.path);
+      // Keep the palette consistent with the sidebar and route guard —
+      // otherwise a restricted employee can still find and briefly
+      // navigate into a blocked module via search.
+      const module = pathToModule(d.path);
+      if (module && blockedModules.has(module)) return false;
       return true;
     });
-  }, []);
+  }, [blockedModules]);
 
   // cmdk's default fuzzy scorer matches on loose subsequences (e.g. "test"
   // matches "Tidsregistr." because t-e-s-t appears in order), which produces

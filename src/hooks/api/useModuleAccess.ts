@@ -24,8 +24,15 @@ export function pathToModule(path: string): ModuleKey | null {
   return null;
 }
 
-/** The current user's own blocked modules. Always empty for admins/owners. */
-export function useMyBlockedModules() {
+/**
+ * The current user's own blocked modules. Always empty for admins/owners.
+ *
+ * While the restrictions query is still loading for a restricted user, this
+ * fails closed — every module is reported blocked — rather than defaulting
+ * to an empty set, which would open a brief unrestricted window on every
+ * page load/refresh before the real restrictions arrive.
+ */
+export function useMyBlockedModules(): Set<string> {
   const { user, roles } = useAuth();
   const isUnrestricted = roles.some(r => ['system_admin', 'company_admin', 'owner'].includes(r.role));
 
@@ -42,7 +49,11 @@ export function useMyBlockedModules() {
     },
   });
 
-  return isUnrestricted ? new Set<string>() : (query.data ?? new Set<string>());
+  if (isUnrestricted) return new Set<string>();
+  if (query.data) return query.data;
+  // Loading (or not yet enabled because we don't have a user id yet): fail
+  // closed so gated UI stays hidden/blocked until we know for sure.
+  return new Set<string>(MODULE_KEYS);
 }
 
 /** A specific employee's blocked modules — for the admin UI. */

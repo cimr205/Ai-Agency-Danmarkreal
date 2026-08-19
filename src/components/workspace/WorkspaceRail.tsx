@@ -25,6 +25,7 @@ interface NavItem {
   label: string;
   path: string;
   icon: LucideIcon;
+  dataTour?: string;
 }
 
 interface NavGroup {
@@ -40,7 +41,7 @@ function useNavGroups(): NavGroup[] {
       label: null,
       module: null,
       items: [
-        { label: t("nav.dashboard") || "Dashboard", path: "dashboard", icon: LayoutDashboard },
+        { label: t("nav.dashboard") || "Dashboard", path: "dashboard", icon: LayoutDashboard, dataTour: "dashboard" },
         { label: "Klienter", path: "clients", icon: Building2 },
         { label: t("nav.calendar") || "Kalender", path: "work/calendar", icon: Calendar },
         { label: t("nav.tasks") || "Opgaver", path: "work/tasks", icon: CheckSquare },
@@ -51,8 +52,8 @@ function useNavGroups(): NavGroup[] {
       label: t("nav.crm") || "CRM",
       module: "crm",
       items: [
-        { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target },
-        { label: t("nav.pipeline") || "Pipeline", path: "crm/pipeline", icon: TrendingUp },
+        { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target, dataTour: "leads" },
+        { label: t("nav.pipeline") || "Pipeline", path: "crm/pipeline", icon: TrendingUp, dataTour: "pipeline" },
         { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase },
         { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Sparkles },
       ],
@@ -97,9 +98,9 @@ function useNavGroups(): NavGroup[] {
         { label: "Forbundne apps", path: "workspace/connected-apps", icon: Plug },
         { label: "Intelligens", path: "workspace/intelligence", icon: Brain },
         { label: "Autopilot", path: "autopilot", icon: Zap },
-        { label: t("nav.clowdbot") || "Assistent", path: "pa", icon: Bot },
+        { label: t("nav.clowdbot") || "Assistent", path: "pa", icon: Bot, dataTour: "pa" },
         { label: "Hjælp", path: "help", icon: BookOpen },
-        { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings },
+        { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings, dataTour: "settings" },
       ],
     },
   ];
@@ -204,6 +205,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                   <RouterNavLink
                     to={`${base}/${item.path}`}
                     onClick={onNavigate}
+                    data-tour={item.dataTour}
                     end
                     className={({ isActive }) => cn(
                       "flex items-center gap-3 px-3 py-2 rounded-xl text-[13.5px]",
