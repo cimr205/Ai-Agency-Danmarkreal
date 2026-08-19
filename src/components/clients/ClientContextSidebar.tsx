@@ -1,6 +1,11 @@
 import type { Signal } from "@/lib/clientIntelligence";
 import type { Tables } from "@/integrations/supabase/types";
 
+const STAGE_LABELS: Record<string, string> = {
+  discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
+  negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
+};
+
 const TONE = {
   risk: "border-destructive/50 text-destructive/90",
   opportunity: "border-emerald-400/40 text-emerald-300/90",
@@ -48,8 +53,8 @@ export function ClientContextSidebar({
             {activeDeals.map(d => (
               <li key={d.id} className="text-[12.5px] text-foreground/85 flex items-baseline justify-between gap-3">
                 <span className="truncate">{d.title}</span>
-                <span className="text-[10.5px] text-muted-foreground/60 shrink-0 lowercase">
-                  {d.stage}
+                <span className="text-[10.5px] text-muted-foreground/60 shrink-0">
+                  {STAGE_LABELS[d.stage] || d.stage}
                 </span>
               </li>
             ))}

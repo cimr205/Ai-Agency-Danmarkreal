@@ -1,36 +1,115 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { isLocale } from "@/lib/i18n";
-import { useCustomers } from "@/hooks/api/useFinance";
+import { useI18n } from "@/lib/i18n";
+import { useCustomers, useCreateCustomer } from "@/hooks/api/useFinance";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Building2, ArrowUpRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Building2, ArrowUpRight, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { CvrLookupField } from "@/components/shared/CvrLookupField";
+import { isValidEmail, isValidPhone, MAX_NAME_LENGTH } from "@/lib/validation";
 
 export default function ClientsListPage() {
+  const { t } = useI18n();
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${locale}/app`;
   const [q, setQ] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newClient, setNewClient] = useState({ name: "", email: "", address: "", vat_number: "", phone: "" });
   const { data, isLoading } = useCustomers();
+  const createCustomer = useCreateCustomer();
 
   const list = (data ?? []).filter(c =>
     c.name.toLowerCase().includes(q.toLowerCase()) ||
     (c.email || "").toLowerCase().includes(q.toLowerCase())
   );
 
+  const handleCreate = async () => {
+    if (!newClient.name || !newClient.email) {
+      toast.error(t('clients.nameRequired'));
+      return;
+    }
+    if (!isValidEmail(newClient.email)) {
+      toast.error(t('clients.invalidEmail'));
+      return;
+    }
+    if (!isValidPhone(newClient.phone)) {
+      toast.error(t('clients.invalidPhone'));
+      return;
+    }
+    try {
+      await createCustomer.mutateAsync(newClient);
+      toast.success(t('clients.created_success'));
+      setNewClient({ name: "", email: "", address: "", vat_number: "", phone: "" });
+      setIsCreateOpen(false);
+    } catch {
+      toast.error(t('clients.created_error'));
+    }
+  };
+
+  const createDialog = (
+    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-2"><Plus className="h-4 w-4" />{t('clients.newClient')}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('clients.createTitle')}</DialogTitle>
+          <DialogDescription>{t('clients.createSubtitle')}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <CvrLookupField onResult={({ name, address, cvr }) => {
+            setNewClient(prev => ({ ...prev, name, address, vat_number: cvr }));
+          }} />
+          <div className="space-y-2">
+            <Label htmlFor="client-name">{t('pages.leads.name')} *</Label>
+            <Input id="client-name" value={newClient.name} maxLength={MAX_NAME_LENGTH} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} placeholder="Firma ApS" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-email">{t('pages.leads.email')} *</Label>
+            <Input id="client-email" type="email" value={newClient.email} onChange={(e) => setNewClient({ ...newClient, email: e.target.value })} placeholder="kontakt@firma.dk" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-phone">{t('pages.leads.phone')}</Label>
+            <Input id="client-phone" value={newClient.phone} onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })} placeholder={t('pages.leads.phonePlaceholder')} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-address">{t('companySettings.address')}</Label>
+            <Input id="client-address" value={newClient.address} onChange={(e) => setNewClient({ ...newClient, address: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-vat">{t('companySettings.cvr')}/VAT</Label>
+            <Input id="client-vat" value={newClient.vat_number} onChange={(e) => setNewClient({ ...newClient, vat_number: e.target.value })} placeholder="DK12345678" />
+          </div>
+          <Button onClick={handleCreate} disabled={createCustomer.isPending} className="w-full">
+            {createCustomer.isPending ? t('common.loading') : t('clients.createCta')}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="space-y-10">
       <header className="space-y-4">
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/60">Connected Business Graph</div>
-          <h1 className="font-display text-[28px] font-semibold tracking-tight text-foreground mt-1">Klienter</h1>
-          <p className="text-[13px] text-muted-foreground mt-1.5">Hver klient er et levende objekt — kommunikation, deals, fakturaer og aktivitet samlet ét sted.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/60">Connected Business Graph</div>
+            <h1 className="font-display text-[28px] font-semibold tracking-tight text-foreground mt-1">{t('clients.title')}</h1>
+            <p className="text-[13px] text-muted-foreground mt-1.5">{t('clients.subtitle')}</p>
+          </div>
+          {list.length > 0 && createDialog}
         </div>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
           <Input
             value={q} onChange={e => setQ(e.target.value)}
-            placeholder="Søg klient eller email"
+            placeholder={t('clients.searchPlaceholder')}
             className="pl-9 h-9 bg-transparent border-border/60 text-[13px]"
           />
         </div>
@@ -41,7 +120,13 @@ export default function ClientsListPage() {
           <li key={i} className="py-4"><Skeleton className="h-6 w-full" /></li>
         ))}
         {!isLoading && list.length === 0 && (
-          <li className="py-12 text-center text-[13px] text-muted-foreground">Ingen klienter endnu.</li>
+          <li className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+            <div className="h-11 w-11 rounded-full bg-foreground/[0.04] border border-border/50 grid place-items-center">
+              <Building2 className="h-5 w-5 text-muted-foreground/60" />
+            </div>
+            <p className="text-[13px] text-muted-foreground">{t('clients.empty')}</p>
+            {createDialog}
+          </li>
         )}
         {list.map(c => {
           const initials = c.name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();

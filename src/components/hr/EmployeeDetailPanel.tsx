@@ -1,8 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Mail, Phone, Building2, Briefcase, Calendar, Hash, User } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Mail, Phone, Building2, Briefcase, Calendar, Hash, User, ShieldCheck } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import {
+  MODULE_KEYS, MODULE_LABELS, type ModuleKey,
+  useUserModuleRestrictions, useSetModuleRestrictions,
+} from '@/hooks/api/useModuleAccess';
 
 interface EmployeeDetail {
   id: string;
@@ -15,6 +24,7 @@ interface EmployeeDetail {
   start_date?: string | null;
   is_active?: boolean | null;
   avatar_url?: string | null;
+  user_id?: string | null;
 }
 
 interface Props {
@@ -26,8 +36,38 @@ interface Props {
 export default function EmployeeDetailPanel({ employee, open, onClose }: Props) {
   const { t, locale } = useI18n();
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
+  const { roles } = useAuth();
+  const isOwnerLevel = roles.some(r => ['system_admin', 'company_admin', 'owner'].includes(r.role));
+
+  const { data: restrictions } = useUserModuleRestrictions(employee?.user_id ?? null);
+  const setRestrictions = useSetModuleRestrictions();
+  const [blocked, setBlocked] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setBlocked(new Set(restrictions ?? []));
+  }, [restrictions]);
 
   if (!employee) return null;
+
+  const toggleModule = (mod: ModuleKey) => {
+    setBlocked(prev => {
+      const next = new Set(prev);
+      if (next.has(mod)) next.delete(mod); else next.add(mod);
+      return next;
+    });
+  };
+
+  const hasChanges = restrictions && (
+    blocked.size !== restrictions.size || [...blocked].some(m => !restrictions.has(m))
+  );
+
+  const saveModuleAccess = () => {
+    if (!employee.user_id) return;
+    setRestrictions.mutate(
+      { userId: employee.user_id, blockedModules: [...blocked] as ModuleKey[] },
+      { onSuccess: () => toast.success(t('hr.moduleAccessSaved') || 'Module access updated') },
+    );
+  };
 
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
@@ -100,6 +140,39 @@ export default function EmployeeDetailPanel({ employee, open, onClose }: Props) 
               </div>
             </div>
           </div>
+
+          {employee.user_id && isOwnerLevel && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {t('hr.moduleAccess') || 'Module Access'}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {t('hr.moduleAccessHint') || 'Uncheck a module to hide it from this employee.'}
+                </p>
+                <div className="space-y-2">
+                  {MODULE_KEYS.map(mod => (
+                    <label key={mod} className="flex items-center gap-3 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={!blocked.has(mod)}
+                        onCheckedChange={() => toggleModule(mod)}
+                      />
+                      {MODULE_LABELS[mod]}
+                    </label>
+                  ))}
+                </div>
+                <Button
+                  size="sm"
+                  onClick={saveModuleAccess}
+                  disabled={!hasChanges || setRestrictions.isPending}
+                >
+                  {t('common.save') || 'Save'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>

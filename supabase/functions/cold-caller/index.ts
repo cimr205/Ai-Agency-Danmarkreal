@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function getTwilioCreds(serviceClient: any, companyId: string) {
+async function getTwilioCreds(serviceClient: SupabaseClient, companyId: string) {
   const { data, error } = await serviceClient
     .from("twilio_accounts")
     .select("account_sid, auth_token, balance, balance_currency, last_balance_check")
@@ -16,7 +16,7 @@ async function getTwilioCreds(serviceClient: any, companyId: string) {
   return data;
 }
 
-async function syncPhoneProvisionRecords(serviceClient: any, companyId: string, phoneNumbers: Array<{ sid?: string; phone_number?: string }>) {
+async function syncPhoneProvisionRecords(serviceClient: SupabaseClient, companyId: string, phoneNumbers: Array<{ sid?: string; phone_number?: string }>) {
   const validNumbers = phoneNumbers.filter((n) => n.sid && n.phone_number);
   if (validNumbers.length === 0) return;
 
@@ -128,15 +128,21 @@ function isValidationFallback(result: unknown): result is { fallback: true; erro
   return typeof result === "object" && result !== null && "fallback" in result && (result as { fallback?: boolean }).fallback === true;
 }
 
+interface TwilioAccountData {
+  friendly_name?: string;
+  type?: string;
+  status?: string;
+}
+
 async function storeTwilioCredentials(
-  serviceClient: any,
+  serviceClient: SupabaseClient,
   companyId: string,
   accountSid: string,
   authToken: string,
 ) {
   const validation = await validateTwilioCredentials(accountSid, authToken) as
     | { fallback: true; error: string }
-    | { fallback: false; accountData: any; balance: number; balanceCurrency: string };
+    | { fallback: false; accountData: TwilioAccountData; balance: number; balanceCurrency: string };
 
   if (isValidationFallback(validation)) {
     return validation;
@@ -353,10 +359,16 @@ Deno.serve(async (req) => {
         { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
       );
 
-      let phoneNumbers: any[] = [];
+      interface TwilioPhoneNumber {
+        sid?: string;
+        phone_number?: string;
+        friendly_name?: string;
+        capabilities?: Record<string, boolean>;
+      }
+      let phoneNumbers: TwilioPhoneNumber[] = [];
       if (numbersRes.ok) {
         const numbersData = await numbersRes.json();
-        phoneNumbers = (numbersData.incoming_phone_numbers || []).map((n: any) => ({
+        phoneNumbers = (numbersData.incoming_phone_numbers || []).map((n: TwilioPhoneNumber) => ({
           sid: n.sid,
           phone_number: n.phone_number,
           friendly_name: n.friendly_name,
@@ -502,7 +514,16 @@ Deno.serve(async (req) => {
         if (!tryEndpoints.includes(fb)) tryEndpoints.push(fb);
       }
 
-      let searchData: any = null;
+      interface TwilioAvailableNumber {
+        phone_number?: string;
+        friendly_name?: string;
+        locality?: string;
+        region?: string;
+        iso_country?: string;
+        capabilities?: Record<string, boolean>;
+        price?: string;
+      }
+      let searchData: { available_phone_numbers?: TwilioAvailableNumber[] } | null = null;
       let usedEndpoint = primary;
       let lastErr = "";
       for (const ep of tryEndpoints) {
@@ -527,7 +548,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const numbers = (searchData.available_phone_numbers || []).map((n: any) => ({
+      const numbers = (searchData.available_phone_numbers || []).map((n) => ({
         phone_number: n.phone_number,
         friendly_name: n.friendly_name,
         locality: n.locality,
@@ -565,7 +586,7 @@ Deno.serve(async (req) => {
 
       if (!buyRes.ok) {
         const err = await buyRes.text();
-        let parsed: any = null;
+        let parsed: { code?: number } | null = null;
 
         try {
           parsed = JSON.parse(err);

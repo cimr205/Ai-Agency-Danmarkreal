@@ -127,7 +127,7 @@ export default function EmailTemplatesPage() {
   );
 
   const handleCreate = async () => {
-    if (!name.trim() || !subject.trim()) { toast.error('Name and subject required'); return; }
+    if (!name.trim() || !subject.trim()) { toast.error(t('emailTemplates.nameAndSubjectRequired')); return; }
     try {
       await createTemplate.mutateAsync({ name, subject, body, category });
       toast.success(t('emailTemplates.created'));

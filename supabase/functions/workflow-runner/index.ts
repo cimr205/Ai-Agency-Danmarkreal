@@ -31,13 +31,13 @@ Deno.serve(async (req) => {
     if (!companyId) return json({ error: "No company" }, 400);
 
     const { workflow_id, payload = {}, mode = "test", ai_prompt } =
-      await req.json() as { workflow_id: string; payload?: any; mode?: "test" | "live"; ai_prompt?: string };
+      await req.json() as { workflow_id: string; payload?: Record<string, unknown>; mode?: "test" | "live"; ai_prompt?: string };
 
     const { data: wf, error: wfErr } = await supabase
       .from("workflows").select("*").eq("id", workflow_id).eq("company_id", companyId).maybeSingle();
     if (wfErr || !wf) return json({ error: "Workflow not found" }, 404);
 
-    const trace: Array<{ step: string; status: "ok" | "skip" | "error"; detail: string; data?: any }> = [];
+    const trace: Array<{ step: string; status: "ok" | "skip" | "error"; detail: string; data?: unknown }> = [];
 
     // Step 1 — trigger
     trace.push({ step: `trigger:${wf.trigger_event}`, status: "ok", detail: "Trigger payload modtaget", data: payload });
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "llama3.2:3b",
             messages: [
               { role: "system", content: "Du er et workflow-AI-trin. Svar kort og konkret." },
               { role: "user", content: `${ai_prompt}\n\nPayload: ${JSON.stringify(payload)}` },
@@ -87,8 +87,8 @@ Deno.serve(async (req) => {
             last_run_at: new Date().toISOString(),
             last_error: r.ok ? null : `HTTP ${r.status}`,
           }).eq("id", wf.id);
-      } catch (e: any) {
-        trace.push({ step: "action:webhook", status: "error", detail: e?.message ?? "fetch failed" });
+      } catch (e) {
+        trace.push({ step: "action:webhook", status: "error", detail: e instanceof Error ? e.message : "fetch failed" });
       }
     } else {
       trace.push({ step: `action:${wf.action_type}`, status: "skip", detail: "Handlingstype ikke understøttet endnu" });
@@ -105,13 +105,13 @@ Deno.serve(async (req) => {
     });
 
     return json({ ok: true, trace, ai_output: aiOutput });
-  } catch (e: any) {
+  } catch (e) {
     console.error("workflow-runner error", e);
-    return json({ error: e?.message ?? "Unknown" }, 500);
+    return json({ error: e instanceof Error ? e.message : "Unknown" }, 500);
   }
 });
 
-function json(body: any, status = 200) {
+function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },

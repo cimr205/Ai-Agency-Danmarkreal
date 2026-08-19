@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check } from 'lucide-react';
@@ -111,6 +112,10 @@ export default function InvoicesPage() {
   // Lead search (to invoice from a lead)
   const [leadPickerOpen, setLeadPickerOpen] = useState(false);
   const [leadSearch, setLeadSearch] = useState('');
+
+  // Customer search (to invoice an existing client directly)
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
   const { data: leadsData } = useLeads({ search: leadSearch, page: 0 });
   const leads = leadsData?.data ?? [];
 
@@ -319,17 +324,17 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.invoices.title')}</h1>
           <p className="text-muted-foreground">{t('pages.invoices.subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Template selector with visual color preview */}
           <div className="flex items-center gap-2">
-            <Palette className="h-4 w-4 text-muted-foreground" />
+            <Palette className="h-4 w-4 text-muted-foreground shrink-0" />
             <Select value={pdfTemplate} onValueChange={(v) => setPdfTemplate(v as InvoiceTemplate)}>
-              <SelectTrigger className="w-52 h-9 text-sm">
+              <SelectTrigger className="w-40 sm:w-52 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -468,7 +473,7 @@ export default function InvoicesPage() {
                                   </span>
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-[480px] p-0" align="start">
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                 <Command shouldFilter={false}>
                                   <CommandInput placeholder={locale === 'da' ? 'Søg navn, email, firma…' : 'Search name, email, company…'} value={leadSearch} onValueChange={setLeadSearch} />
                                   <CommandList>
@@ -496,10 +501,42 @@ export default function InvoicesPage() {
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
                               <Label>{t('pages.invoices.customer')} *</Label>
-                              <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                                <SelectTrigger><SelectValue placeholder={t('pages.invoices.selectCustomer')} /></SelectTrigger>
-                                <SelectContent>{customers?.map(c => (<SelectItem key={c.id} value={c.id}>{c.name} {c.country ? `(${c.country})` : ''}</SelectItem>))}</SelectContent>
-                              </Select>
+                              <Popover open={customerPickerOpen} onOpenChange={setCustomerPickerOpen}>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                                    <span className="flex items-center gap-2 text-muted-foreground truncate">
+                                      <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="truncate">
+                                        {selectedCustomer ? `${selectedCustomer.name}${selectedCustomer.country ? ` (${selectedCustomer.country})` : ''}` : t('pages.invoices.selectCustomer')}
+                                      </span>
+                                    </span>
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder={locale === 'da' ? 'Søg klient…' : 'Search client…'} value={customerSearch} onValueChange={setCustomerSearch} />
+                                    <CommandList>
+                                      <CommandEmpty>{locale === 'da' ? 'Ingen klienter fundet' : 'No clients found'}</CommandEmpty>
+                                      <CommandGroup>
+                                        {(customers ?? []).map(c => (
+                                          <CommandItem
+                                            key={c.id}
+                                            value={`${c.name} ${c.email ?? ''}`}
+                                            onSelect={() => { setSelectedCustomerId(c.id); setCustomerPickerOpen(false); setCustomerSearch(''); }}
+                                            className="flex items-center justify-between gap-3"
+                                          >
+                                            <div className="flex-1 min-w-0">
+                                              <div className="font-medium truncate">{c.name} {c.country ? `(${c.country})` : ''}</div>
+                                              {c.email && <div className="text-xs text-muted-foreground truncate">{c.email}</div>}
+                                            </div>
+                                            {selectedCustomerId === c.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                             <div className="space-y-2">
                               <Label>{t('pages.invoices.dueDate')}</Label>
@@ -670,7 +707,14 @@ export default function InvoicesPage() {
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
             )) : filteredInvoices.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{error ? t('pages.invoices.fetchError') : t('pages.invoices.empty')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8}>
+                <EmptyState
+                  bare
+                  icon={FileText}
+                  title={error ? t('pages.invoices.fetchError') : t('pages.invoices.empty')}
+                  action={!error ? { label: t('pages.invoices.newInvoice'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                />
+              </TableCell></TableRow>
             ) : filteredInvoices.map(invoice => (
               <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedInvoice(invoice)}>
                 <TableCell className="font-mono font-medium">{invoice.invoice_number}</TableCell>

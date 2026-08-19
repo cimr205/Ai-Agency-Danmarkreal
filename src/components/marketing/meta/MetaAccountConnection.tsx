@@ -30,10 +30,10 @@ type MetaAdAccount = {
 };
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  connected: { label: "Connected", color: "border-emerald-200 bg-emerald-50 text-emerald-700", icon: CheckCircle2 },
-  disconnected: { label: "Disconnected", color: "border-muted bg-muted text-muted-foreground", icon: XCircle },
-  error: { label: "Error", color: "border-destructive/30 bg-destructive/10 text-destructive", icon: AlertCircle },
-  pending: { label: "Pending", color: "border-amber-200 bg-amber-50 text-amber-700", icon: Loader2 },
+  connected: { label: "Forbundet", color: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400", icon: CheckCircle2 },
+  disconnected: { label: "Ikke forbundet", color: "border-muted bg-muted text-muted-foreground", icon: XCircle },
+  error: { label: "Fejl", color: "border-destructive/30 bg-destructive/10 text-destructive", icon: AlertCircle },
+  pending: { label: "Afventer", color: "border-amber-500/30 bg-amber-500/10 text-amber-400", icon: Loader2 },
 };
 
 export function MetaAccountConnection() {
@@ -142,7 +142,7 @@ export function MetaAccountConnection() {
 
   if (loading) {
     return (
-      <Card className="liquid-glass-card border-0 shadow-sm">
+      <Card className="border border-border/60 shadow-none">
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </CardContent>
@@ -151,10 +151,10 @@ export function MetaAccountConnection() {
   }
 
   return (
-    <Card className="liquid-glass-card border-0 shadow-sm">
+    <Card className="border border-border/60 shadow-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Meta Ads Forbindelse</CardTitle>
+          <CardTitle className="text-[14px] font-medium">Meta Ads Forbindelse</CardTitle>
           {!isConnected ? (
             <Button size="sm" className="gap-2" onClick={handleConnect}>
               <Link2 className="h-4 w-4" />
@@ -162,11 +162,11 @@ export function MetaAccountConnection() {
             </Button>
           ) : (
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="gap-2" onClick={fetchConnection}>
+              <Button size="sm" variant="ghost" className="gap-2 text-muted-foreground" onClick={fetchConnection}>
                 <RefreshCw className="h-3.5 w-3.5" />
                 Opdater
               </Button>
-              <Button size="sm" variant="destructive" className="gap-2" onClick={handleDisconnect} disabled={disconnecting}>
+              <Button size="sm" variant="outline" className="gap-2 text-muted-foreground hover:text-destructive" onClick={handleDisconnect} disabled={disconnecting}>
                 {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
                 Afbryd
               </Button>

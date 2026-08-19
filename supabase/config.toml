@@ -86,3 +86,24 @@ verify_jwt = false
 
 [functions.autopilot-agent]
 verify_jwt = false
+
+[functions.dinero-oauth-start]
+verify_jwt = false
+
+[functions.dinero-oauth-callback]
+verify_jwt = false
+
+[functions.dinero-sync]
+verify_jwt = false
+
+[functions.economic-oauth-start]
+verify_jwt = false
+
+[functions.economic-oauth-callback]
+verify_jwt = false
+
+[functions.economic-sync]
+verify_jwt = false
+
+[functions.accounting-disconnect]
+verify_jwt = false

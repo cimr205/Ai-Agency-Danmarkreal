@@ -232,8 +232,24 @@ export default function EmailsPage() {
     toast.success(t('pages.email.markedAllRead').replace('{count}', String(unread.length)));
   }, [filteredEmails, updateEmail, t]);
 
+  // Still checking whether Gmail is connected — avoid flashing the full
+  // inbox UI before we actually know the connection state.
+  if (gmailAccount.isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-2 py-24 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <p>{t('pages.email.checkingConnection')}</p>
+        </div>
+      </div>
+    );
+  }
+
   // Not connected
-  if (!isConnected && !gmailAccount.isLoading) {
+  if (!isConnected) {
     return (
       <div className="space-y-6">
         <div>

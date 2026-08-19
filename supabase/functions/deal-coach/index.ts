@@ -69,7 +69,7 @@ DEAL DATA:
 - Stage: ${deal.stage}
 - Created: ${deal.created_at} (${daysSinceCreation} days ago)
 - Expected close: ${deal.expected_close_date || "Not set"}
-- Customer: ${(deal as any).customers?.name || "None"}
+- Customer: ${(deal as { customers?: { name?: string } }).customers?.name || "None"}
 - Notes: ${deal.notes || "None"}
 
 COMPANY HISTORY:
@@ -96,7 +96,7 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "llama3.2:3b",
         messages: [{ role: "user", content: prompt }],
       }),
     });

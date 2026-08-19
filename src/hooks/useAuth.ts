@@ -12,7 +12,7 @@ interface ExtendedAuth {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSystemAdmin: boolean;
-  roles: { role: string }[];
+  roles: { role: string; can_grant_permissions: boolean }[];
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>;
   loginWithGoogle: () => Promise<void>;

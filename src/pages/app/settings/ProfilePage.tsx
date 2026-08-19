@@ -229,11 +229,11 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>{t('profile.newPassword')}</Label>
-            <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" />
+            <Input type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t('profile.newPasswordPlaceholder')} />
           </div>
           <div className="space-y-2">
             <Label>{t('profile.confirmPassword')}</Label>
-            <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
+            <Input type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t('profile.newPasswordPlaceholder')} />
           </div>
           <Button onClick={handleChangePassword} disabled={changingPassword || !newPassword}>
             {changingPassword ? t('common.saving') : t('profile.updatePassword')}

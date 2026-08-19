@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Public endpoint - Twilio status callbacks (no JWT verification).
 // Receives both call status updates and recording status callbacks.
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function transcribeRecording(serviceClient: any, callId: string, companyId: string, recordingUrl: string) {
+async function transcribeRecording(serviceClient: SupabaseClient, callId: string, companyId: string, recordingUrl: string) {
   try {
     // Get OpenAI key for this company
     const { data: openai } = await serviceClient

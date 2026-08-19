@@ -58,7 +58,7 @@ export const DESTINATIONS: Destination[] = [
 
   // People
   { label: "Medarbejdere",  path: "hr/employees",     icon: UserCheck,    modes: ["people"] },
-  { label: "Tidsregistr.",  path: "hr/time-tracking", icon: Clock,        modes: ["people"] },
+  { label: "Tidsregistrering", path: "hr/time-tracking", icon: Clock,     modes: ["people"] },
   { label: "Fremmøde",      path: "hr/attendance",    icon: Activity,     modes: ["people"] },
   { label: "Vagtplan",      path: "hr/work-schedule", icon: CalendarDays, modes: ["people"] },
   { label: "Fravær",        path: "hr/leave",         icon: CalendarClock, modes: ["people"] },

@@ -49,7 +49,7 @@ function buildSupabase(companyId: string, userId: string) {
 function buildTools(companyId: string, userId: string) {
   const sb = buildSupabase(companyId, userId);
 
-  const emit = async (type: string, source: string, entityType: string | null, entityId: string | null, payload: any) => {
+  const emit = async (type: string, source: string, entityType: string | null, entityId: string | null, payload: Record<string, unknown>) => {
     await sb.rpc("emit_workspace_event", {
       _company_id: companyId, _type: type, _source: source,
       _entity_type: entityType, _entity_id: entityId, _payload: payload, _actor: userId,
@@ -57,7 +57,7 @@ function buildTools(companyId: string, userId: string) {
   };
 
   const propose = async (
-    actionType: string, title: string, rationale: string, payload: any,
+    actionType: string, title: string, rationale: string, payload: Record<string, unknown>,
   ) => {
     const { data, error } = await sb.from("autopilot_actions").insert({
       company_id: companyId, user_id: userId,
@@ -78,7 +78,7 @@ function buildTools(companyId: string, userId: string) {
       execute: async ({ status, limit }) => {
         let q = sb.from("leads").select("id,name,email,company_name,status,score,value,next_followup_at")
           .eq("company_id", companyId).order("created_at", { ascending: false }).limit(Math.min(limit, 50));
-        if (status) q = q.eq("status", status as any);
+        if (status) q = q.eq("status", status);
         const { data, error } = await q;
         if (error) throw new Error(error.message);
         return data;
@@ -114,7 +114,7 @@ function buildTools(companyId: string, userId: string) {
       execute: async ({ status, limit }) => {
         let q = sb.from("tasks").select("id,title,status,priority,due_date,assigned_to,lead_id,deal_id")
           .eq("company_id", companyId).order("created_at", { ascending: false }).limit(Math.min(limit, 50));
-        if (status) q = q.eq("status", status as any);
+        if (status) q = q.eq("status", status);
         const { data, error } = await q;
         if (error) throw new Error(error.message);
         return data;
@@ -164,7 +164,7 @@ function buildTools(companyId: string, userId: string) {
       description: "Update a lead's pipeline status.",
       inputSchema: z.object({ lead_id: z.string().uuid(), status: z.string() }),
       execute: async ({ lead_id, status }) => {
-        const { error } = await sb.from("leads").update({ status: status as any })
+        const { error } = await sb.from("leads").update({ status })
           .eq("id", lead_id).eq("company_id", companyId);
         if (error) throw new Error(error.message);
         return { ok: true };
@@ -237,7 +237,7 @@ function buildTools(companyId: string, userId: string) {
 const app = new Hono();
 app.options("*", () => new Response(null, { headers: corsHeaders }));
 
-app.post("/", async (c) => {
+app.post("/*", async (c) => {
   try {
     // Authenticate the caller — never trust client-supplied companyId/userId,
     // which would otherwise let anyone read and mutate any company's CRM data
@@ -276,7 +276,7 @@ app.post("/", async (c) => {
 
     const tools = buildTools(companyId, userId);
     const result = streamText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gateway("llama3.2:3b"),
       system: SYSTEM,
       tools,
       stopWhen: stepCountIs(50),
@@ -284,9 +284,9 @@ app.post("/", async (c) => {
     });
 
     return result.toUIMessageStreamResponse({ headers: corsHeaders });
-  } catch (e: any) {
+  } catch (e) {
     console.error("autopilot-agent", e);
-    return new Response(JSON.stringify({ error: e?.message ?? "Unknown" }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

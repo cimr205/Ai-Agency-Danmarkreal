@@ -15,7 +15,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  roles: { role: string }[];
+  roles: { role: string; can_grant_permissions: boolean }[];
   isAdmin: boolean;
   isSystemAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [roles, setRoles] = useState<{ role: string }[]>([]);
+  const [roles, setRoles] = useState<{ role: string; can_grant_permissions: boolean }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const mountedRef = useRef(true);
   const initializedRef = useRef(false);
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchRoles = async (userId: string) => {
     const { data } = await supabase
       .from('user_roles')
-      .select('role')
+      .select('role, can_grant_permissions')
       .eq('user_id', userId);
     return data ?? [];
   };

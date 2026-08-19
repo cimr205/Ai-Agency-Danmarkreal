@@ -26,8 +26,9 @@ async function authenticate(req: Request): Promise<Ctx | null> {
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
   const { data, error } = await sb.rpc("resolve_mcp_token", { _token: token });
-  if (error || !data || (data as any[]).length === 0) return null;
-  const row = (data as any[])[0];
+  interface ResolvedToken { token_id: string; company_id: string; user_id: string }
+  if (error || !data || (data as ResolvedToken[]).length === 0) return null;
+  const row = (data as ResolvedToken[])[0];
   // Touch last_used_at (best-effort)
   sb.from("mcp_tokens").update({ last_used_at: new Date().toISOString() })
     .eq("id", row.token_id).then(() => {});
@@ -57,7 +58,7 @@ function buildServer(ctx: Ctx) {
         limit: { type: "number", default: 25 },
       },
     },
-    handler: async ({ status, limit }: any) => {
+    handler: async ({ status, limit }: { status?: string; limit?: number }) => {
       let q = sb.from("leads").select("id,name,email,company,status,score,created_at")
         .eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(Math.min(limit ?? 25, 100));
       if (status) q = q.eq("status", status);
@@ -71,7 +72,7 @@ function buildServer(ctx: Ctx) {
     name: "list_deals",
     description: "List sales deals from the pipeline.",
     inputSchema: { type: "object", properties: { stage: { type: "string" }, limit: { type: "number", default: 25 } } },
-    handler: async ({ stage, limit }: any) => {
+    handler: async ({ stage, limit }: { stage?: string; limit?: number }) => {
       let q = sb.from("deals").select("id,title,value,stage,expected_close_date,customer_id,created_at")
         .eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(Math.min(limit ?? 25, 100));
       if (stage) q = q.eq("stage", stage);
@@ -85,7 +86,7 @@ function buildServer(ctx: Ctx) {
     name: "list_tasks",
     description: "List tasks for the company.",
     inputSchema: { type: "object", properties: { status: { type: "string" }, limit: { type: "number", default: 25 } } },
-    handler: async ({ status, limit }: any) => {
+    handler: async ({ status, limit }: { status?: string; limit?: number }) => {
       let q = sb.from("tasks").select("id,title,description,status,due_date,assigned_to,created_at")
         .eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(Math.min(limit ?? 25, 100));
       if (status) q = q.eq("status", status);
@@ -124,7 +125,7 @@ function buildServer(ctx: Ctx) {
       },
       required: ["name"],
     },
-    handler: async ({ name, email, company, phone, notes }: any) => {
+    handler: async ({ name, email, company, phone, notes }: { name: string; email?: string; company?: string; phone?: string; notes?: string }) => {
       const { data, error } = await sb.from("leads").insert({
         company_id: ctx.companyId, created_by: ctx.userId,
         name, email, company, phone, notes, status: "new",
@@ -146,7 +147,7 @@ function buildServer(ctx: Ctx) {
       },
       required: ["title"],
     },
-    handler: async ({ title, description, due_date }: any) => {
+    handler: async ({ title, description, due_date }: { title: string; description?: string; due_date?: string }) => {
       const { data, error } = await sb.from("tasks").insert({
         company_id: ctx.companyId, created_by: ctx.userId,
         title, description, due_date, status: "pending",
@@ -167,11 +168,11 @@ function buildServer(ctx: Ctx) {
       },
       required: ["provider", "payload"],
     },
-    handler: async ({ provider, payload }: any) => {
+    handler: async ({ provider, payload }: { provider: string; payload: unknown }) => {
       const { data: integ } = await sb.from("integrations")
         .select("metadata,status").eq("company_id", ctx.companyId).eq("provider", provider).maybeSingle();
       if (!integ || integ.status !== "connected") throw new Error(`No connected integration for ${provider}`);
-      const url = (integ.metadata as any)?.webhook_url;
+      const url = (integ.metadata as { webhook_url?: string } | null)?.webhook_url;
       if (!url) throw new Error(`No webhook URL stored for ${provider}`);
 
       const res = await fetch(url, {
@@ -188,7 +189,7 @@ function buildServer(ctx: Ctx) {
     name: "search_workspace",
     description: "Full-text search across leads, deals, and tasks.",
     inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
-    handler: async ({ query }: any) => {
+    handler: async ({ query }: { query: string }) => {
       const like = `%${query}%`;
       const [leads, deals, tasks] = await Promise.all([
         sb.from("leads").select("id,name,email,company").eq("company_id", ctx.companyId)

@@ -8,8 +8,8 @@ export function MetaAIRecommendations({ compact }: { compact?: boolean }) {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-primary" />
-          <CardTitle className="text-base font-semibold">AI Recommendations</CardTitle>
-          <Badge variant="secondary" className="text-[10px]">Powered by AI</Badge>
+          <CardTitle className="text-base font-semibold">AI-anbefalinger</CardTitle>
+          <Badge variant="secondary" className="text-[10px]">Drevet af AI</Badge>
         </div>
       </CardHeader>
       <CardContent>

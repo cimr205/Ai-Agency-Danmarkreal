@@ -9,11 +9,11 @@
 
 @layer base {
   :root {
-    /* Crater — Light theme · blue accent · slate ink */
-    --background: 214 33% 97%;        /* #F6F8FB */
+    /* Crater — Light theme · ledger paper · ink blue + stamp red */
+    --background: 42 22% 97%;         /* #F8F6F1 warm paper */
     --foreground: 222 47% 11%;        /* #0F172A */
 
-    --card: 0 0% 100%;
+    --card: 42 30% 99%;               /* #FDFCFA warm-white */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
@@ -22,11 +22,11 @@
     --primary: 221 83% 53%;           /* #2563EB */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 91%;         /* #EEF2F7 */
+    --secondary: 40 20% 92%;          /* #ECE8DF */
     --secondary-foreground: 217 33% 17%;
 
-    --muted: 214 32% 94%;
-    --muted-foreground: 215 16% 47%;  /* slate-500 */
+    --muted: 40 18% 93%;
+    --muted-foreground: 215 12% 42%;  /* ink-slate, slightly warm */
 
     --accent: 221 83% 53%;
     --accent-foreground: 0 0% 100%;
@@ -34,21 +34,25 @@
     --destructive: 0 84% 60%;         /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 24% 92%;            /* #E5E9F0 */
-    --input: 214 24% 92%;
+    --border: 40 15% 85%;             /* visible ink-toned rule */
+    --input: 40 15% 85%;
     --ring: 221 83% 53%;
 
-    --radius: 0.5rem;
+    --radius: 0.125rem;               /* near-sharp — ledger, not app-chrome */
 
-    --sidebar-background: 210 33% 98%;   /* surface2 #FAFBFD */
+    /* Stamp — the one bold, unexpected accent. Used sparingly: marks, badges, the active index tab. */
+    --stamp: 14 88% 50%;              /* #EA4B18 burnt vermillion */
+    --stamp-foreground: 0 0% 100%;
+
+    --sidebar-background: 42 25% 96%;
     --sidebar-foreground: 217 33% 17%;
     --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 94%;
+    --sidebar-accent: 40 18% 91%;
     --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 24% 92%;
+    --sidebar-border: 40 15% 85%;
     --sidebar-ring: 221 83% 53%;
-    --sidebar-muted: 215 20% 65%;        /* #94A3B8 */
+    --sidebar-muted: 215 14% 52%;
 
     --success: 160 84% 39%;             /* #10B981 */
     --success-foreground: 0 0% 100%;
@@ -92,86 +96,174 @@
   }
 
   .dark {
-    /* Crater — Dark theme · periwinkle accent · near-black surfaces */
-    --background: 240 8% 5%;           /* #0B0B0D */
-    --foreground: 240 20% 97%;         /* #F5F5F8 */
+    /* Crater — Dark theme · crimson accent · near-black maroon surfaces */
+    --background: 350 32% 6%;          /* #170B0C deep maroon-black */
+    --foreground: 20 20% 96%;          /* #F7F3F2 warm white */
 
-    --card: 240 6% 10%;                /* #17171A */
-    --card-foreground: 240 20% 97%;
+    --card: 350 28% 10%;               /* #241213 */
+    --card-foreground: 20 20% 96%;
 
-    --popover: 240 7% 9%;
-    --popover-foreground: 240 20% 97%;
+    --popover: 350 30% 8%;
+    --popover-foreground: 20 20% 96%;
 
-    --primary: 235 92% 70%;            /* #6C7CFA periwinkle */
+    --primary: 0 72% 51%;              /* #DC2626 crimson */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 6% 14%;           /* #1E1E22 */
-    --secondary-foreground: 240 15% 90%;
+    --secondary: 350 22% 15%;          /* #2E1719 */
+    --secondary-foreground: 20 15% 90%;
 
-    --muted: 240 6% 13%;
-    --muted-foreground: 240 5% 58%;    /* #8C8C93 */
+    --muted: 350 20% 13%;
+    --muted-foreground: 15 12% 62%;    /* warm grey */
 
-    --accent: 235 92% 70%;
+    --accent: 0 72% 51%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 355 90% 68%;        /* #F4576B */
+    --destructive: 0 84% 60%;          /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 16%;              /* subtle hairline */
-    --input: 240 6% 16%;
-    --ring: 235 92% 70%;
+    --border: 350 22% 18%;             /* subtle warm hairline */
+    --input: 350 22% 18%;
+    --ring: 0 72% 51%;
 
     --radius: 1rem;
 
-    --sidebar-background: 240 8% 6%;   /* #0D0D10 */
-    --sidebar-foreground: 240 15% 90%;
-    --sidebar-primary: 235 92% 70%;
+    --sidebar-background: 350 35% 5%;  /* near-black maroon, slightly deeper than bg */
+    --sidebar-foreground: 20 15% 90%;
+    --sidebar-primary: 0 72% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 16%;
-    --sidebar-accent-foreground: 240 20% 97%;
-    --sidebar-border: 240 6% 14%;
-    --sidebar-ring: 235 92% 70%;
-    --sidebar-muted: 240 5% 50%;
+    --sidebar-accent: 350 22% 15%;
+    --sidebar-accent-foreground: 20 20% 96%;
+    --sidebar-border: 350 22% 15%;
+    --sidebar-ring: 0 72% 51%;
+    --sidebar-muted: 15 10% 55%;
 
-    --success: 152 69% 45%;            /* #22C57E */
+    --success: 152 69% 45%;            /* #22C57E — green, contrasts against red */
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 0%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(235 92% 70%) 0%, hsl(258 90% 66%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(240 8% 5%) 0%, hsl(240 7% 8%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(235 92% 70%) 0%, hsl(280 85% 68%) 100%);
+    --stamp: 0 72% 51%;
+    --stamp-foreground: 0 0% 100%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(350 80% 40%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(350 32% 6%) 0%, hsl(350 28% 9%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(15 85% 48%) 100%);
 
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
     --shadow-md: 0 4px 16px -4px rgba(0,0,0,0.6);
     --shadow-lg: 0 16px 40px -8px rgba(0,0,0,0.5);
     --shadow-xl: 0 32px 64px -16px rgba(0,0,0,0.5);
-    --shadow-glow: 0 0 60px -10px rgba(108,124,250,0.25);
+    --shadow-glow: 0 0 60px -10px rgba(220,38,38,0.28);
 
-    --bg-base: #0B0B0D;
-    --bg-surface: #17171A;
-    --bg-elevated: #1B1B1F;
-    --bg-overlay: #0D0D10;
-    --bg-highlight: #1E1E22;
+    --bg-base: #170B0C;
+    --bg-surface: #241213;
+    --bg-elevated: #2A1517;
+    --bg-overlay: #130809;
+    --bg-highlight: #2E1719;
     --border-subtle: rgba(255,255,255,0.06);
     --border-default: rgba(255,255,255,0.10);
     --border-strong: rgba(255,255,255,0.16);
-    --text-primary: #F5F5F8;
-    --text-secondary: #A8A8B0;
-    --text-muted: #8C8C93;
-    --text-disabled: #4A4A50;
-    --accent-base: #6C7CFA;
-    --accent-hover: #8593FB;
-    --accent-subtle: rgba(108,124,250,0.14);
-    --accent-glow: rgba(108,124,250,0.25);
+    --text-primary: #F7F3F2;
+    --text-secondary: #B8A8A8;
+    --text-muted: #8C7A7A;
+    --text-disabled: #4A3C3C;
+    --accent-base: #DC2626;
+    --accent-hover: #EF4444;
+    --accent-subtle: rgba(220,38,38,0.16);
+    --accent-glow: rgba(220,38,38,0.28);
     --success-color: #22C57E;
     --success-subtle: rgba(34,197,126,0.14);
     --warning-color: #F5A623;
     --warning-subtle: rgba(245,166,35,0.14);
-    --danger: #F4576B;
-    --danger-subtle: rgba(244,87,107,0.14);
-    --info: #6C7CFA;
-    --info-subtle: rgba(108,124,250,0.14);
+    --danger: #EF4444;
+    --danger-subtle: rgba(239,68,68,0.14);
+    --info: #DC2626;
+    --info-subtle: rgba(220,38,38,0.14);
+  }
+
+  /* Forces the light token set inside a .dark ancestor — used to scope the
+     public marketing/legal pages to light mode regardless of the app-wide
+     theme default, since those pages are hand-tuned for light contrast. */
+  .light {
+    --background: 214 33% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 217 33% 17%;
+
+    --muted: 214 32% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 221 83% 53%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 24% 92%;
+    --input: 214 24% 92%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 210 33% 98%;
+    --sidebar-foreground: 217 33% 17%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 94%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 24% 92%;
+    --sidebar-ring: 221 83% 53%;
+    --sidebar-muted: 215 20% 65%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(221 83% 45%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(214 33% 97%) 0%, hsl(214 32% 94%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(258 90% 66%) 100%);
+
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-md: 0 1px 3px rgba(15,23,42,0.05), 0 4px 12px rgba(15,23,42,0.04);
+    --shadow-lg: 0 8px 24px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.05);
+    --shadow-xl: 0 20px 48px rgba(15,23,42,0.10), 0 4px 12px rgba(15,23,42,0.05);
+    --shadow-glow: 0 0 60px -10px rgba(37,99,235,0.18);
+
+    --bg-base: #F6F8FB;
+    --bg-surface: #FFFFFF;
+    --bg-elevated: #FFFFFF;
+    --bg-overlay: #FAFBFD;
+    --bg-highlight: #EEF2F7;
+    --border-subtle: #E5E9F0;
+    --border-default: #D6DDE7;
+    --border-strong: #CBD5E1;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    --text-disabled: #CBD5E1;
+    --accent-base: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-subtle: #DBEAFE;
+    --accent-glow: rgba(37,99,235,0.12);
+    --success-color: #10B981;
+    --success-subtle: #D1FAE5;
+    --warning-color: #F59E0B;
+    --warning-subtle: #FEF3C7;
+    --danger: #EF4444;
+    --danger-subtle: #FEE2E2;
+    --info: #2563EB;
+    --info-subtle: #DBEAFE;
   }
 }
 

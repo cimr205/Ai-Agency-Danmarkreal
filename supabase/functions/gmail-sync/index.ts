@@ -1,4 +1,39 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+
+interface EmailAccount {
+  id: string;
+  company_id: string;
+  access_token: string;
+  refresh_token: string;
+  token_expires_at: string | null;
+}
+
+interface GmailMessageId {
+  id: string;
+  threadId?: string;
+}
+
+interface GmailHeader {
+  name: string;
+  value: string;
+}
+
+interface GmailMessagePart {
+  mimeType?: string;
+  filename?: string;
+  body?: { data?: string };
+  parts?: GmailMessagePart[];
+}
+
+interface SyncedEmail {
+  from_name: string;
+  from_address: string;
+  subject: string;
+  snippet?: string;
+  is_read: boolean;
+  ai_priority?: string | null;
+  [key: string]: unknown;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,7 +145,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshAccessToken(refreshToken: string, supabaseAdmin: any, accountId: string): Promise<string> {
+async function refreshAccessToken(refreshToken: string, supabaseAdmin: SupabaseClient, accountId: string): Promise<string> {
   const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")!;
   const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
@@ -139,9 +174,9 @@ async function refreshAccessToken(refreshToken: string, supabaseAdmin: any, acco
   return data.access_token;
 }
 
-async function fetchGmailMessages(accessToken: string, account: any, userId: string, supabaseAdmin: any, maxResults: number): Promise<any[] | null> {
+async function fetchGmailMessages(accessToken: string, account: EmailAccount, userId: string, supabaseAdmin: SupabaseClient, maxResults: number): Promise<SyncedEmail[] | null> {
   // Fetch all message IDs with pagination (Gmail API max 100 per page)
-  let allMessageIds: any[] = [];
+  let allMessageIds: GmailMessageId[] = [];
   let pageToken: string | null = null;
 
   do {
@@ -165,13 +200,13 @@ async function fetchGmailMessages(accessToken: string, account: any, userId: str
   } while (pageToken);
 
   console.log(`Fetching details for ${allMessageIds.length} messages...`);
-  const emails: any[] = [];
+  const emails: SyncedEmail[] = [];
 
   // Fetch details in parallel batches of 10
   for (let i = 0; i < allMessageIds.length; i += 10) {
     const batch = allMessageIds.slice(i, i + 10);
     const results = await Promise.allSettled(
-      batch.map((msg: any) =>
+      batch.map((msg) =>
         fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -184,8 +219,8 @@ async function fetchGmailMessages(accessToken: string, account: any, userId: str
       const detail = result.value;
 
       try {
-        const headers = detail.payload?.headers || [];
-        const getHeader = (name: string) => headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
+        const headers: GmailHeader[] = detail.payload?.headers || [];
+        const getHeader = (name: string) => headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 
         const fromRaw = getHeader("From");
         const fromMatch = fromRaw.match(/^(.+?)\s*<(.+?)>$/);
@@ -204,7 +239,7 @@ async function fetchGmailMessages(accessToken: string, account: any, userId: str
 
         let bodyText = "";
         let bodyHtml = "";
-        const extractBody = (part: any) => {
+        const extractBody = (part: GmailMessagePart) => {
           if (part.mimeType === "text/plain" && part.body?.data) {
             bodyText = atob(part.body.data.replace(/-/g, "+").replace(/_/g, "/"));
           }
@@ -215,7 +250,7 @@ async function fetchGmailMessages(accessToken: string, account: any, userId: str
         };
         extractBody(detail.payload);
 
-        const hasAttachments = (detail.payload?.parts || []).some((p: any) => p.filename && p.filename.length > 0);
+        const hasAttachments = (detail.payload?.parts || []).some((p: GmailMessagePart) => p.filename && p.filename.length > 0);
 
         const dateStr = getHeader("Date");
         let receivedAt: string;
@@ -267,7 +302,7 @@ async function fetchGmailMessages(accessToken: string, account: any, userId: str
   return emails;
 }
 
-async function aiPrioritize(emails: any[], supabaseAdmin: any) {
+async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient) {
   if (!emails.length) return;
 
   const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
@@ -294,7 +329,7 @@ async function aiPrioritize(emails: any[], supabaseAdmin: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama3.2:3b",
         messages: [
           {
             role: "system",
@@ -386,7 +421,7 @@ Returner KUN valid JSON array. Ingen forklaring.`
       }
     }
 
-    console.log(`AI prioritized ${classifications.filter((c: any) => c.priority !== "none").length} emails`);
+    console.log(`AI prioritized ${classifications.filter((c) => c.priority !== "none").length} emails`);
   } catch (e) {
     console.error("AI prioritization failed:", e);
     // Don't throw - prioritization is optional

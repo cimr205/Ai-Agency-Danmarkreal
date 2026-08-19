@@ -59,6 +59,10 @@ export default {
           DEFAULT: "var(--info)",
           subtle: "var(--info-subtle)",
         },
+        stamp: {
+          DEFAULT: "hsl(var(--stamp))",
+          foreground: "hsl(var(--stamp-foreground))",
+        },
         danger: {
           DEFAULT: "var(--danger)",
           subtle: "var(--danger-subtle)",

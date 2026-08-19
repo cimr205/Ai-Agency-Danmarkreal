@@ -51,7 +51,7 @@ ${email ? `- Email: ${email}` : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "llama3.2:3b",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

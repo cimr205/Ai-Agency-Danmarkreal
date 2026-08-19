@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Wallet, Banknote, Users } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
@@ -95,12 +96,14 @@ export default function PayrollPage() {
         <Table><TableHeader><TableRow><TableHead>{t('hr.employee')}</TableHead><TableHead>{t('hr.salary')}</TableHead><TableHead>{t('hr.period')}</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (<TableRow key={i}><TableCell><Skeleton className="h-4 w-32" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell></TableRow>))
-            : filteredPayroll.length === 0 ? (<TableRow><TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
-                <div className="space-y-2">
-                  <Banknote className="h-8 w-8 mx-auto text-muted-foreground/40" />
-                  <p className="font-medium">{error ? t('hr.fetchPayrollError') : t('hr.noPayroll')}</p>
-                  <p className="text-xs max-w-sm mx-auto">{t('hr.payrollGuide') || 'Register monthly salary payments for employees. Click "Register Payroll" to add a salary record for the current period.'}</p>
-                </div>
+            : filteredPayroll.length === 0 ? (<TableRow><TableCell colSpan={3}>
+                <EmptyState
+                  bare
+                  icon={Banknote}
+                  title={error ? t('hr.fetchPayrollError') : t('hr.noPayroll')}
+                  hint={t('hr.payrollGuide') || 'Register monthly salary payments for employees. Click "Register Payroll" to add a salary record for the current period.'}
+                  action={!error ? { label: t('hr.registerPayroll'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                />
               </TableCell></TableRow>)
             : filteredPayroll.map((record) => (
               <TableRow key={record.id}>

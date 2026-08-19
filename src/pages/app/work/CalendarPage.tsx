@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Calendar, Clock, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
@@ -138,7 +139,7 @@ export default function CalendarPage() {
             ) : error ? (
               <p className="text-muted-foreground text-sm">{t('pages.calendar.fetchError')}</p>
             ) : upcomingEvents.length === 0 ? (
-              <p className="text-muted-foreground text-sm">{t('pages.calendar.empty')}</p>
+              <EmptyState bare icon={Calendar} title={t('pages.calendar.empty')} action={{ label: t('pages.calendar.newEvent'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
             ) : (
               <div className="space-y-4">
                 {upcomingEvents.map((event) => (

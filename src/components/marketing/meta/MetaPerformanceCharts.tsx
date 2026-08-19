@@ -1,82 +1,63 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 export function MetaPerformanceCharts() {
+  const { t } = useI18n();
   const [period, setPeriod] = useState("30");
 
   return (
-    <div className="space-y-4">
-      <Card className="border-0 bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-lg shadow-slate-900/20" style={{ backdropFilter: 'blur(16px)' }}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-white">Performance</CardTitle>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="h-7 w-[120px] text-[11px] bg-white/10 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 Days</SelectItem>
-                <SelectItem value="14">Last 14 Days</SelectItem>
-                <SelectItem value="30">Last 30 Days</SelectItem>
-                <SelectItem value="90">Last 90 Days</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Clicks chart placeholder */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-2xl font-bold text-white">–</p>
-                <p className="text-[11px] text-white/60">Clicks</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">–</p>
-                <p className="text-[11px] text-white/60">Conversions</p>
-              </div>
-            </div>
-            <div className="h-32 flex items-center justify-center rounded-lg bg-white/5 border border-white/10">
-              <div className="text-center">
-                <BarChart3 className="h-8 w-8 text-white/20 mx-auto mb-1" />
-                <p className="text-[11px] text-white/40">Ingen kampagnedata endnu</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-blue-400" />
-                <span className="text-[10px] text-white/60">Clicks</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-[10px] text-white/60">Conversions</span>
-              </div>
-            </div>
-          </div>
+    <div className="rounded-2xl bg-card border border-border/60 p-5 min-w-0">
+      <div className="flex items-center justify-between gap-2 mb-5">
+        <span className="text-[13px] font-medium text-foreground truncate">{t('metaAds.performance')}</span>
+        <Select value={period} onValueChange={setPeriod}>
+          <SelectTrigger className="h-7 w-[112px] text-[11px] shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">{t('metaAds.last7')}</SelectItem>
+            <SelectItem value="14">{t('metaAds.last14')}</SelectItem>
+            <SelectItem value="30">{t('metaAds.last30')}</SelectItem>
+            <SelectItem value="90">{t('metaAds.last90')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-          {/* Second chart placeholder */}
-          <div>
-            <div className="h-28 flex items-center justify-center rounded-lg bg-white/5 border border-white/10">
-              <div className="text-center">
-                <TrendingUp className="h-6 w-6 text-white/20 mx-auto mb-1" />
-                <p className="text-[11px] text-white/40">Spend & ROAS trend</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-blue-400" />
-                <span className="text-[10px] text-white/60">Clicks</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-[10px] text-white/60">Conversions</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-baseline gap-8 mb-4 flex-wrap">
+        <div className="min-w-0">
+          <p className="text-[19px] font-semibold tracking-tight">–</p>
+          <p className="text-[11px] text-muted-foreground truncate">{t('metaAds.clicks')}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[19px] font-semibold tracking-tight">–</p>
+          <p className="text-[11px] text-muted-foreground truncate">{t('metaAds.conversions')}</p>
+        </div>
+      </div>
+      <div className="h-28 flex items-center justify-center rounded-lg bg-muted/40 border border-border/50">
+        <div className="text-center">
+          <BarChart3 className="h-6 w-6 text-muted-foreground/40 mx-auto mb-1" />
+          <p className="text-[11px] text-muted-foreground/70">Ingen kampagnedata endnu</p>
+        </div>
+      </div>
+
+      <div className="h-px bg-border/50 my-5" />
+
+      <p className="text-[11.5px] text-muted-foreground mb-3">{t('metaAds.spendRoasTrend')}</p>
+      <div className="h-24 flex items-center justify-center rounded-lg bg-muted/40 border border-border/50">
+        <TrendingUp className="h-5 w-5 text-muted-foreground/40" />
+      </div>
+
+      <div className="flex items-center gap-4 mt-3">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span className="text-[10.5px] text-muted-foreground">{t('metaAds.clicks')}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-success" />
+          <span className="text-[10.5px] text-muted-foreground">{t('metaAds.conversions')}</span>
+        </div>
+      </div>
     </div>
   );
 }

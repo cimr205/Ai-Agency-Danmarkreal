@@ -1,5 +1,4 @@
 import { useState } from "react";
-import metaAdsBg from "@/assets/meta-ads-bg.png";
 import { Button } from "@/components/ui/button";
 import { MetaOverviewKPIs } from "@/components/marketing/meta/MetaOverviewKPIs";
 import { MetaAccountConnection } from "@/components/marketing/meta/MetaAccountConnection";
@@ -13,7 +12,7 @@ import { MetaQuickAnalyst } from "@/components/marketing/meta/MetaQuickAnalyst";
 import { MetaPerformanceCharts } from "@/components/marketing/meta/MetaPerformanceCharts";
 import { CreateCampaignWizard } from "@/components/marketing/meta/CreateCampaignWizard";
 import AiMediaContent from "@/components/marketing/AiMediaContent";
-import { Megaphone, LayoutDashboard, Target, Layers, Lightbulb, BarChart3, Plus, Sparkles } from "lucide-react";
+import { LayoutDashboard, Target, Layers, Lightbulb, BarChart3, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 
@@ -32,84 +31,71 @@ export default function MetaAdsManagePage() {
   ];
 
   return (
-    <div className="flex gap-0 -m-6 relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <img src={metaAdsBg} alt="" className="w-full h-full object-cover opacity-15 blur-[2px]" />
-        <div className="absolute inset-0 bg-background/60" />
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight text-foreground">{t('pages.meta.title')}</h1>
+          <p className="text-[13px] text-muted-foreground mt-0.5">{t('pages.meta.subtitle')}</p>
+        </div>
+        <Button className="gap-2" onClick={() => setWizardOpen(true)}>
+          <Plus className="h-4 w-4" />
+          {t('pages.meta.createCampaign')}
+        </Button>
       </div>
 
-      <aside className="w-44 shrink-0 liquid-glass-sidebar min-h-[calc(100vh-4rem)]">
-        <div className="p-3 space-y-0.5">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left",
-                  isActive
-                    ? "liquid-glass-card text-primary shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/40"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </aside>
+      {/* Section tabs — single flat row, no second sidebar */}
+      <div className="flex items-center gap-1 flex-wrap border-b border-border/60 -mb-px">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors shrink-0",
+                isActive
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Megaphone className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">{t('pages.meta.title')}</h1>
-                <p className="text-sm text-muted-foreground">{t('pages.meta.subtitle')}</p>
-              </div>
+      <div className="space-y-6">
+        {activeSection !== "media" && <MetaOverviewKPIs />}
+
+        {activeSection === "overview" && (
+          <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+            <div className="space-y-6 min-w-0">
+              <MetaAccountConnection />
+              <MetaCampaignsTable compact />
             </div>
-            <Button className="gap-2" onClick={() => setWizardOpen(true)}>
-              <Plus className="h-4 w-4" />
-              {t('pages.meta.createCampaign')}
-            </Button>
+            <div className="min-w-0">
+              <MetaPerformanceCharts />
+            </div>
           </div>
+        )}
 
-          {activeSection !== "media" && <MetaOverviewKPIs />}
+        {activeSection === "campaigns" && <MetaCampaignsTable />}
+        {activeSection === "adsets" && <MetaAdSetsTable />}
 
-          {activeSection === "overview" && (
-            <div className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-                <div className="space-y-6">
-                  <MetaAccountConnection />
-                  <MetaCampaignsTable compact />
-                </div>
-                <MetaPerformanceCharts />
-              </div>
+        {activeSection === "insights" && (
+          <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <MetaAIRecommendations />
+              <MetaQuickAnalyst />
             </div>
-          )}
+            <MetaAIAdGenerator />
+          </div>
+        )}
 
-          {activeSection === "campaigns" && <MetaCampaignsTable />}
-          {activeSection === "adsets" && <MetaAdSetsTable />}
-
-          {activeSection === "insights" && (
-            <div className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <MetaAIRecommendations />
-                <MetaQuickAnalyst />
-              </div>
-              <MetaAIAdGenerator />
-            </div>
-          )}
-
-          {activeSection === "reports" && <MetaReports />}
-          {activeSection === "media" && <AiMediaContent />}
-        </div>
+        {activeSection === "reports" && <MetaReports />}
+        {activeSection === "media" && <AiMediaContent />}
       </div>
 
       <CreateCampaignWizard open={wizardOpen} onOpenChange={setWizardOpen} />

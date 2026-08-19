@@ -216,7 +216,7 @@ export default function AiMediaContent() {
                   />
                   <Button
                     onClick={handleGenerate}
-                    disabled={generateMutation.isPending || !prompt.trim()}
+                    disabled={generateMutation.isPending}
                     className="w-full gap-2"
                     size="lg"
                   >

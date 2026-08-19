@@ -22,6 +22,7 @@ import {
 } from "@/hooks/api/useIcp";
 import IcpWizard from "@/components/icp/IcpWizard";
 import IcpScoreBreakdown from "@/components/icp/IcpScoreBreakdown";
+import { useI18n } from "@/lib/i18n";
 
 function scoreTierBadge(score: number) {
   if (score >= 80) return <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-xs">Hot</Badge>;
@@ -31,6 +32,7 @@ function scoreTierBadge(score: number) {
 }
 
 export default function IcpPage() {
+  const { t } = useI18n();
   const [view, setView] = useState<"list" | "wizard" | "matches">("list");
   const [editingIcp, setEditingIcp] = useState<IcpProfile | null>(null);
   const [selectedIcpId, setSelectedIcpId] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function IcpPage() {
 
   const handleDelete = (id: string) => {
     deleteIcp.mutate(id, {
-      onSuccess: () => toast.success("ICP archived"),
+      onSuccess: () => toast.success(t('icp.archived')),
       onError: (e) => toast.error(e.message),
     });
   };
@@ -56,7 +58,7 @@ export default function IcpPage() {
     setSelectedIcpId(id);
     scoreLeads.mutate(id, {
       onSuccess: (d) => {
-        toast.success(`Scored ${d.scored_count} leads`);
+        toast.success(t('icp.scoredCount').replace('{count}', String(d.scored_count)));
         setView("matches");
       },
       onError: (e) => toast.error(e.message),
@@ -83,14 +85,14 @@ export default function IcpPage() {
         <div className="flex items-center justify-between">
           <div>
             <Button variant="ghost" size="sm" onClick={() => setView("list")} className="mb-2 gap-1.5 text-muted-foreground">
-              ← Back to ICPs
+              {t('icp.backToIcps')}
             </Button>
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Lead Matches: {selectedIcp?.name}
+              {t('icp.leadMatches').replace('{name}', selectedIcp?.name || '')}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {scores.length} leads scored • Sorted by best match
+              {t('icp.leadsScored').replace('{count}', String(scores.length))} • {t('icp.sortedByBestMatch')}
             </p>
           </div>
           <Button
@@ -99,7 +101,7 @@ export default function IcpPage() {
             className="gap-1.5"
           >
             {scoreLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            Re-Score Leads
+            {t('icp.reScoreLeads')}
           </Button>
         </div>
 
@@ -110,9 +112,9 @@ export default function IcpPage() {
         ) : scores.length === 0 ? (
           <Card className="p-12 text-center">
             <Target className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-foreground mb-1">No scores yet</h3>
+            <h3 className="text-base font-semibold text-foreground mb-1">{t('icp.noScoresYet')}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Click "Re-Score Leads" to analyze your existing leads against this ICP.
+              {t('icp.noScoresDesc')}
             </p>
           </Card>
         ) : (
@@ -121,11 +123,11 @@ export default function IcpPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Lead</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead className="text-center">Score</TableHead>
-                    <TableHead className="text-center">Tier</TableHead>
-                    <TableHead>Action</TableHead>
+                    <TableHead>{t('icp.lead')}</TableHead>
+                    <TableHead>{t('icp.industry')}</TableHead>
+                    <TableHead className="text-center">{t('icp.score')}</TableHead>
+                    <TableHead className="text-center">{t('icp.tier')}</TableHead>
+                    <TableHead>{t('icp.action')}</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -161,7 +163,7 @@ export default function IcpPage() {
         <Dialog open={!!scoreDetailId} onOpenChange={(o) => !o && setScoreDetailId(null)}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Score Breakdown</DialogTitle>
+              <DialogTitle>{t('icp.scoreBreakdown')}</DialogTitle>
             </DialogHeader>
             {detailScore && (
               <IcpScoreBreakdown
@@ -184,13 +186,13 @@ export default function IcpPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 mb-2">
             <Target className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Ideal Customer Profiles</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('icp.title')}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Define who your best customers are and score every lead automatically.
+            {t('icp.subtitle')}
           </p>
         </div>
         <Button onClick={() => { setEditingIcp(null); setView("wizard"); }} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Create ICP
+          <Plus className="h-4 w-4" /> {t('icp.createIcp')}
         </Button>
       </div>
 
@@ -199,19 +201,19 @@ export default function IcpPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{profiles.length}</p>
-            <p className="text-xs text-muted-foreground">Total ICPs</p>
+            <p className="text-xs text-muted-foreground">{t('icp.totalIcps')}</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{profiles.filter(p => p.is_default).length}</p>
-            <p className="text-xs text-muted-foreground">Default</p>
+            <p className="text-xs text-muted-foreground">{t('icp.defaultLabel')}</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{profiles.reduce((a, p) => a + p.industry.length, 0)}</p>
-            <p className="text-xs text-muted-foreground">Industries Targeted</p>
+            <p className="text-xs text-muted-foreground">{t('icp.industriesTargeted')}</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{profiles.reduce((a, p) => a + p.target_countries.length, 0)}</p>
-            <p className="text-xs text-muted-foreground">Countries</p>
+            <p className="text-xs text-muted-foreground">{t('icp.countries')}</p>
           </Card>
         </div>
       )}
@@ -224,12 +226,12 @@ export default function IcpPage() {
       ) : profiles.length === 0 ? (
         <Card className="p-12 text-center">
           <Target className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No ICPs yet</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t('icp.noIcpsYet')}</h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-            Create your first Ideal Customer Profile to start scoring and prioritizing leads automatically.
+            {t('icp.noIcpsDesc')}
           </p>
           <Button onClick={() => { setEditingIcp(null); setView("wizard"); }} className="gap-1.5">
-            <Plus className="h-4 w-4" /> Create Your First ICP
+            <Plus className="h-4 w-4" /> {t('icp.createFirstIcp')}
           </Button>
         </Card>
       ) : (
@@ -240,7 +242,7 @@ export default function IcpPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-semibold text-foreground">{icp.name}</h3>
-                    {icp.is_default && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">Default</Badge>}
+                    {icp.is_default && <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">{t('icp.defaultLabel')}</Badge>}
                   </div>
                   {icp.description && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{icp.description}</p>
@@ -266,7 +268,7 @@ export default function IcpPage() {
                   </Badge>
                 )}
                 {icp.industry.length > 3 && (
-                  <Badge variant="outline" className="text-xs">+{icp.industry.length - 3} more</Badge>
+                  <Badge variant="outline" className="text-xs">{t('icp.moreCount').replace('{count}', String(icp.industry.length - 3))}</Badge>
                 )}
               </div>
 
@@ -279,7 +281,7 @@ export default function IcpPage() {
                   className="gap-1.5 flex-1"
                 >
                   {scoreLeads.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                  Score Leads
+                  {t('icp.scoreLeads')}
                 </Button>
                 <Button
                   size="sm"
@@ -287,14 +289,14 @@ export default function IcpPage() {
                   onClick={() => { setSelectedIcpId(icp.id); setView("matches"); }}
                   className="gap-1.5"
                 >
-                  <Eye className="h-3.5 w-3.5" /> Matches
+                  <Eye className="h-3.5 w-3.5" /> {t('icp.matches')}
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => { setEditingIcp(icp); setView("wizard"); }}
                 >
-                  Edit
+                  {t('icp.edit')}
                 </Button>
                 {!icp.is_default && (
                   <Button

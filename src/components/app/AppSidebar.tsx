@@ -1,42 +1,40 @@
+import { useState } from "react";
 import {
   LayoutDashboard, Users, Briefcase, FileText, CreditCard,
   Calendar, ClipboardList, Mail, Settings,
-  TrendingUp, Clock, LogOut, ChevronDown, Target,
-  Megaphone, Bot, Shield, Send, Sparkles, Phone, Building2, Zap,
+  TrendingUp, Clock, LogOut, Target,
+  Megaphone, Bot, Send, Sparkles, Phone, Zap,
   UserCheck, CalendarDays, Wallet, UserPlus, Activity, BarChart3, CalendarClock,
-  Webhook, BookOpen,
+  Webhook, BookOpen, Menu,
 } from "lucide-react";
 import logo from '@/assets/logo.png';
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarHeader, SidebarFooter, useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isLocale, useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
-export function AppSidebar() {
-  const { state } = useSidebar();
-  const { profile, isSystemAdmin, isAdmin, roles, logout } = useAuth();
-  const navigate = useNavigate();
-  const params = useParams();
-  const locale = isLocale(params.locale) ? params.locale : 'en';
-  const base = `/${locale}/app`;
-  const collapsed = state === "collapsed";
+interface NavItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+function useNavData() {
+  const { isAdmin, roles } = useAuth();
   const { t } = useI18n();
 
   const isManagerOrAbove = isAdmin || roles.some(r => r.role === 'manager');
   const isOwner = roles.some(r => r.role === 'owner' || r.role === 'company_admin' || r.role === 'system_admin');
 
-  const crmItems = [
+  const overviewItems: NavItem[] = [
     { title: t('nav.dashboard'), url: "dashboard", icon: LayoutDashboard },
+  ];
+
+  const crmItems: NavItem[] = [
     { title: t('nav.leads'), url: "crm/leads", icon: Users },
     { title: t('nav.deals'), url: "crm/deals", icon: Briefcase },
     { title: t('nav.pipeline'), url: "crm/pipeline", icon: TrendingUp },
@@ -44,49 +42,46 @@ export function AppSidebar() {
     { title: t('nav.icp') || "ICP Finder", url: "crm/icp", icon: Target },
   ];
 
-  const marketingItems = [
+  const marketingItems: NavItem[] = [
     { title: t('nav.metaAds'), url: "marketing/meta-ads", icon: Megaphone },
     { title: t('nav.coldCaller'), url: "marketing/cold-caller", icon: Phone },
     { title: t('nav.voiceAgent') || 'Voice Agent', url: "marketing/voice-agent", icon: Bot },
-  ];
-
-  const emailItems = [
     { title: t('nav.smartInbox'), url: "email/emails", icon: Sparkles },
     { title: t('nav.bulkEmail'), url: "email/bulk", icon: Send },
     { title: t('nav.emailTemplates'), url: "email/templates", icon: FileText },
   ];
 
-  const financeItems = [
+  const financeItems: NavItem[] = [
     { title: t('nav.invoices'), url: "finance/invoices", icon: FileText },
     { title: t('nav.quotes'), url: "finance/quotes", icon: FileText },
     { title: t('nav.payments'), url: "finance/payments", icon: CreditCard },
   ];
 
-  const hrEmployeeItems = [
+  const hrEmployeeItems: NavItem[] = [
     { title: t('nav.timeTracking') || 'Time Tracking', url: "hr/time-tracking", icon: Clock },
     { title: t('nav.attendance') || 'Attendance', url: "hr/attendance", icon: Activity },
     { title: t('nav.workSchedule') || 'Work Schedule', url: "hr/work-schedule", icon: CalendarDays },
     { title: t('nav.leave') || 'Leave', url: "hr/leave", icon: CalendarClock },
   ];
 
-  const hrAdminItems = [
+  const hrAdminItems: NavItem[] = [
     { title: t('nav.employees') || 'Employees', url: "hr/employees", icon: UserCheck },
     { title: t('nav.workforceDashboard') || 'Workforce', url: "hr/workforce", icon: BarChart3 },
     { title: t('nav.payroll') || 'Payroll', url: "hr/payroll", icon: Wallet },
     { title: t('nav.recruitment') || 'Recruitment', url: "hr/recruitment", icon: UserPlus },
   ];
 
-  const hrItems = [
+  const hrItems: NavItem[] = [
     ...hrEmployeeItems,
     ...(isOwner || isManagerOrAbove ? hrAdminItems : []),
   ];
 
-  const productivityItems = [
+  const productivityItems: NavItem[] = [
     { title: t('nav.tasks'), url: "work/tasks", icon: ClipboardList },
     { title: t('nav.calendar'), url: "work/calendar", icon: Calendar },
   ];
 
-  const systemItems = [
+  const systemItems: NavItem[] = [
     { title: "Autopilot", url: "autopilot", icon: Zap },
     { title: t('nav.clowdbot'), url: "pa", icon: Bot },
     { title: 'Hjælpecenter', url: "help", icon: BookOpen },
@@ -94,6 +89,26 @@ export function AppSidebar() {
     ...(isOwner ? [{ title: t('nav.webhooks'), url: "settings/webhooks", icon: Webhook }] : []),
     ...(isAdmin ? [{ title: 'Monitoring', url: "monitoring", icon: Activity }] : []),
   ];
+
+  return [
+    { label: null, items: overviewItems },
+    { label: t('nav.crm'), items: crmItems },
+    { label: t('nav.marketing'), items: marketingItems },
+    { label: t('nav.finance'), items: financeItems },
+    { label: t('nav.hr') || 'HR', items: hrItems },
+    { label: t('nav.productivity'), items: productivityItems },
+    { label: t('nav.system'), items: systemItems },
+  ];
+}
+
+function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+  const { profile, logout } = useAuth();
+  const navigate = useNavigate();
+  const params = useParams();
+  const locale = isLocale(params.locale) ? params.locale : 'en';
+  const base = `/${locale}/app`;
+  const { t } = useI18n();
+  const groups = useNavData();
 
   const handleLogout = async () => {
     await logout();
@@ -105,89 +120,68 @@ export function AppSidebar() {
     return email.slice(0, 2).toUpperCase();
   };
 
-  const renderItems = (items: typeof crmItems) =>
-    items.map((item) => {
-      const tourId = item.url === 'dashboard' ? 'dashboard'
-        : item.url === 'crm/leads' ? 'leads'
-        : item.url === 'crm/pipeline' ? 'pipeline'
-        : item.url === 'pa' ? 'pa'
-        : item.url === 'settings/company' ? 'settings'
-        : undefined;
-
-      return (
-        <SidebarMenuItem key={item.url}>
-          <SidebarMenuButton asChild>
-            <NavLink
-              to={`${base}/${item.url}`}
-              className="sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-md"
-              activeClassName="sidebar-nav-active font-medium"
-              {...(tourId ? { 'data-tour': tourId } : {})}
-            >
-              <item.icon className="sidebar-nav-icon shrink-0" />
-              {!collapsed && <span className="text-[13px]">{item.title}</span>}
-            </NavLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      );
-    });
-
-  const renderGroup = (label: string, items: typeof crmItems) => (
-    <SidebarGroup className="mb-0.5">
-      <Collapsible defaultOpen className="group/collapsible">
-        <CollapsibleTrigger asChild>
-          <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:bg-secondary/50 rounded-md px-3 py-1.5 mt-3">
-            <span className="sidebar-section-label text-sidebar-foreground/50">{label}</span>
-            {!collapsed && <ChevronDown className="h-3 w-3 text-sidebar-foreground/30 transition-transform group-data-[state=open]/collapsible:rotate-180" />}
-          </SidebarGroupLabel>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(items)}</SidebarMenu>
-          </SidebarGroupContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarGroup>
-  );
-
   return (
-    <Sidebar className="border-r border-border" style={{ background: 'var(--bg-surface)' }}>
-      <SidebarHeader className="p-4 border-b border-border">
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="AI Agency Danmark" className="h-7 w-auto" />
-          {!collapsed && (
-            <span className="font-display font-semibold text-sm text-foreground">AI Agency Danmark</span>
-          )}
+    <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
+      {/* Header: logo + product name, always fully legible */}
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-sidebar-border shrink-0">
+        <img src={logo} alt="AI Agency Danmark" className="h-8 w-8 rounded-md shrink-0" />
+        <div className="min-w-0">
+          <div className="font-display font-semibold text-sm text-sidebar-foreground leading-tight truncate">
+            AI Agency Danmark
+          </div>
+          <div className="text-[11px] text-sidebar-foreground/50 leading-tight truncate">
+            {t('appName') === 'AI Agency Danmark' ? (locale === 'da' ? 'Alt-i-ét workspace' : 'All-in-one workspace') : t('appName')}
+          </div>
         </div>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="px-2">
-        {renderGroup(t('nav.crm'), crmItems)}
-        {renderGroup(t('nav.marketing'), marketingItems)}
-        {renderGroup(t('nav.emailSection'), emailItems)}
-        {renderGroup(t('nav.finance'), financeItems)}
-        {renderGroup(t('nav.hr') || 'HR', hrItems)}
-        {renderGroup(t('nav.productivity'), productivityItems)}
-        {renderGroup(t('nav.system'), systemItems)}
-      </SidebarContent>
+      {/* Nav: solid background, generous contrast, clearly separated groups */}
+      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+        {groups.map((group, i) => (
+          group.items.length === 0 ? null : (
+            <div key={group.label ?? `group-${i}`}>
+              {group.label && (
+                <div className="px-2 mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/45">
+                  {group.label}
+                </div>
+              )}
+              <ul className="space-y-0.5">
+                {group.items.map(item => (
+                  <li key={item.url}>
+                    <NavLink
+                      to={`${base}/${item.url}`}
+                      onClick={onNavigate}
+                      className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13.5px] text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                      activeClassName="!bg-primary/15 !text-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.title}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        ))}
+      </nav>
 
-      <SidebarFooter className="p-4 border-t border-border">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
+      {/* Footer: user + sign out, solid background so it never blends with page content */}
+      <div className="p-3 border-t border-sidebar-border shrink-0 bg-sidebar">
+        <div className="flex items-center gap-3 px-1">
+          <Avatar className="h-8 w-8 shrink-0">
             <AvatarImage src={profile?.avatar_url || undefined} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-display">
               {getInitials(profile?.full_name || null, profile?.email || '')}
             </AvatarFallback>
           </Avatar>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate font-display">
-                {profile?.full_name || profile?.email}
-              </p>
-              <p className="text-[11px] text-sidebar-foreground/50 truncate">
-                {profile?.email}
-              </p>
-            </div>
-          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">
+              {profile?.full_name || profile?.email}
+            </p>
+            <p className="text-[11px] text-sidebar-foreground/50 truncate">
+              {profile?.email}
+            </p>
+          </div>
           <Button
             variant="ghost" size="icon" onClick={handleLogout}
             className="shrink-0 text-sidebar-foreground/40 hover:text-sidebar-foreground"
@@ -196,7 +190,37 @@ export function AppSidebar() {
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </div>
+  );
+}
+
+export function MobileSidebarTrigger() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("lg:hidden shrink-0 text-muted-foreground hover:text-foreground")}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-72">
+        <SidebarBody onNavigate={() => setMobileOpen(false)} />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export function AppSidebar() {
+  return (
+    <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 border-r border-sidebar-border h-screen sticky top-0">
+      <SidebarBody />
+    </aside>
   );
 }

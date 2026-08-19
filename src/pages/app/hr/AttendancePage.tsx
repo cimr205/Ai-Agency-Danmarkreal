@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Clock, LogIn, LogOut, UserCheck } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
@@ -55,7 +56,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Check-in Section */}
-      <Card>
+      <Card id="check-in-card">
         <CardContent className="pt-6">
           <div className="flex items-end gap-3">
             <div className="flex-1 space-y-1">
@@ -88,12 +89,14 @@ export default function AttendancePage() {
         <Table><TableHeader><TableRow><TableHead>{t('hr.employee')}</TableHead><TableHead>{t('hr.checkIn')}</TableHead><TableHead>{t('hr.checkOut')}</TableHead><TableHead>{t('hr.statusLabel')}</TableHead><TableHead>{t('hr.action')}</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (<TableRow key={i}><TableCell><Skeleton className="h-4 w-32" /></TableCell><TableCell><Skeleton className="h-4 w-16" /></TableCell><TableCell><Skeleton className="h-4 w-16" /></TableCell><TableCell><Skeleton className="h-6 w-20" /></TableCell><TableCell><Skeleton className="h-8 w-24" /></TableCell></TableRow>))
-            : filteredAttendance.length === 0 ? (<TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                <div className="space-y-2">
-                  <Clock className="h-8 w-8 mx-auto text-muted-foreground/40" />
-                  <p className="font-medium">{error ? t('hr.fetchAttendanceError') : t('hr.noAttendance')}</p>
-                  <p className="text-xs max-w-sm mx-auto">{t('hr.attendanceGuide') || 'Track employee check-ins and check-outs. Select an employee above and click "Check In" to register their arrival.'}</p>
-                </div>
+            : filteredAttendance.length === 0 ? (<TableRow><TableCell colSpan={5}>
+                <EmptyState
+                  bare
+                  icon={Clock}
+                  title={error ? t('hr.fetchAttendanceError') : t('hr.noAttendance')}
+                  hint={t('hr.attendanceGuide') || 'Track employee check-ins and check-outs. Select an employee above and click "Check In" to register their arrival.'}
+                  action={!error ? { label: t('hr.checkIn'), onClick: () => document.getElementById('check-in-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), icon: LogIn } : undefined}
+                />
               </TableCell></TableRow>)
             : filteredAttendance.map((record) => (
               <TableRow key={record.id}>

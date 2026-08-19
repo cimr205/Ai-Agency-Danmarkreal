@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, Eye, MousePointerClick, BarChart3, TrendingUp, Wallet, CreditCard, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/lib/i18n";
 
 type BalanceView = "funds" | "outstanding";
 
@@ -38,6 +38,7 @@ const emptyKpi: KpiData = {
 };
 
 export function MetaOverviewKPIs() {
+  const { t } = useI18n();
   const [balanceView, setBalanceView] = useState<BalanceView>("funds");
   const [accounts, setAccounts] = useState<AdAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -149,7 +150,7 @@ export function MetaOverviewKPIs() {
   }, [selectedAccountId, token, accounts, fetchKpis]);
 
   const selectedAccount = accounts.find(a => a.account_id === selectedAccountId);
-  const selectedLabel = selectedAccount?.account_name || selectedAccount?.account_id || "Select account";
+  const selectedLabel = selectedAccount?.account_name || selectedAccount?.account_id || t('metaAds.selectAccount');
 
   const outstandingValue = (() => {
     if (data.spend_limit && data.amountSpent) {
@@ -162,15 +163,15 @@ export function MetaOverviewKPIs() {
     ? (data.balance !== null ? `${data.balance} ${data.currency}` : (data.fundingAmount || "–"))
     : (outstandingValue !== null ? `${outstandingValue} ${data.currency}` : "–");
 
-  const balanceCardLabel = balanceView === "funds" ? "FUNDS" : "OUTSTANDING";
+  const balanceCardLabel = balanceView === "funds" ? t('metaAds.funds') : t('metaAds.outstanding');
 
   const kpiDefs = [
     { label: balanceCardLabel, icon: balanceView === "funds" ? Wallet : CreditCard, value: balanceCardValue, highlight: true },
-    { label: "SPEND (30 DAYS)", icon: DollarSign, value: data.totalSpend !== null ? `${data.totalSpend} ${data.currency}` : "–" },
-    { label: "IMPRESSIONS", icon: Eye, value: data.impressions || "–" },
-    { label: "CLICKS", icon: MousePointerClick, value: data.clicks || "–" },
-    { label: "AVG CTR", icon: BarChart3, value: data.ctr || "–" },
-    { label: "ROAS", icon: TrendingUp, value: "–" },
+    { label: t('metaAds.spend30d'), icon: DollarSign, value: data.totalSpend !== null ? `${data.totalSpend} ${data.currency}` : "–" },
+    { label: t('metaAds.impressions'), icon: Eye, value: data.impressions || "–" },
+    { label: t('metaAds.clicks'), icon: MousePointerClick, value: data.clicks || "–" },
+    { label: t('metaAds.avgCtr'), icon: BarChart3, value: data.ctr || "–" },
+    { label: t('metaAds.roas'), icon: TrendingUp, value: "–" },
   ];
 
   return (
@@ -178,7 +179,7 @@ export function MetaOverviewKPIs() {
       {/* Account selector */}
       {accounts.length > 1 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Ad Account:</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('metaAds.adAccount')}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -214,61 +215,42 @@ export function MetaOverviewKPIs() {
         </div>
       )}
 
-      {/* KPI cards */}
-      <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3", loading && "opacity-50 transition-opacity")}>
-        {kpiDefs.map((kpiItem) => (
-          <Card key={kpiItem.label} className={cn("liquid-glass-card border-0 shadow-sm", kpiItem.highlight && "ring-1 ring-primary/20")}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <kpiItem.icon className={cn("h-3.5 w-3.5", kpiItem.highlight ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{kpiItem.label}</span>
-              </div>
-              <div className="text-xl font-bold text-foreground">{kpiItem.value}</div>
-
+      {/* Overview — flowing stats strip, no boxes */}
+      <div className={cn(
+        "flex flex-wrap items-stretch gap-x-8 gap-y-4 py-4 border-y border-border/60",
+        loading && "opacity-50 transition-opacity",
+      )}>
+        {kpiDefs.map((kpiItem, i) => (
+          <div key={kpiItem.label} className="flex items-stretch gap-x-8">
+            {i > 0 && <div className="hidden sm:block w-px bg-border/60" aria-hidden />}
+            <div className="shrink-0">
+              <div className="text-[11.5px] text-muted-foreground first-letter:uppercase">{kpiItem.label}</div>
+              <div className="text-[19px] font-semibold tracking-tight tabular-nums mt-0.5">{kpiItem.value}</div>
               {kpiItem.highlight ? (
-                <div className="mt-1.5 space-y-1.5">
-                  <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setBalanceView("funds")}
-                      className={cn(
-                        "flex-1 text-[10px] font-medium px-2 py-1 rounded transition-all",
-                        balanceView === "funds"
-                          ? "bg-background shadow-sm text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Funds
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBalanceView("outstanding")}
-                      className={cn(
-                        "flex-1 text-[10px] font-medium px-2 py-1 rounded transition-all",
-                        balanceView === "outstanding"
-                          ? "bg-background shadow-sm text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Outstanding
-                    </button>
-                  </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setBalanceView(balanceView === "funds" ? "outstanding" : "funds")}
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-2"
+                  >
+                    {balanceView === "funds" ? t('metaAds.outstandingTab') : t('metaAds.fundsTab')}
+                  </button>
                   <a
                     href={data.accountId ? `https://business.facebook.com/ads/manager/account_settings/account_billing/?act=${data.accountId}` : "https://business.facebook.com/billing"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[10px] text-primary hover:underline inline-block"
+                    className="text-[11px] text-primary hover:underline"
                   >
-                    Add funds →
+                    {t('metaAds.addFunds')}
                   </a>
                 </div>
               ) : (
-                <p className="text-[10px] text-muted-foreground/60 mt-1">
-                  {kpiItem.value === "–" ? "No data yet" : "Last 30 days"}
+                <p className="text-[10.5px] text-muted-foreground/60 mt-0.5">
+                  {kpiItem.value === "–" ? t('metaAds.noDataYet') : t('metaAds.last30Days')}
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
     </div>

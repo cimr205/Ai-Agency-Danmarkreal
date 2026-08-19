@@ -95,7 +95,7 @@ function CallerRing({ status }: { status: string }) {
 }
 
 /* ─── Numpad Dialer ─── */
-function Numpad({ value, onChange, onCall, disabled }: { value: string; onChange: (v: string) => void; onCall: () => void; disabled: boolean }) {
+function Numpad({ value, onChange, onCall }: { value: string; onChange: (v: string) => void; onCall: () => void }) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
   const sub = ["", "ABC", "DEF", "GHI", "JKL", "MNO", "PQRS", "TUV", "WXYZ", "", "+", ""];
   return (
@@ -130,7 +130,7 @@ function Numpad({ value, onChange, onCall, disabled }: { value: string; onChange
       </div>
       <Button
         onClick={onCall}
-        disabled={disabled || !value}
+        disabled={!value}
         className="w-full h-14 rounded-xl text-lg gap-3 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 shadow-lg shadow-emerald-500/25 transition-all active:scale-[0.97]"
       >
         <Phone className="h-5 w-5" /> Ring op
@@ -393,14 +393,14 @@ export default function ColdCallerPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-2xl opacity-50 group-hover:opacity-75 blur transition-opacity" />
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary/60 rounded-2xl opacity-50 group-hover:opacity-75 blur transition-opacity" />
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70">
               <Zap className="h-6 w-6 text-white" />
             </div>
             {isSessionActive && <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-400 animate-pulse border-2 border-background" />}
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Power Dialer
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
@@ -444,8 +444,18 @@ export default function ColdCallerPage() {
 
           <Button
             size="lg"
-            onClick={isSessionActive ? handleEndSession : () => setConfirmStartOpen(true)}
-              disabled={!isConnected || !selectedFromNumber || startSession.isPending}
+            onClick={isSessionActive ? handleEndSession : () => {
+              if (!isConnected) {
+                toast({ title: "Twilio ikke forbundet", description: "Forbind en Twilio-konto under fanen 'Konto' for at starte opkald.", variant: "destructive" });
+                return;
+              }
+              if (!selectedFromNumber) {
+                toast({ title: "Vælg et afsendernummer", description: "Vælg hvilket nummer opkald skal foretages fra.", variant: "destructive" });
+                return;
+              }
+              setConfirmStartOpen(true);
+            }}
+            disabled={startSession.isPending}
             className={cn(
               "gap-2 rounded-xl px-6 transition-all duration-300",
               isSessionActive
@@ -550,13 +560,43 @@ export default function ColdCallerPage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold tracking-tight">Kom i gang med Power Dialer</h2>
-                    <p className="text-muted-foreground mt-2">Ring op til dine leads direkte fra platformen. Sæt det op på 3 minutter.</p>
+                    <p className="text-muted-foreground mt-2">Ring op til dine leads direkte fra platformen.</p>
                   </div>
                 </div>
               </div>
 
+              {/* Fast path: shared Twilio connection */}
+              <div className="px-6 pt-6">
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="text-sm font-semibold flex items-center gap-1.5"><Wifi className="h-4 w-4 text-emerald-400" /> Hurtigste vej: brug jeres delte forbindelse</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Klar på et øjeblik — ingen Twilio-konto nødvendig.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="gap-2 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700"
+                    disabled={connectDefaultTwilio.isPending}
+                    onClick={async () => {
+                      try {
+                        await connectDefaultTwilio.mutateAsync();
+                        toast({ title: "Twilio forbundet!", description: "Standardforbindelsen er nu aktiv for din virksomhed." });
+                      } catch (e) {
+                        toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
+                      }
+                    }}
+                  >
+                    {connectDefaultTwilio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
+                    Brug eksisterende forbindelse
+                  </Button>
+                </div>
+                <div className="relative text-center text-xs text-muted-foreground my-4">
+                  <span className="bg-card px-2 relative z-10">eller forbind din egen Twilio-konto (kræver teknisk opsætning, ca. 10-15 min)</span>
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-border/40" />
+                </div>
+              </div>
+
               {/* Steps */}
-              <div className="p-6 space-y-4">
+              <div className="p-6 pt-0 space-y-4">
                 <div className="grid gap-3">
                   {[
                     {
@@ -907,8 +947,21 @@ export default function ColdCallerPage() {
                 <Numpad
                   value={manualNumber}
                   onChange={setManualNumber}
-                  onCall={() => handleStartCall(manualNumber)}
-                  disabled={!isConnected || !isSessionActive || !selectedFromNumber}
+                  onCall={() => {
+                    if (!isConnected) {
+                      toast({ title: "Twilio ikke forbundet", description: "Forbind en Twilio-konto under fanen 'Konto' for at ringe op.", variant: "destructive" });
+                      return;
+                    }
+                    if (!isSessionActive) {
+                      toast({ title: "Ingen aktiv session", description: "Start en opkaldssession, før du kan ringe manuelt op.", variant: "destructive" });
+                      return;
+                    }
+                    if (!selectedFromNumber) {
+                      toast({ title: "Vælg et afsendernummer", description: "Vælg hvilket nummer opkald skal foretages fra.", variant: "destructive" });
+                      return;
+                    }
+                    handleStartCall(manualNumber);
+                  }}
                 />
               )}
             </Card>
@@ -1272,7 +1325,7 @@ export default function ColdCallerPage() {
                     </div>
                   </div>
                   <h3 className="font-semibold text-lg">Forbind din Twilio-konto</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">Du skal bruge en Twilio-konto for at ringe. Det tager under 3 minutter.</p>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">Brug jeres delte forbindelse med det samme, eller forbind din egen Twilio-konto (kræver teknisk opsætning, ca. 10-15 min).</p>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-2">

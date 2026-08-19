@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/components/ui/toaster";
@@ -17,6 +17,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 // CommandPalette removed — now embedded inside WorkspaceShell
 const CookieConsentLazy = lazy(() => import("@/components/shared/CookieConsent").then(m => ({ default: m.CookieConsent })));
 import { SessionTimeoutWarning } from '@/components/session/SessionTimeoutWarning';
+import { useMyBlockedModules, pathToModule } from '@/hooks/api/useModuleAccess';
 
 // Lazy-load ALL pages for fast initial load
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -144,13 +145,34 @@ const LocaleLayout = () => {
   );
 };
 
+// Gates direct URL navigation the same way the sidebar is gated — hiding a
+// nav item is cosmetic on its own; a restricted user could otherwise still
+// reach the page by typing/bookmarking the URL.
+const ModuleAccessGuard = ({ children }: { children: ReactNode }) => {
+  const params = useParams();
+  const location = useLocation();
+  const locale = isLocale(params.locale) ? params.locale : 'en';
+  const blockedModules = useMyBlockedModules();
+
+  const base = `/${locale}/app/`;
+  const relativePath = location.pathname.startsWith(base) ? location.pathname.slice(base.length) : '';
+  const module = pathToModule(relativePath);
+
+  if (module && blockedModules.has(module)) {
+    return <Navigate to={`/${locale}/app/dashboard`} replace />;
+  }
+  return <>{children}</>;
+};
+
 const AppRouteLayout = () => {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
   return (
     <Suspense fallback={<PageLoader />}>
       <WorkspaceShell basePath={`/${locale}/app`}>
-        <Outlet />
+        <ModuleAccessGuard>
+          <Outlet />
+        </ModuleAccessGuard>
       </WorkspaceShell>
     </Suspense>
   );

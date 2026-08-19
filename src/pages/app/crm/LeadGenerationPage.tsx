@@ -57,6 +57,13 @@ function emailBadge(status: LeadGenResult["email_status"]) {
   return map[status] || map.missing;
 }
 
+const EMAIL_STATUS_LABEL: Record<string, string> = {
+  verified: "Verificeret",
+  likely_valid: "Sandsynligvis gyldig",
+  unverified: "Ikke verificeret",
+  missing: "Mangler",
+};
+
 function validationBadge(status: LeadGenResult["validation_status"]) {
   const map = {
     valid: { cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20", Icon: ShieldCheck },
@@ -289,7 +296,7 @@ export default function LeadGenerationPage() {
           </div>
           <Button
             onClick={handleStartSearch}
-            disabled={isRunning || createSession.isPending || !query.trim()}
+            disabled={isRunning || createSession.isPending}
             className="gap-2"
           >
             {createSession.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -483,7 +490,7 @@ export default function LeadGenerationPage() {
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm truncate max-w-[160px]">{email}</span>
                               <Badge variant="outline" className={`text-[10px] px-1.5 py-0 border ${emailBadge(r.email_status)}`}>
-                                {r.email_status}
+                                {EMAIL_STATUS_LABEL[r.email_status] ?? r.email_status}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-0.5">

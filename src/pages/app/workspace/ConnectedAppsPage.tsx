@@ -27,6 +27,17 @@ interface Catalog {
   hint?: string;
 }
 
+const CATEGORY_LABELS_DA: Record<Catalog["category"], string> = {
+  Communication: "Kommunikation",
+  Calendar: "Kalender",
+  Finance: "Finans",
+  Data: "Data",
+  Developer: "Udvikler",
+  Marketing: "Marketing",
+  AI: "AI",
+  Automation: "Automatisering",
+};
+
 const catalog: Catalog[] = [
   { provider: "gmail",      name: "Gmail",            surface: "Indbakke · Email · Tråde",            icon: Mail,          category: "Communication", hint: "Zapier: New Email → Webhook" },
   { provider: "outlook",    name: "Outlook",          surface: "Mail · Kalender",                     icon: Mail,          category: "Communication", hint: "Make: Outlook → HTTP" },
@@ -114,7 +125,7 @@ export default function ConnectedAppsPage() {
 
       {grouped.map(([cat, items]) => (
         <section key={cat} className="space-y-6">
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">{cat}</div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">{CATEGORY_LABELS_DA[cat]}</div>
           <div className="grid gap-px bg-border/30 rounded-xl overflow-hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {items.map((c, i) => (
               <AppNode

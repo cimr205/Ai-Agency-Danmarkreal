@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('remember_me') === 'true');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const stuckTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(stuckTimerRef.current), []);
 
   if (!authLoading && isAuthenticated) {
     return <Navigate to={`/${locale}/app/dashboard`} replace />;
@@ -42,9 +45,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
+      // Keep the button in its loading state — AuthContext still needs to
+      // load the profile before `isAuthenticated` flips and the redirect
+      // above fires. Clearing loading here left the button looking idle
+      // for several seconds with no feedback while that finished.
+      // Fallback: if that never resolves (slow/failed profile fetch), don't
+      // leave the user stuck on a dead button forever.
+      clearTimeout(stuckTimerRef.current);
+      stuckTimerRef.current = setTimeout(() => {
+        setLoading(false);
+        toast({ variant: 'destructive', title: t('auth.loginFailed'), description: t('auth.unknownError') });
+      }, 10000);
     } catch (err) {
       toast({ variant: 'destructive', title: t('auth.loginFailed'), description: describeAuthError(err, t) });
-    } finally {
       setLoading(false);
     }
   };

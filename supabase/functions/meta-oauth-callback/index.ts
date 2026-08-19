@@ -187,7 +187,15 @@ Deno.serve(async (req) => {
       .eq("company_id", company_id);
 
     if (adAccounts.length > 0) {
-      const accountRows = adAccounts.map((acc: any) => ({
+      interface MetaAdAccount {
+        account_id?: string;
+        id: string;
+        name?: string;
+        business?: { id?: string; name?: string };
+        currency?: string;
+        account_status?: string;
+      }
+      const accountRows = (adAccounts as MetaAdAccount[]).map((acc) => ({
         company_id,
         meta_connection_id: connection.id,
         account_id: acc.account_id || acc.id,

@@ -7,7 +7,7 @@ export function MetaReports() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-primary" />
-          <CardTitle className="text-base font-semibold">Reports</CardTitle>
+          <CardTitle className="text-base font-semibold">Rapporter</CardTitle>
         </div>
       </CardHeader>
       <CardContent>

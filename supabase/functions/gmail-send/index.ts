@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
       ? `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`
       : `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`;
 
-    const sendBody: any = { raw: encodedEmail };
+    const sendBody: { raw: string; threadId?: string } = { raw: encodedEmail };
     if (reply_to_message_id) {
       sendBody.threadId = reply_to_message_id;
     }

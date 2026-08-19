@@ -428,7 +428,7 @@ async function aiExpandQuery(query: string): Promise<string[]> {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "llama3.2:3b",
         messages: [{
           role: "system",
           content: `You are a B2B lead generation expert. Expand the search query into 15-20 highly specific sub-niches, synonyms, and related service types that real businesses would use in their names or descriptions. Include the original query. Focus on variations customers would actually search for. Return ONLY a JSON array.
@@ -556,9 +556,29 @@ function getMajorCities(country: string): string[] {
   return map[country.toLowerCase()] || [];
 }
 
+// If the user typed a city inline in the query ("tandlæge i København")
+// instead of using the separate city filter, honor it anyway — otherwise
+// the geo term only survives by chance inside whichever AI-expanded query
+// variants happen to keep it, and the wide "search every major city too"
+// net below drowns it out.
+function extractCityFromQuery(query: string, country: string): string | undefined {
+  const words = query.toLowerCase();
+  for (const city of getMajorCities(country)) {
+    if (new RegExp(`\\b${city.toLowerCase()}\\b`).test(words)) return city;
+  }
+  return undefined;
+}
+
 // ─── Firecrawl Search (PRIMARY source) ──────────────────────
 
-function parseFirecrawlResult(item: any, searchQuery: string): PlaceResult | null {
+interface FirecrawlItem {
+  title?: string;
+  url?: string;
+  description?: string;
+  markdown?: string;
+}
+
+function parseFirecrawlResult(item: FirecrawlItem, searchQuery: string): PlaceResult | null {
   const title = item.title || "";
   const url = item.url || "";
   const description = item.description || "";
@@ -715,7 +735,25 @@ async function searchViaFirecrawl(
 
 // ─── Apify Google Maps Fallback ─────────────────────────────
 
-function mapApifyGooglePlace(item: any): PlaceResult | null {
+interface ApifyPlaceItem {
+  title?: string;
+  placeId?: string;
+  address?: string;
+  street?: string;
+  permanentlyClosed?: boolean;
+  temporarilyClosed?: boolean;
+  categories?: string[];
+  categoryName?: string;
+  totalScore?: number;
+  reviewsCount?: number;
+  website?: string;
+  email?: string;
+  phone?: string;
+  phoneUnformatted?: string;
+  url?: string;
+}
+
+function mapApifyGooglePlace(item: ApifyPlaceItem): PlaceResult | null {
   if (!item?.title) return null;
   const phone = (item.phone || item.phoneUnformatted || "").replace(/\s+/g, "");
   return {
@@ -898,7 +936,7 @@ async function runPipeline(
 
   try {
     const country = ((filters.country as string) || "dk").toLowerCase();
-    const city = (filters.city as string) || undefined;
+    const city = (filters.city as string) || extractCityFromQuery(query, country) || undefined;
 
     // ── Phase 1: AI Query Expansion ──
     await updateProgress(5, "AI analyserer søgning og udvider med relaterede brancher...");
@@ -948,7 +986,19 @@ async function runPipeline(
 
     // ── Phase 3: Discover Places ──
     await updateProgress(12, `Søger virksomheder med ${queryVariants.length} varianter...`);
-    const places = await discoverPlaces(queryVariants, country, city, startTime);
+    let places = await discoverPlaces(queryVariants, country, city, startTime);
+
+    // The discovery step deliberately also searches other major cities to
+    // maximize coverage — but when the user asked for a specific city, those
+    // results must not outrank actual matches. Stable-sort city matches first.
+    if (city) {
+      const cityLower = city.toLowerCase();
+      places = [...places].sort((a, b) => {
+        const aMatch = (a.formatted_address || "").toLowerCase().includes(cityLower) ? 0 : 1;
+        const bMatch = (b.formatted_address || "").toLowerCase().includes(cityLower) ? 0 : 1;
+        return aMatch - bMatch;
+      });
+    }
 
     if (places.length === 0) {
       await supabase.from("lead_gen_sessions").update({
@@ -1001,8 +1051,9 @@ async function runPipeline(
 
       for (let j = 0; j < batch.length; j++) {
         const place = batch[j];
-        const details = detailsBatch[j]?.status === "fulfilled" ? (detailsBatch[j] as PromiseFulfilledResult<any>).value : {};
-        const webData: ScrapedData = scrapeResults[j]?.status === "fulfilled" && (scrapeResults[j] as PromiseFulfilledResult<any>).value
+        type PlaceDetails = ReturnType<typeof getPlaceDetails>;
+        const details = detailsBatch[j]?.status === "fulfilled" ? (detailsBatch[j] as PromiseFulfilledResult<PlaceDetails>).value : ({} as PlaceDetails);
+        const webData: ScrapedData = scrapeResults[j]?.status === "fulfilled" && (scrapeResults[j] as PromiseFulfilledResult<ScrapedData | null>).value
           ? (scrapeResults[j] as PromiseFulfilledResult<ScrapedData>).value
           : { emails: [], phones: [], description: null, contactPersons: [], linkedinUrls: [], companyLinkedin: null, technologies: [], sources: [] };
 
@@ -1343,7 +1394,26 @@ Deno.serve(async (req) => {
       const { result_ids, folder_id } = await req.json();
       if (!Array.isArray(result_ids) || result_ids.length === 0) return errorResponse("Missing result_ids");
 
-      const allResults: any[] = [];
+      interface LeadGenResultRow {
+        id: string;
+        contact_person_name?: string | null;
+        company_name?: string | null;
+        business_email?: string | null;
+        phone?: string | null;
+        industry?: string | null;
+        website?: string | null;
+        address?: string | null;
+        contact_role?: string | null;
+        linkedin_url?: string | null;
+        company_linkedin?: string | null;
+        description?: string | null;
+        review_count?: number | null;
+        rating?: number | null;
+        technologies_detected?: string[] | null;
+        lead_score?: number | null;
+      }
+
+      const allResults: LeadGenResultRow[] = [];
       for (let i = 0; i < result_ids.length; i += 50) {
         const batch = result_ids.slice(i, i + 50);
         const { data } = await supabase.from("lead_gen_results").select("*")
@@ -1353,7 +1423,7 @@ Deno.serve(async (req) => {
       }
       if (allResults.length === 0) return errorResponse("No importable results found");
 
-      const leads = allResults.map((r: any) => ({
+      const leads = allResults.map((r) => ({
         company_id: companyId,
         created_by: userId,
         name: r.contact_person_name || r.company_name || "Unknown Lead",
@@ -1377,7 +1447,7 @@ Deno.serve(async (req) => {
         ...(folder_id ? { folder_id } : {}),
       }));
 
-      const allInserted: any[] = [];
+      const allInserted: { id: string }[] = [];
       for (let i = 0; i < leads.length; i += 50) {
         const batch = leads.slice(i, i + 50);
         const { data: inserted, error: insertErr } = await supabase.from("leads").insert(batch).select("id");

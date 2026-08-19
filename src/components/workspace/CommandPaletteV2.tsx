@@ -64,6 +64,19 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
     });
   }, []);
 
+  // cmdk's default fuzzy scorer matches on loose subsequences (e.g. "test"
+  // matches "Tidsregistr." because t-e-s-t appears in order), which produces
+  // irrelevant top results. Use plain substring matching instead.
+  const q = query.trim().toLowerCase();
+  const filteredDestinations = useMemo(
+    () => (q ? allDestinations.filter(d => d.label.toLowerCase().includes(q)) : allDestinations),
+    [allDestinations, q],
+  );
+  const filteredModes = useMemo(
+    () => (q ? MODES.filter(m => m.label.toLowerCase().includes(q) || m.hint.toLowerCase().includes(q)) : MODES),
+    [q],
+  );
+
   const go = (path: string) => {
     onOpenChange(false);
     setQuery("");
@@ -71,7 +84,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} shouldFilter={false}>
       <CommandInput
         placeholder="Søg klienter, deals, fakturaer eller naviger…"
         value={query}
@@ -131,7 +144,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
         )}
 
         <CommandGroup heading="Modes">
-          {MODES.map(m => (
+          {filteredModes.map(m => (
             <CommandItem key={m.id} value={`mode ${m.label} ${m.hint}`} onSelect={() => go(`${base}/dashboard`)} className="gap-2">
               <m.icon className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1">{m.label}</span>
@@ -143,7 +156,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
         <CommandSeparator />
 
         <CommandGroup heading="Naviger">
-          {allDestinations.map(d => (
+          {filteredDestinations.map(d => (
             <CommandItem key={d.path} value={`naviger ${d.label}`} onSelect={() => go(`${base}/${d.path}`)} className="gap-2">
               <d.icon className="h-4 w-4 text-muted-foreground" />
               <span>{d.label}</span>

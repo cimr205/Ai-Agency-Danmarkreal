@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Briefcase, DollarSign, Trophy, XCircle, Calendar, LayoutGrid, List, FileText, Mic } from 'lucide-react';
@@ -297,7 +298,14 @@ export default function DealsPage() {
                     {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-4 w-full" /></TableCell></TableRow>
                     )) : filteredDeals.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{error ? t('pages.deals.fetchError') : t('pages.deals.empty')}</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7}>
+                        <EmptyState
+                          bare
+                          icon={Briefcase}
+                          title={error ? t('pages.deals.fetchError') : t('pages.deals.empty')}
+                          action={!error ? { label: t('pages.deals.newDeal'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                        />
+                      </TableCell></TableRow>
                     ) : filteredDeals.map(deal => (
                       <TableRow key={deal.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedDeal(deal)}>
                         <TableCell className="font-medium"><div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" />{deal.title}</div></TableCell>

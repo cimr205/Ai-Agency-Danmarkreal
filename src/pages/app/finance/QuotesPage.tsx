@@ -92,7 +92,7 @@ export default function QuotesPage() {
   const removeLine = (idx: number) => setLines(prev => prev.filter((_, i) => i !== idx));
 
   const handleCreate = async () => {
-    if (!title.trim() || lines.length === 0) { toast.error('Title and at least one line required'); return; }
+    if (!title.trim() || lines.length === 0) { toast.error(t('quotes.titleAndLineRequired')); return; }
     try {
       await createQuote.mutateAsync({
         title, lead_id: leadId || undefined, lines, subtotal, vat_rate: vatRate, vat_amount: vatAmount, total,

@@ -45,8 +45,8 @@ export default function CompanySettingsPage() {
       name: company.name, cvr: company.cvr || null, address: company.address || null,
       phone: company.phone || null, email: company.email || null, website: company.website || null,
     }).eq('id', company.id);
-    if (error) toast({ title: t('auth.error'), description: error.message });
-    else toast({ title: t('common.save') });
+    if (error) toast({ title: t('auth.error'), description: error.message, variant: 'destructive' });
+    else toast({ title: t('common.saved'), description: t('companySettings.savedDesc') });
     setSaving(false);
   };
 

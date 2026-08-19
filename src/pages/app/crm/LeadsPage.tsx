@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -769,12 +770,13 @@ export default function LeadsPage() {
           {isLoading ? (
             <div className="p-6 space-y-3">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : leads.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-muted-foreground">{t('pages.leads.noLeads')}</p>
-              <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" /> {t('pages.leads.import')}
-              </Button>
-            </div>
+            <EmptyState
+              bare
+              icon={Search}
+              title={t('pages.leads.noLeads')}
+              action={{ label: t('pages.leads.addLead'), onClick: () => setIsCreateOpen(true), icon: Plus }}
+              secondaryAction={{ label: t('pages.leads.import'), onClick: () => setIsImportOpen(true), icon: Upload }}
+            />
           ) : (
             <Table>
               <TableHeader>

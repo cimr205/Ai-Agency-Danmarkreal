@@ -127,7 +127,7 @@ serve(async (req) => {
             method: "POST",
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
+              model: "llama3.2:3b",
               messages: [
                 {
                   role: "system",

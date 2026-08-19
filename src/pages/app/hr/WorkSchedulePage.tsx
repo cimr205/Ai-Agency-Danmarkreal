@@ -10,13 +10,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useWorkSchedules, useCreateSchedule, useDeleteSchedule, type WorkSchedule } from '@/hooks/api/useWorkforce';
 import { useEmployees } from '@/hooks/api/useEmployees';
+import {
+  useShifts, useCreateShift, useDeleteShift, useMyEmployeeProfile,
+  useShiftApplicationsByEmployee, useApplyToShift, usePendingApplications, useReviewApplication,
+  useShiftPermissions,
+} from '@/hooks/api/useShifts';
 import { CalendarDays, Plus, Trash2, List, Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, isSameDay, parseISO } from 'date-fns';
+import { da, enUS, de } from 'date-fns/locale';
+
+const DATE_LOCALES: Record<string, typeof da> = { da, en: enUS, de };
 
 export default function WorkSchedulePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dateFnsLocale = DATE_LOCALES[locale] || da;
   const [view, setView] = useState<'week' | 'list'>('week');
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -29,6 +39,61 @@ export default function WorkSchedulePage() {
   const { data: employees } = useEmployees();
   const createSchedule = useCreateSchedule();
   const deleteSchedule = useDeleteSchedule();
+
+  // Open shifts employees can apply to take
+  const { canManageShifts } = useShiftPermissions();
+  const { data: myEmployeeProfile } = useMyEmployeeProfile();
+  const openShiftsStart = format(new Date(), 'yyyy-MM-dd');
+  const openShiftsEnd = format(addDays(new Date(), 60), 'yyyy-MM-dd');
+  const { data: allShifts } = useShifts({ start: openShiftsStart, end: openShiftsEnd });
+  const openShifts = (allShifts ?? []).filter(s => s.status === 'open');
+  const { data: myApplications } = useShiftApplicationsByEmployee(myEmployeeProfile?.id ?? null);
+  const createShift = useCreateShift();
+  const deleteShift = useDeleteShift();
+  const applyToShift = useApplyToShift();
+  const { data: pendingApplications } = usePendingApplications();
+  const reviewApplication = useReviewApplication();
+
+  const [openShiftDialogOpen, setOpenShiftDialogOpen] = useState(false);
+  const [openShiftForm, setOpenShiftForm] = useState({
+    shift_date: format(new Date(), 'yyyy-MM-dd'),
+    start_time: '09:00',
+    end_time: '17:00',
+    notes: '',
+  });
+
+  const handleCreateOpenShift = async () => {
+    try {
+      await createShift.mutateAsync({
+        shift_date: openShiftForm.shift_date,
+        start_time: openShiftForm.start_time,
+        end_time: openShiftForm.end_time,
+        department_id: null,
+        assigned_employee_id: null,
+        notes: openShiftForm.notes || undefined,
+      });
+      toast.success(t('workforce.scheduleCreated'));
+      setOpenShiftDialogOpen(false);
+      setOpenShiftForm({ shift_date: format(new Date(), 'yyyy-MM-dd'), start_time: '09:00', end_time: '17:00', notes: '' });
+    } catch { toast.error(t('workforce.scheduleCreateFailed')); }
+  };
+
+  const handleApplyToShift = async (shift: { id: string; shift_date: string; start_time: string; end_time: string }) => {
+    if (!myEmployeeProfile) return;
+    try {
+      await applyToShift.mutateAsync({
+        shiftId: shift.id,
+        employeeId: myEmployeeProfile.id,
+        shiftLabel: `${shift.shift_date} ${String(shift.start_time).slice(0, 5)}-${String(shift.end_time).slice(0, 5)}`,
+      });
+      toast.success(t('workforce.applicationSent'));
+    } catch (e: unknown) {
+      const message = e && typeof e === 'object' && 'code' in e && (e as { code?: string }).code === '23505'
+        ? t('workforce.alreadyApplied')
+        : t('workforce.applicationFailed');
+      toast.error(message);
+    }
+  };
 
   // Form state
   const [form, setForm] = useState({
@@ -159,7 +224,7 @@ export default function WorkSchedulePage() {
           <ChevronLeft className="h-4 w-4 mr-1" /> {t('workforce.prevWeek')}
         </Button>
         <h2 className="text-lg font-semibold">
-          {format(currentWeekStart, 'dd MMM')} – {format(weekEnd, 'dd MMM yyyy')}
+          {format(currentWeekStart, 'dd MMM', { locale: dateFnsLocale })} – {format(weekEnd, 'dd MMM yyyy', { locale: dateFnsLocale })}
         </h2>
         <Button variant="ghost" size="sm" onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}>
           {t('workforce.nextWeek')} <ChevronRight className="h-4 w-4 ml-1" />
@@ -179,7 +244,7 @@ export default function WorkSchedulePage() {
                     <th className="text-left p-3 font-medium text-muted-foreground min-w-[160px]">{t('workforce.employee')}</th>
                     {weekDays.map(day => (
                       <th key={day.toISOString()} className={`text-center p-3 font-medium min-w-[120px] ${isSameDay(day, new Date()) ? 'text-primary bg-primary/5' : 'text-muted-foreground'}`}>
-                        <div>{format(day, 'EEE')}</div>
+                        <div>{format(day, 'EEE', { locale: dateFnsLocale })}</div>
                         <div className="text-xs">{format(day, 'dd/MM')}</div>
                       </th>
                     ))}
@@ -216,7 +281,9 @@ export default function WorkSchedulePage() {
                     </tr>
                   ))}
                   {schedulesByEmployee.size === 0 && (
-                    <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">{t('workforce.noSchedules')}</td></tr>
+                    <tr><td colSpan={8}>
+                    <EmptyState bare icon={CalendarDays} title={t('workforce.noSchedules')} action={{ label: t('workforce.addSchedule'), onClick: () => setDialogOpen(true), icon: Plus }} />
+                  </td></tr>
                   )}
                 </tbody>
               </table>
@@ -240,7 +307,9 @@ export default function WorkSchedulePage() {
               </thead>
               <tbody>
                 {(schedules ?? []).length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-muted-foreground">{t('workforce.noSchedules')}</td></tr>
+                  <tr><td colSpan={6}>
+                    <EmptyState bare icon={CalendarDays} title={t('workforce.noSchedules')} action={{ label: t('workforce.addSchedule'), onClick: () => setDialogOpen(true), icon: Plus }} />
+                  </td></tr>
                 ) : (
                   (schedules ?? []).map((s: WorkSchedule) => (
                     <tr key={s.id} className="border-b border-border/20">
@@ -259,6 +328,113 @@ export default function WorkSchedulePage() {
                 )}
               </tbody>
             </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Open shifts employees can take */}
+      <Card className="border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">{t('workforce.openShifts')}</CardTitle>
+          {canManageShifts && (
+            <Dialog open={openShiftDialogOpen} onOpenChange={setOpenShiftDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-1" />{t('workforce.addOpenShift')}</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[420px]">
+                <DialogHeader>
+                  <DialogTitle>{t('workforce.addOpenShift')}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label>{t('workforce.date')}</Label>
+                      <Input type="date" value={openShiftForm.shift_date} onChange={e => setOpenShiftForm(p => ({ ...p, shift_date: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>{t('workforce.startTime')}</Label>
+                      <Input type="time" value={openShiftForm.start_time} onChange={e => setOpenShiftForm(p => ({ ...p, start_time: e.target.value }))} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>{t('workforce.endTime')}</Label>
+                      <Input type="time" value={openShiftForm.end_time} onChange={e => setOpenShiftForm(p => ({ ...p, end_time: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>{t('workforce.notes')}</Label>
+                    <Textarea value={openShiftForm.notes} onChange={e => setOpenShiftForm(p => ({ ...p, notes: e.target.value }))} rows={2} />
+                  </div>
+                  <Button onClick={handleCreateOpenShift} disabled={createShift.isPending} className="w-full">
+                    {t('workforce.addOpenShift')}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {openShifts.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic py-4 text-center">{t('workforce.noOpenShifts')}</p>
+          ) : (
+            openShifts.map(shift => {
+              const myApp = myApplications?.find(a => a.shift_id === shift.id);
+              return (
+                <div key={shift.id} className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                  <div>
+                    <p className="text-sm font-medium font-mono">
+                      {format(parseISO(shift.shift_date), 'EEE dd/MM', { locale: dateFnsLocale })} · {String(shift.start_time).slice(0, 5)}–{String(shift.end_time).slice(0, 5)}
+                    </p>
+                    {shift.notes && <p className="text-xs text-muted-foreground">{shift.notes}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {canManageShifts ? (
+                      <Button variant="ghost" size="icon" onClick={() => deleteShift.mutate(shift)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    ) : myApp ? (
+                      <Badge variant="secondary">
+                        {myApp.status === 'pending' ? t('workforce.applicationPending') : myApp.status === 'approved' ? t('workforce.applicationApproved') : t('workforce.applicationRejected')}
+                      </Badge>
+                    ) : (
+                      <Button size="sm" onClick={() => handleApplyToShift(shift)} disabled={!myEmployeeProfile || applyToShift.isPending}>
+                        {t('workforce.takeShift')}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pending applications for managers to approve */}
+      {canManageShifts && (pendingApplications ?? []).length > 0 && (
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="text-base">{t('workforce.pendingApplications')}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pendingApplications!.map(app => (
+              <div key={app.id} className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                <div>
+                  <p className="text-sm font-medium">{app.employee?.full_name}</p>
+                  {app.shift && (
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {format(parseISO(app.shift.shift_date), 'dd/MM')} · {String(app.shift.start_time).slice(0, 5)}–{String(app.shift.end_time).slice(0, 5)}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => reviewApplication.mutate({ application: app, approve: false })}>
+                    {t('workforce.reject')}
+                  </Button>
+                  <Button size="sm" onClick={() => reviewApplication.mutate({ application: app, approve: true })}>
+                    {t('workforce.approve')}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

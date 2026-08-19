@@ -49,7 +49,7 @@ interface I18nContextValue {
   t: (key: string) => string;
 }
 
-const I18nContext = createContext<I18nContextValue>({
+export const I18nContext = createContext<I18nContextValue>({
   locale: 'en',
   t: (key) => key,
 });

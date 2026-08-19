@@ -56,8 +56,8 @@ async function verifyWithReacher(email: string, reacherUrl: string, signal?: Abo
     }
     // unknown
     return { valid: false, reason: "Unknown reachability", details: data };
-  } catch (err: any) {
-    if (err?.name === 'AbortError') {
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
       return { valid: false, reason: "Timeout (5s)" };
     }
     console.error(`Reacher fetch error for ${email}:`, err);

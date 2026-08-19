@@ -9,14 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, ArrowRight, Check, Plus, X, Target, MapPin, Building2, Users, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateIcpProfile, useUpdateIcpProfile, type IcpProfile, type IcpProfileInput } from "@/hooks/api/useIcp";
-
-const STEPS = [
-  { label: "Name & Description", icon: Target },
-  { label: "Target Market", icon: MapPin },
-  { label: "Company Profile", icon: Building2 },
-  { label: "Pain Points & Services", icon: Zap },
-  { label: "Priorities & Review", icon: Users },
-];
+import { useI18n } from "@/lib/i18n";
 
 const INDUSTRIES = [
   "Cleaning", "Construction", "Landscaping", "Plumbing", "HVAC", "Electrical",
@@ -59,9 +52,18 @@ type Props = {
 };
 
 export default function IcpWizard({ existing, onClose, onSaved }: Props) {
+  const { t } = useI18n();
   const createIcp = useCreateIcpProfile();
   const updateIcp = useUpdateIcpProfile();
   const [step, setStep] = useState(0);
+
+  const STEPS = [
+    { label: t('icp.wizard.stepName'), icon: Target },
+    { label: t('icp.wizard.stepMarket'), icon: MapPin },
+    { label: t('icp.wizard.stepCompany'), icon: Building2 },
+    { label: t('icp.wizard.stepPain'), icon: Zap },
+    { label: t('icp.wizard.stepPriorities'), icon: Users },
+  ];
 
   const [form, setForm] = useState<IcpProfileInput>({
     name: existing?.name || "",
@@ -129,18 +131,18 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
   };
 
   const handleSave = () => {
-    if (!form.name.trim()) { toast.error("Please enter a name"); return; }
+    if (!form.name.trim()) { toast.error(t('icp.wizard.pleaseEnterName')); return; }
     if (existing) {
       updateIcp.mutate(
         { id: existing.id, data: form },
         {
-          onSuccess: (d) => { toast.success("ICP updated"); onSaved(d.id); },
+          onSuccess: (d) => { toast.success(t('icp.wizard.icpUpdated')); onSaved(d.id); },
           onError: (e) => toast.error(e.message),
         }
       );
     } else {
       createIcp.mutate(form, {
-        onSuccess: (d) => { toast.success("ICP created"); onSaved(d.id); },
+        onSuccess: (d) => { toast.success(t('icp.wizard.icpCreated')); onSaved(d.id); },
         onError: (e) => toast.error(e.message),
       });
     }
@@ -158,7 +160,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
             className="h-7 w-16 text-xs"
             onClick={() => updateField(field, w as IcpProfileInput[typeof field])}
           >
-            {w === 1 ? "Low" : w === 2 ? "Med" : "High"}
+            {w === 1 ? t('icp.wizard.weightLow') : w === 2 ? t('icp.wizard.weightMed') : t('icp.wizard.weightHigh')}
           </Button>
         ))}
       </div>
@@ -241,20 +243,20 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <Label>ICP Name *</Label>
+              <Label>{t('icp.wizard.nameLabel')}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => updateField("name", e.target.value)}
-                placeholder="e.g. Texas Cleaning Companies 5-25 Employees"
+                placeholder={t('icp.wizard.namePlaceholder')}
                 className="mt-1"
               />
             </div>
             <div>
-              <Label>Description</Label>
+              <Label>{t('icp.wizard.descriptionLabel')}</Label>
               <Textarea
                 value={form.description || ""}
                 onChange={(e) => updateField("description", e.target.value)}
-                placeholder="Describe your ideal customer in your own words..."
+                placeholder={t('icp.wizard.descriptionPlaceholder')}
                 className="mt-1"
                 rows={3}
               />
@@ -265,7 +267,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <Label className="mb-2 block">Target Industries</Label>
+              <Label className="mb-2 block">{t('icp.wizard.targetIndustries')}</Label>
               <ChipSelector
                 items={INDUSTRIES}
                 selected={form.industry}
@@ -273,7 +275,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <Label className="mb-2 block">Target Countries</Label>
+              <Label className="mb-2 block">{t('icp.wizard.targetCountries')}</Label>
               <ChipSelector
                 items={COUNTRIES}
                 selected={form.target_countries}
@@ -281,16 +283,16 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <Label className="mb-2 block">Target Regions / States</Label>
-              <TagInputField field="target_regions" placeholder="e.g. Texas, California..." />
+              <Label className="mb-2 block">{t('icp.wizard.targetRegions')}</Label>
+              <TagInputField field="target_regions" placeholder={t('icp.wizard.targetRegionsPlaceholder')} />
             </div>
             <div>
-              <Label className="mb-2 block">Target Cities</Label>
-              <TagInputField field="target_cities" placeholder="e.g. Houston, Dallas..." />
+              <Label className="mb-2 block">{t('icp.wizard.targetCities')}</Label>
+              <TagInputField field="target_cities" placeholder={t('icp.wizard.targetCitiesPlaceholder')} />
             </div>
             <div>
-              <Label className="mb-2 block">Exclude Industries</Label>
-              <TagInputField field="exclude_industries" placeholder="Industries to exclude..." />
+              <Label className="mb-2 block">{t('icp.wizard.excludeIndustries')}</Label>
+              <TagInputField field="exclude_industries" placeholder={t('icp.wizard.excludeIndustriesPlaceholder')} />
             </div>
           </div>
         )}
@@ -299,7 +301,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Min Employees</Label>
+                <Label>{t('icp.wizard.minEmployees')}</Label>
                 <Input
                   type="number"
                   value={form.min_employees ?? ""}
@@ -309,7 +311,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
                 />
               </div>
               <div>
-                <Label>Max Employees</Label>
+                <Label>{t('icp.wizard.maxEmployees')}</Label>
                 <Input
                   type="number"
                   value={form.max_employees ?? ""}
@@ -320,18 +322,18 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               </div>
             </div>
             <div>
-              <Label className="mb-2 block">Budget Level</Label>
+              <Label className="mb-2 block">{t('icp.wizard.budgetLevel')}</Label>
               <Select value={form.budget_level} onValueChange={(v) => updateField("budget_level", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low Budget</SelectItem>
-                  <SelectItem value="medium">Medium Budget</SelectItem>
-                  <SelectItem value="high">High Budget</SelectItem>
+                  <SelectItem value="low">{t('icp.wizard.lowBudget')}</SelectItem>
+                  <SelectItem value="medium">{t('icp.wizard.mediumBudget')}</SelectItem>
+                  <SelectItem value="high">{t('icp.wizard.highBudget')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="mb-2 block">Decision Maker Roles</Label>
+              <Label className="mb-2 block">{t('icp.wizard.decisionMakerRoles')}</Label>
               <ChipSelector
                 items={ROLES}
                 selected={form.target_roles}
@@ -339,8 +341,8 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <Label className="mb-2 block">Business Types</Label>
-              <TagInputField field="business_types" placeholder="e.g. LLC, Sole Proprietor..." />
+              <Label className="mb-2 block">{t('icp.wizard.businessTypes')}</Label>
+              <TagInputField field="business_types" placeholder={t('icp.wizard.businessTypesPlaceholder')} />
             </div>
           </div>
         )}
@@ -348,7 +350,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <Label className="mb-2 block">Pain Points (signals to look for)</Label>
+              <Label className="mb-2 block">{t('icp.wizard.painPoints')}</Label>
               <ChipSelector
                 items={PAIN_POINTS}
                 selected={form.pain_points}
@@ -356,7 +358,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <Label className="mb-2 block">Desired Services (what you sell)</Label>
+              <Label className="mb-2 block">{t('icp.wizard.desiredServices')}</Label>
               <ChipSelector
                 items={SERVICES}
                 selected={form.desired_services}
@@ -364,36 +366,36 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               />
             </div>
             <div>
-              <Label className="mb-2 block">Technology Signals</Label>
-              <TagInputField field="technology_signals" placeholder="e.g. no CRM, WordPress, no analytics..." />
+              <Label className="mb-2 block">{t('icp.wizard.technologySignals')}</Label>
+              <TagInputField field="technology_signals" placeholder={t('icp.wizard.technologySignalsPlaceholder')} />
             </div>
           </div>
         )}
 
         {step === 4 && (
           <div className="space-y-5">
-            <h3 className="text-sm font-semibold text-foreground">Set Scoring Priorities</h3>
-            <p className="text-xs text-muted-foreground">Higher priority = more weight in the ICP score calculation.</p>
+            <h3 className="text-sm font-semibold text-foreground">{t('icp.wizard.setScoringPriorities')}</h3>
+            <p className="text-xs text-muted-foreground">{t('icp.wizard.scoringPrioritiesDesc')}</p>
             <div className="space-y-3">
-              <WeightSelector label="Industry Match" field="weight_industry" />
-              <WeightSelector label="Location Match" field="weight_location" />
-              <WeightSelector label="Company Size" field="weight_company_size" />
-              <WeightSelector label="Role Fit" field="weight_role_fit" />
-              <WeightSelector label="Pain Points" field="weight_pain_points" />
-              <WeightSelector label="Budget Fit" field="weight_budget_fit" />
-              <WeightSelector label="Service Fit" field="weight_service_fit" />
+              <WeightSelector label={t('icp.wizard.industryMatch')} field="weight_industry" />
+              <WeightSelector label={t('icp.wizard.locationMatch')} field="weight_location" />
+              <WeightSelector label={t('icp.wizard.companySize')} field="weight_company_size" />
+              <WeightSelector label={t('icp.wizard.roleFit')} field="weight_role_fit" />
+              <WeightSelector label={t('icp.wizard.painPointsWeight')} field="weight_pain_points" />
+              <WeightSelector label={t('icp.wizard.budgetFit')} field="weight_budget_fit" />
+              <WeightSelector label={t('icp.wizard.serviceFit')} field="weight_service_fit" />
             </div>
 
             {/* Preview */}
             <Card className="p-4 bg-primary/5 border-primary/20 mt-4">
-              <h4 className="text-sm font-semibold text-primary mb-2">ICP Preview</h4>
+              <h4 className="text-sm font-semibold text-primary mb-2">{t('icp.wizard.icpPreview')}</h4>
               <p className="text-sm text-foreground">
-                <strong>{form.name}</strong> — Looking for{" "}
-                {form.industry.length > 0 ? form.industry.join(", ") : "any industry"} companies
-                {form.target_countries.length > 0 && ` in ${form.target_countries.join(", ")}`}
+                <strong>{form.name}</strong> — {t('icp.wizard.lookingFor')}{" "}
+                {form.industry.length > 0 ? form.industry.join(", ") : t('icp.wizard.anyIndustry')} {t('icp.wizard.companiesIn')}
+                {form.target_countries.length > 0 && ` ${form.target_countries.join(", ")}`}
                 {form.target_regions.length > 0 && ` (${form.target_regions.join(", ")})`}
-                {form.min_employees && ` with ${form.min_employees}–${form.max_employees || "∞"} employees`}
-                {form.pain_points.length > 0 && ` showing signs of: ${form.pain_points.slice(0, 3).join(", ")}`}
+                {form.min_employees && ` ${t('icp.wizard.withEmployees')} ${form.min_employees}–${form.max_employees || "∞"} ${t('icp.wizard.employeesLabel')}`}
+                {form.pain_points.length > 0 && ` ${t('icp.wizard.showingSignsOf')}: ${form.pain_points.slice(0, 3).join(", ")}`}
                 .
               </p>
             </Card>
@@ -404,17 +406,17 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
       {/* Navigation */}
       <div className="flex justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t('icp.wizard.cancel')}</Button>
           {step > 0 && (
             <Button variant="ghost" onClick={() => setStep(step - 1)} className="gap-1.5">
-              <ArrowLeft className="h-4 w-4" /> Back
+              <ArrowLeft className="h-4 w-4" /> {t('icp.wizard.back')}
             </Button>
           )}
         </div>
         <div>
           {step < STEPS.length - 1 ? (
             <Button onClick={() => setStep(step + 1)} disabled={!canNext()} className="gap-1.5">
-              Next <ArrowRight className="h-4 w-4" />
+              {t('icp.wizard.next')} <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button
@@ -423,7 +425,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
               className="gap-1.5"
             >
               <Check className="h-4 w-4" />
-              {existing ? "Update ICP" : "Create ICP"}
+              {existing ? t('icp.wizard.updateIcp') : t('icp.createIcp')}
             </Button>
           )}
         </div>

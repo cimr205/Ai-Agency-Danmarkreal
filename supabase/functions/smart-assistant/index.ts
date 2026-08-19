@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -299,11 +299,47 @@ const tools = [
   },
 ];
 
+interface ToolArgs {
+  to?: string;
+  subject?: string;
+  message?: string;
+  cc?: string;
+  receiver_email?: string;
+  content?: string;
+  cvr_number?: string;
+  title?: string;
+  description?: string;
+  priority?: string;
+  due_date?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  company_name?: string;
+  notes?: string;
+  value?: number;
+  start_time?: string;
+  end_time?: string;
+  query?: string;
+  tags?: string[];
+  filter_industry?: string;
+  filter_status?: string;
+  filter_search?: string;
+  filter_tags?: string[];
+  filter_folder_name?: string;
+  lead_ids?: string[];
+  industry?: string;
+  status?: string;
+  color?: string;
+  folder_name?: string;
+  folder_id?: string;
+  confirm?: boolean;
+}
+
 // Tool execution functions
 async function executeTool(
   toolName: string,
-  args: any,
-  supabase: any,
+  args: ToolArgs,
+  supabase: SupabaseClient,
   userId: string,
   companyId: string
 ): Promise<{ success: boolean; result: string }> {
@@ -414,7 +450,7 @@ async function executeTool(
           .or(`name.ilike.${q},email.ilike.${q},company_name.ilike.${q}`)
           .limit(10);
         if (!leads?.length) return { success: true, result: `Ingen leads fundet for "${query}".` };
-        const list = leads.map((l: any) => `- **${l.name}** (${l.email}, ID: ${l.id}) – ${l.company_name || "Ingen virksomhed"}, score: ${l.score}, status: ${l.status}, tags: ${(l.tags || []).join(", ") || "ingen"}, branche: ${l.industry || "ikke sat"}`).join("\n");
+        const list = leads.map((l: { name: string; email: string; id: string; company_name?: string; score?: number; status?: string; tags?: string[]; industry?: string }) => `- **${l.name}** (${l.email}, ID: ${l.id}) – ${l.company_name || "Ingen virksomhed"}, score: ${l.score}, status: ${l.status}, tags: ${(l.tags || []).join(", ") || "ingen"}, branche: ${l.industry || "ikke sat"}`).join("\n");
         return { success: true, result: `Fandt ${leads.length} leads:\n${list}` };
       }
 
@@ -490,7 +526,7 @@ async function executeTool(
           .not("tags", "is", null);
 
         const tagCounts: Record<string, number> = {};
-        (leads || []).forEach((l: any) => {
+        (leads || []).forEach((l: { tags?: string[] }) => {
           if (Array.isArray(l.tags)) {
             l.tags.forEach((t: string) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
           }
@@ -574,7 +610,7 @@ async function executeTool(
           .or(`name.ilike.${q},email.ilike.${q},vat_number.ilike.${q}`)
           .limit(10);
         if (!customers?.length) return { success: true, result: `Ingen kunder fundet for "${query}".` };
-        const list = customers.map((c: any) => `- **${c.name}** (${c.email}) – CVR: ${c.vat_number || "N/A"}, ${c.address || ""}`).join("\n");
+        const list = customers.map((c: { name: string; email: string; vat_number?: string; address?: string }) => `- **${c.name}** (${c.email}) – CVR: ${c.vat_number || "N/A"}, ${c.address || ""}`).join("\n");
         return { success: true, result: `Fandt ${customers.length} kunder:\n${list}` };
       }
 
@@ -606,9 +642,9 @@ async function executeTool(
           .not("folder_id", "is", null);
 
         const folderCounts: Record<string, number> = {};
-        (leads || []).forEach((l: any) => { folderCounts[l.folder_id] = (folderCounts[l.folder_id] || 0) + 1; });
+        (leads || []).forEach((l: { folder_id?: string }) => { folderCounts[l.folder_id] = (folderCounts[l.folder_id] || 0) + 1; });
 
-        const formatted = folders.map((f: any) => `- 📁 **${f.name}** (ID: ${f.id}): ${folderCounts[f.id] || 0} leads`).join("\n");
+        const formatted = folders.map((f: { name: string; id: string }) => `- 📁 **${f.name}** (ID: ${f.id}): ${folderCounts[f.id] || 0} leads`).join("\n");
         return { success: true, result: `📂 Lead-mapper:\n${formatted}` };
       }
 
@@ -723,7 +759,7 @@ function detectContext(path: string): string {
   return "dashboard";
 }
 
-async function fetchContextData(supabase: any, context: string, companyId: string): Promise<string> {
+async function fetchContextData(supabase: SupabaseClient, context: string, companyId: string): Promise<string> {
   const now = new Date();
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const parts: string[] = [];
@@ -739,7 +775,7 @@ async function fetchContextData(supabase: any, context: string, companyId: strin
       .order("due_date")
       .limit(10);
     if (urgentTasks?.length) {
-      parts.push("**Opgaver med deadline inden 7 dage:**\n" + urgentTasks.map((t: any) => `- ${t.title} (${t.due_date}, prioritet: ${t.priority}, status: ${t.status})`).join("\n"));
+      parts.push("**Opgaver med deadline inden 7 dage:**\n" + urgentTasks.map((t: { title: string; due_date?: string; priority?: string; status?: string }) => `- ${t.title} (${t.due_date}, prioritet: ${t.priority}, status: ${t.status})`).join("\n"));
     }
 
     const { data: urgentDeals } = await supabase
@@ -752,7 +788,7 @@ async function fetchContextData(supabase: any, context: string, companyId: strin
       .order("expected_close_date")
       .limit(10);
     if (urgentDeals?.length) {
-      parts.push("**Deals med forventet lukning inden 7 dage:**\n" + urgentDeals.map((d: any) => `- ${d.title}: ${d.value} DKK (${d.stage}, lukker: ${d.expected_close_date})`).join("\n"));
+      parts.push("**Deals med forventet lukning inden 7 dage:**\n" + urgentDeals.map((d: { title: string; value?: number; stage?: string; expected_close_date?: string }) => `- ${d.title}: ${d.value} DKK (${d.stage}, lukker: ${d.expected_close_date})`).join("\n"));
     }
 
     if (context === "leads") {
@@ -763,7 +799,7 @@ async function fetchContextData(supabase: any, context: string, companyId: strin
         .order("score", { ascending: false })
         .limit(15);
       if (leads?.length) {
-        parts.push("**Aktuelle leads (top 15):**\n" + leads.map((l: any) => `- ${l.name} (${l.email}): score ${l.score}, status: ${l.status}`).join("\n"));
+        parts.push("**Aktuelle leads (top 15):**\n" + leads.map((l: { name: string; email: string; score?: number; status?: string }) => `- ${l.name} (${l.email}): score ${l.score}, status: ${l.status}`).join("\n"));
       }
     }
 
@@ -776,7 +812,7 @@ async function fetchContextData(supabase: any, context: string, companyId: strin
         .order("value", { ascending: false })
         .limit(15);
       if (deals?.length) {
-        parts.push("**Aktive deals:**\n" + deals.map((d: any) => `- ${d.title}: ${d.value} DKK, stage: ${d.stage}`).join("\n"));
+        parts.push("**Aktive deals:**\n" + deals.map((d: { title: string; value?: number; stage?: string }) => `- ${d.title}: ${d.value} DKK, stage: ${d.stage}`).join("\n"));
       }
     }
   } catch (e) {
@@ -898,7 +934,7 @@ ${contextData}${pageSnapshotSection}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "llama3.2:3b",
           messages: aiMessages,
           tools,
           tool_choice: "auto",
@@ -956,7 +992,7 @@ ${contextData}${pageSnapshotSection}`;
       // Execute tool calls
       for (const toolCall of assistantMsg.tool_calls) {
         const fn = toolCall.function;
-        let args: any = {};
+        let args: ToolArgs = {};
         try {
           args = typeof fn.arguments === "string" ? JSON.parse(fn.arguments) : fn.arguments;
         } catch { args = {}; }
@@ -983,7 +1019,7 @@ ${contextData}${pageSnapshotSection}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama3.2:3b",
         messages: aiMessages,
         stream: true,
       }),

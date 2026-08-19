@@ -132,7 +132,7 @@ export default function HelpCenterPage() {
 
       {/* Categories */}
       {!search && !selectedCategory && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {CATEGORIES.map(cat => {
             const count = HELP_ARTICLES.filter(a => a.category === cat.name).length;
             return (
@@ -141,13 +141,13 @@ export default function HelpCenterPage() {
                 className="cursor-pointer hover:border-primary/30 transition-colors"
                 onClick={() => setSelectedCategory(cat.name)}
               >
-                <CardContent className="p-4 flex items-center gap-3">
-                  <cat.icon className={`w-5 h-5 ${cat.color}`} />
+                <CardContent className="p-4 flex items-start gap-3">
+                  <cat.icon className={`w-5 h-5 ${cat.color} shrink-0 mt-0.5`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{cat.name}</p>
-                    <p className="text-xs text-muted-foreground">{count} artikler</p>
+                    <p className="text-sm font-medium leading-snug line-clamp-2" title={cat.name}>{cat.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{count} artikler</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                 </CardContent>
               </Card>
             );

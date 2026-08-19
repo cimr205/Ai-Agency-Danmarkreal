@@ -90,7 +90,7 @@ serve(async (req) => {
     }
 
     // Build message content - support reference image for editing
-    let messageContent: any;
+    let messageContent: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
     if (reference_image && typeof reference_image === "string" && reference_image.startsWith("data:")) {
       // Multimodal: text + image for editing
       messageContent = [

@@ -962,6 +962,50 @@ export type Database = {
           },
         ]
       }
+      departments: {
+        Row: {
+          color: string
+          company_id: string
+          created_at: string
+          created_by: string
+          emoji: string | null
+          id: string
+          location_type: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          company_id: string
+          created_at?: string
+          created_by: string
+          emoji?: string | null
+          id?: string
+          location_type?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          emoji?: string | null
+          id?: string
+          location_type?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dinero_connections: {
         Row: {
           access_token: string
@@ -2567,6 +2611,41 @@ export type Database = {
           },
         ]
       }
+      module_restrictions: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          module: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          module: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          module?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_restrictions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           company_id: string
@@ -3095,6 +3174,118 @@ export type Database = {
           },
         ]
       }
+      shift_applications: {
+        Row: {
+          applied_at: string
+          employee_id: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shift_id: string
+          status: string
+        }
+        Insert: {
+          applied_at?: string
+          employee_id: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id: string
+          status?: string
+        }
+        Update: {
+          applied_at?: string
+          employee_id?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_applications_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_applications_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          assigned_employee_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          department_id: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          shift_date: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_employee_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by: string
+          department_id?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          shift_date: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_employee_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          department_id?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_assigned_employee_id_fkey"
+            columns: ["assigned_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           active_user_count: number | null
@@ -3380,18 +3571,21 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          can_grant_permissions: boolean
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          can_grant_permissions?: boolean
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          can_grant_permissions?: boolean
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]

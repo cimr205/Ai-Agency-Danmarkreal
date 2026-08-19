@@ -112,7 +112,7 @@ serve(async (req) => {
     const campaignId = campaignData.id;
 
     // 2. Create Ad Set
-    const adSetBody: Record<string, any> = {
+    const adSetBody: Record<string, unknown> = {
       name: `${campaign_name} – Ad Set`,
       campaign_id: campaignId,
       billing_event: "IMPRESSIONS",
@@ -152,13 +152,24 @@ serve(async (req) => {
     const adSetId = adSetData.id;
 
     // 3. Create Ad Creative
-    const creativeBody: Record<string, any> = {
+    const creativeBody: Record<string, unknown> = {
       name: `${campaign_name} – Creative`,
       access_token: accessToken,
     };
 
     // Build object story spec
-    const storySpec: Record<string, any> = {
+    interface StorySpec {
+      link_data: {
+        message: string;
+        link: string;
+        name: string;
+        description: string;
+        call_to_action: { type: string; value: { link: string } };
+        picture?: string;
+      };
+      page_id?: string;
+    }
+    const storySpec: StorySpec = {
       link_data: {
         message: ad_creative?.primary_text || "",
         link: ad_creative?.link_url || "https://example.com",

@@ -1,5 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+interface Lead {
+  name: string;
+  number?: string;
+  address?: string;
+  city?: string;
+  type?: string;
+  industry?: string;
+  status?: string;
+  country?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  source?: string;
+  sources?: string[];
+  source_details?: {
+    phone_source?: string;
+    email_source?: string;
+    address_source?: string;
+  };
+  rating?: number | null;
+  reviews?: number;
+  place_id?: string;
+  phone_confidence?: string;
+  email_confidence?: string;
+  data_quality?: string;
+  score?: number;
+  match_reasons?: string[];
+  ai_score?: number;
+  ai_quality?: string;
+  ai_reason?: string;
+  [key: string]: unknown;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -140,7 +173,7 @@ async function searchGoogleMaps(
   location: string,
   maxResults = 50,
   onProgress?: (msg: string, count: number) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   const token = Deno.env.get("APIFY_API_TOKEN");
   if (!token) { console.error("APIFY_API_TOKEN not configured"); return []; }
 
@@ -185,7 +218,7 @@ async function searchGoogleMaps(
 async function searchGoogleMapsAsync(
   token: string, searchQueries: string[], maxResults: number,
   onProgress?: (msg: string, count: number) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   const perQuery = Math.min(Math.ceil(maxResults / searchQueries.length), 100);
   try {
     const startRes = await fetchWithTimeout(
@@ -230,7 +263,27 @@ async function searchGoogleMapsAsync(
   } catch { return []; }
 }
 
-function mapGoogleItem(item: any): any | null {
+interface GoogleMapsItem {
+  title?: string;
+  phone?: string;
+  phoneUnformatted?: string;
+  address?: string;
+  street?: string;
+  city?: string;
+  neighborhood?: string;
+  categoryName?: string;
+  categories?: string[];
+  permanentlyClosed?: boolean;
+  temporarilyClosed?: boolean;
+  email?: string;
+  website?: string;
+  url?: string;
+  totalScore?: number;
+  reviewsCount?: number;
+  placeId?: string;
+}
+
+function mapGoogleItem(item: GoogleMapsItem): Lead | null {
   if (!item?.title) return null;
   const phone = (item.phone || item.phoneUnformatted || "").replace(/\s/g, "");
   return {
@@ -265,7 +318,7 @@ async function searchKrak(
   location: string,
   maxResults = 50,
   onProgress?: (msg: string, count: number) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   const token = Deno.env.get("APIFY_API_TOKEN");
   if (!token) { console.error("APIFY_API_TOKEN not configured for Krak"); return []; }
 
@@ -315,7 +368,7 @@ async function searchKrak(
 async function searchKrakAsync(
   token: string, keyword: string, maxResults: number,
   onProgress?: (msg: string, count: number) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   const krakMaxItems = Math.min(maxResults, 200);
   try {
     const startRes = await fetchWithTimeout(
@@ -365,7 +418,23 @@ async function searchKrakAsync(
   } catch { return []; }
 }
 
-function mapKrakApifyItem(item: any): any | null {
+interface KrakItem {
+  name?: string;
+  phones?: Array<{ number?: string }>;
+  addresses?: Array<{
+    street_name?: string;
+    street_number?: string;
+    postal_code?: string;
+    postal_area?: string;
+    municipality?: string;
+  }>;
+  products?: Array<{ name?: string; link?: string; url?: string }>;
+  organisation_number?: string;
+  categories?: Array<{ name?: string }>;
+  eniro_id?: string;
+}
+
+function mapKrakApifyItem(item: KrakItem): Lead | null {
   if (!item?.name) return null;
 
   // Extract phone from phones array
@@ -378,18 +447,18 @@ function mapKrakApifyItem(item: any): any | null {
   const city = addr?.postal_area || addr?.municipality || "";
 
   // Extract email from products array
-  const emailProduct = item.products?.find((p: any) => p.name === "email");
+  const emailProduct = item.products?.find((p) => p.name === "email");
   const email = emailProduct?.link || "";
 
   // Extract website from products array
-  const websiteProduct = item.products?.find((p: any) => p.name === "homepage");
+  const websiteProduct = item.products?.find((p) => p.name === "homepage");
   const website = websiteProduct?.link || websiteProduct?.url || "";
 
   // CVR / organisation number
   const cvr = item.organisation_number || "";
 
   // Categories
-  const categories = item.categories?.map((c: any) => c.name).filter(Boolean) || [];
+  const categories = item.categories?.map((c) => c.name).filter(Boolean) || [];
 
   return {
     name: item.name,
@@ -469,9 +538,9 @@ async function scrapeContactFromWebsite(url: string): Promise<{
 // ENRICHMENT PIPELINE
 // ═══════════════════════════════════════════════════════════
 async function enrichLeadContacts(
-  leads: any[],
+  leads: Lead[],
   onProgress?: (msg: string) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   const withWebsite = leads.filter(l => l.website && (!l.phone || !l.email));
   const scrapeLimit = leads.length >= 100 ? 30 : 15;
   const batch = withWebsite.slice(0, scrapeLimit);
@@ -487,7 +556,7 @@ async function enrichLeadContacts(
     }),
   );
 
-  const websiteMap = new Map<string, any>();
+  const websiteMap = new Map<string, { leadName: string; phone?: string; email?: string; social_links: string[]; phone_confidence: string; email_confidence: string }>();
   for (const r of results) {
     if (r.status === "fulfilled" && r.value) websiteMap.set(r.value.leadName, r.value);
   }
@@ -513,7 +582,7 @@ async function enrichLeadContacts(
 }
 
 // ─── CVR Enrichment ─────────────────────────────────────────
-async function enrichWithCVR(leads: any[], onProgress?: (msg: string) => void): Promise<any[]> {
+async function enrichWithCVR(leads: Lead[], onProgress?: (msg: string) => void): Promise<Lead[]> {
   const toEnrich = leads.filter(l => !l.number && l.country === "DK" && l.name);
   if (toEnrich.length === 0) return leads;
 
@@ -521,7 +590,7 @@ async function enrichWithCVR(leads: any[], onProgress?: (msg: string) => void): 
 
   // Process in batches of 8 with 200ms delay between batches to respect rate limits
   const BATCH_SIZE = 8;
-  const allEnrichResults: (any | null)[] = [];
+  const allEnrichResults: (({ leadName: string; cvr: string; email: string; phone: string; industry: string; address: string; city: string; website: string }) | null)[] = [];
 
   for (let i = 0; i < toEnrich.length; i += BATCH_SIZE) {
     const batch = toEnrich.slice(i, i + BATCH_SIZE);
@@ -606,7 +675,7 @@ function normalizeDomain(url: string): string {
   } catch { return normalize(url); }
 }
 
-function areDuplicates(a: any, b: any): boolean {
+function areDuplicates(a: Lead, b: Lead): boolean {
   if (a.number && b.number && a.number === b.number) return true;
   const nameA = normalize(a.name), nameB = normalize(b.name);
   if (nameA && nameB && nameA.length > 3 && nameB.length > 3) {
@@ -629,7 +698,7 @@ function areDuplicates(a: any, b: any): boolean {
 // Email: Website > CVR > Krak > Google
 const SOURCE_PRIORITY: Record<string, number> = { "Krak": 4, "Google": 3, "CVR": 2, "Website": 1 };
 
-function mergeLeadData(existing: any, incoming: any): any {
+function mergeLeadData(existing: Lead, incoming: Lead): Lead {
   const merged = { ...existing };
   const existingSources = existing.sources || [];
   const incomingSources = incoming.sources || [];
@@ -683,8 +752,8 @@ function mergeLeadData(existing: any, incoming: any): any {
   return merged;
 }
 
-function mergeDuplicatesCrossSources(leads: any[]): any[] {
-  const merged: any[] = [];
+function mergeDuplicatesCrossSources(leads: Lead[]): Lead[] {
+  const merged: Lead[] = [];
   for (const lead of leads) {
     let foundDupe = false;
     for (let i = 0; i < merged.length; i++) {
@@ -711,10 +780,10 @@ function normalizePhoneNumber(phone: string): string {
 }
 
 // ─── Scoring ────────────────────────────────────────────────
-function scoreAndRank(leads: any[], intent: {
+function scoreAndRank(leads: Lead[], intent: {
   category: string; location: string; expandedTerms: string[];
   requireEmail: boolean; requirePhone: boolean;
-}): any[] {
+}): Lead[] {
   const locationLower = intent.location?.toLowerCase() || "";
   const categoryTerms = intent.expandedTerms.map(t => t.toLowerCase());
 
@@ -773,11 +842,11 @@ function scoreAndRank(leads: any[], intent: {
 
 // ─── AI-Powered Lead Qualification ─────────────────────────
 async function aiQualifyLeads(
-  leads: any[],
+  leads: Lead[],
   category: string,
   location: string,
   onProgress?: (msg: string) => void,
-): Promise<any[]> {
+): Promise<Lead[]> {
   if (leads.length === 0) return leads;
 
   const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
@@ -790,7 +859,7 @@ async function aiQualifyLeads(
 
   // Batch leads into chunks of 15 for AI processing
   const BATCH_SIZE = 15;
-  const qualified: any[] = [];
+  const qualified: Lead[] = [];
 
   for (let i = 0; i < leads.length; i += BATCH_SIZE) {
     const batch = leads.slice(i, i + BATCH_SIZE);
@@ -889,7 +958,7 @@ Vær kort i reason (maks 15 ord).`,
 }
 
 // ─── Analysis ───────────────────────────────────────────────
-function instantAnalysis(leads: any[]): string {
+function instantAnalysis(leads: Lead[]): string {
   const withEmail = leads.filter(l => l.email).length;
   const withPhone = leads.filter(l => l.phone).length;
   const withCVR = leads.filter(l => l.number).length;
@@ -904,7 +973,7 @@ function instantAnalysis(leads: any[]): string {
 }
 
 // ─── SSE Helper ─────────────────────────────────────────────
-function sseEvent(type: string, data: any): string {
+function sseEvent(type: string, data: Record<string, unknown>): string {
   return `data: ${JSON.stringify({ type, ...data })}\n\n`;
 }
 
@@ -965,7 +1034,7 @@ serve(async (req) => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
-          const send = (type: string, data: any) => {
+          const send = (type: string, data: Record<string, unknown>) => {
             try { controller.enqueue(encoder.encode(sseEvent(type, data))); } catch { /* closed */ }
           };
 
@@ -974,7 +1043,7 @@ serve(async (req) => {
           // ═══ GOOGLE MAPS ONLY ═══
           send("status", { step: "google", message: `🗺️ Søger i Google Maps...` });
 
-          let googleResults: any[] = [];
+          let googleResults: Lead[] = [];
           try {
             if (isRegion) {
               const cityResults = await Promise.all(
@@ -1203,14 +1272,14 @@ Regler:
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
-          const send = (type: string, data: any) => {
+          const send = (type: string, data: Record<string, unknown>) => {
             try { controller.enqueue(encoder.encode(sseEvent(type, data))); } catch { /* closed */ }
           };
 
           send("status", { step: "searching", message: `🔍 Søger efter ${isCompanyName || isSpecificQuery ? rawQuery : category} ${location ? `i ${location}` : ""}...` });
 
           // Google Maps ONLY
-          let googleResults: any[] = [];
+          let googleResults: Lead[] = [];
           try {
             if (isRegion) {
               const cityResults = await Promise.all(
@@ -1279,7 +1348,7 @@ Regler:
     }
 
     // Non-streaming fallback — Google Maps ONLY
-    let googleResults: any[] = [];
+    let googleResults: Lead[] = [];
     try {
       if (isRegion) {
         const cityResults = await Promise.all(regionCities!.slice(0, 4).map(city => searchGoogleMaps(searchQueries, city, Math.ceil(targetMax / regionCities!.length))));

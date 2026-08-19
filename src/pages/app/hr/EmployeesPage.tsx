@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, UserCheck, Building2 } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import EmployeeDetailPanel from '@/components/hr/EmployeeDetailPanel';
@@ -77,7 +78,14 @@ export default function EmployeesPage() {
         <Table><TableHeader><TableRow><TableHead>{t('common.name')}</TableHead><TableHead>{t('hr.positionLabel')}</TableHead><TableHead>{t('hr.departmentLabel')}</TableHead><TableHead>{t('hr.startDate')}</TableHead></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (<TableRow key={i}><TableCell><Skeleton className="h-4 w-32" /></TableCell><TableCell><Skeleton className="h-4 w-28" /></TableCell><TableCell><Skeleton className="h-6 w-20" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell></TableRow>))
-            : filteredEmployees.length === 0 ? (<TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{error ? t('hr.fetchError') : t('hr.noEmployees')}</TableCell></TableRow>)
+            : filteredEmployees.length === 0 ? (<TableRow><TableCell colSpan={4}>
+                <EmptyState
+                  bare
+                  icon={UserCheck}
+                  title={error ? t('hr.fetchError') : t('hr.noEmployees')}
+                  action={!error ? { label: t('hr.newEmployee'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                />
+              </TableCell></TableRow>)
             : filteredEmployees.map((employee) => (
               <TableRow key={employee.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { setSelectedEmployee(employee); setDetailOpen(true); }}>
                 <TableCell className="font-medium">{employee.full_name}</TableCell>

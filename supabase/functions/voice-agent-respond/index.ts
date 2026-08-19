@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       // Fallback to Lovable AI Gateway (no extra setup needed for tenant)
       aiKey = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY")) ?? null;
       aiBaseUrl = (Deno.env.get("AI_GATEWAY_BASE_URL") ?? "https://ai.gateway.lovable.dev/v1");
-      aiModel = "google/gemini-2.5-flash";
+      aiModel = "llama3.2:3b";
     }
 
     if (!aiKey) {

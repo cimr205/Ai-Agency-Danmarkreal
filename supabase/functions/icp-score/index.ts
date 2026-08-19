@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     // Score each lead
-    const scores = leads.map((lead: any) => scoreLead(lead, icp, profile.company_id));
+    const scores = leads.map((lead: Lead) => scoreLead(lead, icp as IcpProfile, profile.company_id));
 
     // Upsert scores
     const { error: upsertErr } = await supabase
@@ -64,17 +64,48 @@ Deno.serve(async (req) => {
       JSON.stringify({ scored_count: scores.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("icp-score error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal error" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
       { status: 500, headers: corsHeaders }
     );
   }
 });
 
 // ─── Scoring Engine ─────────────────────────────────────────
-function scoreLead(lead: any, icp: any, companyId: string) {
+interface Lead {
+  id: string;
+  industry?: string | null;
+  company_name?: string | null;
+  notes?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  value?: number | null;
+}
+
+interface IcpProfile {
+  id: string;
+  industry?: string[] | null;
+  target_countries?: string[] | null;
+  target_cities?: string[] | null;
+  target_regions?: string[] | null;
+  min_employees?: number | null;
+  max_employees?: number | null;
+  target_roles?: string[] | null;
+  pain_points?: string[] | null;
+  desired_services?: string[] | null;
+  budget_level?: string | null;
+  weight_industry: number;
+  weight_location: number;
+  weight_company_size: number;
+  weight_role_fit: number;
+  weight_pain_points: number;
+  weight_service_fit: number;
+  weight_budget_fit: number;
+}
+
+function scoreLead(lead: Lead, icp: IcpProfile, companyId: string) {
   const matchReasons: string[] = [];
   const redFlags: string[] = [];
 

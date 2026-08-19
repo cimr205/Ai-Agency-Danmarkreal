@@ -6,10 +6,12 @@ import { useNotifications } from '@/hooks/api/useNotifications';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { da } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n';
 
 export default function NotificationDropdown() {
   const { data: notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <Popover>
@@ -25,16 +27,16 @@ export default function NotificationDropdown() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <span className="text-sm font-semibold">Notifications</span>
+          <span className="text-sm font-semibold">{t('common.notifications')}</span>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => markAllRead.mutate()}>
-              <CheckCheck className="h-3 w-3" /> Mark all read
+              <CheckCheck className="h-3 w-3" /> {t('common.markAllRead')}
             </Button>
           )}
         </div>
         <ScrollArea className="max-h-80">
           {(!notifications || notifications.length === 0) ? (
-            <p className="p-4 text-sm text-muted-foreground text-center">No notifications</p>
+            <p className="p-4 text-sm text-muted-foreground text-center">{t('common.noNotifications')}</p>
           ) : (
             notifications.map(n => (
               <button

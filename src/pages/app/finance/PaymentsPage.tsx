@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, CreditCard, CheckCircle, Clock, Building2, Smartphone, Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -211,7 +212,14 @@ export default function PaymentsPage() {
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>{Array.from({ length: 5 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
             )) : filteredPayments.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{error ? t('payments.fetchError') : t('payments.noPayments')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5}>
+                <EmptyState
+                  bare
+                  icon={CreditCard}
+                  title={error ? t('payments.fetchError') : t('payments.noPayments')}
+                  action={!error ? { label: t('payments.registerPayment'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                />
+              </TableCell></TableRow>
             ) : filteredPayments.map(payment => (
               <TableRow key={payment.id}>
                 <TableCell className="font-mono font-medium">{payment.invoices?.invoice_number || '–'}</TableCell>

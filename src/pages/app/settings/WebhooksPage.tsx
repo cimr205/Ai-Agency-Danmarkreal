@@ -42,13 +42,13 @@ export default function WebhooksPage() {
 
   const handleCreate = async () => {
     if (!form.name || !form.url || !form.event) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("webhooks.fillRequired"));
       return;
     }
     try {
       new URL(form.url);
     } catch {
-      toast.error("Please enter a valid URL");
+      toast.error(t("webhooks.invalidUrl"));
       return;
     }
     try {
@@ -58,7 +58,7 @@ export default function WebhooksPage() {
         event: form.event,
         ...(form.secret_key ? { secret_key: form.secret_key } : {}),
       });
-      toast.success("Webhook created");
+      toast.success(t("webhooks.created"));
       setShowCreate(false);
       setForm({ name: "", url: "", event: "", secret_key: "" });
     } catch (e) {
@@ -74,22 +74,22 @@ export default function WebhooksPage() {
         companyId: profile!.company_id!,
       });
       const status = result?.results?.[0]?.status;
-      if (status === "success") toast.success("Test webhook delivered successfully!");
-      else toast.error("Test webhook failed — check logs for details");
+      if (status === "success") toast.success(t("webhooks.testSuccess"));
+      else toast.error(t("webhooks.testFailed"));
     } catch (e) {
-      toast.error("Test failed: " + (getErrorMessage(e) || String(e)));
+      toast.error(t("webhooks.testFailedPrefix") + ": " + (getErrorMessage(e) || String(e)));
     }
   };
 
   const handleToggle = async (wh: WebhookRow) => {
     await updateMut.mutateAsync({ id: wh.id, is_active: !wh.is_active });
-    toast.success(wh.is_active ? "Webhook disabled" : "Webhook enabled");
+    toast.success(wh.is_active ? t("webhooks.webhookDisabled") : t("webhooks.webhookEnabled"));
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this webhook? This cannot be undone.")) return;
+    if (!confirm(t("webhooks.deleteConfirm"))) return;
     await deleteMut.mutateAsync(id);
-    toast.success("Webhook deleted");
+    toast.success(t("webhooks.webhookDeleted"));
   };
 
   return (
@@ -112,18 +112,18 @@ export default function WebhooksPage() {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div>
-                <Label>Name *</Label>
-                <Input placeholder="e.g. Slack — New Leads" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                <Label>{t("webhooks.name")} *</Label>
+                <Input placeholder={t("webhooks.namePlaceholder")} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
-                <Label>Webhook URL *</Label>
-                <Input placeholder="https://hooks.zapier.com/..." value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
-                <p className="text-xs text-muted-foreground mt-1">Paste the URL from Zapier, Make, or any other service</p>
+                <Label>{t("webhooks.url")} *</Label>
+                <Input placeholder={t("webhooks.urlPlaceholder")} value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
+                <p className="text-xs text-muted-foreground mt-1">{t("webhooks.urlHint")}</p>
               </div>
               <div>
-                <Label>Event Trigger *</Label>
+                <Label>{t("webhooks.eventTrigger")} *</Label>
                 <Select value={form.event} onValueChange={v => setForm(f => ({ ...f, event: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select event..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("webhooks.selectEvent")} /></SelectTrigger>
                   <SelectContent>
                     {WEBHOOK_EVENTS.map(ev => (
                       <SelectItem key={ev} value={ev}>{ev}</SelectItem>
@@ -132,16 +132,16 @@ export default function WebhooksPage() {
                 </Select>
               </div>
               <div>
-                <Label className="flex items-center gap-1"><Shield className="h-3 w-3" /> Secret Key (optional)</Label>
-                <Input placeholder="Used for HMAC-SHA256 verification" value={form.secret_key} onChange={e => setForm(f => ({ ...f, secret_key: e.target.value }))} />
-                <p className="text-xs text-muted-foreground mt-1">If set, we'll include an X-Webhook-Signature header</p>
+                <Label className="flex items-center gap-1"><Shield className="h-3 w-3" /> {t("webhooks.secretKey")}</Label>
+                <Input placeholder={t("webhooks.secretPlaceholder")} value={form.secret_key} onChange={e => setForm(f => ({ ...f, secret_key: e.target.value }))} />
+                <p className="text-xs text-muted-foreground mt-1">{t("webhooks.secretHint")}</p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setShowCreate(false)}>{t("common.cancel")}</Button>
               <Button onClick={handleCreate} disabled={createMut.isPending}>
                 {createMut.isPending ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
-                Create Webhook
+                {t("webhooks.createWebhook")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -185,7 +185,7 @@ export default function WebhooksPage() {
                 </div>
               </div>
               <Button onClick={() => setShowCreate(true)} className="mt-1">
-                <Plus className="h-4 w-4 mr-2" /> Forbind med webhook-URL
+                <Plus className="h-4 w-4 mr-2" /> {t("webhooks.connectButton")}
               </Button>
             </div>
           </div>
@@ -195,8 +195,8 @@ export default function WebhooksPage() {
       {/* Tabs: Webhooks | Logs */}
       <Tabs defaultValue="webhooks" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="webhooks">Webhooks ({webhooks?.length || 0})</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="webhooks">{t("webhooks.webhooksTab")} ({webhooks?.length || 0})</TabsTrigger>
+          <TabsTrigger value="logs">{t("webhooks.logsTab")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="webhooks" className="space-y-4">
@@ -221,7 +221,7 @@ export default function WebhooksPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium truncate">{wh.name}</span>
                           <Badge variant={wh.is_active ? "default" : "secondary"} className="text-xs">
-                            {wh.is_active ? "Active" : "Disabled"}
+                            {wh.is_active ? t("webhooks.active") : t("webhooks.disabled")}
                           </Badge>
                           <Badge variant="outline" className="text-xs font-mono">{wh.event}</Badge>
                         </div>
@@ -243,10 +243,10 @@ export default function WebhooksPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Switch checked={wh.is_active} onCheckedChange={() => handleToggle(wh)} />
                         <Button variant="outline" size="sm" onClick={() => handleTest(wh)} disabled={testMut.isPending}>
-                          <Play className="h-3 w-3 mr-1" /> Test
+                          <Play className="h-3 w-3 mr-1" /> {t("webhooks.test")}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => { setSelectedWebhookId(wh.id); }}>
-                          <Eye className="h-3 w-3 mr-1" /> Logs
+                          <Eye className="h-3 w-3 mr-1" /> {t("webhooks.logs")}
                         </Button>
                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(wh.id)}>
                           <Trash2 className="h-4 w-4" />
@@ -264,9 +264,9 @@ export default function WebhooksPage() {
           {/* Webhook filter for logs */}
           <div className="flex items-center gap-3 mb-4">
             <Select value={selectedWebhookId || "all"} onValueChange={v => setSelectedWebhookId(v === "all" ? null : v)}>
-              <SelectTrigger className="w-64"><SelectValue placeholder="All webhooks" /></SelectTrigger>
+              <SelectTrigger className="w-64"><SelectValue placeholder={t("webhooks.allWebhooks")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All webhooks</SelectItem>
+                <SelectItem value="all">{t("webhooks.allWebhooks")}</SelectItem>
                 {webhooks?.map(wh => (
                   <SelectItem key={wh.id} value={wh.id}>{wh.name}</SelectItem>
                 ))}
@@ -278,26 +278,26 @@ export default function WebhooksPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Event</TableHead>
-                  <TableHead>HTTP Code</TableHead>
-                  <TableHead>Attempt</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Error</TableHead>
+                  <TableHead>{t("webhooks.status")}</TableHead>
+                  <TableHead>{t("webhooks.event")}</TableHead>
+                  <TableHead>{t("webhooks.httpCode")}</TableHead>
+                  <TableHead>{t("webhooks.attempt")}</TableHead>
+                  <TableHead>{t("webhooks.time")}</TableHead>
+                  <TableHead>{t("webhooks.error")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logsLoading ? (
                   <TableRow><TableCell colSpan={6}><Skeleton className="h-6 w-full" /></TableCell></TableRow>
                 ) : !logs?.length ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No logs yet</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t("webhooks.noLogs")}</TableCell></TableRow>
                 ) : logs.map(log => (
                   <TableRow key={log.id}>
                     <TableCell>
                       {log.status === "success" ? (
-                        <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="h-3 w-3 mr-1" /> OK</Badge>
+                        <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="h-3 w-3 mr-1" /> {t("webhooks.ok")}</Badge>
                       ) : (
-                        <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Failed</Badge>
+                        <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> {t("webhooks.failed")}</Badge>
                       )}
                     </TableCell>
                     <TableCell className="font-mono text-xs">{log.event}</TableCell>

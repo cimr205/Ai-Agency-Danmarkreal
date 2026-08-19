@@ -45,6 +45,18 @@ export function useCreateEmployee() {
         ? parseInt(existingEmps[0].employee_id.replace(/\D/g, '')) || 0
         : 0;
       const nextId = `EMP-${String(lastNum + 1).padStart(3, '0')}`;
+
+      // If someone with this email already has portal access in this company,
+      // link the new employee record to their account so they show up as
+      // themselves everywhere (shift assignment, "who am I" lookups, etc.)
+      // instead of becoming an orphaned HR-only record.
+      const { data: matchingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('company_id', profile.company_id)
+        .ilike('email', input.email)
+        .maybeSingle();
+
       const { data, error } = await supabase
         .from('employee_profiles')
         .insert({
@@ -52,6 +64,7 @@ export function useCreateEmployee() {
           employee_id: nextId,
           company_id: profile.company_id,
           created_by: session.user.id,
+          user_id: matchingProfile?.user_id ?? null,
         })
         .select()
         .single();

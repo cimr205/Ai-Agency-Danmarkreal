@@ -44,7 +44,7 @@ serve(async (req) => {
       executed_at: status === "approved" ? new Date().toISOString() : null,
     });
 
-    let result: any = { success: true, message: "Action logged" };
+    let result: { success: boolean; message: string } = { success: true, message: "Action logged" };
 
     // Execute if approved
     if (status === "approved" && action.execution_function) {

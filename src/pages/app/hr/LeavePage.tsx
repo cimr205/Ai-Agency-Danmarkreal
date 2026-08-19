@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Calendar, Check, X, Clock } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
@@ -99,12 +100,14 @@ export default function LeavePage() {
         <Table><TableHeader><TableRow><TableHead>{t('hr.employee')}</TableHead><TableHead>{t('hr.typeLabel')}</TableHead><TableHead>{t('hr.fromDate').replace(' *', '')}</TableHead><TableHead>{t('hr.toDate').replace(' *', '')}</TableHead><TableHead>{t('hr.statusLabel')}</TableHead>{isAdmin && <TableHead>{t('hr.action')}</TableHead>}</TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (<TableRow key={i}><TableCell><Skeleton className="h-4 w-32" /></TableCell><TableCell><Skeleton className="h-4 w-20" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell><TableCell><Skeleton className="h-6 w-20" /></TableCell>{isAdmin && <TableCell><Skeleton className="h-8 w-24" /></TableCell>}</TableRow>))
-            : filteredLeave.length === 0 ? (<TableRow><TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-12 text-muted-foreground">
-                <div className="space-y-2">
-                  <Calendar className="h-8 w-8 mx-auto text-muted-foreground/40" />
-                  <p className="font-medium">{error ? t('hr.fetchLeaveError') : t('hr.noRequests')}</p>
-                  <p className="text-xs max-w-sm mx-auto">{t('hr.leaveGuide') || 'Manage vacation, sick days, and personal leave. Click "New Request" to submit a leave request for approval.'}</p>
-                </div>
+            : filteredLeave.length === 0 ? (<TableRow><TableCell colSpan={isAdmin ? 6 : 5}>
+                <EmptyState
+                  bare
+                  icon={Calendar}
+                  title={error ? t('hr.fetchLeaveError') : t('hr.noRequests')}
+                  hint={t('hr.leaveGuide') || 'Manage vacation, sick days, and personal leave. Click "New Request" to submit a leave request for approval.'}
+                  action={!error ? { label: t('hr.newRequest'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                />
               </TableCell></TableRow>)
             : filteredLeave.map((leave) => (
               <TableRow key={leave.id}>

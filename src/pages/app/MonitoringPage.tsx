@@ -53,7 +53,7 @@ export default function MonitoringPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">System Monitoring</h1>
+          <h1 className="text-2xl font-bold">Systemovervågning</h1>
           <p className="text-sm text-muted-foreground">Realtids systemstatus og performance metrics</p>
         </div>
         <Badge variant="outline" className="gap-1.5">
@@ -80,7 +80,7 @@ export default function MonitoringPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="w-4 h-4" /> Email Delivery
+            <Mail className="w-4 h-4" /> Email-levering
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -103,7 +103,7 @@ export default function MonitoringPage() {
               <Clock className="w-4 h-4 text-warning" />
               <div>
                 <p className="text-sm font-medium">{metrics?.emailDeliveryRate ?? 100}% levering</p>
-                <p className="text-xs text-muted-foreground">Delivery rate</p>
+                <p className="text-xs text-muted-foreground">Leveringsrate</p>
               </div>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function MonitoringPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4" /> Database Status
+            <Database className="w-4 h-4" /> Databasestatus
           </CardTitle>
         </CardHeader>
         <CardContent>

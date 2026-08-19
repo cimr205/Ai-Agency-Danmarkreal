@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,9 +23,13 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const stuckTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Auto-confirm is enabled platform-wide → after signup Supabase returns a
-  // live session and AuthContext flips isAuthenticated. Redirect into the app.
+  useEffect(() => () => clearTimeout(stuckTimerRef.current), []);
+
+  // If email confirmation is disabled, signup returns a live session and
+  // AuthContext flips isAuthenticated — redirect into the app. If it's
+  // enabled, the user needs to confirm via email first (see needsEmailConfirmation below).
   if (!authLoading && isAuthenticated) {
     return <Navigate to={`/${locale}/app/dashboard`} replace />;
   }
@@ -49,12 +53,21 @@ export default function SignupPage() {
       const { needsEmailConfirmation } = await signup(email, password, fullName);
       if (needsEmailConfirmation) {
         toast({ title: t('auth.checkEmail'), description: t('auth.checkEmailConfirm') });
+        setLoading(false);
       } else {
         toast({ title: t('auth.accountCreated'), description: t('auth.welcomeAboard') });
+        // Keep the button in its loading state — a session now exists, so
+        // AuthContext is loading the profile before `isAuthenticated` flips
+        // and the redirect above fires. Don't clear loading here.
+        // Fallback: if that never resolves, don't leave the user stuck.
+        clearTimeout(stuckTimerRef.current);
+        stuckTimerRef.current = setTimeout(() => {
+          setLoading(false);
+          toast({ variant: 'destructive', title: t('auth.registerFailed'), description: t('auth.unknownError') });
+        }, 10000);
       }
     } catch (err) {
       toast({ variant: 'destructive', title: t('auth.registerFailed'), description: describeAuthError(err, t) });
-    } finally {
       setLoading(false);
     }
   };

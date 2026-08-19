@@ -2,7 +2,7 @@
 // Connects ambient AI to real workspace data via tool calls scoped to the
 // authenticated user's company. Destructive tools require `confirm: true`.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +10,23 @@ const corsHeaders = {
 };
 
 const LOVABLE_AI_URL = (Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions");
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "llama3.2:3b";
 
-type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; tool_calls?: any[] };
+type ToolCall = { id: string; function: { name: string; arguments: string } };
+type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; tool_calls?: ToolCall[] };
+type ToolArgs = {
+  query?: string;
+  title?: string;
+  due_date?: string;
+  priority?: string;
+  customer_id?: string;
+  value?: number;
+  expected_close_date?: string;
+  lead_id?: string;
+  status?: string;
+  workflow_id?: string;
+  payload?: Record<string, unknown>;
+};
 
 const tools = [
   {
@@ -128,7 +142,7 @@ Deno.serve(async (req) => {
       ...messages,
     ];
 
-    const actions: any[] = [];
+    const actions: Array<{ tool: string; input: ToolArgs; result: unknown; status: "ok" | "error"; error?: string }> = [];
     let reply = "";
 
     for (let step = 0; step < 6; step++) {
@@ -152,12 +166,12 @@ Deno.serve(async (req) => {
       conversation.push(choice);
       reply = choice.content ?? reply;
 
-      const calls = choice.tool_calls as any[] | undefined;
+      const calls = choice.tool_calls as ToolCall[] | undefined;
       if (!calls?.length) break;
 
       for (const call of calls) {
         const name = call.function?.name;
-        let args: any = {};
+        let args: ToolArgs = {};
         try { args = JSON.parse(call.function?.arguments ?? "{}"); } catch { /* noop */ }
 
         if (DESTRUCTIVE.has(name) && !confirm) {
@@ -191,19 +205,19 @@ Deno.serve(async (req) => {
     }
 
     return json({ reply, actions });
-  } catch (e: any) {
+  } catch (e) {
     console.error("ai-actions error", e);
-    return json({ error: e?.message ?? "Unknown" }, 500);
+    return json({ error: e instanceof Error ? e.message : "Unknown" }, 500);
   }
 });
 
 async function execTool(
   name: string,
-  args: any,
-  supabase: any,
+  args: ToolArgs,
+  supabase: SupabaseClient,
   companyId: string,
   userId: string,
-): Promise<{ ok: true; data: any } | { ok: false; error: string }> {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   try {
     switch (name) {
       case "search_clients": {
@@ -269,12 +283,12 @@ async function execTool(
       default:
         return { ok: false, error: `unknown_tool:${name}` };
     }
-  } catch (e: any) {
-    return { ok: false, error: e?.message ?? "exec_failed" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "exec_failed" };
   }
 }
 
-function json(body: any, status = 200) {
+function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },

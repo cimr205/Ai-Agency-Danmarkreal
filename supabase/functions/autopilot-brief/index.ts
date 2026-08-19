@@ -108,7 +108,7 @@ serve(async (req) => {
     }).map(d => ({
       ...d,
       days_stalled: Math.floor((now.getTime() - new Date(d.updated_at).getTime()) / (1000 * 60 * 60 * 24)),
-      customer_name: (d as any).customers?.name || "Unknown",
+      customer_name: (d as { customers?: { name?: string } }).customers?.name || "Unknown",
     }));
 
     const dealsClosingSoon = deals.filter(d => d.expected_close_date && d.expected_close_date <= sevenDaysFromNow);
@@ -118,7 +118,7 @@ serve(async (req) => {
     const overdueInvoices = invoices.filter(i => i.due_date && new Date(i.due_date) < now).map(i => ({
       ...i,
       days_overdue: Math.floor((now.getTime() - new Date(i.due_date!).getTime()) / (1000 * 60 * 60 * 24)),
-      customer_name: (i as any).customers?.name || "Unknown",
+      customer_name: (i as { customers?: { name?: string } }).customers?.name || "Unknown",
     }));
     const invoicesDueSoon = invoices.filter(i => i.due_date && new Date(i.due_date) >= now && i.due_date <= fiveDaysFromNow);
     const unpaidTotal = invoices.reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -126,7 +126,7 @@ serve(async (req) => {
     // Process payments
     const recentPayments = (paymentsRes.data || []).map(p => ({
       amount: p.amount,
-      customer_name: (p as any).customers?.name || "Unknown",
+      customer_name: (p as { customers?: { name?: string } }).customers?.name || "Unknown",
     }));
 
     // High ICP uncontacted leads
@@ -162,7 +162,7 @@ serve(async (req) => {
       },
       finance: {
         overdue_invoices: overdueInvoices,
-        invoices_due_soon: invoicesDueSoon.map(i => ({ ...i, customer_name: (i as any).customers?.name })),
+        invoices_due_soon: invoicesDueSoon.map(i => ({ ...i, customer_name: (i as { customers?: { name?: string } }).customers?.name })),
         unpaid_total: unpaidTotal,
         recent_payments: recentPayments,
       },
@@ -176,7 +176,7 @@ serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiKey}` },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "llama3.2:3b",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Here is the real-time business data for today:\n\n${JSON.stringify(businessData, null, 2)}` },

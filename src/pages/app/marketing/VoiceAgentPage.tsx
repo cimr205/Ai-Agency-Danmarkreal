@@ -210,24 +210,24 @@ export default function VoiceAgentPage() {
     setSavingKey(true);
     try {
       await invokeWithError('voice-agent-connect-openai', { action: 'save', apiKey: apiKey.trim() });
-      toast.success('OpenAI connected');
+      toast.success(t('voiceAgent.openaiConnected'));
       setOpenaiDialog(false);
       setApiKey('');
       // Optimistic update so UI immediately shows connected state
       setOpenai({ id: 'pending', status: 'connected', last_tested_at: new Date().toISOString(), last_error: null });
       await loadAll();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Failed to save key');
+      toast.error(getErrorMessage(e) || t('voiceAgent.openaiSaveFailed'));
     } finally {
       setSavingKey(false);
     }
   };
 
   const disconnectOpenAI = async () => {
-    if (!confirm('Disconnect OpenAI? Voice agents will stop working.')) return;
+    if (!confirm(t('voiceAgent.disconnectOpenaiConfirm'))) return;
     try {
       await invokeWithError('voice-agent-connect-openai', { action: 'disconnect' });
-      toast.success('OpenAI disconnected');
+      toast.success(t('voiceAgent.openaiDisconnected'));
       setOpenai(null);
       loadAll();
     } catch (e) { toast.error(getErrorMessage(e) || String(e)); }
@@ -245,7 +245,7 @@ export default function VoiceAgentPage() {
       created_by: user?.id,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success('Agent created');
+    toast.success(t('voiceAgent.agentCreated'));
     setAgentDialog(false);
     setAgentName('');
     loadAll();
@@ -257,7 +257,7 @@ export default function VoiceAgentPage() {
     try {
       const { data, error } = await supabase.functions.invoke('voice-agent-call', { body: { agentId: callAgentId, toNumber: callTo } });
       if (error || data?.error) throw new Error(data?.error || error?.message);
-      toast.success('Call initiated');
+      toast.success(t('voiceAgent.callInitiated'));
       setCallDialog(false);
       setCallTo('');
       setSelectedCallId(data.callId);

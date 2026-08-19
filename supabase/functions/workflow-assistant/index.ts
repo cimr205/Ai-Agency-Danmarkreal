@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -132,10 +132,20 @@ const tools = [
   },
 ];
 
+interface ToolArgs {
+  trigger_event?: string;
+  action_type?: string;
+  webhook_url?: string;
+  payload_fields?: string[];
+  description?: string;
+  workflow_id?: string;
+  is_active?: boolean;
+}
+
 async function executeTool(
   toolName: string,
-  args: any,
-  supabase: any,
+  args: ToolArgs,
+  supabase: SupabaseClient,
   userId: string,
   companyId: string
 ): Promise<{ success: boolean; result: string }> {
@@ -143,7 +153,7 @@ async function executeTool(
     switch (toolName) {
       case "create_workflow": {
         const { trigger_event, action_type, webhook_url, payload_fields, description } = args;
-        if (!VALID_EVENTS.includes(trigger_event)) {
+        if (!trigger_event || !VALID_EVENTS.includes(trigger_event)) {
           return { success: false, result: `Ugyldig trigger: ${trigger_event}` };
         }
         const needsUrl = action_type === "send_webhook" && (!webhook_url || webhook_url.trim() === "");
@@ -188,7 +198,15 @@ async function executeTool(
           .order("created_at", { ascending: false });
         if (error) return { success: false, result: `Fejl: ${error.message}` };
         if (!data?.length) return { success: true, result: "Du har ingen workflows endnu. Skriv hvad du gerne vil automatisere, så opretter jeg det for dig! 🚀" };
-        const list = data.map((w: any, i: number) =>
+        interface WorkflowRow {
+          id: string;
+          is_active: boolean;
+          description: string | null;
+          trigger_event: string;
+          action_type: string;
+          run_count: number;
+        }
+        const list = (data as WorkflowRow[]).map((w, i: number) =>
           `${i + 1}. ${w.is_active ? "🟢" : "🔴"} **${w.description || w.trigger_event}**\n   Trigger: ${EVENT_LABELS[w.trigger_event] || w.trigger_event}\n   Handling: ${w.action_type}\n   Kørsler: ${w.run_count} | ID: \`${w.id}\``
         ).join("\n\n");
         return { success: true, result: `📋 **Dine workflows (${data.length}):**\n\n${list}` };
@@ -371,7 +389,7 @@ VIGTIGT:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama3.2:3b",
         messages: aiMessages,
         tools,
         stream: false,
@@ -404,7 +422,7 @@ VIGTIGT:
     let iterations = 0;
     while (choice?.message?.tool_calls?.length && iterations < 5) {
       iterations++;
-      const toolResults: any[] = [];
+      const toolResults: Array<{ role: "tool"; tool_call_id: string; content: string }> = [];
       for (const tc of choice.message.tool_calls) {
         const toolArgs = typeof tc.function.arguments === "string"
           ? JSON.parse(tc.function.arguments)
@@ -426,7 +444,7 @@ VIGTIGT:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "llama3.2:3b",
           messages: aiMessages,
           tools,
           stream: false,

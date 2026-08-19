@@ -42,7 +42,14 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    const items = (data.items || []).map((c: any) => ({
+    interface CompaniesHouseResult {
+      company_number: string;
+      title: string;
+      address_snippet?: string;
+      company_type?: string;
+      company_status?: string;
+    }
+    const items = ((data.items || []) as CompaniesHouseResult[]).map((c) => ({
       company_number: c.company_number,
       title: c.title,
       address_snippet: c.address_snippet || "",

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Clock, CheckCircle, AlertCircle, User } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 
@@ -234,7 +235,7 @@ export default function TasksPage() {
       ) : error ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.fetchError')}</CardContent></Card>
       ) : filteredTasks.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.empty')}</CardContent></Card>
+        <EmptyState icon={CheckCircle} title={t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
       ) : (
         <div className="space-y-3">{filteredTasks.map((task) => (<TaskCard key={task.id} task={task} />))}</div>
       )}

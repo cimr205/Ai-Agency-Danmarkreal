@@ -7,6 +7,11 @@ type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "de
 
 export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity";
 
+const DEAL_STAGE_LABELS: Record<string, string> = {
+  discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
+  negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
+};
+
 export interface TimelineEvent {
   id: string;
   kind: TimelineKind;
@@ -108,7 +113,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `d:${d.id}`, kind: "deal",
           at: d.created_at,
           title: `Deal: ${d.title}`,
-          meta: d.stage,
+          meta: DEAL_STAGE_LABELS[d.stage] || d.stage,
           amount: Number(d.value),
         });
       }

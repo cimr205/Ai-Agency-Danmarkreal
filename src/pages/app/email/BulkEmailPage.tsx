@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Send, Upload, FileText, X, Paperclip, Users, Eye, ArrowLeft, CheckCircle2, AlertTriangle, Clock, BarChart3, Mail, MailOpen, UserX, TrendingUp, ShieldCheck, ShieldX, Loader2, MessageSquareReply } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,7 +57,7 @@ function personalizeText(template: string, r: Recipient): string {
     .replace(/\{\{initials\}\}/gi, initials);
 }
 
-function CampaignAnalytics() {
+function CampaignAnalytics({ onCompose }: { onCompose: () => void }) {
   const { user } = useAuth();
   const { locale } = useI18n();
   const da = locale === 'da';
@@ -340,11 +341,12 @@ function CampaignAnalytics() {
   return (
     <div className="space-y-4">
       {campaigns.length === 0 ? (
-        <div className="text-center py-12">
-          <BarChart3 className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{da ? 'Ingen kampagner sendt endnu' : 'No campaigns sent yet'}</p>
-          <p className="text-sm text-muted-foreground/70">{da ? 'Send din første masse-email for at se statistik her' : 'Send your first bulk email to see stats here'}</p>
-        </div>
+        <EmptyState
+          icon={BarChart3}
+          title={da ? 'Ingen kampagner sendt endnu' : 'No campaigns sent yet'}
+          hint={da ? 'Send din første masse-email for at se statistik her' : 'Send your first bulk email to see stats here'}
+          action={{ label: da ? 'Skriv email' : 'Compose email', onClick: onCompose, icon: Send }}
+        />
       ) : (
         <div className="space-y-2">
           {campaigns.map((c) => {
@@ -504,7 +506,7 @@ export default function BulkEmailPage() {
     // Create campaign record
     const companyId = user?.company_id;
     const userId = user?.user_id;
-    if (!companyId || !userId) { toast.error('Missing company context'); setSending(false); return; }
+    if (!companyId || !userId) { toast.error(locale === 'da' ? 'Manglende virksomhedskontekst' : 'Missing company context'); setSending(false); return; }
 
     const campaignId = crypto.randomUUID();
     await supabase.from('bulk_email_campaigns').insert({
@@ -753,7 +755,7 @@ export default function BulkEmailPage() {
                       if (!subject.trim() || !body.trim()) { toast.error(locale === 'da' ? 'Udfyld emne og brødtekst først' : 'Fill in subject and body first'); return; }
                       if (!gmailAccount) { toast.error(t('bulkEmail.connectFirst')); return; }
                       const { data: { user: authUser } } = await supabase.auth.getUser();
-                      if (!authUser?.email) { toast.error('No email found'); return; }
+                      if (!authUser?.email) { toast.error(locale === 'da' ? 'Ingen email fundet' : 'No email found'); return; }
                       try {
                         const testRecipient: Recipient = { email: authUser.email, name: user?.full_name || '', firstName: user?.full_name?.split(' ')[0] || '', lastName: user?.full_name?.split(' ').slice(1).join(' ') || '' };
                         await supabase.functions.invoke('gmail-send', {
@@ -889,7 +891,7 @@ export default function BulkEmailPage() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <CampaignAnalytics />
+          <CampaignAnalytics onCompose={() => setTab('compose')} />
         </TabsContent>
       </Tabs>
 
