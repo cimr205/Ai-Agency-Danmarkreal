@@ -59,6 +59,7 @@ const AdminOverviewPage = lazy(() => import("@/pages/app/admin/Overview"));
 const AdminCompaniesPage = lazy(() => import("@/pages/app/admin/AdminCompanies"));
 const AdminGatePage = lazy(() => import("@/pages/AdminGate"));
 const AdminContactSubmissions = lazy(() => import("@/pages/app/admin/AdminContactSubmissions"));
+const AdminDataDeletionRequests = lazy(() => import("@/pages/app/admin/AdminDataDeletionRequests"));
 const AdminUsersPage = lazy(() => import("@/pages/app/admin/AdminUsers"));
 const AdminSettingsPage = lazy(() => import("@/pages/app/admin/AdminSettings"));
 const OnboardingPage = lazy(() => import("@/pages/app/Onboarding"));
@@ -196,6 +197,7 @@ const App = () => (
                     <Route path="overview" element={<AdminOverviewPage />} />
                     <Route path="companies" element={<AdminCompaniesPage />} />
                     <Route path="contacts" element={<AdminContactSubmissions />} />
+                    <Route path="data-deletion-requests" element={<AdminDataDeletionRequests />} />
                     <Route path="users" element={<AdminUsersPage />} />
                     <Route path="settings" element={<AdminSettingsPage />} />
                   </Route>

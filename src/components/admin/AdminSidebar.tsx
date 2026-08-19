@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Building2, Users, Settings, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, Settings, MessageSquare, ShieldAlert } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { href: 'admin/companies', label: 'Virksomheder', icon: Building2 },
   { href: 'admin/users', label: 'Brugere', icon: Users },
   { href: 'admin/contacts', label: 'Henvendelser', icon: MessageSquare },
+  { href: 'admin/data-deletion-requests', label: 'GDPR-sletteanmodninger', icon: ShieldAlert },
   { href: 'admin/settings', label: 'Indstillinger', icon: Settings },
 ];
 
