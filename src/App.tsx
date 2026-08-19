@@ -1,4 +1,6 @@
 import { lazy, Suspense } from "react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,6 +77,7 @@ const ForgotPasswordPage = lazy(() => import("@/pages/auth/ForgotPassword"));
 const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPassword"));
 const PrivacyPolicyPage = lazy(() => import("@/pages/legal/PrivacyPolicy"));
 const TermsOfServicePage = lazy(() => import("@/pages/legal/TermsOfService"));
+const DataProcessingAgreementPage = lazy(() => import("@/pages/legal/DataProcessingAgreement"));
 
 // Lazy-load layouts
 const WorkspaceShell = lazy(() => import("@/components/workspace/WorkspaceShell"));
@@ -179,6 +182,8 @@ const App = () => (
         <CurrencyProvider>
           <Toaster />
           <Sonner />
+          <Analytics />
+          <SpeedInsights />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Navigate to="/en" replace />} />
@@ -207,6 +212,7 @@ const App = () => (
                 <Route path="invite" element={<AcceptInvitePage />} />
                 <Route path="privacy" element={<PrivacyPolicyPage />} />
                 <Route path="terms" element={<TermsOfServicePage />} />
+                <Route path="dpa" element={<DataProcessingAgreementPage />} />
                 <Route
                   path="app"
                   element={
