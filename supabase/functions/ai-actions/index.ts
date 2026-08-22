@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_AI_URL = (Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions");
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "llama3.2:3b";
 
 type ToolCall = { id: string; function: { name: string; arguments: string } };
 type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; tool_calls?: ToolCall[] };

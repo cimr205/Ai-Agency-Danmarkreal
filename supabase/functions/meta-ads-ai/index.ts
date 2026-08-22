@@ -34,7 +34,7 @@ Generate compelling ad copy with multiple variations.`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "llama3.2:3b",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -131,7 +131,7 @@ Answer concisely and actionably. Use specific numbers. Keep answers under 150 wo
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "llama3.2:3b",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: question },

@@ -934,7 +934,7 @@ ${contextData}${pageSnapshotSection}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "llama3.2:3b",
           messages: aiMessages,
           tools,
           tool_choice: "auto",
@@ -1019,7 +1019,7 @@ ${contextData}${pageSnapshotSection}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama3.2:3b",
         messages: aiMessages,
         stream: true,
       }),

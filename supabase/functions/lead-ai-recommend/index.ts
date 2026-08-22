@@ -126,7 +126,7 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "llama3.2:3b",
         messages: [{ role: "user", content: prompt }],
       }),
     });

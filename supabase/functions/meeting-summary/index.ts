@@ -69,7 +69,7 @@ Svar KUN med valid JSON.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "llama3.2:3b",
         messages: [{ role: "user", content: prompt }],
         tools: [{
           type: "function",

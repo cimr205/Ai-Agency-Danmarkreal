@@ -276,7 +276,7 @@ app.post("/*", async (c) => {
 
     const tools = buildTools(companyId, userId);
     const result = streamText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: gateway("llama3.2:3b"),
       system: SYSTEM,
       tools,
       stopWhen: stepCountIs(50),

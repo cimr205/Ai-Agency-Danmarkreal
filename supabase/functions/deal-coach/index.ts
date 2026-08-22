@@ -96,7 +96,7 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "llama3.2:3b",
         messages: [{ role: "user", content: prompt }],
       }),
     });

@@ -176,7 +176,7 @@ serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiKey}` },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "llama3.2:3b",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Here is the real-time business data for today:\n\n${JSON.stringify(businessData, null, 2)}` },
