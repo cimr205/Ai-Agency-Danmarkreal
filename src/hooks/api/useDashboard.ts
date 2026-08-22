@@ -9,10 +9,6 @@ const DEFAULT_PIPELINE_STAGES = [
   { key: 'lost', name: 'Lost', color: '#EF4444' },
 ] as const;
 
-function normalizeStageKey(value?: string | null) {
-  return value?.trim().toLowerCase().replace(/\s+/g, '_') ?? '';
-}
-
 export interface DashboardData {
   leads: { total: number; new: number; qualified: number; contacted: number };
   deals: { total: number; value: number; won: number; lost: number; wonValue: number };
@@ -24,133 +20,45 @@ export interface DashboardData {
   invoices: { total: number; paid: number; overdue: number; totalValue: number };
 }
 
-type PipelineStageSummary = DashboardData['pipeline']['stages'][number];
+export interface FollowUpItem {
+  id: string;
+  name: string;
+  company_name: string | null;
+  status: string;
+  score: number | null;
+  value: number | null;
+  days_since_contact: number;
+  overdue: boolean;
+  priority: number;
+  reason: string;
+}
 
+export interface DashboardSummary extends DashboardData {
+  revenueByDay: { label: string; value: number }[];
+  trends: { leads: { v: number }[]; deals: { v: number }[]; won: { v: number }[] };
+  today: {
+    meetings: { id: string; title: string; start_time: string; end_time: string }[];
+    tasks: { id: string; title: string; due_date: string | null; priority: string | null }[];
+  };
+  followUps: FollowUpItem[];
+}
+
+// Everything the dashboard needs, aggregated server-side in a single RPC call
+// instead of the 30+ per-table REST calls (counts, unbounded row fetches for
+// client-side summing, and separate revenue/trend/followup queries) this page
+// used to fire on every load — see get_dashboard_summary() migration.
 export function useDashboard() {
-  return useQuery<DashboardData>({
-    queryKey: ['dashboard'],
-    queryFn: async (): Promise<DashboardData> => {
-      // Use count queries instead of fetching all rows (breaks at 1000+ rows)
-      const [
-        leadsTotal, leadsNew, leadsContacted, leadsQualified,
-        dealsAll, dealsWon, dealsLost,
-        employeesTotal, employeesActive,
-        tasksPending, tasksInProgress, tasksCompleted,
-        emailsTotal, emailsUnread,
-        pipelineRes,
-        customersTotal,
-        invoicesTotal, invoicesPaid, invoicesOverdue, invoicesTotalValue,
-      ] = await Promise.all([
-        // Leads
-        supabase.from('leads').select('*', { count: 'exact', head: true }),
-        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'new'),
-        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'contacted'),
-        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'qualified'),
-        // Deals - need values so fetch minimal columns
-        supabase.from('deals').select('stage, value'),
-        supabase.from('deals').select('*', { count: 'exact', head: true }).eq('stage', 'won'),
-        supabase.from('deals').select('*', { count: 'exact', head: true }).eq('stage', 'lost'),
-        // Employees
-        supabase.from('employee_profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('employee_profiles').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        // Tasks
-        supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
-        supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-        // Emails
-        supabase.from('emails').select('*', { count: 'exact', head: true }),
-        supabase.from('emails').select('*', { count: 'exact', head: true }).eq('is_read', false),
-        // Pipeline stages
-        supabase.from('pipeline_stages').select('id, name, color, order_index').order('order_index'),
-        // Customers
-        supabase.from('customers').select('*', { count: 'exact', head: true }),
-        // Invoices
-        supabase.from('invoices').select('*', { count: 'exact', head: true }),
-        supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('status', 'paid'),
-        supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('status', 'overdue'),
-        supabase.from('invoices').select('amount'),
-      ]);
+  return useQuery<DashboardSummary>({
+    queryKey: ['dashboard-summary'],
+    queryFn: async (): Promise<DashboardSummary> => {
+      const { data, error } = await supabase.rpc('get_dashboard_summary');
+      if (error) throw error;
 
-      const deals = (dealsAll.data ?? []) as Array<{ stage: string | null; value: number | null }>;
-      const stages = (pipelineRes.data ?? []) as Array<{ name: string; color: string | null }>;
-      const invoiceAmounts = (invoicesTotalValue.data ?? []) as Array<{ amount: number | null }>;
-
-      const normalizedStages = stages.length > 0
-        ? stages.map((stage) => ({
-            key: normalizeStageKey(stage.name),
-            name: stage.name,
-            color: stage.color || '#3B82F6',
-          }))
-        : [...DEFAULT_PIPELINE_STAGES];
-
-      const stageMap = new Map<string, PipelineStageSummary>(
-        normalizedStages.map(
-          (stage): [string, PipelineStageSummary] => [
-            stage.key,
-            { name: stage.name, color: stage.color, count: 0 },
-          ],
-        ),
-      );
-
-      deals.forEach(d => {
-        const key = normalizeStageKey(d.stage);
-        if (key && stageMap.has(key)) {
-          stageMap.get(key)!.count++;
-        } else if (key) {
-          stageMap.set(key, {
-            name: d.stage,
-            color: '#64748B',
-            count: 1,
-          });
-        }
-      });
-
-      const wonValue = deals
-        .filter(d => normalizeStageKey(d.stage) === 'won')
-        .reduce((sum, d) => sum + Number(d.value || 0), 0);
-      const totalDealValue = deals.reduce((sum, d) => sum + Number(d.value || 0), 0);
-      const totalInvoiceValue = invoiceAmounts.reduce((sum, i) => sum + Number(i.amount || 0), 0);
-
-      const result: DashboardData = {
-        leads: {
-          total: leadsTotal.count ?? 0,
-          new: leadsNew.count ?? 0,
-          qualified: leadsQualified.count ?? 0,
-          contacted: leadsContacted.count ?? 0,
-        },
-        deals: {
-          total: deals.length,
-          value: totalDealValue,
-          won: dealsWon.count ?? 0,
-          lost: dealsLost.count ?? 0,
-          wonValue,
-        },
-        employees: {
-          total: employeesTotal.count ?? 0,
-          active: employeesActive.count ?? 0,
-        },
-        tasks: {
-          pending: tasksPending.count ?? 0,
-          completed: tasksCompleted.count ?? 0,
-          inProgress: tasksInProgress.count ?? 0,
-        },
-        emails: {
-          total: emailsTotal.count ?? 0,
-          unread: emailsUnread.count ?? 0,
-        },
-        pipeline: {
-          stages: Array.from(stageMap.values()),
-        },
-        customers: { total: customersTotal.count ?? 0 },
-        invoices: {
-          total: invoicesTotal.count ?? 0,
-          paid: invoicesPaid.count ?? 0,
-          overdue: invoicesOverdue.count ?? 0,
-          totalValue: totalInvoiceValue,
-        },
-      };
-
-      return result;
+      const summary = data as unknown as DashboardSummary;
+      if (!summary.pipeline?.stages?.length) {
+        summary.pipeline = { stages: DEFAULT_PIPELINE_STAGES.map(s => ({ name: s.name, color: s.color, count: 0 })) };
+      }
+      return summary;
     },
   });
 }

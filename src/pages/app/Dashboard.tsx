@@ -1,6 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityLogs } from "@/hooks/api/useActivityLogs";
-import { useFollowUpFeed } from "@/hooks/api/useFollowUpFeed";
 import {
   ArrowUpRight, Plus, Briefcase, FileText,
   Calendar, CheckCircle2, Mail, Sparkles, AlertTriangle, Flame,
@@ -13,8 +12,6 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { useDashboard } from "@/hooks/api/useDashboard";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RTooltip, XAxis,
 } from "recharts";
@@ -51,7 +48,8 @@ export default function Dashboard() {
   const { profile, isAdmin } = useAuth();
   const { data: d, isLoading } = useDashboard();
   const { data: recentActivity, isLoading: activityLoading } = useActivityLogs(10);
-  const { data: followUps, isLoading: followUpsLoading } = useFollowUpFeed(6);
+  const followUps = d?.followUps;
+  const followUpsLoading = isLoading;
   const { locale, t } = useI18n();
   const navigate = useNavigate();
   const params = useParams();
@@ -69,83 +67,11 @@ export default function Dashboard() {
     weekday: "long", day: "numeric", month: "short",
   }).replace(/\.$/, "");
 
-  // Revenue-by-day this month, from paid invoices — feeds the bar chart.
-  const { data: revenueByDay } = useQuery({
-    queryKey: ["dashboard-revenue-by-day", profile?.company_id],
-    enabled: !!profile?.company_id,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
-      const { data } = await supabase
-        .from("invoices")
-        .select("amount, paid_at, created_at")
-        .eq("company_id", profile!.company_id)
-        .gte("created_at", start.toISOString());
-      const byDay = new Map<string, number>();
-      (data ?? []).forEach((inv) => {
-        const dt = new Date(inv.paid_at || inv.created_at);
-        const key = dt.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
-        byDay.set(key, (byDay.get(key) ?? 0) + Number(inv.amount || 0));
-      });
-      return Array.from(byDay.entries()).map(([label, value]) => ({ label, value })).slice(-8);
-    },
-  });
-
-  // 14-day trend buckets for the stat card sparklines — grounded in real data.
-  const { data: trends } = useQuery({
-    queryKey: ["dashboard-trends", profile?.company_id],
-    enabled: !!profile?.company_id,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const start = new Date(); start.setDate(start.getDate() - 13); start.setHours(0, 0, 0, 0);
-      const [leadsRes, dealsRes] = await Promise.all([
-        supabase.from("leads").select("created_at").eq("company_id", profile!.company_id).gte("created_at", start.toISOString()),
-        supabase.from("deals").select("created_at, stage, value").eq("company_id", profile!.company_id).gte("created_at", start.toISOString()),
-      ]);
-      const days: string[] = [];
-      for (let i = 13; i >= 0; i--) {
-        const dt = new Date(); dt.setDate(dt.getDate() - i);
-        days.push(dt.toISOString().slice(0, 10));
-      }
-      const leadsByDay = new Map(days.map(dy => [dy, 0]));
-      (leadsRes.data ?? []).forEach(l => {
-        const key = (l.created_at as string).slice(0, 10);
-        if (leadsByDay.has(key)) leadsByDay.set(key, leadsByDay.get(key)! + 1);
-      });
-      const dealsByDay = new Map(days.map(dy => [dy, 0]));
-      const wonByDay = new Map(days.map(dy => [dy, 0]));
-      (dealsRes.data ?? []).forEach(dl => {
-        const key = (dl.created_at as string).slice(0, 10);
-        if (dealsByDay.has(key)) dealsByDay.set(key, dealsByDay.get(key)! + 1);
-        if (dl.stage === "won" && wonByDay.has(key)) wonByDay.set(key, wonByDay.get(key)! + Number(dl.value || 0));
-      });
-      return {
-        leads: days.map(dy => ({ v: leadsByDay.get(dy) ?? 0 })),
-        deals: days.map(dy => ({ v: dealsByDay.get(dy) ?? 0 })),
-        won: days.map(dy => ({ v: wonByDay.get(dy) ?? 0 })),
-      };
-    },
-  });
-
-  const { data: todayFocus } = useQuery({
-    queryKey: ["today-focus", profile?.company_id],
-    enabled: !!profile?.company_id,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const end = new Date(); end.setHours(23, 59, 59, 999);
-      const [meetingsRes, tasksRes] = await Promise.all([
-        supabase.from("calendar_events").select("id,title,start_time,end_time")
-          .eq("company_id", profile!.company_id)
-          .gte("start_time", start.toISOString()).lte("start_time", end.toISOString())
-          .order("start_time").limit(6),
-        supabase.from("tasks").select("id,title,due_date,priority")
-          .eq("company_id", profile!.company_id).neq("status", "completed")
-          .order("due_date", { ascending: true, nullsFirst: false }).limit(6),
-      ]);
-      return { meetings: meetingsRes.data ?? [], tasks: tasksRes.data ?? [] };
-    },
-  });
+  // Revenue-by-day, 14-day trends, and today's meetings/tasks all come back
+  // as part of the single dashboard-summary RPC call above.
+  const revenueByDay = d?.revenueByDay;
+  const trends = d?.trends;
+  const todayFocus = d?.today;
 
   const moments = (() => {
     if (!recentActivity) return [];

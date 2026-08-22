@@ -33,6 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const mountedRef = useRef(true);
   const initializedRef = useRef(false);
+  // onAuthStateChange fires an INITIAL_SESSION event on subscribe *and* the
+  // getSession() call below resolves separately for the same session — both
+  // used to call loadUser (and its profiles + user_roles queries) for the
+  // same user, tripling those requests on every fresh load.
+  const lastLoadedUserIdRef = useRef<string | null>(null);
 
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     const { data, error } = await supabase
@@ -52,7 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data ?? [];
   };
 
-  const loadUser = async (userId: string) => {
+  const loadUser = async (userId: string, force = false) => {
+    if (!force && lastLoadedUserIdRef.current === userId) return;
+    lastLoadedUserIdRef.current = userId;
     try {
       const [profile, userRoles] = await Promise.all([
         fetchProfile(userId),
@@ -118,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
+        lastLoadedUserIdRef.current = null;
         if (mountedRef.current) {
           setUser(null);
           setRoles([]);
