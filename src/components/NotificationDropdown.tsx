@@ -16,7 +16,7 @@ export default function NotificationDropdown() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative rounded-full border border-border bg-card/60 p-2">
+        <button className="relative rounded-full border border-border bg-card/60 p-2" aria-label={t('common.notifications')}>
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">

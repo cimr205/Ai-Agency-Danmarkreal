@@ -2,9 +2,15 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+// One row per browser-tab auth session, not per page load/refresh — the id
+// lives in sessionStorage (cleared when the tab closes, unlike localStorage)
+// so a refresh resumes the same row instead of inserting a new one.
+const SESSION_ROW_ID_KEY = 'app_session_row_id';
+
 /**
- * Tracks user session duration. Creates a session row on mount,
- * periodically updates duration, and marks ended_at on unmount.
+ * Tracks user session duration. Creates a session row on first mount,
+ * resumes it across page refreshes within the same tab, periodically updates
+ * duration, and marks ended_at on unmount.
  * Uses auth.uid() (user_id from profiles) to match RLS policies.
  */
 export function useSessionTracker() {
@@ -22,12 +28,31 @@ export function useSessionTracker() {
 
     const startSession = async () => {
       try {
+        const existingId = sessionStorage.getItem(SESSION_ROW_ID_KEY);
+        if (existingId) {
+          const { data: existing } = await supabase
+            .from('user_sessions')
+            .select('id, user_id')
+            .eq('id', existingId)
+            .maybeSingle();
+          if (existing && existing.user_id === authUid) {
+            if (!cancelled) sessionIdRef.current = existing.id;
+            // Refresh may have raced a beforeunload that marked ended_at — clear it since the tab is still open.
+            await supabase.from('user_sessions').update({ ended_at: null }).eq('id', existing.id);
+            return;
+          }
+          sessionStorage.removeItem(SESSION_ROW_ID_KEY);
+        }
+
         const { data } = await supabase
           .from('user_sessions')
           .insert({ user_id: authUid, company_id: companyId })
           .select('id')
           .single();
-        if (data && !cancelled) sessionIdRef.current = data.id;
+        if (data && !cancelled) {
+          sessionIdRef.current = data.id;
+          sessionStorage.setItem(SESSION_ROW_ID_KEY, data.id);
+        }
       } catch {
         // Silently fail — non-critical feature
       }
