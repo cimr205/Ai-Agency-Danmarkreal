@@ -11,7 +11,7 @@ import {
 import {
   LogOut, User, Settings, Menu, type LucideIcon,
   LayoutDashboard, Building2, Calendar, CheckSquare, Inbox,
-  Target, TrendingUp, Briefcase, Sparkles,
+  Target, Briefcase, Sparkles,
   Send, Phone, Megaphone,
   FileText, CreditCard,
   UserCheck, Clock, CalendarDays, CalendarClock, Wallet, UserPlus, BarChart3,
@@ -53,9 +53,9 @@ function useNavGroups(): NavGroup[] {
       module: "crm",
       items: [
         { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target, dataTour: "leads" },
-        { label: t("nav.pipeline") || "Pipeline", path: "crm/pipeline", icon: TrendingUp, dataTour: "pipeline" },
-        { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase },
+        { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase, dataTour: "pipeline" },
         { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Sparkles },
+        { label: t("nav.coldCaller") || "Cold caller", path: "marketing/cold-caller", icon: Phone },
       ],
     },
     {
@@ -63,7 +63,6 @@ function useNavGroups(): NavGroup[] {
       module: "marketing",
       items: [
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: Send },
-        { label: t("nav.coldCaller") || "Cold caller", path: "marketing/cold-caller", icon: Phone },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },
       ],
     },

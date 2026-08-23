@@ -40,11 +40,10 @@ export const DESTINATIONS: Destination[] = [
 
   // Sales
   { label: "Leads",         path: "crm/leads",          icon: Target,    modes: ["sales"] },
-  { label: "Pipeline",      path: "crm/pipeline",       icon: TrendingUp, modes: ["sales"] },
   { label: "Deals",         path: "crm/deals",          icon: Briefcase, modes: ["sales"] },
   { label: "Lead Gen",      path: "crm/lead-generation", icon: Sparkles, modes: ["sales"] },
-  { label: "Bulk email",    path: "email/bulk",         icon: Send,      modes: ["sales"] },
   { label: "Cold caller",   path: "marketing/cold-caller", icon: Phone,  modes: ["sales"] },
+  { label: "Bulk email",    path: "email/bulk",         icon: Send,      modes: ["sales"] },
   { label: "Meta Ads",      path: "marketing/meta-ads", icon: Megaphone, modes: ["sales"] },
 
   // Operations
