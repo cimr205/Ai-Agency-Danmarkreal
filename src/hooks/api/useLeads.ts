@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
-import type { Enums, Json } from '@/integrations/supabase/types';
+import type { Enums, Json, Tables } from '@/integrations/supabase/types';
 
 export const LEADS_PAGE_SIZE = 100;
+
+export type LeadWithOwner = Tables<'leads'> & { owner: { full_name: string | null; email: string } | null };
 
 export function useLeads(params?: { status?: string; page?: number; search?: string; tags?: string[]; tagLogic?: 'and' | 'or'; industry?: string; folderId?: string | null }) {
   const page = params?.page ?? 0;
@@ -15,7 +17,7 @@ export function useLeads(params?: { status?: string; page?: number; search?: str
 
       let query = supabase
         .from('leads')
-        .select('*', { count: 'exact' })
+        .select('*, owner:profiles!leads_owner_id_fkey(full_name, email)', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -38,7 +40,7 @@ export function useLeads(params?: { status?: string; page?: number; search?: str
 
       const { data, error, count } = await query;
       if (error) throw error;
-      return { data: data ?? [], count: count ?? 0, pageSize: LEADS_PAGE_SIZE };
+      return { data: (data ?? []) as unknown as LeadWithOwner[], count: count ?? 0, pageSize: LEADS_PAGE_SIZE };
     },
     placeholderData: (prev) => prev,
     staleTime: 30_000,

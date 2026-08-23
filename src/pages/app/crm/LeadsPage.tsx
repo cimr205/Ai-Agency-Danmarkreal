@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
-import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads } from '@/hooks/api/useLeads';
+import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,7 +28,7 @@ import { useI18n } from '@/lib/i18n';
 import type { Tables, Enums } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 
-type Lead = Tables<'leads'>;
+type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
 type LeadFolder = Tables<'lead_folders'>;
 type Deal = Tables<'deals'>;
@@ -597,20 +598,26 @@ export default function LeadsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder={t('pages.leads.search')} className="pl-10" value={search} onChange={e => handleSearchChange(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={industryFilter} onValueChange={v => { setIndustryFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t('pages.leads.industry')} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('common.all')}</SelectItem>
-            {INDUSTRY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{t(`pages.leads.${o.labelKey}`)}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t('pages.leads.statusLabel')}</Label>
+          <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t('pages.leads.industry')}</Label>
+          <Select value={industryFilter} onValueChange={v => { setIndustryFilter(v); setPage(0); }}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder={t('pages.leads.industry')} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {INDUSTRY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{t(`pages.leads.${o.labelKey}`)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Tag filter bar - always visible */}
@@ -778,6 +785,7 @@ export default function LeadsPage() {
               secondaryAction={{ label: t('pages.leads.import'), onClick: () => setIsImportOpen(true), icon: Upload }}
             />
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -798,8 +806,17 @@ export default function LeadsPage() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('phone')}>{t('common.phone')}<SortIcon col="phone" /></TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('company_name')}>{t('pages.leads.company')}<SortIcon col="company_name" /></TableHead>
                   <TableHead>{t('pages.leads.status')}</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('score')}>{t('pages.leads.score')}<SortIcon col="score" /></TableHead>
+                  <TableHead>{t('pages.leads.owner')}</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('score')}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center">{t('pages.leads.score')}<SortIcon col="score" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('pages.leads.scoreManualHint')}</TooltipContent>
+                    </Tooltip>
+                  </TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('value')}>{t('pages.leads.value')}<SortIcon col="value" /></TableHead>
+                  <TableHead>{t('pages.leads.lastTouched')}</TableHead>
                   <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>
@@ -846,8 +863,11 @@ export default function LeadsPage() {
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.owner?.full_name || lead.owner?.email || '–'}
+                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex items-center gap-0.5" title={t('pages.leads.scoreManualHint')}>
                         {[1, 2, 3, 4, 5].map(s => (
                           <button key={s} onClick={e => { e.stopPropagation(); handleScoreChange(lead.id, s); }} className="p-0">
                             <Star className={`h-3.5 w-3.5 ${s <= (lead.score ?? 0) ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
@@ -857,6 +877,9 @@ export default function LeadsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {lead.value ? `${lead.value.toLocaleString()} kr.` : '–'}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lead.last_touched_at ? new Date(lead.last_touched_at).toLocaleDateString() : '–'}
                     </TableCell>
                     <TableCell onClick={e => e.stopPropagation()}>
                       <AlertDialog>
@@ -883,6 +906,7 @@ export default function LeadsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
