@@ -93,7 +93,7 @@ export default function ConnectedAppsPage() {
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Forbind alt. <span className="text-muted-foreground/60">Uden API-nøgler.</span>
+              Forbundne apps
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
               Hver tjeneste forbindes via en webhook (Zapier Catch, Make, n8n, Activepieces eller dit eget self-hostede endpoint).

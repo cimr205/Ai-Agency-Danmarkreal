@@ -78,7 +78,7 @@ export default function WorkflowStudioPage() {
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Automatiseringer der <span className="text-muted-foreground/60">tænker.</span>
+              Workflow Studio
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
               Triggers fra Smart Inbox, AI-beslutninger, handlinger på tværs af Gmail, Calendar og webhook-modtagere.

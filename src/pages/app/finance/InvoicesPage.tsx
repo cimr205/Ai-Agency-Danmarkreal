@@ -585,6 +585,11 @@ export default function InvoicesPage() {
                               <Input value={newCust.address} onChange={e => setNewCust({ ...newCust, address: e.target.value })} placeholder={locale === 'da' ? 'Hovedgaden 1, 1000 København' : 'Main St 1, 1000 Copenhagen'} />
                             </div>
                           </div>
+                          <p className="text-xs text-muted-foreground">
+                            {locale === 'da'
+                              ? 'Bekræft kunden nedenfor, før du kan fortsætte til fakturalinjer.'
+                              : 'Confirm the customer below before you can continue to invoice lines.'}
+                          </p>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={handleCreateCustomerInline} disabled={createCustomer.isPending || !newCust.name || !newCust.email}>
                               {createCustomer.isPending ? t('pages.invoices.creatingCustomer') : t('pages.invoices.customerCreated').split(' ')[0]}

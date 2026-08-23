@@ -53,7 +53,7 @@ export default function IntelligencePage() {
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Den arbejder. <span className="text-muted-foreground/60">Du behøver ikke spørge.</span>
+              Ambient intelligens
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
               Assistenten observerer workspace, udfører trygge handlinger automatisk og foreslår resten.
