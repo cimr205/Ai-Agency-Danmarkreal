@@ -1,106 +1,91 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useActivityLogs } from "@/hooks/api/useActivityLogs";
 import {
-  ArrowUpRight, Plus, Briefcase, FileText,
-  Calendar, CheckCircle2, Mail, Sparkles, AlertTriangle, Flame,
+  ArrowUpRight, ArrowDownRight, Plus, Briefcase, FileText,
+  Calendar, CheckCircle2, Mail, Sparkles, AlertTriangle, Flame, PhoneCall,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
-import { da, de, enUS } from "date-fns/locale";
 import { useI18n, isLocale } from "@/lib/i18n";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { useDashboard } from "@/hooks/api/useDashboard";
+import type { FocusItem } from "@/hooks/api/useDashboard";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RTooltip, XAxis,
 } from "recharts";
 
-const DATE_LOCALES = { da, de, en: enUS } as const;
+const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall } as const;
+const FOCUS_CTA = { invoice: "Send rykker", deal: "Følg op", lead: "Ring" } as const;
 
-const ACTION_LABEL: Record<string, string> = {
-  company_created: "Virksomhed oprettet",
-  employee_created: "Medarbejder oprettet",
-  employee_joined: "Medarbejder tilsluttede sig",
-  task_created: "Opgave oprettet",
-  task_updated: "Opgave opdateret",
-  deal_created: "Deal oprettet",
-  deal_updated: "Deal opdateret",
-  lead_created: "Lead oprettet",
-  lead_updated: "Lead opdateret",
-  invoice_created: "Faktura oprettet",
-  integration_connected: "Integration forbundet",
-  integration_disconnected: "Integration afbrudt",
-  gmail_connected: "Gmail forbundet",
-  gmail_disconnected: "Gmail afbrudt",
-  campaign_published: "Kampagne udgivet",
-  workflow_run: "Workflow kørt",
-  workflow_test: "Workflow testet",
-};
-
-// Any action_type not covered above still needs a readable label instead of
-// the raw snake_case DB value (e.g. "integration_connected" verbatim).
-function humanizeActionType(actionType: string): string {
-  return actionType.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+function focusItemText(item: FocusItem): string {
+  if (item.kind === "invoice") {
+    return `Faktura #${item.label} er ${item.days} dag${item.days === 1 ? "" : "e"} forfalden${item.company ? ` — ${item.company}` : ""}`;
+  }
+  if (item.kind === "deal") {
+    return `Deal "${item.label}" har stået i ${item.stage} i ${item.days} dag${item.days === 1 ? "" : "e"}`;
+  }
+  const who = item.company ? `${item.label} hos ${item.company}` : item.label;
+  return item.overdue ? `${who} — opfølgning er overskredet` : `${who} — ${item.days} dage uden kontakt`;
 }
 
 export default function Dashboard() {
   const { profile, isAdmin } = useAuth();
   const { data: d, isLoading } = useDashboard();
-  const { data: recentActivity, isLoading: activityLoading } = useActivityLogs(10);
-  const followUps = d?.followUps;
-  const followUpsLoading = isLoading;
-  const { locale, t } = useI18n();
+  const { locale } = useI18n();
   const navigate = useNavigate();
   const params = useParams();
   const routeLocale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${routeLocale}/app`;
   const showOnboardingBanner = isAdmin && !isOnboardingComplete();
-  const dateFnsLocale = DATE_LOCALES[locale] || enUS;
   const { format } = useCurrency();
-  const overdueCount = d?.invoices?.overdue ?? 0;
-  const firstName = (profile?.full_name || "").split(" ")[0] || "there";
+  const firstName = (profile?.full_name || "").split(" ")[0] || "der";
 
-  // Danish/German abbreviated months already end in a period (e.g. "aug."),
-  // which would double up with the trailing "." in dashboard.workspaceToday.
-  const today = new Date().toLocaleDateString(locale === "da" ? "da-DK" : locale === "de" ? "de-DE" : "en-US", {
+  const today = new Date().toLocaleDateString("da-DK", {
     weekday: "long", day: "numeric", month: "short",
   }).replace(/\.$/, "");
 
-  // Revenue-by-day, 14-day trends, and today's meetings/tasks all come back
-  // as part of the single dashboard-summary RPC call above.
   const revenueByDay = d?.revenueByDay;
   const trends = d?.trends;
   const todayFocus = d?.today;
+  const focusItems = d?.focusItems ?? [];
 
-  const moments = (() => {
-    if (!recentActivity) return [];
-    const seen = new Set<string>();
-    return recentActivity.filter(a => {
-      const key = `${a.action_type}:${a.entity_id || ""}:${(a.description || "").slice(0, 40)}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  })();
+  const monthValue = d?.invoices?.monthValue ?? 0;
+  const lastMonthValue = d?.invoices?.lastMonthValue ?? 0;
+  const momDelta = lastMonthValue > 0 ? Math.round(((monthValue - lastMonthValue) / lastMonthValue) * 100) : null;
 
   const pipelineStages = (d?.pipeline?.stages ?? []).filter(s => s.count > 0);
 
+  const QUICK_ACTIONS = [
+    { icon: Plus, label: "Nyt lead", href: `${base}/crm/leads?create=true` },
+    { icon: Briefcase, label: "Ny deal", href: `${base}/crm/deals?create=true` },
+    { icon: FileText, label: "Ny faktura", href: `${base}/finance/invoices?create=true` },
+    { icon: Calendar, label: "Book møde", href: `${base}/work/calendar?create=true` },
+    { icon: Mail, label: "Skriv mail", href: `${base}/email/emails?compose=true` },
+  ];
+
   return (
     <div className="space-y-6 pb-16">
-      {/* Greeting header */}
+      {/* Greeting header + quick actions */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-[24px] font-semibold tracking-tight text-foreground">
-            {t('dashboard.greeting').replace('{name}', firstName)}
+            Hej, {firstName}!
           </h1>
           <p className="text-[13.5px] text-muted-foreground mt-1">
-            {t('dashboard.workspaceToday').replace('{date}', today)}
+            Sådan står det til i dit workspace {today}.
           </p>
         </div>
-        <div className="flex items-center gap-2 h-9 px-4 rounded-full bg-card border border-border text-[12.5px] text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />
-          {t('dashboard.thisMonth')}
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {QUICK_ACTIONS.map(a => (
+            <button
+              key={a.label}
+              onClick={() => navigate(a.href)}
+              className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-full border border-border bg-card hover:border-primary/40 hover:bg-primary/5 text-[12.5px] text-foreground/85 transition-colors"
+            >
+              <a.icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+              <span>{a.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -109,7 +94,7 @@ export default function Dashboard() {
           <Sparkles className="h-4 w-4 text-primary mt-1 shrink-0" />
           <div className="flex-1">
             <p className="text-[14px] text-foreground/90">Færdiggør opsætningen for at tage workspace i fuldt brug.</p>
-            <p className="text-[12.5px] text-muted-foreground mt-0.5">Få minutter — så er CRM, fakturering og team klar.</p>
+            <p className="text-[12.5px] text-muted-foreground mt-0.5">3 trin — under 2 minutter, så er CRM, fakturering og team klar.</p>
           </div>
           <button onClick={() => navigate(`${base}/onboarding`)} className="gap-1 h-8 px-3 rounded-xl text-[12px] text-primary hover:bg-primary/10 flex items-center shrink-0">
             Fortsæt <ArrowUpRight className="h-3 w-3" />
@@ -117,60 +102,49 @@ export default function Dashboard() {
         </div>
       )}
 
-      {overdueCount > 0 && (
-        <button
-          onClick={() => navigate(`${base}/finance/invoices`)}
-          className="group w-full flex items-center gap-3 text-left rounded-2xl bg-destructive/10 border border-destructive/20 px-5 py-3 transition-colors hover:bg-destructive/15"
-        >
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-          <span className="text-[13.5px] text-foreground/90">
-            {overdueCount} faktura{overdueCount > 1 ? "er" : ""} er forfalden.
-          </span>
-          <span className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground ml-auto">se →</span>
-        </button>
-      )}
-
-      {/* Stat cards — icon badge, big number, trend accent */}
+      {/* Stat cards — money first, each with real comparison context */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label={t('dashboard.totalRevenue')}
-          value={isLoading ? null : format(d?.invoices?.totalValue ?? 0)}
+          label="Faktureret denne måned"
+          value={isLoading ? null : format(monthValue)}
+          delta={momDelta}
           icon={ArrowUpRight}
           href={`${base}/finance/invoices`}
           sparkline={revenueByDay?.map(r => ({ v: r.value }))}
         />
         <StatCard
-          label={t('dashboard.totalDeals')}
-          value={isLoading ? null : String(d?.deals?.total ?? 0)}
-          sub={`${d?.deals?.won ?? 0} ${t('dashboard.wonSuffix')}`}
+          label="Udestående (forfaldent)"
+          value={isLoading ? null : format(d?.invoices?.overdueValue ?? 0)}
+          sub={(d?.invoices?.overdue ?? 0) > 0 ? `${d?.invoices?.overdue} faktura${(d?.invoices?.overdue ?? 0) > 1 ? "er" : ""}` : "ingen forfaldne"}
+          destructive={(d?.invoices?.overdueValue ?? 0) > 0}
+          icon={AlertTriangle}
+          href={`${base}/finance/invoices`}
+        />
+        <StatCard
+          label="Pipeline-værdi"
+          value={isLoading ? null : format(d?.deals?.openValue ?? 0)}
+          sub={`${(d?.deals?.total ?? 0) - (d?.deals?.won ?? 0) - (d?.deals?.lost ?? 0)} åbne deals`}
           icon={Briefcase}
-          href={`${base}/crm/deals`}
+          href={`${base}/crm/pipeline`}
           sparkline={trends?.deals}
         />
         <StatCard
-          label={t('dashboard.totalLeads')}
-          value={isLoading ? null : String(d?.leads?.total ?? 0)}
-          sub={`${d?.leads?.new ?? 0} ${t('dashboard.new')}`}
+          label="Nye leads"
+          value={isLoading ? null : String(d?.leads?.newThisMonth ?? 0)}
+          sub="denne måned"
           icon={Flame}
           href={`${base}/crm/leads`}
           sparkline={trends?.leads}
         />
-        <StatCard
-          label={t('dashboard.wonValue')}
-          value={isLoading ? null : format(d?.deals?.wonValue ?? 0)}
-          icon={CheckCircle2}
-          href={`${base}/crm/deals`}
-          sparkline={trends?.won}
-        />
       </div>
 
-      {/* Revenue chart + recent activity, side by side */}
+      {/* Revenue chart + Dagens fokus, side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         <div className="rounded-2xl bg-card border border-border p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <div className="text-[13px] font-medium">{t('dashboard.revenueLabel')}</div>
-              <div className="text-[11.5px] text-muted-foreground mt-0.5">{t('dashboard.invoicedThisMonth')}</div>
+              <div className="text-[13px] font-medium">Omsætning</div>
+              <div className="text-[11.5px] text-muted-foreground mt-0.5">Faktureret denne måned</div>
             </div>
           </div>
           <div className="min-h-[220px]">
@@ -191,51 +165,63 @@ export default function Dashboard() {
                       borderRadius: 12,
                       fontSize: 12,
                     }}
-                    formatter={(v: number) => [format(v), t('dashboard.revenueLabel')]}
+                    formatter={(v: number) => [format(v), "Omsætning"]}
                   />
                   <Bar dataKey="value" radius={[6, 6, 6, 6]} fill="hsl(var(--primary))" maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] grid place-items-center text-[12.5px] text-muted-foreground italic">
-                Ingen fakturerede beløb denne måned endnu.
+              <div className="h-[220px] flex flex-col items-center justify-center gap-3 text-center">
+                <p className="text-[12.5px] text-muted-foreground italic">Ingen fakturerede beløb denne måned endnu.</p>
+                <Link to={`${base}/finance/invoices?create=true`} className="text-[12px] text-primary hover:underline">
+                  Opret faktura →
+                </Link>
               </div>
             )}
           </div>
         </div>
 
         <div className="rounded-2xl bg-card border border-border p-6">
-          <div className="text-[13px] font-medium mb-4">Seneste aktivitet</div>
-          {activityLoading ? (
+          <div className="text-[13px] font-medium mb-1">Dagens fokus</div>
+          <div className="text-[11.5px] text-muted-foreground mb-4">De sager der har mest brug for dig lige nu.</div>
+          {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
-          ) : moments.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground italic">Ingen aktivitet endnu.</p>
+          ) : focusItems.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground italic">Alt er fulgt op — ingen presserende sager lige nu.</p>
           ) : (
-            <ul className="space-y-3.5">
-              {moments.slice(0, 6).map(a => (
-                <li key={a.id} className="flex items-start gap-3">
-                  <span className="grid place-items-center h-6 w-6 rounded-full bg-success/15 text-success shrink-0 mt-0.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[13px] text-foreground/90 truncate">{ACTION_LABEL[a.action_type] ?? humanizeActionType(a.action_type)}</p>
-                    <p className="text-[11px] text-muted-foreground mt-px">
-                      {formatDistanceToNow(new Date(a.created_at), { addSuffix: true, locale: dateFnsLocale })}
-                    </p>
-                  </div>
-                </li>
-              ))}
+            <ul className="space-y-3">
+              {focusItems.map(item => {
+                const Icon = FOCUS_ICON[item.kind];
+                const href = item.kind === "invoice" ? "finance/invoices" : item.kind === "deal" ? "crm/pipeline" : "crm/leads";
+                const urgent = item.overdue || item.kind === "invoice";
+                return (
+                  <li key={`${item.kind}-${item.id}`} className="flex items-start gap-3">
+                    <span className={`grid place-items-center h-7 w-7 rounded-full shrink-0 mt-0.5 ${urgent ? "bg-destructive/15 text-destructive" : "bg-primary/12 text-primary"}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12.5px] text-foreground/90 leading-snug">{focusItemText(item)}</p>
+                      <button
+                        onClick={() => navigate(`${base}/${href}`)}
+                        className="text-[11.5px] text-primary hover:underline mt-1"
+                      >
+                        {FOCUS_CTA[item.kind]} →
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
       </div>
 
-      {/* Pipeline breakdown — donut + today's focus */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      {/* Pipeline breakdown + today's meetings/tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="rounded-2xl bg-card border border-border p-6">
-          <div className="text-[13px] font-medium mb-4">{t('dashboard.pipelineByStage')}</div>
+          <div className="text-[13px] font-medium mb-4">Pipeline efter fase</div>
           {pipelineStages.length > 0 ? (
             <div className="flex items-center gap-5">
               <div className="h-[110px] w-[110px] shrink-0">
@@ -276,15 +262,18 @@ export default function Dashboard() {
               </ul>
             </div>
           ) : (
-            <div className="h-[110px] grid place-items-center text-[12.5px] text-muted-foreground italic">
-              Ingen deals i pipeline endnu.
+            <div className="h-[110px] flex flex-col items-center justify-center gap-2 text-center">
+              <p className="text-[12.5px] text-muted-foreground italic">Ingen deals i pipeline endnu.</p>
+              <Link to={`${base}/crm/deals?create=true`} className="text-[12px] text-primary hover:underline">
+                Opret deal →
+              </Link>
             </div>
           )}
         </div>
         <FlowCard
           icon={Calendar}
           label="Møder i dag"
-          emptyText="Ingen møder planlagt."
+          emptyText="Ingen møder planlagt i dag."
           href={`${base}/work/calendar`}
           items={(todayFocus?.meetings ?? []).map(m => ({
             id: m.id,
@@ -306,56 +295,29 @@ export default function Dashboard() {
             tone: t.priority === "high" ? "urgent" : undefined,
           }))}
         />
-        <FlowCard
-          icon={Flame}
-          label="Hvem skal du tale med"
-          emptyText="Ingen leads kræver opfølgning lige nu."
-          href={`${base}/crm/leads`}
-          items={(followUps ?? []).map(f => ({
-            id: f.id,
-            primary: f.company_name ? `${f.name} — ${f.company_name}` : f.name,
-            secondary: f.reason,
-            tone: f.overdue ? "urgent" : undefined,
-          }))}
-          isLoading={followUpsLoading}
-        />
-      </div>
-
-      {/* Quick actions */}
-      <div className="flex flex-wrap items-center gap-2">
-        {[
-          { icon: Plus, label: "Nyt lead", href: `${base}/crm/leads?create=true` },
-          { icon: Briefcase, label: "Ny deal", href: `${base}/crm/deals?create=true` },
-          { icon: FileText, label: "Ny faktura", href: `${base}/finance/invoices?create=true` },
-          { icon: Calendar, label: "Book møde", href: `${base}/work/calendar?create=true` },
-          { icon: Mail, label: "Skriv mail", href: `${base}/email/emails?compose=true` },
-        ].map(a => (
-          <button
-            key={a.label}
-            onClick={() => navigate(a.href)}
-            className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-full border border-border bg-card hover:border-primary/40 hover:bg-primary/5 text-[12.5px] text-foreground/85 transition-colors"
-          >
-            <a.icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
-            <span>{a.label}</span>
-          </button>
-        ))}
       </div>
     </div>
   );
 }
 
 function StatCard({
-  label, value, sub, icon: Icon, href, sparkline,
+  label, value, sub, delta, destructive, icon: Icon, href, sparkline,
 }: {
-  label: string; value: string | null; sub?: string; icon: React.ComponentType<{ className?: string }>; href: string;
+  label: string; value: string | null; sub?: string; delta?: number | null; destructive?: boolean;
+  icon: React.ComponentType<{ className?: string }>; href: string;
   sparkline?: { v: number }[];
 }) {
   const gradientId = `spark-${label.replace(/\s+/g, "-")}`;
   return (
-    <Link to={href} className="rounded-2xl bg-card border border-border p-5 flex flex-col justify-between min-h-[128px] hover:border-primary/40 transition-colors">
+    <Link
+      to={href}
+      className={`rounded-2xl border p-5 flex flex-col justify-between min-h-[128px] transition-colors ${
+        destructive ? "bg-destructive/5 border-destructive/25 hover:border-destructive/50" : "bg-card border-border hover:border-primary/40"
+      }`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-[12px] text-muted-foreground">{label}</span>
-        <span className="grid place-items-center h-8 w-8 rounded-full bg-primary/12 text-primary">
+        <span className={`grid place-items-center h-8 w-8 rounded-full ${destructive ? "bg-destructive/15 text-destructive" : "bg-primary/12 text-primary"}`}>
           <Icon className="h-4 w-4" />
         </span>
       </div>
@@ -364,7 +326,15 @@ function StatCard({
           {value === null ? (
             <Skeleton className="h-7 w-20" />
           ) : (
-            <div className="text-[24px] font-semibold tracking-tight tabular-nums">{value}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-[24px] font-semibold tracking-tight tabular-nums">{value}</div>
+              {typeof delta === "number" && (
+                <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${delta >= 0 ? "text-success" : "text-destructive"}`}>
+                  {delta >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  {Math.abs(delta)}%
+                </span>
+              )}
+            </div>
           )}
           {sub && <div className="text-[11.5px] text-muted-foreground mt-0.5">{sub}</div>}
         </div>

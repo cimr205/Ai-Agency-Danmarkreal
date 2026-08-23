@@ -10,14 +10,28 @@ const DEFAULT_PIPELINE_STAGES = [
 ] as const;
 
 export interface DashboardData {
-  leads: { total: number; new: number; qualified: number; contacted: number };
-  deals: { total: number; value: number; won: number; lost: number; wonValue: number };
+  leads: { total: number; new: number; qualified: number; contacted: number; newThisMonth: number };
+  deals: { total: number; value: number; won: number; lost: number; wonValue: number; openValue: number };
   employees: { total: number; active: number };
   tasks: { pending: number; completed: number; inProgress: number };
   emails: { total: number; unread: number };
   pipeline: { stages: { name: string; count: number; color: string }[] };
   customers: { total: number };
-  invoices: { total: number; paid: number; overdue: number; totalValue: number };
+  invoices: {
+    total: number; paid: number; overdue: number; totalValue: number;
+    overdueValue: number; monthValue: number; lastMonthValue: number;
+  };
+}
+
+export interface FocusItem {
+  kind: 'invoice' | 'deal' | 'lead';
+  id: string;
+  label: string;
+  company: string | null;
+  amount: number | null;
+  days: number;
+  stage: string | null;
+  overdue: boolean;
 }
 
 export interface FollowUpItem {
@@ -41,6 +55,7 @@ export interface DashboardSummary extends DashboardData {
     tasks: { id: string; title: string; due_date: string | null; priority: string | null }[];
   };
   followUps: FollowUpItem[];
+  focusItems: FocusItem[];
 }
 
 // Everything the dashboard needs, aggregated server-side in a single RPC call
