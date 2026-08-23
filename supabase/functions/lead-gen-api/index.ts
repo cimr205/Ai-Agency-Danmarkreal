@@ -966,8 +966,8 @@ async function runPipeline(
         const names: string[] = [];
         let offset = 0;
         while (true) {
-          const { data } = await supabase.from("leads")
-            .select("name, company_name").eq("company_id", companyId)
+          const { data } = await supabase.from("customers")
+            .select("name, company_name").eq("company_id", companyId).eq("record_type", "lead")
             .range(offset, offset + 999);
           if (!data || data.length === 0) break;
           for (const l of data) {
@@ -1444,13 +1444,14 @@ Deno.serve(async (req) => {
         status: "new",
         score: r.lead_score || 0,
         tags: ["lead-gen", ...(r.contact_person_name ? ["has-contact"] : [])],
+        record_type: "lead",
         ...(folder_id ? { folder_id } : {}),
       }));
 
       const allInserted: { id: string }[] = [];
       for (let i = 0; i < leads.length; i += 50) {
         const batch = leads.slice(i, i + 50);
-        const { data: inserted, error: insertErr } = await supabase.from("leads").insert(batch).select("id");
+        const { data: inserted, error: insertErr } = await supabase.from("customers").insert(batch).select("id");
         if (insertErr) { console.error("Import insert error:", insertErr); continue; }
         if (inserted) allInserted.push(...inserted);
       }

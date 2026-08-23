@@ -258,10 +258,11 @@ async function execTool(
         return { ok: true, data };
       }
       case "update_lead_status": {
-        const { data, error } = await supabase.from("leads")
+        const { data, error } = await supabase.from("customers")
           .update({ status: args.status })
           .eq("id", args.lead_id)
           .eq("company_id", companyId)
+          .eq("record_type", "lead")
           .select("id,status").maybeSingle();
         if (error) return { ok: false, error: error.message };
         return { ok: true, data };

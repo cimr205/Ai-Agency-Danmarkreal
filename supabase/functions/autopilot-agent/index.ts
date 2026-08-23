@@ -76,8 +76,8 @@ function buildTools(companyId: string, userId: string) {
       description: "List leads from the CRM. Filter by status (new, contacted, qualified, won, lost) and limit.",
       inputSchema: z.object({ status: z.string().optional(), limit: z.number().default(20) }),
       execute: async ({ status, limit }) => {
-        let q = sb.from("leads").select("id,name,email,company_name,status,score,value,next_followup_at")
-          .eq("company_id", companyId).order("created_at", { ascending: false }).limit(Math.min(limit, 50));
+        let q = sb.from("customers").select("id,name,email,company_name,status,score,value,next_followup_at")
+          .eq("company_id", companyId).eq("record_type", "lead").order("created_at", { ascending: false }).limit(Math.min(limit, 50));
         if (status) q = q.eq("status", status);
         const { data, error } = await q;
         if (error) throw new Error(error.message);
@@ -164,8 +164,8 @@ function buildTools(companyId: string, userId: string) {
       description: "Update a lead's pipeline status.",
       inputSchema: z.object({ lead_id: z.string().uuid(), status: z.string() }),
       execute: async ({ lead_id, status }) => {
-        const { error } = await sb.from("leads").update({ status })
-          .eq("id", lead_id).eq("company_id", companyId);
+        const { error } = await sb.from("customers").update({ status })
+          .eq("id", lead_id).eq("company_id", companyId).eq("record_type", "lead");
         if (error) throw new Error(error.message);
         return { ok: true };
       },

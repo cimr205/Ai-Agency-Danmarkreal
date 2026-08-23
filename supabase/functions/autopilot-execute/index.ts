@@ -96,7 +96,7 @@ serve(async (req) => {
           });
           result = { success: true, message: "HR-alert oprettet" };
         } else if (fn === "contact_lead") {
-          await supabase.from("leads").update({ status: "contacted", last_touched_at: new Date().toISOString() }).eq("id", payload.lead_id);
+          await supabase.from("customers").update({ status: "contacted", last_touched_at: new Date().toISOString() }).eq("id", payload.lead_id).eq("record_type", "lead");
           result = { success: true, message: "Lead markeret som kontaktet" };
         } else {
           // Generic: create a task for the action

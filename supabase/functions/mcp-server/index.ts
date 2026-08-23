@@ -59,8 +59,8 @@ function buildServer(ctx: Ctx) {
       },
     },
     handler: async ({ status, limit }: { status?: string; limit?: number }) => {
-      let q = sb.from("leads").select("id,name,email,company,status,score,created_at")
-        .eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(Math.min(limit ?? 25, 100));
+      let q = sb.from("customers").select("id,name,email,company_name,status,score,created_at")
+        .eq("company_id", ctx.companyId).eq("record_type", "lead").order("created_at", { ascending: false }).limit(Math.min(limit ?? 25, 100));
       if (status) q = q.eq("status", status);
       const { data, error } = await q;
       if (error) throw new Error(error.message);
@@ -126,9 +126,9 @@ function buildServer(ctx: Ctx) {
       required: ["name"],
     },
     handler: async ({ name, email, company, phone, notes }: { name: string; email?: string; company?: string; phone?: string; notes?: string }) => {
-      const { data, error } = await sb.from("leads").insert({
+      const { data, error } = await sb.from("customers").insert({
         company_id: ctx.companyId, created_by: ctx.userId,
-        name, email, company, phone, notes, status: "new",
+        name, email, company_name: company, phone, notes, status: "new", record_type: "lead",
       }).select().single();
       if (error) throw new Error(error.message);
       return { content: [{ type: "text", text: `Created lead ${data.id}: ${data.name}` }] };
@@ -192,8 +192,8 @@ function buildServer(ctx: Ctx) {
     handler: async ({ query }: { query: string }) => {
       const like = `%${query}%`;
       const [leads, deals, tasks] = await Promise.all([
-        sb.from("leads").select("id,name,email,company").eq("company_id", ctx.companyId)
-          .or(`name.ilike.${like},email.ilike.${like},company.ilike.${like}`).limit(10),
+        sb.from("customers").select("id,name,email,company_name").eq("company_id", ctx.companyId).eq("record_type", "lead")
+          .or(`name.ilike.${like},email.ilike.${like},company_name.ilike.${like}`).limit(10),
         sb.from("deals").select("id,title,value,stage").eq("company_id", ctx.companyId)
           .ilike("title", like).limit(10),
         sb.from("tasks").select("id,title,status").eq("company_id", ctx.companyId)

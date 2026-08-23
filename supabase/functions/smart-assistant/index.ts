@@ -420,7 +420,7 @@ async function executeTool(
 
       case "create_lead": {
         const { name, email, phone, company_name, notes, value } = args;
-        const { error } = await supabase.from("leads").insert({
+        const { error } = await supabase.from("customers").insert({
           company_id: companyId,
           created_by: userId,
           name,
@@ -429,6 +429,7 @@ async function executeTool(
           company_name: company_name || null,
           notes: notes || null,
           value: value || 0,
+          record_type: "lead",
         });
         if (error) return { success: false, result: `Lead fejl: ${error.message}` };
         return { success: true, result: `✅ Lead oprettet: "${name}" (${email})${company_name ? ` fra ${company_name}` : ""}` };
@@ -452,9 +453,10 @@ async function executeTool(
         const { query } = args;
         const q = `%${query}%`;
         const { data: leads } = await supabase
-          .from("leads")
+          .from("customers")
           .select("id, name, email, company_name, status, score, value, tags, industry")
           .eq("company_id", companyId)
+          .eq("record_type", "lead")
           .or(`name.ilike.${q},email.ilike.${q},company_name.ilike.${q}`)
           .limit(10);
         if (!leads?.length) return { success: true, result: `Ingen leads fundet for "${query}".` };
@@ -467,7 +469,7 @@ async function executeTool(
         if (!tags?.length) return { success: false, result: "Ingen tags angivet." };
 
         // Build query to find leads
-        let query = supabase.from("leads").select("id, name, tags").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id, name, tags").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else {
@@ -489,7 +491,7 @@ async function executeTool(
           const existing: string[] = lead.tags || [];
           const merged = [...new Set([...existing, ...tags])];
           if (merged.length !== existing.length) {
-            const { error } = await supabase.from("leads").update({ tags: merged }).eq("id", lead.id);
+            const { error } = await supabase.from("customers").update({ tags: merged }).eq("id", lead.id);
             if (!error) updated++;
           }
         }
@@ -500,7 +502,7 @@ async function executeTool(
         const { tags, filter_industry, filter_search, lead_ids } = args;
         if (!tags?.length) return { success: false, result: "Ingen tags angivet." };
 
-        let query = supabase.from("leads").select("id, name, tags").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id, name, tags").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else {
@@ -520,7 +522,7 @@ async function executeTool(
         let updated = 0;
         for (const lead of leads) {
           const remaining = (lead.tags || []).filter((t: string) => !tags.includes(t));
-          const { error } = await supabase.from("leads").update({ tags: remaining.length ? remaining : null }).eq("id", lead.id);
+          const { error } = await supabase.from("customers").update({ tags: remaining.length ? remaining : null }).eq("id", lead.id);
           if (!error) updated++;
         }
         return { success: true, result: `✅ Tags [${tags.join(", ")}] fjernet fra ${updated} leads.` };
@@ -528,9 +530,10 @@ async function executeTool(
 
       case "list_lead_tags": {
         const { data: leads } = await supabase
-          .from("leads")
+          .from("customers")
           .select("tags")
           .eq("company_id", companyId)
+          .eq("record_type", "lead")
           .not("tags", "is", null);
 
         const tagCounts: Record<string, number> = {};
@@ -552,7 +555,7 @@ async function executeTool(
         const validIndustries = ["craftsman", "marketing", "it_software", "retail", "restaurant", "legal_accounting", "other"];
         if (!validIndustries.includes(industry)) return { success: false, result: `Ugyldig branche. Gyldige: ${validIndustries.join(", ")}` };
 
-        let query = supabase.from("leads").select("id").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else if (filter_search) {
@@ -570,7 +573,7 @@ async function executeTool(
         const industryLabels: Record<string, string> = { craftsman: "Håndværker", marketing: "Marketing", it_software: "IT/Software", retail: "Detailhandel", restaurant: "Restaurant", legal_accounting: "Advokat/Revisor", other: "Anden" };
         let updated = 0;
         for (const lead of leads) {
-          const { error } = await supabase.from("leads").update({ industry }).eq("id", lead.id);
+          const { error } = await supabase.from("customers").update({ industry }).eq("id", lead.id);
           if (!error) updated++;
         }
         return { success: true, result: `✅ Branche sat til "${industryLabels[industry]}" på ${updated} leads.` };
@@ -581,7 +584,7 @@ async function executeTool(
         const validStatuses = ["new", "contacted", "qualified", "unqualified", "customer"];
         if (!validStatuses.includes(status)) return { success: false, result: `Ugyldig status. Gyldige: ${validStatuses.join(", ")}` };
 
-        let query = supabase.from("leads").select("id, name").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id, name").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else {
@@ -602,7 +605,7 @@ async function executeTool(
         const statusLabels: Record<string, string> = { new: "Ny", contacted: "Kontaktet", qualified: "Kvalificeret", unqualified: "Ukvalificeret", customer: "Kunde" };
         let updated = 0;
         for (const lead of leads) {
-          const { error } = await supabase.from("leads").update({ status }).eq("id", lead.id);
+          const { error } = await supabase.from("customers").update({ status }).eq("id", lead.id);
           if (!error) updated++;
         }
         return { success: true, result: `✅ Status opdateret til **${statusLabels[status]}** for ${updated} leads (ud af ${leads.length} fundet).` };
@@ -615,6 +618,7 @@ async function executeTool(
           .from("customers")
           .select("name, email, phone, vat_number, address")
           .eq("company_id", companyId)
+          .eq("record_type", "customer")
           .or(`name.ilike.${q},email.ilike.${q},vat_number.ilike.${q}`)
           .limit(10);
         if (!customers?.length) return { success: true, result: `Ingen kunder fundet for "${query}".` };
@@ -644,9 +648,10 @@ async function executeTool(
 
         // Count leads per folder
         const { data: leads } = await supabase
-          .from("leads")
+          .from("customers")
           .select("folder_id")
           .eq("company_id", companyId)
+          .eq("record_type", "lead")
           .not("folder_id", "is", null);
 
         const folderCounts: Record<string, number> = {};
@@ -683,7 +688,7 @@ async function executeTool(
         if (!targetFolderId) return { success: false, result: "Ingen mappe angivet." };
 
         // Find leads to move
-        let query = supabase.from("leads").select("id, name").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id, name").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else {
@@ -703,7 +708,7 @@ async function executeTool(
 
         let moved = 0;
         for (const lead of leads) {
-          const { error } = await supabase.from("leads").update({ folder_id: targetFolderId }).eq("id", lead.id);
+          const { error } = await supabase.from("customers").update({ folder_id: targetFolderId }).eq("id", lead.id);
           if (!error) moved++;
         }
         return { success: true, result: `✅ ${moved} leads flyttet til mappen "${folder_name || "valgt mappe"}" (ud af ${leads.length} fundet).` };
@@ -714,7 +719,7 @@ async function executeTool(
         if (!confirm) return { success: false, result: "⚠️ Sletning kræver bekræftelse. Sæt confirm=true for at slette." };
 
         // Find leads to delete
-        let query = supabase.from("leads").select("id, name").eq("company_id", companyId);
+        let query = supabase.from("customers").select("id, name").eq("company_id", companyId).eq("record_type", "lead");
         if (lead_ids?.length) {
           query = query.in("id", lead_ids);
         } else {
@@ -744,7 +749,7 @@ async function executeTool(
 
         let deleted = 0;
         for (const lead of leads) {
-          const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+          const { error } = await supabase.from("customers").delete().eq("id", lead.id);
           if (!error) deleted++;
         }
         return { success: true, result: `🗑️ ${deleted} leads slettet permanent (ud af ${leads.length} fundet).` };
@@ -801,9 +806,10 @@ async function fetchContextData(supabase: SupabaseClient, context: string, compa
 
     if (context === "leads") {
       const { data: leads } = await supabase
-        .from("leads")
+        .from("customers")
         .select("name, status, score, value, next_followup_at, email")
         .eq("company_id", companyId)
+        .eq("record_type", "lead")
         .order("score", { ascending: false })
         .limit(15);
       if (leads?.length) {

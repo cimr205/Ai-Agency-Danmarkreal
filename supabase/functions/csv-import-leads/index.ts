@@ -65,6 +65,7 @@ serve(async (req) => {
         created_by: user.id,
         import_batch_id: batchId,
         status: "new",
+        record_type: "lead",
       };
 
       for (const [csvCol, dbField] of Object.entries(mapping)) {
@@ -99,9 +100,10 @@ serve(async (req) => {
     // Check for duplicates by email within company
     const emails = leads.map(l => l.email as string);
     const { data: existing } = await adminClient
-      .from("leads")
+      .from("customers")
       .select("email")
       .eq("company_id", profile.company_id)
+      .eq("record_type", "lead")
       .in("email", emails);
 
     const existingEmails = new Set((existing || []).map(e => e.email.toLowerCase()));
@@ -165,7 +167,7 @@ serve(async (req) => {
     for (let i = 0; i < newLeads.length; i += 50) {
       const batch = newLeads.slice(i, i + 50);
       const { error: insertError, data: inserted } = await adminClient
-        .from("leads")
+        .from("customers")
         .insert(batch)
         .select("id");
 
