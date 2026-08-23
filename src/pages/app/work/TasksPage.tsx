@@ -66,6 +66,7 @@ export default function TasksPage() {
     try {
       await createTask.mutateAsync({
         ...newTask,
+        due_date: newTask.due_date || undefined,
         assigned_to: newTask.assigned_to || undefined,
         lead_id: newTask.lead_id || undefined,
         deal_id: newTask.deal_id || undefined,
