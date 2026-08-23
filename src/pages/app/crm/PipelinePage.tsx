@@ -146,7 +146,7 @@ export default function PipelinePage() {
         </div>
         <div className="flex items-center gap-2">
           <PipelineStageEditor />
-          <Button onClick={() => navigate(`/${locale}/app/deals?create=true`)}>
+          <Button onClick={() => navigate(`/${locale}/app/crm/deals?create=true`)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('pages.deals.newDeal')}
           </Button>
@@ -186,7 +186,7 @@ export default function PipelinePage() {
             <Briefcase className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-semibold mb-2">{t('pages.deals.emptyTitle')}</h3>
             <p className="text-muted-foreground mb-4 max-w-md">{t('pages.deals.emptyDesc')}</p>
-            <Button onClick={() => navigate(`/${locale}/app/deals?create=true`)}>
+            <Button onClick={() => navigate(`/${locale}/app/crm/deals?create=true`)}>
               <Plus className="h-4 w-4 mr-2" />{t('pages.deals.createFirst')}
             </Button>
           </CardContent>
