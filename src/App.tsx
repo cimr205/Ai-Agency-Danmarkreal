@@ -28,7 +28,6 @@ const MetaOAuthCallbackPage = lazy(() => import("@/pages/auth/MetaOAuthCallback"
 const DashboardPage = lazy(() => import("@/pages/app/Dashboard"));
 const LeadsPage = lazy(() => import("@/pages/app/crm/LeadsPage"));
 const DealsPage = lazy(() => import("@/pages/app/crm/DealsPage"));
-const PipelinePage = lazy(() => import("@/pages/app/crm/PipelinePage"));
 const ColdCallerPage = lazy(() => import("@/pages/app/marketing/ColdCallerPage"));
 const VoiceAgentPage = lazy(() => import("@/pages/app/marketing/VoiceAgentPage"));
 const LeadGenerationPage = lazy(() => import("@/pages/app/crm/LeadGenerationPage"));
@@ -248,7 +247,7 @@ const App = () => (
                   <Route path="dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
                   <Route path="onboarding" element={<OnboardingPage />} />
                   <Route path="crm/leads" element={<ErrorBoundary><LeadsPage /></ErrorBoundary>} />
-                  <Route path="crm/pipeline" element={<ErrorBoundary><PipelinePage /></ErrorBoundary>} />
+                  <Route path="crm/pipeline" element={<Navigate to="../crm/deals?view=board" replace />} />
                   <Route path="crm/deals" element={<ErrorBoundary><DealsPage /></ErrorBoundary>} />
                   <Route path="crm/lead-generation" element={<ErrorBoundary><LeadGenerationPage /></ErrorBoundary>} />
                   <Route path="crm/icp" element={<ErrorBoundary><IcpPage /></ErrorBoundary>} />

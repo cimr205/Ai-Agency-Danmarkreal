@@ -125,7 +125,7 @@ export default function Dashboard() {
           value={isLoading ? null : format(d?.deals?.openValue ?? 0)}
           sub={`${(d?.deals?.total ?? 0) - (d?.deals?.won ?? 0) - (d?.deals?.lost ?? 0)} åbne deals`}
           icon={Briefcase}
-          href={`${base}/crm/pipeline`}
+          href={`${base}/crm/deals?view=board`}
           sparkline={trends?.deals}
         />
         <StatCard
@@ -194,7 +194,7 @@ export default function Dashboard() {
             <ul className="space-y-3">
               {focusItems.map(item => {
                 const Icon = FOCUS_ICON[item.kind];
-                const href = item.kind === "invoice" ? "finance/invoices" : item.kind === "deal" ? "crm/pipeline" : "crm/leads";
+                const href = item.kind === "invoice" ? "finance/invoices" : item.kind === "deal" ? "crm/deals?view=board" : "crm/leads";
                 const urgent = item.overdue || item.kind === "invoice";
                 return (
                   <li key={`${item.kind}-${item.id}`} className="flex items-start gap-3">

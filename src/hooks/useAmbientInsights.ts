@@ -52,7 +52,7 @@ export function useAmbientInsights() {
           id: "stalled",
           kind: "risk",
           text: `${counts.stalledDeals} deal${counts.stalledDeals > 1 ? "s" : ""} har ikke bevæget sig i 3+ uger.`,
-          href: "crm/pipeline",
+          href: "crm/deals",
         });
       }
 
