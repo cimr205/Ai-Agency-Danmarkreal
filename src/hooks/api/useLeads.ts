@@ -5,7 +5,7 @@ import type { Enums, Json, Tables } from '@/integrations/supabase/types';
 
 export const LEADS_PAGE_SIZE = 100;
 
-export type LeadWithOwner = Tables<'leads'> & { owner: { full_name: string | null; email: string } | null };
+export type LeadWithOwner = Tables<'customers'> & { owner: { full_name: string | null; email: string } | null };
 
 export function useLeads(params?: { status?: string; page?: number; search?: string; tags?: string[]; tagLogic?: 'and' | 'or'; industry?: string; folderId?: string | null }) {
   const page = params?.page ?? 0;
@@ -16,8 +16,9 @@ export function useLeads(params?: { status?: string; page?: number; search?: str
       const to = from + LEADS_PAGE_SIZE - 1;
 
       let query = supabase
-        .from('leads')
-        .select('*, owner:profiles!leads_owner_id_fkey(full_name, email)', { count: 'exact' })
+        .from('customers')
+        .select('*, owner:profiles!customers_owner_id_fkey(full_name, email)', { count: 'exact' })
+        .eq('record_type', 'lead')
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -100,7 +101,7 @@ export function useAllLeadTags() {
   return useQuery({
     queryKey: ['lead_tags_all'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('leads').select('tags');
+      const { data, error } = await supabase.from('customers').select('tags').eq('record_type', 'lead');
       if (error) throw error;
       const tagSet = new Set<string>();
       (data ?? []).forEach((r) => {
@@ -124,8 +125,8 @@ export function useCreateLead() {
         .single();
       if (!profile?.company_id) throw new Error('No company');
       const { data, error } = await supabase
-        .from('leads')
-        .insert({ ...input, company_id: profile.company_id, created_by: session.user.id })
+        .from('customers')
+        .insert({ ...input, company_id: profile.company_id, created_by: session.user.id, record_type: 'lead' })
         .select()
         .single();
       if (error) throw error;
@@ -137,14 +138,57 @@ export function useCreateLead() {
   });
 }
 
+// Real lead→customer conversion: creates a new customers row
+// (record_type='customer') linked back to the source lead via
+// converted_from_lead_id, and marks the lead's status so it's visible at a
+// glance in the Leads list. The original lead row is never deleted or
+// mutated beyond that status flag — its history stays intact.
+export function useConvertLeadToCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (lead: { id: string; name: string; email: string; phone: string | null; company_name: string | null; address: string | null; city: string | null; company_id: string; created_by: string }) => {
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .insert({
+          name: lead.company_name || lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          address: lead.address,
+          city: lead.city,
+          company_id: lead.company_id,
+          created_by: lead.created_by,
+          record_type: 'customer',
+          converted_from_lead_id: lead.id,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
+      const { error: statusError } = await supabase
+        .from('customers')
+        .update({ status: 'customer' as Enums<'lead_status'> })
+        .eq('id', lead.id)
+        .eq('record_type', 'lead');
+      if (statusError) throw statusError;
+
+      return customer;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+}
+
 export function useUpdateLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data: updateData }: { id: string; data: Record<string, unknown> }) => {
       const { data, error } = await supabase
-        .from('leads')
+        .from('customers')
         .update(updateData)
         .eq('id', id)
+        .eq('record_type', 'lead')
         .select()
         .single();
       if (error) throw error;
@@ -159,7 +203,7 @@ export function useDeleteLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('leads').delete().eq('id', id);
+      const { error } = await supabase.from('customers').delete().eq('id', id).eq('record_type', 'lead');
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
@@ -171,9 +215,10 @@ export function useUpdateLeadScore() {
   return useMutation({
     mutationFn: async ({ id, score }: { id: string; score: number }) => {
       const { data, error } = await supabase
-        .from('leads')
+        .from('customers')
         .update({ score })
         .eq('id', id)
+        .eq('record_type', 'lead')
         .select()
         .single();
       if (error) throw error;
@@ -259,9 +304,10 @@ export function useBulkUpdateLeads() {
   return useMutation({
     mutationFn: async ({ ids, data: updateData }: { ids: string[]; data: Record<string, unknown> }) => {
       const { error } = await supabase
-        .from('leads')
+        .from('customers')
         .update(updateData)
-        .in('id', ids);
+        .in('id', ids)
+        .eq('record_type', 'lead');
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
@@ -272,7 +318,7 @@ export function useBulkDeleteLeads() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from('leads').delete().in('id', ids);
+      const { error } = await supabase.from('customers').delete().in('id', ids).eq('record_type', 'lead');
       if (error) throw error;
     },
     onSuccess: () => {
@@ -287,9 +333,10 @@ export function useMoveLeadToFolder() {
   return useMutation({
     mutationFn: async ({ leadId, folderId }: { leadId: string; folderId: string | null }) => {
       const { data, error } = await supabase
-        .from('leads')
+        .from('customers')
         .update({ folder_id: folderId })
         .eq('id', leadId)
+        .eq('record_type', 'lead')
         .select()
         .single();
       if (error) throw error;

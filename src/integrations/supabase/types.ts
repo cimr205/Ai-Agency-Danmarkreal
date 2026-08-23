@@ -716,52 +716,106 @@ export type Database = {
         Row: {
           accounting_synced_at: string | null
           address: string | null
+          ai_recommendation: string | null
+          ai_recommendation_at: string | null
+          city: string | null
           company_id: string
+          company_name: string | null
+          converted_from_lead_id: string | null
           country: string | null
           created_at: string
           created_by: string
+          currency: string | null
           customer_type: string | null
           dinero_contact_guid: string | null
           economic_customer_number: number | null
           email: string
+          folder_id: string | null
           id: string
+          import_batch_id: string | null
+          industry: string | null
+          last_touched_at: string | null
           name: string
+          next_followup_at: string | null
+          notes: string | null
+          owner_id: string | null
           phone: string | null
+          record_type: string
+          score: number | null
+          status: Database["public"]["Enums"]["lead_status"] | null
+          tags: string[] | null
           updated_at: string
+          value: number | null
           vat_number: string | null
         }
         Insert: {
           accounting_synced_at?: string | null
           address?: string | null
+          ai_recommendation?: string | null
+          ai_recommendation_at?: string | null
+          city?: string | null
           company_id: string
+          company_name?: string | null
+          converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
           created_by: string
+          currency?: string | null
           customer_type?: string | null
           dinero_contact_guid?: string | null
           economic_customer_number?: number | null
           email: string
+          folder_id?: string | null
           id?: string
+          import_batch_id?: string | null
+          industry?: string | null
+          last_touched_at?: string | null
           name: string
+          next_followup_at?: string | null
+          notes?: string | null
+          owner_id?: string | null
           phone?: string | null
+          record_type?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          tags?: string[] | null
           updated_at?: string
+          value?: number | null
           vat_number?: string | null
         }
         Update: {
           accounting_synced_at?: string | null
           address?: string | null
+          ai_recommendation?: string | null
+          ai_recommendation_at?: string | null
+          city?: string | null
           company_id?: string
+          company_name?: string | null
+          converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
           created_by?: string
+          currency?: string | null
           customer_type?: string | null
           dinero_contact_guid?: string | null
           economic_customer_number?: number | null
           email?: string
+          folder_id?: string | null
           id?: string
+          import_batch_id?: string | null
+          industry?: string | null
+          last_touched_at?: string | null
           name?: string
+          next_followup_at?: string | null
+          notes?: string | null
+          owner_id?: string | null
           phone?: string | null
+          record_type?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["lead_status"] | null
+          tags?: string[] | null
           updated_at?: string
+          value?: number | null
           vat_number?: string | null
         }
         Relationships: [
@@ -771,6 +825,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_converted_from_lead_id_fkey"
+            columns: ["converted_from_lead_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "lead_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -4157,6 +4232,11 @@ export type Database = {
         Args: { _company_id: string; _full_name: string }
         Returns: undefined
       }
+      can_grant_shift_permissions: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_shifts: { Args: { _user_id: string }; Returns: boolean }
       check_usage_quota: {
         Args: { _company_id: string; _quota_type: string }
         Returns: boolean
@@ -4196,6 +4276,14 @@ export type Database = {
           id: string
           secret_key: string
           url: string
+        }[]
+      }
+      get_ambient_insights: { Args: never; Returns: Json }
+      get_company_by_activation_code: {
+        Args: { _code: string }
+        Returns: {
+          id: string
+          name: string
         }[]
       }
       get_company_for_user: {
@@ -4244,6 +4332,17 @@ export type Database = {
           status: string
         }[]
       }
+      get_dashboard_summary: { Args: never; Returns: Json }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          company_name: string
+          email: string
+          expires_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+        }[]
+      }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -4275,28 +4374,6 @@ export type Database = {
           id: string
           prefix: string
           token: string
-        }[]
-      }
-      get_company_by_activation_code: {
-        Args: { _code: string }
-        Returns: { id: string; name: string }[]
-      }
-      get_dashboard_summary: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      get_ambient_insights: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      get_invitation_by_token: {
-        Args: { _token: string }
-        Returns: {
-          email: string
-          role: Database["public"]["Enums"]["app_role"]
-          status: string
-          expires_at: string
-          company_name: string
         }[]
       }
       join_company_by_code: { Args: { _code: string }; Returns: string }

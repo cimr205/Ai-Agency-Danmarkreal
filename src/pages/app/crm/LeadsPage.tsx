@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
-import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
+import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToCustomer, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -128,7 +128,7 @@ export default function LeadsPage() {
     const deepLinkId = searchParams.get('leadId');
     if (!deepLinkId) return;
     (async () => {
-      const { data } = await supabase.from('leads').select('*').eq('id', deepLinkId).single();
+      const { data } = await supabase.from('customers').select('*').eq('id', deepLinkId).eq('record_type', 'lead').single();
       if (data) openLeadDetail(data as Lead);
       searchParams.delete('leadId');
       setSearchParams(searchParams, { replace: true });
@@ -158,6 +158,7 @@ export default function LeadsPage() {
   const createLead = useCreateLead();
   const deleteLead = useDeleteLead();
   const updateLead = useUpdateLead();
+  const convertToCustomer = useConvertLeadToCustomer();
   const updateScore = useUpdateLeadScore();
   const { data: allDeals } = useDeals();
   const { data: allTags } = useAllLeadTags();
@@ -1088,13 +1089,30 @@ export default function LeadsPage() {
                   {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString()}</p>}
                 </div>
 
-                {/* Convert to Deal */}
+                {/* Convert to Deal — creates a real linked customer record first,
+                    not just a pre-filled name/value on an orphan deal */}
                 <Button
                   variant="default"
                   className="w-full gap-2"
-                  onClick={() => {
+                  disabled={convertToCustomer.isPending}
+                  onClick={async () => {
                     const locale = isLocale(params.locale) ? params.locale : 'en';
-                    navigate(`/${locale}/app/crm/deals?create=true&leadName=${encodeURIComponent(selectedLead.name)}&leadValue=${selectedLead.value || 0}`);
+                    try {
+                      const customer = await convertToCustomer.mutateAsync({
+                        id: selectedLead.id,
+                        name: selectedLead.name,
+                        email: selectedLead.email,
+                        phone: selectedLead.phone,
+                        company_name: selectedLead.company_name,
+                        address: selectedLead.address,
+                        city: selectedLead.city,
+                        company_id: selectedLead.company_id,
+                        created_by: selectedLead.created_by,
+                      });
+                      navigate(`/${locale}/app/crm/deals?create=true&leadName=${encodeURIComponent(selectedLead.name)}&leadValue=${selectedLead.value || 0}&customer=${customer.id}`);
+                    } catch {
+                      toast.error(t('common.error'));
+                    }
                   }}
                 >
                   <Briefcase className="h-4 w-4" /> {t('pages.leads.convertToDeal') || 'Convert to Deal →'}

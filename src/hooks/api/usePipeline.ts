@@ -1,7 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PipelineLead } from '@/lib/pipeline';
 import type { Enums } from '@/integrations/supabase/types';
+
+// useUpdateLead lives in useLeads.ts — it's the canonical version (repointed
+// to the unified customers table). Re-exported here so existing importers
+// of this file don't need to change their import path.
+export { useUpdateLead } from '@/hooks/api/useLeads';
 
 export function usePipelineLeads(params?: {
   status?: string;
@@ -20,7 +25,7 @@ export function usePipelineLeads(params?: {
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
       if (!profile?.company_id) return { data: [] as PipelineLead[], total: 0 };
 
-      let query = supabase.from('leads').select('*').eq('company_id', profile.company_id);
+      let query = supabase.from('customers').select('*').eq('record_type', 'lead').eq('company_id', profile.company_id);
       if (params?.status) query = query.eq('status', params.status as Enums<'lead_status'>);
       if (params?.owner_id) query = query.eq('owner_id', params.owner_id);
       if (params?.min_score !== undefined) query = query.gte('score', params.min_score);
@@ -32,20 +37,6 @@ export function usePipelineLeads(params?: {
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       return { data: (data || []) as unknown as PipelineLead[], total: data?.length || 0 };
-    },
-  });
-}
-
-export function useUpdateLead() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
-      const { error } = await supabase.from('leads').update(data).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['pipeline-leads'] });
-      qc.invalidateQueries({ queryKey: ['leads'] });
     },
   });
 }

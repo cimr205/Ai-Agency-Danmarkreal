@@ -20,7 +20,7 @@ export function useTeamPerformance() {
       // Fetch all company profiles, leads, deals, tasks in parallel
       const [profilesRes, leadsRes, dealsRes, tasksRes] = await Promise.all([
         supabase.from('profiles').select('user_id, full_name, avatar_url'),
-        supabase.from('leads').select('created_by'),
+        supabase.from('customers').select('created_by').eq('record_type', 'lead'),
         supabase.from('deals').select('created_by, owner_id, stage, value'),
         supabase.from('tasks').select('assigned_to, status'),
       ]);

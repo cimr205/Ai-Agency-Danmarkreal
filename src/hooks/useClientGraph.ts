@@ -33,6 +33,7 @@ export function useClientGraph(customerId: string | undefined) {
         .from("customers")
         .select("*")
         .eq("id", customerId)
+        .eq("record_type", "customer")
         .maybeSingle();
       if (cErr) throw cErr;
       if (!customer) throw new Error("Customer not found");

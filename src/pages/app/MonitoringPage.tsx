@@ -14,7 +14,7 @@ function useSystemMetrics() {
 
       const [activityRes, leadsRes, emailsRes, usersRes, emailLogRes] = await Promise.all([
         supabase.from('activity_logs').select('*', { count: 'exact', head: true }).gte('created_at', dayAgo.toISOString()),
-        supabase.from('leads').select('*', { count: 'exact', head: true }),
+        supabase.from('customers').select('*', { count: 'exact', head: true }).eq('record_type', 'lead'),
         supabase.from('emails').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('email_send_log').select('status, created_at').gte('created_at', dayAgo.toISOString()).limit(500),

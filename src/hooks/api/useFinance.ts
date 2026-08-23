@@ -39,6 +39,7 @@ export function useCustomers() {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .eq('record_type', 'customer')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
@@ -53,7 +54,7 @@ export function useCreateCustomer() {
       const { session, companyId } = await getProfileWithCompany();
       const { data, error } = await supabase
         .from('customers')
-        .insert({ ...input, company_id: companyId, created_by: session.user.id })
+        .insert({ ...input, company_id: companyId, created_by: session.user.id, record_type: 'customer' })
         .select()
         .single();
       if (error) throw error;

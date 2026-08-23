@@ -43,9 +43,9 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
     queryFn: async () => {
       const q = `%${query}%`;
       const [customers, deals, leads, invoices] = await Promise.all([
-        supabase.from("customers").select("id,name,email").ilike("name", q).limit(5),
+        supabase.from("customers").select("id,name,email").eq("record_type", "customer").ilike("name", q).limit(5),
         supabase.from("deals").select("id,title,customer_id").ilike("title", q).limit(5),
-        supabase.from("leads").select("id,name,email").ilike("name", q).limit(5),
+        supabase.from("customers").select("id,name,email").eq("record_type", "lead").ilike("name", q).limit(5),
         supabase.from("invoices").select("id,invoice_number,amount,customer_id").ilike("invoice_number", q).limit(5),
       ]);
       return {

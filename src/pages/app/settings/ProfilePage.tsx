@@ -87,7 +87,7 @@ export default function ProfilePage() {
     try {
       const [profileData, leadsData, tasksData, activityData] = await Promise.all([
         supabase.from('profiles').select('*').eq('user_id', profile.user_id),
-        supabase.from('leads').select('*').eq('created_by', profile.user_id).limit(1000),
+        supabase.from('customers').select('*').eq('record_type', 'lead').eq('created_by', profile.user_id).limit(1000),
         supabase.from('tasks').select('*').eq('created_by', profile.user_id).limit(1000),
         supabase.from('activity_logs').select('*').eq('user_id', profile.user_id).limit(1000),
       ]);

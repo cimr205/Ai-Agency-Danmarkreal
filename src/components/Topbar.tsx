@@ -53,8 +53,9 @@ export default function Topbar() {
     if (!debouncedSearch.trim()) { setSearchResults([]); return; }
     const fetchResults = async () => {
       const { data } = await supabase
-        .from('leads')
+        .from('customers')
         .select('id, name, company_name')
+        .eq('record_type', 'lead')
         .or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%,company_name.ilike.%${debouncedSearch}%`)
         .limit(6);
       setSearchResults(data ?? []);
