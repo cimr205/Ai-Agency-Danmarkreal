@@ -150,9 +150,10 @@ export function useExecuteAction() {
         });
         result = { status: res.status };
       } else if (action.action_type === "send_email") {
-        // route via gmail webhook integration (or gmail-send edge function if available)
+        // gmail-send requires `message`, not `body` — this previously always
+        // failed with "Missing required fields: to, subject, message".
         const { data, error } = await supabase.functions.invoke("gmail-send", {
-          body: { to: payload.to, subject: payload.subject, body: payload.body },
+          body: { to: payload.to, subject: payload.subject, message: payload.body },
         }).catch((e) => ({ data: null, error: e }));
         if (error) throw new Error(error.message ?? "gmail-send fejlede");
         result = data;

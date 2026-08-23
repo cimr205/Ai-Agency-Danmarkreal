@@ -33,7 +33,7 @@ const tools = [
     type: "function",
     function: {
       name: "send_email",
-      description: "Send en email via brugerens tilknyttede Gmail-konto. Brug denne når brugeren beder om at sende en mail.",
+      description: "Opret et UDKAST til en email via brugerens Gmail-konto. Sender IKKE emailen — opretter et forslag i handlingskøen, som brugeren selv skal godkende med et klik, før den rent faktisk sendes.",
       parameters: {
         type: "object",
         properties: {
@@ -346,20 +346,28 @@ async function executeTool(
   try {
     switch (toolName) {
       case "send_email": {
+        // Never sends directly — creates a proposal in the same approval
+        // queue autopilot_actions already uses (autopilot-agent's
+        // propose_email), so a real human click in the UI is required
+        // before gmail-send is ever called. See useExecuteAction().
         const { to, subject, message, cc } = args;
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-        const resp = await fetch(`${supabaseUrl}/functions/v1/gmail-send`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-          body: JSON.stringify({ to, subject, message, cc, _user_id: userId, _company_id: companyId }),
+        const { error } = await supabase.from("autopilot_actions").insert({
+          company_id: companyId,
+          user_id: userId,
+          action_id: crypto.randomUUID(),
+          action_type: "send_email",
+          category: "PA",
+          headline: `Email → ${to}: ${subject}`,
+          status: "proposed",
+          rationale: "Foreslået af Personal PA — afventer din godkendelse.",
+          payload: { to, subject, body: message, cc: cc || null },
+          suggested_by: "smart-assistant",
         });
-        const data = await resp.json();
-        if (data?.error) return { success: false, result: `Email fejl: ${data.error}` };
-        return { success: true, result: `✅ Email sendt til ${to} med emne "${subject}"` };
+        if (error) return { success: false, result: `Kunne ikke oprette udkast: ${error.message}` };
+        return {
+          success: true,
+          result: `📝 Udkast oprettet til ${to} med emne "${subject}". Emailen er IKKE sendt endnu — den venter på din godkendelse i handlingskøen.`,
+        };
       }
 
       case "send_internal_message": {
@@ -880,7 +888,7 @@ KONTEKST-BEVIDST HJÆLP:
 - Giv ALTID specifikke forslag baseret på de data du kan se – ikke generelle råd.
 
 DU HAR ADGANG TIL VÆRKTØJER:
-- **send_email**: Send emails via brugerens Gmail.
+- **send_email**: Opretter et udkast til handlingskøen — sender ALDRIG direkte. Brugeren skal selv godkende udkastet med et klik, før det bliver sendt.
 - **send_internal_message**: Send intern besked til en kollega.
 - **lookup_cvr**: Slå dansk virksomhed op via CVR-nummer.
 - **create_task**: Opret opgaver i systemet.
@@ -901,6 +909,7 @@ MAPPER-STRATEGI:
 - Når brugeren beder om at organisere leads i mapper, brug 'list_lead_folders' først for at se eksisterende mapper.
 - Brug 'move_leads_to_folder' til at flytte leads – mappen oprettes automatisk hvis den ikke findes.
 - Når brugeren beder om at slette leads, brug 'delete_leads' med confirm=true. Bekræft ALTID med brugeren FØRST hvad der slettes.
+- 'send_email' opretter ALTID kun et udkast i handlingskøen — den sender aldrig noget selv. Fortæl brugeren at emailen afventer deres godkendelse; påstå ALDRIG at en email er "sendt". Opfind aldrig selv en email at sende — brug kun 'send_email' når brugeren eksplicit har bedt om at sende netop denne email.
 
 VIGTIGE REGLER FOR VÆRKTØJER:
 1. Brug værktøjer PROAKTIVT når det giver mening.

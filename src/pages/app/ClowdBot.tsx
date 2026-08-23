@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bot, Send, Sparkles, Trash2, Paperclip, X } from 'lucide-react';
+import { Bot, Send, Sparkles, Trash2, Paperclip, X, Mail, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { streamChat, type ChatMsg, type ChatContentPart } from '@/lib/streamChat';
 import ReactMarkdown from 'react-markdown';
 import { useI18n } from '@/lib/i18n';
+import { useAutopilotActions, useExecuteAction, useUpdateActionStatus } from '@/hooks/api/useAutopilot';
 
 type ImageAttachment = { base64: string; mimeType: string; preview: string };
 type UIMessage = { id: string; role: 'user' | 'assistant'; content: string; images?: ImageAttachment[] };
@@ -137,6 +138,8 @@ export default function ClowdBotPage() {
         )}
       </div>
 
+      <PendingEmailApprovals />
+
       <Card className="flex-1 flex flex-col overflow-hidden">
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -216,5 +219,54 @@ export default function ClowdBotPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+// Emails the PA drafts never send themselves — they land here as a
+// proposed autopilot_actions row and need one real human click before
+// gmail-send is ever called (see smart-assistant/index.ts send_email tool).
+function PendingEmailApprovals() {
+  const { data: actions } = useAutopilotActions();
+  const exec = useExecuteAction();
+  const updateStatus = useUpdateActionStatus();
+
+  const pending = (actions ?? []).filter(
+    a => a.action_type === 'send_email' && a.status === 'proposed' && a.suggested_by === 'smart-assistant'
+  );
+  if (pending.length === 0) return null;
+
+  return (
+    <Card className="mb-4 border-primary/30 bg-primary/5">
+      <div className="p-3 space-y-2">
+        {pending.map(a => {
+          const payload = (a.payload ?? {}) as { to?: string; subject?: string; body?: string };
+          return (
+            <div key={a.id} className="flex items-start gap-3 text-sm">
+              <Mail className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{a.headline}</div>
+                {payload.body && <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{payload.body}</div>}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="sm" className="h-7 text-xs"
+                  onClick={() => exec.mutate(a)}
+                  disabled={exec.isPending}
+                >
+                  {exec.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                  Godkend & send
+                </Button>
+                <Button
+                  size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground"
+                  onClick={() => updateStatus.mutate({ id: a.id, status: 'dismissed' })}
+                >
+                  <X className="h-3 w-3 mr-1" /> Afvis
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }
