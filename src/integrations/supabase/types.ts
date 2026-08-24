@@ -2326,7 +2326,7 @@ export type Database = {
             foreignKeyName: "lead_icp_scores_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
-            referencedRelation: "leads"
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -3156,7 +3156,7 @@ export type Database = {
             foreignKeyName: "quotes_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
-            referencedRelation: "leads"
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -3510,7 +3510,7 @@ export type Database = {
             foreignKeyName: "tasks_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
-            referencedRelation: "leads"
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -3703,6 +3703,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      verified_caller_ids: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          phone_number: string
+          status: string
+          twilio_caller_id_sid: string | null
+          twilio_validation_sid: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          phone_number: string
+          status?: string
+          twilio_caller_id_sid?: string | null
+          twilio_validation_sid?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          phone_number?: string
+          status?: string
+          twilio_caller_id_sid?: string | null
+          twilio_validation_sid?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_caller_ids_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_caller_ids_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
