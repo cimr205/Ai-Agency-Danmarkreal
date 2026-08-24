@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useLeads } from "@/hooks/api/useLeads";
-import { useTwilioAccount, useColdCallerUsage, useStartSession, useEndSession, useMakeCall, useSaveTwilioCredentials, useConnectDefaultTwilio, useDisconnectTwilio, useSearchNumbers, useBuyNumber, useReleaseNumber, type TwilioPhoneNumber, type NumberSearchResult } from "@/hooks/api/useColdCaller";
+import { useTwilioAccount, useColdCallerUsage, useStartSession, useEndSession, useMakeCall, useSaveTwilioCredentials, useConnectDefaultTwilio, useDisconnectTwilio, useSearchNumbers, useBuyNumber, useReleaseNumber, useVerifiedCallerIds, useStartCallerIdVerification, useCheckCallerIdStatus, useDeleteVerifiedCallerId, type TwilioPhoneNumber, type NumberSearchResult } from "@/hooks/api/useColdCaller";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,6 +165,10 @@ export default function ColdCallerPage() {
   const searchNumbers = useSearchNumbers();
   const buyNumber = useBuyNumber();
   const releaseNumber = useReleaseNumber();
+  const { data: verifiedCallerIds } = useVerifiedCallerIds();
+  const startCallerIdVerification = useStartCallerIdVerification();
+  const checkCallerIdStatus = useCheckCallerIdStatus();
+  const deleteVerifiedCallerId = useDeleteVerifiedCallerId();
 
   const [activeTab, setActiveTab] = useState("dialer");
   const [dialerMode, setDialerMode] = useState<"power" | "manual">("power");
@@ -178,7 +182,28 @@ export default function ColdCallerPage() {
   const [callStatus, setCallStatus] = useState<"idle" | "dialing" | "connected" | "ended">("idle");
   const [sessionStats, setSessionStats] = useState({ calls: 0, connected: 0, duration: 0 });
   const [selectedFromNumber, setSelectedFromNumber] = useState<string>("");
+  const [ownNumberInput, setOwnNumberInput] = useState("");
+  const [pendingVerification, setPendingVerification] = useState<{ phoneNumber: string; validationCode: string } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const pollRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Poll for verification completion while a verification is pending
+  useEffect(() => {
+    if (!pendingVerification) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const result = await checkCallerIdStatus.mutateAsync({ phone_number: pendingVerification.phoneNumber });
+        if (result.verified) {
+          toast({ title: "Nummer bekræftet", description: `${pendingVerification.phoneNumber} kan nu bruges som afsendernummer.` });
+          setPendingVerification(null);
+        }
+      } catch {
+        // transient — keep polling until the interval is cleared
+      }
+    }, 5000);
+    return () => clearInterval(pollRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingVerification?.phoneNumber]);
 
   const [confirmStartOpen, setConfirmStartOpen] = useState(false);
   const [callDisposition, setCallDisposition] = useState<CallDisposition>(null);
@@ -202,6 +227,17 @@ export default function ColdCallerPage() {
   const isConnected = twilioInfo?.connected === true;
   const isTrial = twilioInfo?.account?.type === "Trial";
   const phoneNumbers = twilioInfo?.phoneNumbers || [];
+  const myVerifiedNumbers = useMemo(
+    () => (verifiedCallerIds ?? []).filter(v => v.status === "verified"),
+    [verifiedCallerIds],
+  );
+  const allFromNumbers = useMemo(
+    () => [
+      ...myVerifiedNumbers.map(v => ({ value: v.phone_number, label: `${v.phone_number} (dit eget)` })),
+      ...phoneNumbers.map((n: TwilioPhoneNumber) => ({ value: n.phone_number, label: n.friendly_name || n.phone_number })),
+    ],
+    [myVerifiedNumbers, phoneNumbers],
+  );
   const leadsArray = Array.isArray(leads) ? leads : (leads?.data ?? []);
   const leadQueue = useMemo(() => leadsArray.filter((l: Lead) => l.phone).slice(0, 100), [leadsArray]);
   const currentLead = leadQueue[currentLeadIdx];
@@ -212,16 +248,16 @@ export default function ColdCallerPage() {
   }, [locale]);
 
   useEffect(() => {
-    if (phoneNumbers.length === 0) {
+    if (allFromNumbers.length === 0) {
       if (selectedFromNumber) setSelectedFromNumber("");
       return;
     }
 
-    const stillExists = phoneNumbers.some((n: TwilioPhoneNumber) => n.phone_number === selectedFromNumber);
+    const stillExists = allFromNumbers.some(n => n.value === selectedFromNumber);
     if (!selectedFromNumber || !stillExists) {
-      setSelectedFromNumber(phoneNumbers[0].phone_number);
+      setSelectedFromNumber(allFromNumbers[0].value);
     }
-  }, [phoneNumbers, selectedFromNumber]);
+  }, [allFromNumbers, selectedFromNumber]);
 
   useEffect(() => {
     if (callStatus === "connected") {
@@ -425,12 +461,12 @@ export default function ColdCallerPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {isConnected && phoneNumbers.length > 1 && (
+          {isConnected && allFromNumbers.length > 1 && (
             <Select value={selectedFromNumber} onValueChange={setSelectedFromNumber}>
-              <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="Vælg nummer" /></SelectTrigger>
+              <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Vælg nummer" /></SelectTrigger>
               <SelectContent>
-                {phoneNumbers.map((n: TwilioPhoneNumber) => (
-                  <SelectItem key={n.sid} value={n.phone_number}>{n.friendly_name || n.phone_number}</SelectItem>
+                {allFromNumbers.map(n => (
+                  <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1179,6 +1215,73 @@ export default function ColdCallerPage() {
                     ))}
                   </div>
                 )}
+
+                {/* Verified personal caller ID */}
+                <div className="space-y-3 pt-2 border-t border-border/40">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Dit eget nummer</p>
+                  <p className="text-xs text-muted-foreground">
+                    Bekræft dit personlige nummer én gang — så kan du ringe ud fra systemet og lade kunden se dit rigtige nummer, i stedet for et firmanummer.
+                  </p>
+
+                  {(verifiedCallerIds ?? []).filter(v => v.status === "verified").map(v => (
+                    <div key={v.id} className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                      <div className="flex items-center gap-2">
+                        <PhoneForwarded className="h-4 w-4 text-emerald-400" />
+                        <span className="font-mono text-sm">{v.phone_number}</span>
+                        <Badge variant="outline" className="text-[9px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Bekræftet</Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        disabled={deleteVerifiedCallerId.isPending}
+                        onClick={async () => {
+                          if (!confirm(`Fjern ${v.phone_number} som bekræftet nummer?`)) return;
+                          await deleteVerifiedCallerId.mutateAsync({ id: v.id });
+                        }}
+                      >
+                        <PhoneOff className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  {pendingVerification ? (
+                    <Card className="border-amber-500/30 bg-amber-500/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-medium text-amber-300">Vi ringer dig op nu på {pendingVerification.phoneNumber}</p>
+                          <p className="text-sm text-muted-foreground">Svar opkaldet og tast koden <span className="font-mono font-semibold">{pendingVerification.validationCode}</span> når du bliver bedt om det. Denne side opdaterer automatisk når nummeret er bekræftet.</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="+45 12 34 56 78"
+                        value={ownNumberInput}
+                        onChange={e => setOwnNumberInput(e.target.value)}
+                        className="max-w-xs"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!ownNumberInput.trim() || startCallerIdVerification.isPending}
+                        onClick={async () => {
+                          try {
+                            const result = await startCallerIdVerification.mutateAsync({ phone_number: ownNumberInput.trim() });
+                            setPendingVerification({ phoneNumber: result.phoneNumber, validationCode: result.validationCode });
+                            setOwnNumberInput("");
+                          } catch (e) {
+                            toast({ title: "Kunne ikke starte bekræftelse", description: getErrorMessage(e) || String(e), variant: "destructive" });
+                          }
+                        }}
+                      >
+                        {startCallerIdVerification.isPending ? "Starter..." : "Bekræft nummer"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Phone Number Provisioning */}
                 <div className="space-y-3">

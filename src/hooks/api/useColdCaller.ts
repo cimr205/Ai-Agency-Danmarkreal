@@ -25,6 +25,7 @@ export interface TwilioAccountInfo {
 }
 
 export type ColdCallerUsageRecord = Tables<'cold_caller_usage'>;
+export type VerifiedCallerId = Tables<'verified_caller_ids'>;
 
 export interface NumberSearchResult {
   phone_number: string;
@@ -171,6 +172,48 @@ export function useBuyNumber() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["twilio-account"] });
     },
+  });
+}
+
+export function useVerifiedCallerIds() {
+  const { isAuthenticated, isLoading } = useAuth();
+  return useQuery({
+    queryKey: ["verified-caller-ids"],
+    queryFn: () => callColdCaller<VerifiedCallerId[]>("list-verified-caller-ids"),
+    staleTime: 30_000,
+    enabled: isAuthenticated && !isLoading,
+  });
+}
+
+export function useStartCallerIdVerification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { phone_number: string }) =>
+      callColdCaller<{ success: boolean; validationCode: string; phoneNumber: string }>(
+        "start-caller-id-verification",
+        payload,
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["verified-caller-ids"] }),
+  });
+}
+
+export function useCheckCallerIdStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { phone_number: string }) =>
+      callColdCaller<{ verified: boolean }>("check-caller-id-status", payload),
+    onSuccess: (data) => {
+      if (data.verified) qc.invalidateQueries({ queryKey: ["verified-caller-ids"] });
+    },
+  });
+}
+
+export function useDeleteVerifiedCallerId() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { id: string }) =>
+      callColdCaller("delete-verified-caller-id", payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["verified-caller-ids"] }),
   });
 }
 
