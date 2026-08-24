@@ -448,6 +448,31 @@ Deno.serve(async (req) => {
       const { to, from, leadId, leadName } = body;
       if (!to || !from) throw new Error("Missing 'to' or 'from' number");
 
+      // Authorize the "from" number: it must either be one of the company's
+      // purchased Twilio numbers, or a number THIS user has personally
+      // verified (never a colleague's verified number).
+      const { data: companyNumber } = await serviceClient
+        .from("phone_provisions")
+        .select("phone_number")
+        .eq("company_id", profile.company_id)
+        .eq("phone_number", from)
+        .maybeSingle();
+
+      if (!companyNumber) {
+        const { data: verifiedOwn } = await serviceClient
+          .from("verified_caller_ids")
+          .select("id")
+          .eq("company_id", profile.company_id)
+          .eq("user_id", user.id)
+          .eq("phone_number", from)
+          .eq("status", "verified")
+          .maybeSingle();
+
+        if (!verifiedOwn) {
+          throw new Error("Dette nummer er hverken et firmanummer eller et bekræftet personligt nummer for dig. Bekræft nummeret under Konto-fanen først.");
+        }
+      }
+
       const callAttempt = await safeTwilioRequest(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`,
         {
@@ -492,6 +517,125 @@ Deno.serve(async (req) => {
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ─── ACTION: List this user's verified caller ids (+ all for admins) ───
+    if (action === "list-verified-caller-ids") {
+      const { data: isAdmin } = await serviceClient.rpc("is_company_admin", { _user_id: user.id });
+      let query = serviceClient
+        .from("verified_caller_ids")
+        .select("id, phone_number, status, user_id, created_at")
+        .eq("company_id", profile.company_id)
+        .order("created_at", { ascending: false });
+      if (!isAdmin) query = query.eq("user_id", user.id);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return jsonResponse(data ?? []);
+    }
+
+    // ─── ACTION: Start verifying a personal caller id ───
+    if (action === "start-caller-id-verification") {
+      const { phone_number: phoneNumber } = body;
+      if (!phoneNumber) throw new Error("Manglende telefonnummer");
+
+      const creds = await getTwilioCreds(serviceClient, profile.company_id);
+      if (!creds) throw new Error("Twilio ikke konfigureret. Gå til Konto-fanen for at forbinde.");
+      const { account_sid: twilioSid, auth_token: twilioToken } = creds;
+
+      const verifyAttempt = await safeTwilioRequest(
+        `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/OutgoingCallerIds.json`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: twilioAuth(twilioSid, twilioToken),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ PhoneNumber: phoneNumber }),
+        }
+      );
+
+      if (verifyAttempt.fallback) {
+        return jsonResponse({ success: false, fallback: true, error: verifyAttempt.error });
+      }
+
+      const verifyRes = verifyAttempt.response!;
+      if (!verifyRes.ok) {
+        const err = await verifyRes.text();
+        throw new Error(`Kunne ikke starte bekræftelse: ${err}`);
+      }
+
+      const verifyData = await verifyRes.json();
+
+      const { error: upsertErr } = await serviceClient
+        .from("verified_caller_ids")
+        .upsert({
+          company_id: profile.company_id,
+          user_id: user.id,
+          phone_number: phoneNumber,
+          twilio_validation_sid: verifyData.call_sid ?? null,
+          status: "pending",
+        }, { onConflict: "company_id,user_id,phone_number" });
+      if (upsertErr) throw new Error(upsertErr.message);
+
+      return jsonResponse({
+        success: true,
+        validationCode: verifyData.validation_code,
+        phoneNumber: verifyData.phone_number,
+      });
+    }
+
+    // ─── ACTION: Check verification status (poll after starting) ───
+    if (action === "check-caller-id-status") {
+      const { phone_number: phoneNumber } = body;
+      if (!phoneNumber) throw new Error("Manglende telefonnummer");
+
+      const creds = await getTwilioCreds(serviceClient, profile.company_id);
+      if (!creds) throw new Error("Twilio ikke konfigureret.");
+      const { account_sid: twilioSid, auth_token: twilioToken } = creds;
+
+      const listAttempt = await safeTwilioRequest(
+        `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/OutgoingCallerIds.json?PhoneNumber=${encodeURIComponent(phoneNumber)}`,
+        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+      );
+
+      if (listAttempt.fallback) {
+        return jsonResponse({ success: false, fallback: true, error: listAttempt.error });
+      }
+
+      const listRes = listAttempt.response!;
+      if (!listRes.ok) {
+        const err = await listRes.text();
+        throw new Error(`Kunne ikke tjekke status: ${err}`);
+      }
+
+      const listData = await listRes.json();
+      const match = (listData.outgoing_caller_ids ?? [])[0];
+
+      if (match) {
+        const { error: updateErr } = await serviceClient
+          .from("verified_caller_ids")
+          .update({ status: "verified", twilio_caller_id_sid: match.sid })
+          .eq("company_id", profile.company_id)
+          .eq("user_id", user.id)
+          .eq("phone_number", phoneNumber);
+        if (updateErr) throw new Error(updateErr.message);
+        return jsonResponse({ verified: true });
+      }
+
+      return jsonResponse({ verified: false });
+    }
+
+    // ─── ACTION: Remove a verified caller id ───
+    if (action === "delete-verified-caller-id") {
+      const { id } = body;
+      if (!id) throw new Error("Manglende id");
+      const { error } = await serviceClient
+        .from("verified_caller_ids")
+        .delete()
+        .eq("id", id)
+        .eq("company_id", profile.company_id);
+      if (error) throw new Error(error.message);
+      return jsonResponse({ success: true });
     }
 
     // ─── ACTION: Search available phone numbers ───
