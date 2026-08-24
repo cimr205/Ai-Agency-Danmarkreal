@@ -9,7 +9,7 @@ const corsHeaders = {
 async function getTwilioCreds(serviceClient: SupabaseClient, companyId: string) {
   const { data, error } = await serviceClient
     .from("twilio_accounts")
-    .select("account_sid, auth_token, balance, balance_currency, last_balance_check")
+    .select("account_sid, auth_token, api_key_sid, api_key_secret, balance, balance_currency, last_balance_check")
     .eq("company_id", companyId)
     .single();
   if (error || !data) return null;
@@ -48,6 +48,16 @@ function twilioAuth(sid: string, token: string) {
   return "Basic " + btoa(`${sid}:${token}`);
 }
 
+// Prefer an API Key (SKxxx + secret) over the primary Account Auth Token
+// when both are stored — API Keys are independently revocable without
+// regenerating the master token. The Account SID in the URL path is always
+// the real account_sid regardless of which credential pair authenticates.
+function twilioAuthCreds(creds: { account_sid: string; auth_token: string | null; api_key_sid?: string | null; api_key_secret?: string | null }) {
+  const authUser = creds.api_key_sid || creds.account_sid;
+  const authSecret = creds.api_key_secret || creds.auth_token || "";
+  return twilioAuth(authUser, authSecret);
+}
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -80,10 +90,16 @@ async function safeTwilioRequest(url: string, init?: RequestInit) {
   }
 }
 
-async function validateTwilioCredentials(accountSid: string, authToken: string) {
+async function validateTwilioCredentials(
+  accountSid: string,
+  authToken: string,
+  apiKey?: { sid: string; secret: string },
+) {
+  const authHeader = apiKey ? twilioAuth(apiKey.sid, apiKey.secret) : twilioAuth(accountSid, authToken);
+
   const testCheck = await safeTwilioRequest(
     `https://api.twilio.com/2010-04-01/Accounts/${accountSid}.json`,
-    { headers: { Authorization: twilioAuth(accountSid, authToken) } }
+    { headers: { Authorization: authHeader } }
   );
 
   if (testCheck.fallback) {
@@ -98,14 +114,14 @@ async function validateTwilioCredentials(accountSid: string, authToken: string) 
       accountSid,
       body: errorBody,
     });
-    throw new Error("Ugyldige Twilio-oplysninger. Tjek dit Account SID og Auth Token.");
+    throw new Error("Ugyldige Twilio-oplysninger. Tjek dit Account SID og Auth Token / API Key.");
   }
 
   const accountData = await testRes.json();
 
   const balRes = await twilioFetch(
     `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Balance.json`,
-    { headers: { Authorization: twilioAuth(accountSid, authToken) } }
+    { headers: { Authorization: authHeader } }
   );
 
   let balance = 0;
@@ -139,8 +155,9 @@ async function storeTwilioCredentials(
   companyId: string,
   accountSid: string,
   authToken: string,
+  apiKey?: { sid: string; secret: string },
 ) {
-  const validation = await validateTwilioCredentials(accountSid, authToken) as
+  const validation = await validateTwilioCredentials(accountSid, authToken, apiKey) as
     | { fallback: true; error: string }
     | { fallback: false; accountData: TwilioAccountData; balance: number; balanceCurrency: string };
 
@@ -156,6 +173,8 @@ async function storeTwilioCredentials(
       company_id: companyId,
       account_sid: accountSid,
       auth_token: authToken,
+      api_key_sid: apiKey?.sid ?? null,
+      api_key_secret: apiKey?.secret ?? null,
       friendly_name: accountData.friendly_name,
       account_type: accountData.type,
       status: accountData.status,
@@ -242,10 +261,12 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: Save Twilio credentials ───
     if (action === "save-credentials") {
-      const { accountSid, authToken } = body;
-      if (!accountSid || !authToken) throw new Error("Missing accountSid or authToken");
+      const { accountSid, authToken, apiKeySid, apiKeySecret } = body;
+      if (!accountSid) throw new Error("Missing accountSid");
+      const apiKey = apiKeySid && apiKeySecret ? { sid: apiKeySid, secret: apiKeySecret } : undefined;
+      if (!apiKey && !authToken) throw new Error("Missing authToken or apiKeySid/apiKeySecret");
 
-      const result = await storeTwilioCredentials(serviceClient, profile.company_id, accountSid, authToken);
+      const result = await storeTwilioCredentials(serviceClient, profile.company_id, accountSid, authToken ?? "", apiKey);
       return jsonResponse(result);
     }
 
@@ -283,7 +304,7 @@ Deno.serve(async (req) => {
 
        const accountCheck = await safeTwilioRequest(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}.json`,
-        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+        { headers: { Authorization: twilioAuthCreds(creds) } }
       );
 
       if (accountCheck.fallback) {
@@ -316,7 +337,7 @@ Deno.serve(async (req) => {
       // Get balance
       const balRes = await twilioFetch(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Balance.json`,
-        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+        { headers: { Authorization: twilioAuthCreds(creds) } }
       );
       let balance = 0;
       let balanceCurrency = "USD";
@@ -337,7 +358,7 @@ Deno.serve(async (req) => {
       const startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
       const usageRes = await twilioFetch(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Usage/Records.json?Category=calls&StartDate=${startDate}`,
-        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+        { headers: { Authorization: twilioAuthCreds(creds) } }
       );
 
       let usage = { count: 0, price: "0.00", usage_minutes: 0 };
@@ -356,7 +377,7 @@ Deno.serve(async (req) => {
       // Get phone numbers
       const numbersRes = await twilioFetch(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/IncomingPhoneNumbers.json?PageSize=50`,
-        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+        { headers: { Authorization: twilioAuthCreds(creds) } }
       );
 
       interface TwilioPhoneNumber {
@@ -478,7 +499,7 @@ Deno.serve(async (req) => {
         {
           method: "POST",
           headers: {
-            Authorization: twilioAuth(twilioSid, twilioToken),
+            Authorization: twilioAuthCreds(creds),
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
@@ -547,7 +568,7 @@ Deno.serve(async (req) => {
         {
           method: "POST",
           headers: {
-            Authorization: twilioAuth(twilioSid, twilioToken),
+            Authorization: twilioAuthCreds(creds),
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({ PhoneNumber: phoneNumber }),
@@ -595,7 +616,7 @@ Deno.serve(async (req) => {
 
       const listAttempt = await safeTwilioRequest(
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/OutgoingCallerIds.json?PhoneNumber=${encodeURIComponent(phoneNumber)}`,
-        { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+        { headers: { Authorization: twilioAuthCreds(creds) } }
       );
 
       if (listAttempt.fallback) {
@@ -673,7 +694,7 @@ Deno.serve(async (req) => {
       for (const ep of tryEndpoints) {
         const res = await twilioFetch(
           `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/AvailablePhoneNumbers/${country}/${ep}.json?${params}`,
-          { headers: { Authorization: twilioAuth(twilioSid, twilioToken) } }
+          { headers: { Authorization: twilioAuthCreds(creds) } }
         );
         if (res.ok) {
           searchData = await res.json();
@@ -721,7 +742,7 @@ Deno.serve(async (req) => {
         {
           method: "POST",
           headers: {
-            Authorization: twilioAuth(twilioSid, twilioToken),
+            Authorization: twilioAuthCreds(creds),
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({ PhoneNumber: phoneNumber }),
@@ -789,7 +810,7 @@ Deno.serve(async (req) => {
         `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/IncomingPhoneNumbers/${numberSid}.json`,
         {
           method: "DELETE",
-          headers: { Authorization: twilioAuth(twilioSid, twilioToken) },
+          headers: { Authorization: twilioAuthCreds(creds) },
         }
       );
 

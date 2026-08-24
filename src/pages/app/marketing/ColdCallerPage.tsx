@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useLeads } from "@/hooks/api/useLeads";
-import { useTwilioAccount, useColdCallerUsage, useStartSession, useEndSession, useMakeCall, useSaveTwilioCredentials, useConnectDefaultTwilio, useDisconnectTwilio, useSearchNumbers, useBuyNumber, useReleaseNumber, useVerifiedCallerIds, useStartCallerIdVerification, useCheckCallerIdStatus, useDeleteVerifiedCallerId, type TwilioPhoneNumber, type NumberSearchResult } from "@/hooks/api/useColdCaller";
+import { useTwilioAccount, useColdCallerUsage, useStartSession, useEndSession, useMakeCall, useConnectDefaultTwilio, useDisconnectTwilio, useSearchNumbers, useBuyNumber, useReleaseNumber, useVerifiedCallerIds, useStartCallerIdVerification, useCheckCallerIdStatus, useDeleteVerifiedCallerId, type TwilioPhoneNumber, type NumberSearchResult } from "@/hooks/api/useColdCaller";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,7 +159,6 @@ export default function ColdCallerPage() {
   const startSession = useStartSession();
   const endSession = useEndSession();
   const makeCall = useMakeCall();
-  const saveCredentials = useSaveTwilioCredentials();
   const connectDefaultTwilio = useConnectDefaultTwilio();
   const disconnectTwilio = useDisconnectTwilio();
   const searchNumbers = useSearchNumbers();
@@ -210,8 +209,6 @@ export default function ColdCallerPage() {
   const [callNotes, setCallNotes] = useState("");
   const [selectedScript, setSelectedScript] = useState<string>("intro");
   const [dispositionHistory, setDispositionHistory] = useState<Array<{leadId: string; leadName: string; disposition: CallDisposition; notes: string; time: string; duration: number}>>([]);
-  const [setupSid, setSetupSid] = useState("");
-  const [setupToken, setSetupToken] = useState("");
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [autoDialNext, setAutoDialNext] = useState(true);
   const [numberSearchCountry, setNumberSearchCountry] = useState("US");
@@ -419,7 +416,7 @@ export default function ColdCallerPage() {
             <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-amber-300">Trial-konto — begrænsede opkald</p>
-              <p className="text-sm text-muted-foreground mt-1">Opgradér din Twilio-konto for ubegrænsede opkald.</p>
+              <p className="text-sm text-muted-foreground mt-1">Opgradér din konto for ubegrænsede opkald.</p>
             </div>
           </div>
         </Card>
@@ -482,7 +479,7 @@ export default function ColdCallerPage() {
             size="lg"
             onClick={isSessionActive ? handleEndSession : () => {
               if (!isConnected) {
-                toast({ title: "Twilio ikke forbundet", description: "Forbind en Twilio-konto under fanen 'Konto' for at starte opkald.", variant: "destructive" });
+                toast({ title: "Ingen opkaldsforbindelse", description: "Forbind en opkaldsforbindelse under fanen 'Konto' for at starte opkald.", variant: "destructive" });
                 return;
               }
               if (!selectedFromNumber) {
@@ -601,12 +598,12 @@ export default function ColdCallerPage() {
                 </div>
               </div>
 
-              {/* Fast path: shared Twilio connection */}
-              <div className="px-6 pt-6">
+              {/* Connect */}
+              <div className="p-6">
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-center justify-between gap-4 flex-wrap">
                   <div>
-                    <p className="text-sm font-semibold flex items-center gap-1.5"><Wifi className="h-4 w-4 text-emerald-400" /> Hurtigste vej: brug jeres delte forbindelse</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Klar på et øjeblik — ingen Twilio-konto nødvendig.</p>
+                    <p className="text-sm font-semibold flex items-center gap-1.5"><Wifi className="h-4 w-4 text-emerald-400" /> Forbind jeres opkaldsforbindelse</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Klar på et øjeblik — ingen opsætning nødvendig.</p>
                   </div>
                   <Button
                     size="sm"
@@ -615,98 +612,14 @@ export default function ColdCallerPage() {
                     onClick={async () => {
                       try {
                         await connectDefaultTwilio.mutateAsync();
-                        toast({ title: "Twilio forbundet!", description: "Standardforbindelsen er nu aktiv for din virksomhed." });
+                        toast({ title: "Forbindelse oprettet!", description: "Din opkaldsforbindelse er nu aktiv for din virksomhed." });
                       } catch (e) {
                         toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
                       }
                     }}
                   >
                     {connectDefaultTwilio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
-                    Brug eksisterende forbindelse
-                  </Button>
-                </div>
-                <div className="relative text-center text-xs text-muted-foreground my-4">
-                  <span className="bg-card px-2 relative z-10">eller forbind din egen Twilio-konto (kræver teknisk opsætning, ca. 10-15 min)</span>
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-border/40" />
-                </div>
-              </div>
-
-              {/* Steps */}
-              <div className="p-6 pt-0 space-y-4">
-                <div className="grid gap-3">
-                  {[
-                    {
-                      step: 1,
-                      title: "Opret gratis Twilio-konto",
-                      desc: "Twilio giver dig et telefonnummer til opkald. Gratis trial inkluderet.",
-                      action: (
-                        <a href="https://www.twilio.com/try-twilio" target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" className="gap-2 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700">
-                            <Sparkles className="h-3.5 w-3.5" /> Opret konto gratis
-                          </Button>
-                        </a>
-                      ),
-                    },
-                    {
-                      step: 2,
-                      title: "Kopiér Account SID & Auth Token",
-                      desc: "Find dem på dit Twilio-dashboard under 'Account Info'.",
-                      action: (
-                        <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" variant="outline" className="gap-2">
-                            <ArrowRight className="h-3.5 w-3.5" /> Åbn Twilio Console
-                          </Button>
-                        </a>
-                      ),
-                    },
-                    {
-                      step: 3,
-                      title: "Indsæt dine oplysninger herunder",
-                      desc: "Så er du klar til at ringe direkte fra platformen.",
-                      action: null,
-                    },
-                  ].map((s) => (
-                    <div key={s.step} className="flex gap-4 p-4 rounded-xl bg-muted/20 border border-border/30 hover:bg-muted/30 transition-colors">
-                      <div className="shrink-0 h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                        {s.step}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{s.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
-                        {s.action && <div className="mt-2.5">{s.action}</div>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Inline credential form */}
-                <div className="p-5 rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-border/40 space-y-4">
-                  <h4 className="font-semibold flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Forbind din konto
-                  </h4>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Account SID</label>
-                      <Input placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={setupSid} onChange={e => setSetupSid(e.target.value)} className="font-mono text-sm h-10" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Auth Token</label>
-                      <Input type="password" placeholder="Dit Auth Token" value={setupToken} onChange={e => setSetupToken(e.target.value)} className="font-mono text-sm h-10" />
-                    </div>
-                  </div>
-                  <Button
-                    className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-600 gap-2 shadow-lg shadow-emerald-500/20"
-                    disabled={!setupSid.startsWith("AC") || setupToken.length < 10 || saveCredentials.isPending}
-                    onClick={async () => {
-                      try {
-                        await saveCredentials.mutateAsync({ accountSid: setupSid, authToken: setupToken });
-                        setSetupSid(""); setSetupToken("");
-                        toast({ title: "Twilio forbundet!", description: "Din konto er nu aktiv. Du er klar til at ringe!" });
-                      } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
-                    }}
-                  >
-                    {saveCredentials.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                    Forbind & kom i gang
+                    Forbind nu
                   </Button>
                 </div>
               </div>
@@ -985,7 +898,7 @@ export default function ColdCallerPage() {
                   onChange={setManualNumber}
                   onCall={() => {
                     if (!isConnected) {
-                      toast({ title: "Twilio ikke forbundet", description: "Forbind en Twilio-konto under fanen 'Konto' for at ringe op.", variant: "destructive" });
+                      toast({ title: "Ingen opkaldsforbindelse", description: "Forbind en opkaldsforbindelse under fanen 'Konto' for at ringe op.", variant: "destructive" });
                       return;
                     }
                     if (!isSessionActive) {
@@ -1148,8 +1061,7 @@ export default function ColdCallerPage() {
                 <div>
                   <p className="font-medium text-red-300">{twilioInfo.balance <= 0 ? "Saldo er tom" : "Lav saldo"}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Saldo: {twilioInfo.balance_currency} {Number(twilioInfo.balance).toFixed(2)}.{" "}
-                    <a href="https://console.twilio.com/us1/billing/manage-billing/billing" target="_blank" rel="noopener noreferrer" className="text-primary underline">Tilføj kredit →</a>
+                    Saldo: {twilioInfo.balance_currency} {Number(twilioInfo.balance).toFixed(2)}. Kontakt support for at tilføje kredit.
                   </p>
                 </div>
               </div>
@@ -1157,7 +1069,7 @@ export default function ColdCallerPage() {
           )}
 
           <Card className="liquid-glass-card p-6 space-y-4">
-            <h3 className="font-semibold flex items-center gap-2"><Settings2 className="h-4 w-4" /> Twilio-konto</h3>
+            <h3 className="font-semibold flex items-center gap-2"><Settings2 className="h-4 w-4" /> Opkaldsforbindelse</h3>
 
             {isConnected ? (
               <div className="space-y-5">
@@ -1173,7 +1085,7 @@ export default function ColdCallerPage() {
                       "bg-red-500/10 text-red-400 border-red-500/30"
                     )}>{twilioInfo.balance > 5 ? "OK" : twilioInfo.balance > 0 ? "Lav" : "Tom"}</Badge>
                   </div>
-                  <a href="https://console.twilio.com/us1/billing/manage-billing/billing" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2">Tilføj kredit →</a>
+                  <p className="text-xs text-muted-foreground mt-2">Kontakt support for at tilføje kredit.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1366,7 +1278,7 @@ export default function ColdCallerPage() {
                             });
                             setSearchResults(res.numbers || []);
                             if (res.usedType && res.usedType.toLowerCase() !== numberSearchType.replace('-', '')) {
-                              toast({ title: "Alternativ type brugt", description: `Twilio havde ikke ${numberSearchType} i ${numberSearchCountry}, så der blev søgt i ${res.usedType}.` });
+                              toast({ title: "Alternativ type brugt", description: `Der var ikke ${numberSearchType} numre i ${numberSearchCountry}, så der blev søgt i ${res.usedType}.` });
                             }
                             if (!res.numbers?.length) {
                               toast({ title: "Ingen numre fundet", description: res.warning || "Prøv et andet land eller type." });
@@ -1414,7 +1326,7 @@ export default function ColdCallerPage() {
 
                 <div className="pt-2 border-t border-border/40">
                   <Button variant="outline" size="sm" className="text-red-400 border-red-500/30 hover:bg-red-500/10" onClick={() => setShowDisconnectConfirm(true)}>
-                    Afbryd Twilio-konto
+                    Afbryd forbindelse
                   </Button>
                 </div>
               </div>
@@ -1427,67 +1339,26 @@ export default function ColdCallerPage() {
                       <Phone className="h-7 w-7 text-white" />
                     </div>
                   </div>
-                  <h3 className="font-semibold text-lg">Forbind din Twilio-konto</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">Brug jeres delte forbindelse med det samme, eller forbind din egen Twilio-konto (kræver teknisk opsætning, ca. 10-15 min).</p>
-                </div>
-
-                <div className="flex flex-wrap justify-center gap-2">
-                  <a href="https://www.twilio.com/try-twilio" target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="gap-2 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10">
-                      <Sparkles className="h-3.5 w-3.5" /> Opret gratis Twilio-konto
-                    </Button>
-                  </a>
-                  <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <ArrowRight className="h-3.5 w-3.5" /> Åbn Twilio Console
-                    </Button>
-                  </a>
+                  <h3 className="font-semibold text-lg">Forbind din opkaldsforbindelse</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">Forbind jeres delte opkaldsforbindelse for at komme i gang med det samme.</p>
                 </div>
 
                 <div className="space-y-3 max-w-md mx-auto">
                   <Button
                     variant="outline"
                     className="w-full gap-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
-                    disabled={connectDefaultTwilio.isPending || saveCredentials.isPending}
+                    disabled={connectDefaultTwilio.isPending}
                     onClick={async () => {
                       try {
                         await connectDefaultTwilio.mutateAsync();
-                        toast({ title: "Twilio forbundet!", description: "Standardforbindelsen er nu aktiv for din virksomhed." });
+                        toast({ title: "Forbindelse oprettet!", description: "Din opkaldsforbindelse er nu aktiv for din virksomhed." });
                       } catch (e) {
                         toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
                       }
                     }}
                   >
                     {connectDefaultTwilio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
-                    Brug eksisterende Twilio-forbindelse
-                  </Button>
-
-                  <div className="relative text-center text-xs text-muted-foreground">
-                    <span className="bg-background px-2 relative z-10">eller forbind manuelt</span>
-                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-border/40" />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Account SID</label>
-                    <Input placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={setupSid} onChange={e => setSetupSid(e.target.value)} className="font-mono text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Auth Token</label>
-                    <Input type="password" placeholder="Dit Auth Token" value={setupToken} onChange={e => setSetupToken(e.target.value)} className="font-mono text-sm" />
-                  </div>
-                  <Button
-                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 gap-2"
-                    disabled={!setupSid.startsWith("AC") || setupToken.length < 10 || saveCredentials.isPending}
-                    onClick={async () => {
-                      try {
-                        await saveCredentials.mutateAsync({ accountSid: setupSid, authToken: setupToken });
-                        setSetupSid(""); setSetupToken("");
-                        toast({ title: "Twilio forbundet!", description: "Din konto er nu aktiv." });
-                      } catch (e) { toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" }); }
-                    }}
-                  >
-                    {saveCredentials.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                    Forbind konto
+                    Forbind nu
                   </Button>
                 </div>
               </div>
@@ -1497,7 +1368,7 @@ export default function ColdCallerPage() {
           <Dialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
             <DialogContent className="max-w-sm">
               <DialogHeader>
-                <DialogTitle>Afbryd Twilio?</DialogTitle>
+                <DialogTitle>Afbryd forbindelse?</DialogTitle>
                 <DialogDescription>Din forbindelse fjernes. Du kan altid forbinde igen.</DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -1505,7 +1376,7 @@ export default function ColdCallerPage() {
                 <Button variant="destructive" disabled={disconnectTwilio.isPending} onClick={async () => {
                   await disconnectTwilio.mutateAsync();
                   setShowDisconnectConfirm(false);
-                  toast({ title: "Twilio afbrudt" });
+                  toast({ title: "Forbindelse afbrudt" });
                 }}>
                   {disconnectTwilio.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Afbryd"}
                 </Button>
