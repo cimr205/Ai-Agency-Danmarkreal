@@ -3028,6 +3028,69 @@ export type Database = {
           },
         ]
       }
+      power_dialer_calls: {
+        Row: {
+          callback_at: string | null
+          company_id: string
+          created_at: string
+          dialed_at: string
+          duration_seconds: number
+          handoff_method: string
+          id: string
+          lead_id: string
+          notes: string | null
+          outcome: string
+          phone_number: string
+          platform: string
+          user_id: string | null
+        }
+        Insert: {
+          callback_at?: string | null
+          company_id: string
+          created_at?: string
+          dialed_at?: string
+          duration_seconds?: number
+          handoff_method: string
+          id?: string
+          lead_id: string
+          notes?: string | null
+          outcome: string
+          phone_number: string
+          platform: string
+          user_id?: string | null
+        }
+        Update: {
+          callback_at?: string | null
+          company_id?: string
+          created_at?: string
+          dialed_at?: string
+          duration_seconds?: number
+          handoff_method?: string
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          outcome?: string
+          phone_number?: string
+          platform?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "power_dialer_calls_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "power_dialer_calls_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -4439,6 +4502,19 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      log_power_dialer_call: {
+        Args: {
+          _callback_at?: string | null
+          _duration_seconds?: number
+          _handoff_method?: string
+          _lead_id: string
+          _notes?: string | null
+          _outcome: string
+          _phone_number: string
+          _platform?: string
+        }
+        Returns: string
       }
       regenerate_activation_code: {
         Args: { _company_id: string }

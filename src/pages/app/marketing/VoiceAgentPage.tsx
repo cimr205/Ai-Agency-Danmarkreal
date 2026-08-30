@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
-import { useTwilioAccount } from '@/hooks/api/useColdCaller';
+import { useConnectVoiceTelephony, useVoiceTelephonyAccount } from '@/hooks/api/useVoiceTelephony';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -31,8 +30,8 @@ const LANGUAGES = [{ v: 'da', l: 'Dansk' }, { v: 'en', l: 'English' }, { v: 'de'
 export default function VoiceAgentPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const { locale } = useParams();
-  const { data: twilioInfo, refetch: refetchTwilio } = useTwilioAccount();
+  const { data: twilioInfo, refetch: refetchTwilio } = useVoiceTelephonyAccount();
+  const connectVoiceProvider = useConnectVoiceTelephony();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [openai, setOpenai] = useState<OpenAIAccount | null>(null);
@@ -41,7 +40,7 @@ export default function VoiceAgentPage() {
   const [events, setEvents] = useState<VoiceCallEvent[]>([]);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
 
-  // Derive Twilio state directly from the shared hook (single source of truth with Power Dialer)
+  // Twilio belongs to the AI Voice Agent only. The Device Power Dialer never reads this state.
   const twilioConnected = twilioInfo?.connected === true;
   const twilioPhoneNumbers = twilioInfo?.phoneNumbers || [];
   const hasTwilioNumber = twilioPhoneNumbers.length > 0;
@@ -274,6 +273,15 @@ export default function VoiceAgentPage() {
   const isReady = !!twilio;
   const canCall = isReady && hasTwilioNumber;
 
+  const connectVoiceTelephony = async () => {
+    try {
+      await connectVoiceProvider.mutateAsync();
+      toast.success(t('voiceAgent.connectionSaved'));
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -301,17 +309,22 @@ export default function VoiceAgentPage() {
               </Badge>
             )}
             {!isReady && (
-              <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
-                <Link to={`/${locale}/app/marketing/cold-caller`}>
-                  {t('voiceAgent.connectInPowerDialer')} <ExternalLink className="h-3 w-3" />
-                </Link>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5"
+                onClick={connectVoiceTelephony}
+                disabled={connectVoiceProvider.isPending}
+              >
+                {connectVoiceProvider.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                {t('voiceAgent.connectVoiceTelephony')}
               </Button>
             )}
             {isReady && !hasTwilioNumber && (
               <Button asChild size="sm" variant="outline" className="h-7 gap-1.5">
-                <Link to={`/${locale}/app/marketing/cold-caller`}>
-                  {t('voiceAgent.buyNumber')} <ExternalLink className="h-3 w-3" />
-                </Link>
+                <a href="https://console.twilio.com/" target="_blank" rel="noreferrer">
+                  {t('voiceAgent.manageNumbers')} <ExternalLink className="h-3 w-3" />
+                </a>
               </Button>
             )}
             {lastStatusChange && (
@@ -357,15 +370,19 @@ export default function VoiceAgentPage() {
                       <code className="text-xs">{twilio.account_sid.slice(0, 12)}…{twilio.account_sid.slice(-4)}</code>
                       {!hasTwilioNumber && (
                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-                          Tilslutningen findes, men der mangler et aktivt telefonnummer. Køb et nummer i Power Dialer før Voice Agent kan ringe.
+                          {t('voiceAgent.numberMissingHelp')}
                         </div>
                       )}
                     </div>
                   ) : (
-                    <Button asChild variant="outline" className="w-full gap-2">
-                      <Link to={`/${locale}/app/marketing/cold-caller`}>
-                        {t('voiceAgent.connectTwilioInPowerDialer')} <ExternalLink className="h-4 w-4" />
-                      </Link>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={connectVoiceTelephony}
+                      disabled={connectVoiceProvider.isPending}
+                    >
+                      {connectVoiceProvider.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Phone className="h-4 w-4" />}
+                      {t('voiceAgent.connectVoiceTelephony')}
                     </Button>
                   )}
                 </CardContent>
@@ -407,9 +424,7 @@ export default function VoiceAgentPage() {
           {!isReady && !loading && (
             <Card className="border-dashed">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">
-                  Du skal bare have Twilio forbundet (via Power Dialer) og mindst ét aktivt telefonnummer. AI-modellen kører som standard på platformens AI gateway — ingen ekstra API-nøgle nødvendig.
-                </p>
+                <p className="text-sm text-muted-foreground">{t('voiceAgent.voiceSetupHelp')}</p>
               </CardContent>
             </Card>
           )}
