@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,8 +54,8 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const ai = await getCompanyAI(supabase, profile.company_id);
+    if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
     // Fetch the lead, scoped to the caller's own company
     const { data: lead, error: leadErr } = await supabase
@@ -119,14 +120,14 @@ Returner et JSON-objekt med præcis disse nøgler:
 
 VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen kodeblokke, kun rå JSON.`;
 
-    const response = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const response = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [{ role: "user", content: prompt }],
       }),
     });

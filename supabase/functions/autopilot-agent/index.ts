@@ -7,25 +7,16 @@ import {
 import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@^2";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"))!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, content-type, x-client-info, apikey",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-const gateway = createOpenAICompatible({
-  name: "lovable",
-  baseURL: (Deno.env.get("AI_GATEWAY_BASE_URL") ?? "https://ai.gateway.lovable.dev/v1"),
-  headers: {
-    "Lovable-API-Key": LOVABLE_API_KEY,
-    "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-  },
-});
 
 const SYSTEM = `You are the Autopilot — the operational AI brain inside a business OS that two people use to run a $100M company.
 
@@ -271,12 +262,24 @@ app.post("/*", async (c) => {
     const companyId = profile.company_id as string;
     const userId = user.id;
 
+    const ai = await getCompanyAI(serviceClient, companyId);
+    if (!ai) {
+      return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const gateway = createOpenAICompatible({
+      name: "openai",
+      baseURL: ai.url.replace(/\/chat\/completions$/, ""),
+      headers: { Authorization: `Bearer ${ai.apiKey}` },
+    });
+
     const body = await c.req.json();
     const messages = (body.messages ?? []) as UIMessage[];
 
     const tools = buildTools(companyId, userId);
     const result = streamText({
-      model: gateway("llama3.2:3b"),
+      model: gateway(ai.model),
       system: SYSTEM,
       tools,
       stopWhen: stepCountIs(50),

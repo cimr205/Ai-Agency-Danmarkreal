@@ -67,6 +67,7 @@ const QuotesPage = lazy(() => import("@/pages/app/finance/QuotesPage"));
 const EmailTemplatesPage = lazy(() => import("@/pages/app/email/EmailTemplatesPage"));
 const AutomationPage = lazy(() => import("@/pages/app/Workflows"));
 const WebhooksPage = lazy(() => import("@/pages/app/settings/WebhooksPage"));
+const AIConnectionPage = lazy(() => import("@/pages/app/settings/AIConnectionPage"));
 const MetaAdsManagePage = lazy(() => import("@/pages/app/marketing/MetaAdsManagePage"));
 const MonitoringPage = lazy(() => import("@/pages/app/MonitoringPage"));
 const HelpCenterPage = lazy(() => import("@/pages/app/HelpCenterPage"));
@@ -288,6 +289,7 @@ const App = () => (
                   <Route path="settings/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
                   <Route path="settings/invitations" element={<RoleGate role="company_admin"><ErrorBoundary><InvitationsPage /></ErrorBoundary></RoleGate>} />
                   <Route path="settings/webhooks" element={<RoleGate role="company_admin"><ErrorBoundary><WebhooksPage /></ErrorBoundary></RoleGate>} />
+                  <Route path="settings/ai" element={<RoleGate role="company_admin"><ErrorBoundary><AIConnectionPage /></ErrorBoundary></RoleGate>} />
                   <Route path="workspace/connected-apps" element={<ErrorBoundary><ConnectedAppsPage /></ErrorBoundary>} />
                   <Route path="workspace/documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
                   <Route path="workspace/studio" element={<ErrorBoundary><WorkflowStudioPage /></ErrorBoundary>} />

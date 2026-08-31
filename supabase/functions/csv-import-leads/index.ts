@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -118,18 +119,18 @@ serve(async (req) => {
 
     // AI pipeline assignment
     if (useAi) {
-      const apiKey = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-      if (apiKey) {
+      const ai = await getCompanyAI(adminClient, profile.company_id);
+      if (ai) {
         try {
           const leadsForAi = newLeads.slice(0, 50).map(l => ({
             name: l.name, email: l.email, company_name: l.company_name, value: l.value, notes: l.notes,
           }));
 
-          const aiRes = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+          const aiRes = await fetch(ai.url, {
             method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "llama3.2:3b",
+              model: ai.model,
               messages: [
                 {
                   role: "system",

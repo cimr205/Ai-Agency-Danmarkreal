@@ -3,14 +3,12 @@
 // authenticated user's company. Destructive tools require `confirm: true`.
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const LOVABLE_AI_URL = (Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions");
-const MODEL = "llama3.2:3b";
 
 type ToolCall = { id: string; function: { name: string; arguments: string } };
 type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_call_id?: string; tool_calls?: ToolCall[] };
@@ -128,8 +126,8 @@ Deno.serve(async (req) => {
 
     const { messages, confirm } = await req.json() as { messages: Msg[]; confirm?: boolean };
 
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) return json({ error: "AI not configured" }, 500);
+    const ai = await getCompanyAI(supabase, companyId);
+    if (!ai) return json({ error: AI_NOT_CONNECTED_MESSAGE }, 400);
 
     const conversation: Msg[] = [
       {
@@ -146,13 +144,13 @@ Deno.serve(async (req) => {
     let reply = "";
 
     for (let step = 0; step < 6; step++) {
-      const aiRes = await fetch(LOVABLE_AI_URL, {
+      const aiRes = await fetch(ai.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: MODEL, messages: conversation, tools, tool_choice: "auto" }),
+        body: JSON.stringify({ model: ai.model, messages: conversation, tools, tool_choice: "auto" }),
       });
 
       if (aiRes.status === 429) return json({ error: "AI rate limited" }, 429);

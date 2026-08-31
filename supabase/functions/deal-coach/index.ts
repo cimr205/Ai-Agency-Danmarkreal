@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const authHeader = req.headers.get("authorization") || "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "");
     const supabase = createClient(
@@ -26,6 +24,9 @@ serve(async (req) => {
     // Service-role client bypasses RLS, so tenant isolation must be enforced explicitly here.
     const { data: profile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!profile?.company_id) return new Response(JSON.stringify({ error: "No company associated" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const ai = await getCompanyAI(supabase, profile.company_id);
+    if (!ai) return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const { deal_id } = await req.json();
     if (!deal_id) return new Response(JSON.stringify({ error: "deal_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -89,14 +90,14 @@ Return a JSON object with these exact keys:
 
 IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fences, just raw JSON.`;
 
-    const response = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const response = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [{ role: "user", content: prompt }],
       }),
     });

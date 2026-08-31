@@ -3,13 +3,12 @@
 // Mode: "test" returns a per-step trace without firing webhooks; "live" performs the action.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const LOVABLE_AI_URL = (Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -45,15 +44,15 @@ Deno.serve(async (req) => {
     // Step 2 — optional AI reasoning
     let aiOutput: string | null = null;
     if (ai_prompt) {
-      const key = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-      if (!key) {
-        trace.push({ step: "ai", status: "error", detail: "LOVABLE_API_KEY mangler" });
+      const ai = await getCompanyAI(supabase, companyId);
+      if (!ai) {
+        trace.push({ step: "ai", status: "error", detail: AI_NOT_CONNECTED_MESSAGE });
       } else {
-        const res = await fetch(LOVABLE_AI_URL, {
+        const res = await fetch(ai.url, {
           method: "POST",
-          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "llama3.2:3b",
+            model: ai.model,
             messages: [
               { role: "system", content: "Du er et workflow-AI-trin. Svar kort og konkret." },
               { role: "user", content: `${ai_prompt}\n\nPayload: ${JSON.stringify(payload)}` },

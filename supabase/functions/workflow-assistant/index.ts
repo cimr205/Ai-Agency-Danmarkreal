@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -374,7 +375,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableKey = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"))!;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -394,6 +394,14 @@ serve(async (req) => {
 
     if (!profile?.company_id) {
       return new Response(JSON.stringify({ error: "Ingen virksomhed tilknyttet" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const ai = await getCompanyAI(supabase, profile.company_id);
+    if (!ai) {
+      return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -437,14 +445,14 @@ VIGTIGT:
     ];
 
     // AI call with tool support
-    let response = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    let response = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: aiMessages,
         tools,
         stream: false,
@@ -492,14 +500,14 @@ VIGTIGT:
       aiMessages.push(choice.message);
       aiMessages.push(...toolResults);
 
-      response = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+      response = await fetch(ai.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${lovableKey}`,
+          Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama3.2:3b",
+          model: ai.model,
           messages: aiMessages,
           tools,
           stream: false,

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI } from "../_shared/aiConnection.ts";
 
 // Public endpoint (no JWT). Twilio posts the user's speech transcript here
 // after each <Gather>. We call OpenAI Chat with full conversation history,
@@ -118,27 +119,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Resolve OpenAI key — tenant key first, else platform LOVABLE_API_KEY
-    let aiKey: string | null = null;
-    let aiBaseUrl = "https://api.openai.com/v1";
-    let aiModel = "gpt-4o-mini";
-
-    const { data: openai } = await serviceClient
-      .from("openai_accounts")
-      .select("api_key, status")
-      .eq("company_id", call.company_id)
-      .single();
-
-    if (openai?.api_key && openai.status === "connected") {
-      aiKey = openai.api_key;
-    } else {
-      // Fallback to Lovable AI Gateway (no extra setup needed for tenant)
-      aiKey = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY")) ?? null;
-      aiBaseUrl = (Deno.env.get("AI_GATEWAY_BASE_URL") ?? "https://ai.gateway.lovable.dev/v1");
-      aiModel = "llama3.2:3b";
-    }
-
-    if (!aiKey) {
+    // Resolve the tenant's own connected AI provider — same table/edge
+    // function every other AI feature in the app uses.
+    const ai = await getCompanyAI(serviceClient, call.company_id);
+    if (!ai) {
       return new Response(
         hangupTwiml("AI service is not configured. Goodbye.", voice, lang),
         { headers: { "Content-Type": "text/xml" } },
@@ -164,14 +148,14 @@ Deno.serve(async (req) => {
     let shouldHangup = false;
 
     try {
-      const aiRes = await fetch(`${aiBaseUrl}/chat/completions`, {
+      const aiRes = await fetch(ai.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${aiKey}`,
+          Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: aiModel,
+          model: ai.model,
           messages,
           max_tokens: 120,
           temperature: 0.7,

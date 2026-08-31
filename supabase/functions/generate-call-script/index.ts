@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,10 +23,13 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await client.auth.getUser(token);
     if (authErr || !user) throw new Error("Unauthorized");
 
+    const { data: profile } = await client.from("profiles").select("company_id").eq("user_id", user.id).single();
+    if (!profile?.company_id) throw new Error("No company associated");
+
     const { leadName, companyName, industry, phone, email, notes, scriptType } = await req.json();
 
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) throw new Error("AI not configured");
+    const ai = await getCompanyAI(client, profile.company_id);
+    if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
     const systemPrompt = `Du er en erfaren salgskonsulent der skriver korte, effektive telefonmanuskripter på dansk.
 Regler:
@@ -44,14 +48,14 @@ Regler:
 ${notes ? `- Noter: ${notes}` : ""}
 ${email ? `- Email: ${email}` : ""}`;
 
-    const aiResp = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const aiResp = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

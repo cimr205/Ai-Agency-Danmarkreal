@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI } from "../_shared/aiConnection.ts";
 
 interface EmailAccount {
   id: string;
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
       }
 
       // AI prioritize
-      await aiPrioritize(retryEmails, supabaseAdmin);
+      await aiPrioritize(retryEmails, supabaseAdmin, account.company_id);
 
       await supabaseAdmin
         .from("email_accounts")
@@ -125,8 +126,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // AI prioritize emails using Lovable AI
-    await aiPrioritize(emails, supabaseAdmin);
+    // AI prioritize emails using the company's connected AI provider
+    await aiPrioritize(emails, supabaseAdmin, account.company_id);
 
     // Update last_synced_at
     await supabaseAdmin
@@ -302,12 +303,12 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
   return emails;
 }
 
-async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient) {
+async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient, companyId: string) {
   if (!emails.length) return;
 
-  const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-  if (!LOVABLE_API_KEY) {
-    console.log("No LOVABLE_API_KEY, skipping AI prioritization");
+  const ai = await getCompanyAI(supabaseAdmin, companyId);
+  if (!ai) {
+    console.log("No AI provider connected for this company, skipping AI prioritization");
     return;
   }
 
@@ -322,14 +323,14 @@ async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient
   ).join("\n---\n");
 
   try {
-    const aiRes = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const aiRes = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [
           {
             role: "system",

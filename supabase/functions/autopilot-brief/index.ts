@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -169,14 +170,14 @@ serve(async (req) => {
     };
 
     // Call AI
-    const aiUrl = (Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions");
-    const aiKey = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY")) || "";
+    const ai = await getCompanyAI(supabase, companyId);
+    if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
-    const aiResp = await fetch(aiUrl, {
+    const aiResp = await fetch(ai.url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiKey}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ai.apiKey}` },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Here is the real-time business data for today:\n\n${JSON.stringify(businessData, null, 2)}` },

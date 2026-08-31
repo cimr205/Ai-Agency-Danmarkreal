@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -841,8 +842,6 @@ serve(async (req) => {
 
   try {
     const { messages, pageContext, pageSnapshot } = await req.json();
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const context = detectContext(pageContext || "");
     const contextPrompt = CONTEXT_PROMPTS[context] || CONTEXT_PROMPTS.dashboard;
@@ -867,6 +866,10 @@ serve(async (req) => {
         contextData = await fetchContextData(supabase, context, companyId);
       }
     }
+
+    if (!companyId) throw new Error("Ingen virksomhed tilknyttet");
+    const ai = await getCompanyAI(supabase, companyId);
+    if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
     // Include page snapshot if available (only sent when PA is open)
     const pageSnapshotSection = pageSnapshot
@@ -942,14 +945,14 @@ ${contextData}${pageSnapshotSection}`;
     const toolResults: string[] = [];
 
     while (toolRound < MAX_TOOL_ROUNDS) {
-      const toolResponse = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+      const toolResponse = await fetch(ai.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama3.2:3b",
+          model: ai.model,
           messages: aiMessages,
           tools,
           tool_choice: "auto",
@@ -1027,14 +1030,14 @@ ${contextData}${pageSnapshotSection}`;
     }
 
     // Fallback: stream final response after tool rounds exhausted
-    const finalResponse = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const finalResponse = await fetch(ai.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${ai.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: aiMessages,
         stream: true,
       }),

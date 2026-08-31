@@ -53,6 +53,7 @@ export const DESTINATIONS: Destination[] = [
   { label: "Studio",      path: "workspace/studio", icon: Workflow,    modes: ["operations"] },
   { label: "Forbundne",   path: "workspace/connected-apps", icon: Plug, modes: ["operations", "overview"] },
   { label: "Dokumenter",  path: "workspace/documents", icon: FileText, modes: ["operations", "overview"] },
+  { label: "AI-udbyder",  path: "settings/ai", icon: Bot, modes: ["operations", "overview"] },
   { label: "Intelligens", path: "workspace/intelligence",   icon: Brain, modes: ["overview", "sales", "operations"] },
   { label: "Autopilot",   path: "autopilot",        icon: Zap,         modes: ["operations"] },
 

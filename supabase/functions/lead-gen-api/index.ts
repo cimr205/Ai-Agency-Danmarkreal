@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCompanyAI } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -419,16 +420,16 @@ async function scrapeWebsite(baseUrl: string): Promise<ScrapedData> {
 
 // ─── AI Query Expansion ─────────────────────────────────────
 
-async function aiExpandQuery(query: string): Promise<string[]> {
-  const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-  if (!LOVABLE_API_KEY) return [query];
+async function aiExpandQuery(query: string, supabase: ReturnType<typeof createClient>, companyId: string): Promise<string[]> {
+  const ai = await getCompanyAI(supabase, companyId);
+  if (!ai) return [query];
   try {
-    const response = await fetchWithTimeout((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const response = await fetchWithTimeout(ai.url, {
       timeout: 8000,
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model: ai.model,
         messages: [{
           role: "system",
           content: `You are a B2B lead generation expert. Expand the search query into 15-20 highly specific sub-niches, synonyms, and related service types that real businesses would use in their names or descriptions. Include the original query. Focus on variations customers would actually search for. Return ONLY a JSON array.
@@ -941,7 +942,7 @@ async function runPipeline(
     // ── Phase 1: AI Query Expansion ──
     await updateProgress(5, "AI analyserer søgning og udvider med relaterede brancher...");
     const cleanQuery = normalizeUserQuery(query);
-    const queryVariants = await aiExpandQuery(cleanQuery);
+    const queryVariants = await aiExpandQuery(cleanQuery, supabase, companyId);
     console.log(`AI expanded "${cleanQuery}" → ${queryVariants.length} variants`);
 
     // ── Phase 2: Load existing names for dedup ──
