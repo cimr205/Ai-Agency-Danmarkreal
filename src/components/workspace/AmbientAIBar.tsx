@@ -83,7 +83,7 @@ export function AmbientAIBar() {
 
                 <div className="flex items-center justify-between gap-3 pt-2">
                   <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/40">
-                    {pendingConfirm ? "Bekræftelse påkrævet" : "Lovable AI · Gemini 2.5"}
+                    {pendingConfirm ? "Bekræftelse påkrævet" : "Jeres forbundne AI"}
                   </span>
                   <div className="flex items-center gap-2">
                     {pendingConfirm && (

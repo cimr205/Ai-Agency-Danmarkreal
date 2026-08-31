@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, AlertTriangle, CheckCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
+import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface DealCoachAnalysis {
   win_probability: number;
@@ -33,7 +33,7 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
       const { data, error } = await supabase.functions.invoke('deal-coach', {
         body: { deal_id: dealId },
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       setAnalysis(data);
     } catch (e) {

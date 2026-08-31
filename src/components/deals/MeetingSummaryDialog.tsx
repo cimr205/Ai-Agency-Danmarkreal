@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Mic, FileText, CheckCircle, TrendingUp, Mail, Copy, Sparkles, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/errors';
+import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface MeetingSummaryResult {
   summary: string;
@@ -44,7 +44,7 @@ export function MeetingSummaryDialog({ open, onOpenChange, dealId, leadId }: Mee
       const { data, error } = await supabase.functions.invoke('meeting-summary', {
         body: { transcript, deal_id: dealId, lead_id: leadId, meeting_title: meetingTitle },
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       setResult(data);
       if (data.tasks_created > 0) toast.success(`${data.tasks_created} opgaver auto-oprettet`);

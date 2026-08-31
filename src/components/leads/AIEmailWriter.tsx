@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sparkles, Copy, Send, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
+import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface AIEmailWriterProps {
   open: boolean;
@@ -33,7 +33,7 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
       const { data, error } = await supabase.functions.invoke('ai-email-writer', {
         body: { lead_id: leadId, tone, purpose, custom_context: customContext },
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       setResult(data);
     } catch (e) {

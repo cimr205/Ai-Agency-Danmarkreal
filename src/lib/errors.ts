@@ -10,3 +10,22 @@ export function getErrorMessage(err: unknown): string | undefined {
   }
   return undefined;
 }
+
+/**
+ * supabase.functions.invoke() only surfaces a generic "Edge Function
+ * returned a non-2xx status code" for the `error` it returns — the real
+ * { error: "..." } JSON body our edge functions send back has to be read
+ * separately from error.context, or callers only ever see that generic
+ * message instead of the actual reason (e.g. "no AI provider connected").
+ */
+export async function getFunctionErrorMessage(error: unknown): Promise<string | undefined> {
+  const fallback = getErrorMessage(error);
+  const ctx = (error as { context?: { json?: () => Promise<unknown> } } | undefined)?.context;
+  try {
+    const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
+    if (parsed?.error) return parsed.error;
+  } catch {
+    // ignore, fall back below
+  }
+  return fallback;
+}
