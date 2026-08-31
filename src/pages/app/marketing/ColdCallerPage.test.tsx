@@ -202,7 +202,7 @@ describe('Device Power Dialer page', () => {
     expect(screen.getByText('Phone connected')).toBeInTheDocument();
   });
 
-  it('shows desktop QR handoff instead of a non-working desktop call button', () => {
+  it('guides desktop pairing and enables calls only after every relay step is complete', () => {
     window.localStorage.clear();
     Object.defineProperty(window.navigator, 'userAgent', {
       configurable: true,
@@ -210,8 +210,35 @@ describe('Device Power Dialer page', () => {
     });
     renderPage();
 
-    expect(screen.getByLabelText('QR code for opening Power Dialer on a phone')).toBeInTheDocument();
-    expect(screen.getByText('Connect your phone')).toBeInTheDocument();
+    expect(screen.getByText('Call from your computer through your phone')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mac + iPhone' })).toHaveAttribute('aria-pressed', 'true');
+    expect(getCallLink('+4512345678')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Prepare both devices' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow calls on iPhone' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow calls on Mac' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Keep iPhone nearby' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Connect and enable Call' }));
+
+    expect(getCallLink('+4512345678')).toBeInTheDocument();
+    expect(screen.getByText('Computer and phone connected')).toBeInTheDocument();
+    expect(window.localStorage.getItem('crm-power-dialer-phone-v1')).toContain('computer_relay');
+  });
+
+  it('offers an honest Mac and Android phone fallback without claiming desktop relay', () => {
+    window.localStorage.clear();
+    Object.defineProperty(window.navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+    });
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mac + Android' }));
+
+    expect(screen.getByLabelText('QR code for Power Dialer on Android')).toBeInTheDocument();
+    expect(screen.getByText('Mac + Android uses the phone directly')).toBeInTheDocument();
+    expect(screen.getByText(/not through the Mac microphone/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Connect and enable Call' })).not.toBeInTheDocument();
     expect(getCallLink('+4512345678')).not.toBeInTheDocument();
   });
 });

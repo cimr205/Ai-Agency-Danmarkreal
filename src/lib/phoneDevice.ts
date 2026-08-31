@@ -2,11 +2,18 @@ import { normalizePhoneNumber, type DevicePlatform } from '@/lib/deviceDialer';
 
 const CONNECTED_PHONE_KEY = 'crm-power-dialer-phone-v1';
 
+export type ComputerPlatform = 'mac' | 'windows';
+export type PhonePlatform = 'ios' | 'android';
+export type ConnectionMode = 'on_device' | 'computer_relay';
+
 export interface ConnectedPhone {
   version: 1;
   deviceId: string;
   phoneNumber: string;
-  platform: Exclude<DevicePlatform, 'web'>;
+  platform: DevicePlatform;
+  connectionMode?: ConnectionMode;
+  phonePlatform?: PhonePlatform;
+  computerPlatform?: ComputerPlatform;
   connectedAt: string;
 }
 
@@ -21,7 +28,7 @@ export function loadConnectedPhone(): ConnectedPhone | null {
       value.version !== 1 ||
       typeof value.deviceId !== 'string' ||
       typeof value.phoneNumber !== 'string' ||
-      !['android', 'ios'].includes(value.platform ?? '') ||
+      !['android', 'ios', 'web'].includes(value.platform ?? '') ||
       typeof value.connectedAt !== 'string'
     ) {
       window.localStorage.removeItem(CONNECTED_PHONE_KEY);
@@ -44,10 +51,48 @@ export function connectPhone(phoneNumber: string, platform: DevicePlatform): Con
     deviceId: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     phoneNumber: normalized,
     platform,
+    connectionMode: 'on_device',
+    phonePlatform: platform,
     connectedAt: new Date().toISOString(),
   };
   window.localStorage.setItem(CONNECTED_PHONE_KEY, JSON.stringify(connectedPhone));
   return connectedPhone;
+}
+
+export function connectComputerRelay(
+  computerPlatform: ComputerPlatform,
+  phonePlatform: PhonePlatform,
+): ConnectedPhone | null {
+  if (typeof window === 'undefined') return null;
+  if (computerPlatform === 'mac' && phonePlatform !== 'ios') return null;
+
+  const connectedPhone: ConnectedPhone = {
+    version: 1,
+    deviceId: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    phoneNumber: '',
+    platform: 'web',
+    connectionMode: 'computer_relay',
+    phonePlatform,
+    computerPlatform,
+    connectedAt: new Date().toISOString(),
+  };
+  window.localStorage.setItem(CONNECTED_PHONE_KEY, JSON.stringify(connectedPhone));
+  return connectedPhone;
+}
+
+export function getComputerPlatform(
+  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent,
+  platform = typeof navigator === 'undefined' ? '' : navigator.platform,
+): ComputerPlatform {
+  return /Mac|iPhone|iPad|iPod/i.test(`${userAgent} ${platform}`) ? 'mac' : 'windows';
+}
+
+export function isDialerConnectionReady(phone: ConnectedPhone | null, platform: DevicePlatform): boolean {
+  if (!phone) return false;
+  if (platform === 'web') {
+    return phone.platform === 'web' && phone.connectionMode === 'computer_relay';
+  }
+  return phone.platform === platform && phone.connectionMode !== 'computer_relay';
 }
 
 export function disconnectPhone() {

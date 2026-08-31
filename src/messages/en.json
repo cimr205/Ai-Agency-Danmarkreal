@@ -1495,10 +1495,113 @@
       "callLockedDesktop": "Scan the QR code above and continue Power Dialer on the phone.",
       "callLockedMobile": "Enter your number above and choose Connect this phone."
     },
+    "relay": {
+      "title": "Call from your computer through your phone",
+      "oneTime": "One-time setup",
+      "description": "Connect a nearby iPhone or Android to the computer. Call and talk from the computer while the phone's SIM/eSIM, plan and caller ID are used.",
+      "chooseCombination": "Choose your devices",
+      "guideTitle": "Complete all four steps",
+      "keepNearby": "Keep the phone nearby with Bluetooth on. Mac + iPhone also uses Wi-Fi.",
+      "officialHelp": "Open the official setup guide",
+      "finishAction": "Connect and enable Call",
+      "completeAllSteps": "Complete every step first",
+      "privacy": "The CRM does not access your SIM. Apple or Microsoft handles the local connection, and calls are charged to the mobile plan.",
+      "connectedTitle": "Computer and phone connected",
+      "connectedDescription": "The Call button now uses the computer's system connection to the nearby phone and its mobile plan.",
+      "reopenGuide": "View the system guide again",
+      "callConfirmation": "The call opens on the computer through your connected phone. The phone's plan and caller ID are used.",
+      "callLockedDesktop": "Complete the connection guide above to enable Call on the computer.",
+      "macAndroid": {
+        "title": "Mac + Android uses the phone directly",
+        "description": "macOS cannot take over a regular Android SIM call. Scan the code and continue the same Power Dialer queue on Android so every call still uses the user's own plan and caller ID.",
+        "qrLabel": "QR code for Power Dialer on Android",
+        "audioNotice": "The conversation takes place on the Android phone or a headset connected to it — not through the Mac microphone."
+      },
+      "combinations": {
+        "mac_iphone": "Mac + iPhone",
+        "mac_android": "Mac + Android",
+        "windows_iphone": "Windows + iPhone",
+        "windows_android": "Windows + Android"
+      },
+      "steps": {
+        "mac_iphone": {
+          "1": {
+            "title": "Prepare both devices",
+            "description": "Sign in to the same Apple Account on Mac and iPhone. Turn on Wi-Fi and Bluetooth and join the same Wi-Fi network."
+          },
+          "2": {
+            "title": "Allow calls on iPhone",
+            "description": "Open Settings → Apps → Phone → Calls on Other Devices. Turn it on and allow your Mac."
+          },
+          "3": {
+            "title": "Allow calls on Mac",
+            "description": "Open FaceTime or Phone on the Mac → Settings and turn on Calls from iPhone."
+          },
+          "4": {
+            "title": "Keep iPhone nearby",
+            "description": "Leave the iPhone on and connected. The first time you press Call, choose or approve the iPhone as the calling device."
+          }
+        },
+        "mac_android": {
+          "1": {
+            "title": "Scan the QR code",
+            "description": "Scan the QR code with the Android phone's camera."
+          },
+          "2": {
+            "title": "Sign in",
+            "description": "Sign in to the same company account on Android."
+          },
+          "3": {
+            "title": "Connect the phone",
+            "description": "Register Android as the calling device with its own mobile number."
+          },
+          "4": {
+            "title": "Call from Android",
+            "description": "Open the lead queue on the phone and press Call; its SIM/eSIM and mobile plan are used."
+          }
+        },
+        "windows_iphone": {
+          "1": {
+            "title": "Open Phone Link",
+            "description": "Open Microsoft Phone Link on Windows, choose iPhone and sign in if Windows asks you to."
+          },
+          "2": {
+            "title": "Pair over Bluetooth",
+            "description": "Scan the QR code in Phone Link with the iPhone and confirm that the same Bluetooth code appears on both devices."
+          },
+          "3": {
+            "title": "Approve permissions",
+            "description": "Allow Bluetooth, notifications, contacts and calls on iPhone so Windows can handle the call."
+          },
+          "4": {
+            "title": "Check the Calls tab",
+            "description": "Open Calls in Phone Link and confirm the iPhone is connected. Keep Bluetooth on and the phone nearby."
+          }
+        },
+        "windows_android": {
+          "1": {
+            "title": "Open Phone Link",
+            "description": "Open Microsoft Phone Link on Windows, choose Android and open Link to Windows on the phone."
+          },
+          "2": {
+            "title": "Pair the devices",
+            "description": "Scan the Phone Link QR code with Android and complete Bluetooth pairing on both devices."
+          },
+          "3": {
+            "title": "Approve permissions",
+            "description": "Allow calls, contacts, microphone and Bluetooth on the phone. These permissions enable calls from the computer."
+          },
+          "4": {
+            "title": "Check the Calls tab",
+            "description": "Open Calls in Phone Link and confirm Android is connected. Keep Bluetooth on and the phone nearby."
+          }
+        }
+      }
+    },
     "platform": {
       "android": "Android opens the native dialer with the lead's number ready. Your SIM/eSIM plan and caller ID are used; you still start the call in the phone app.",
       "ios": "iPhone hands the number to the system Phone app. Apple requires you to confirm the call; your SIM/eSIM plan and caller ID are used.",
-      "web": "The system phone handler opens with the lead's number ready. Your connected device and its caller ID place the call after you confirm."
+      "web": "Once the phone is connected, the computer sends the number through Apple Calls on Other Devices or Microsoft Phone Link. The phone's plan and caller ID are used."
     },
     "stats": {
       "label": "Power Dialer statistics",

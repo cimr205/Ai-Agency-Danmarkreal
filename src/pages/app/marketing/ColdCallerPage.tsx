@@ -40,7 +40,7 @@ import {
 } from '@/lib/deviceDialer';
 import { getErrorMessage } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
-import { loadConnectedPhone, type ConnectedPhone } from '@/lib/phoneDevice';
+import { isDialerConnectionReady, loadConnectedPhone, type ConnectedPhone } from '@/lib/phoneDevice';
 import { cn } from '@/lib/utils';
 
 const PENDING_CALL_KEY = 'crm-power-dialer-pending-v1';
@@ -209,7 +209,7 @@ export default function ColdCallerPage() {
     : platform === 'ios'
       ? t('devicePowerDialer.platform.ios')
       : t('devicePowerDialer.platform.web');
-  const canDialFromThisDevice = platform !== 'web' && Boolean(connectedPhone);
+  const canDialFromThisDevice = isDialerConnectionReady(connectedPhone, platform);
 
   const clearCallForm = useCallback(() => {
     setPendingCall(null);
@@ -459,7 +459,9 @@ export default function ColdCallerPage() {
                       </a>
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
-                      {t('devicePowerDialer.callConfirmation')}
+                      {platform === 'web'
+                        ? t('devicePowerDialer.relay.callConfirmation')
+                        : t('devicePowerDialer.callConfirmation')}
                     </p>
                   </div>
                 ) : !pendingCall ? (
@@ -468,7 +470,7 @@ export default function ColdCallerPage() {
                     <p className="mt-3 text-sm font-semibold">{t('devicePowerDialer.pairing.callLockedTitle')}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {platform === 'web'
-                        ? t('devicePowerDialer.pairing.callLockedDesktop')
+                        ? t('devicePowerDialer.relay.callLockedDesktop')
                         : t('devicePowerDialer.pairing.callLockedMobile')}
                     </p>
                   </div>

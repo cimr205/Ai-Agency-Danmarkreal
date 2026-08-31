@@ -1512,10 +1512,113 @@
       "callLockedDesktop": "Scan QR-koden ovenfor og fortsæt Power Dialer på mobilen.",
       "callLockedMobile": "Indtast dit nummer ovenfor og tryk Forbind denne telefon."
     },
+    "relay": {
+      "title": "Ring fra computeren via din mobil",
+      "oneTime": "Opsættes én gang",
+      "description": "Forbind en nærliggende iPhone eller Android til computeren. Du ringer og taler fra computeren, mens mobilens SIM/eSIM, abonnement og nummer bruges.",
+      "chooseCombination": "Vælg dine enheder",
+      "guideTitle": "Gennemfør alle fire trin",
+      "keepNearby": "Telefonen skal være i nærheden med Bluetooth slået til. Mac + iPhone bruger også Wi-Fi.",
+      "officialHelp": "Åbn den officielle vejledning",
+      "finishAction": "Forbind og aktivér Ring",
+      "completeAllSteps": "Gennemfør alle trin først",
+      "privacy": "CRM'et får ikke adgang til dit SIM-kort. Apple eller Microsoft håndterer den lokale forbindelse, og opkaldet afregnes på mobilabonnementet.",
+      "connectedTitle": "Computer og telefon er forbundet",
+      "connectedDescription": "Ring-knappen bruger computerens systemforbindelse til den nærliggende telefon og dens mobilabonnement.",
+      "reopenGuide": "Se systemvejledningen igen",
+      "callConfirmation": "Opkaldet åbnes på computeren via din forbundne telefon. Mobilens abonnement og nummer bruges.",
+      "callLockedDesktop": "Gennemfør forbindelsesguiden ovenfor for at aktivere Ring på computeren.",
+      "macAndroid": {
+        "title": "Mac + Android bruger telefonen direkte",
+        "description": "macOS kan ikke overtage et almindeligt Android-SIM-opkald. Scan koden og fortsæt den samme Power Dialer-kø på Android, så alle opkald stadig bruger brugerens eget abonnement og nummer.",
+        "qrLabel": "QR-kode til Power Dialer på Android",
+        "audioNotice": "Samtalen foregår på Android-telefonen eller et headset, der er forbundet til telefonen — ikke gennem Mac'ens mikrofon."
+      },
+      "combinations": {
+        "mac_iphone": "Mac + iPhone",
+        "mac_android": "Mac + Android",
+        "windows_iphone": "Windows + iPhone",
+        "windows_android": "Windows + Android"
+      },
+      "steps": {
+        "mac_iphone": {
+          "1": {
+            "title": "Klargør begge enheder",
+            "description": "Log ind med samme Apple-konto på Mac og iPhone. Slå Wi-Fi og Bluetooth til, og forbind dem til samme Wi-Fi-netværk."
+          },
+          "2": {
+            "title": "Tillad opkald på iPhone",
+            "description": "Åbn Indstillinger → Apps → Telefon → Opkald på andre enheder. Slå funktionen til, og tillad din Mac."
+          },
+          "3": {
+            "title": "Tillad opkald på Mac",
+            "description": "Åbn FaceTime eller Telefon på Mac → Indstillinger, og slå Opkald fra iPhone til."
+          },
+          "4": {
+            "title": "Hold iPhone i nærheden",
+            "description": "Lad iPhone være tændt og forbundet. Første gang du trykker Ring, skal du vælge eller godkende iPhone som opkaldsenhed."
+          }
+        },
+        "mac_android": {
+          "1": {
+            "title": "Scan QR-koden",
+            "description": "Scan QR-koden med Android-telefonens kamera."
+          },
+          "2": {
+            "title": "Log ind",
+            "description": "Log ind på samme virksomhedskonto på Android."
+          },
+          "3": {
+            "title": "Forbind telefonen",
+            "description": "Registrér Android som opkaldsenhed med dens eget mobilnummer."
+          },
+          "4": {
+            "title": "Ring fra Android",
+            "description": "Åbn lead-køen på telefonen og tryk Ring; SIM/eSIM og mobilabonnementet bruges."
+          }
+        },
+        "windows_iphone": {
+          "1": {
+            "title": "Åbn Telefonlink",
+            "description": "Åbn Microsoft Telefonlink på Windows, vælg iPhone, og log ind, hvis Windows beder om det."
+          },
+          "2": {
+            "title": "Par med Bluetooth",
+            "description": "Scan QR-koden i Telefonlink med iPhone, og bekræft at den samme Bluetooth-kode vises på begge enheder."
+          },
+          "3": {
+            "title": "Godkend tilladelser",
+            "description": "Tillad Bluetooth, meddelelser, kontakter og opkald på iPhone, så Windows kan håndtere opkaldet."
+          },
+          "4": {
+            "title": "Kontrollér fanen Opkald",
+            "description": "Åbn Opkald i Telefonlink og kontrollér, at iPhone står som forbundet. Hold Bluetooth aktivt og telefonen i nærheden."
+          }
+        },
+        "windows_android": {
+          "1": {
+            "title": "Åbn Telefonlink",
+            "description": "Åbn Microsoft Telefonlink på Windows, vælg Android, og åbn Link til Windows på telefonen."
+          },
+          "2": {
+            "title": "Par enhederne",
+            "description": "Scan QR-koden i Telefonlink med Android-telefonen, og gennemfør Bluetooth-parringen på begge enheder."
+          },
+          "3": {
+            "title": "Godkend tilladelser",
+            "description": "Tillad opkald, kontakter, mikrofon og Bluetooth på telefonen. Tilladelserne er nødvendige for opkald fra computeren."
+          },
+          "4": {
+            "title": "Kontrollér fanen Opkald",
+            "description": "Åbn Opkald i Telefonlink og kontrollér, at Android står som forbundet. Hold Bluetooth aktivt og telefonen i nærheden."
+          }
+        }
+      }
+    },
     "platform": {
       "android": "Android åbner den indbyggede opkalder med leadets nummer klar. Dit SIM/eSIM-abonnement og nummer bruges; du starter stadig opkaldet i telefonappen.",
       "ios": "iPhone sender nummeret til systemets Telefon-app. Apple kræver, at du bekræfter opkaldet; dit SIM/eSIM-abonnement og nummer bruges.",
-      "web": "Systemets telefonhåndtering åbner med leadets nummer klar. Din tilsluttede enhed og dens nummer foretager opkaldet, når du bekræfter."
+      "web": "Når telefonen er forbundet, sender computeren nummeret til Apple Opkald på andre enheder eller Microsoft Telefonlink. Mobilens abonnement og nummer bruges."
     },
     "stats": {
       "label": "Power Dialer-statistik",

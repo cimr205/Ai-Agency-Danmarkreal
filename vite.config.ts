@@ -11,6 +11,19 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    // This repository also contains large Python/HR applications. Watching
+    // those trees can queue tens of thousands of unrelated page reloads and
+    // prevent the frontend dev server from responding during startup.
+    watch: {
+      ignored: [
+        "**/hr/**",
+        "**/crm-sdr-agent/**",
+        "**/scraper/**",
+        "**/server/**",
+        "**/twilio-server/**",
+        "**/voice-platform/**",
+      ],
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

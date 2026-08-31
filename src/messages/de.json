@@ -1507,10 +1507,113 @@
       "callLockedDesktop": "Scannen Sie den QR-Code oben und setzen Sie den Power Dialer auf dem Telefon fort.",
       "callLockedMobile": "Geben Sie oben Ihre Nummer ein und wählen Sie Dieses Telefon verbinden."
     },
+    "relay": {
+      "title": "Vom Computer über Ihr Mobiltelefon anrufen",
+      "oneTime": "Einmalige Einrichtung",
+      "description": "Verbinden Sie ein iPhone oder Android-Telefon in der Nähe. Sie telefonieren am Computer, während SIM/eSIM, Tarif und Rufnummer des Mobiltelefons verwendet werden.",
+      "chooseCombination": "Geräte auswählen",
+      "guideTitle": "Alle vier Schritte abschließen",
+      "keepNearby": "Das Telefon muss mit aktiviertem Bluetooth in der Nähe bleiben. Mac + iPhone nutzt zusätzlich WLAN.",
+      "officialHelp": "Offizielle Anleitung öffnen",
+      "finishAction": "Verbinden und Anrufen aktivieren",
+      "completeAllSteps": "Zuerst alle Schritte abschließen",
+      "privacy": "Das CRM greift nicht auf Ihre SIM zu. Apple oder Microsoft verwaltet die lokale Verbindung; Anrufe werden über den Mobilfunktarif abgerechnet.",
+      "connectedTitle": "Computer und Telefon verbunden",
+      "connectedDescription": "Die Anrufen-Schaltfläche nutzt jetzt die Systemverbindung zum Mobiltelefon und dessen Tarif.",
+      "reopenGuide": "Systemanleitung erneut anzeigen",
+      "callConfirmation": "Der Anruf wird über das verbundene Telefon am Computer geöffnet. Tarif und Rufnummer des Telefons werden verwendet.",
+      "callLockedDesktop": "Schließen Sie die Verbindungsanleitung oben ab, um Anrufen am Computer zu aktivieren.",
+      "macAndroid": {
+        "title": "Mac + Android verwendet das Telefon direkt",
+        "description": "macOS kann einen normalen Android-SIM-Anruf nicht übernehmen. Scannen Sie den Code und setzen Sie dieselbe Power-Dialer-Warteschlange auf Android fort.",
+        "qrLabel": "QR-Code für Power Dialer auf Android",
+        "audioNotice": "Das Gespräch erfolgt über das Android-Telefon oder ein damit verbundenes Headset — nicht über das Mac-Mikrofon."
+      },
+      "combinations": {
+        "mac_iphone": "Mac + iPhone",
+        "mac_android": "Mac + Android",
+        "windows_iphone": "Windows + iPhone",
+        "windows_android": "Windows + Android"
+      },
+      "steps": {
+        "mac_iphone": {
+          "1": {
+            "title": "Beide Geräte vorbereiten",
+            "description": "Melden Sie sich auf Mac und iPhone mit demselben Apple Account an. Aktivieren Sie WLAN und Bluetooth und nutzen Sie dasselbe WLAN."
+          },
+          "2": {
+            "title": "Anrufe auf dem iPhone erlauben",
+            "description": "Öffnen Sie Einstellungen → Apps → Telefon → Auf anderen Geräten. Aktivieren Sie die Funktion und erlauben Sie Ihren Mac."
+          },
+          "3": {
+            "title": "Anrufe auf dem Mac erlauben",
+            "description": "Öffnen Sie FaceTime oder Telefon auf dem Mac → Einstellungen und aktivieren Sie Anrufe vom iPhone."
+          },
+          "4": {
+            "title": "iPhone in der Nähe halten",
+            "description": "Lassen Sie das iPhone eingeschaltet und verbunden. Wählen oder bestätigen Sie es beim ersten Anruf als Anrufgerät."
+          }
+        },
+        "mac_android": {
+          "1": {
+            "title": "QR-Code scannen",
+            "description": "Scannen Sie den QR-Code mit der Kamera des Android-Telefons."
+          },
+          "2": {
+            "title": "Anmelden",
+            "description": "Melden Sie sich auf Android beim gleichen Unternehmenskonto an."
+          },
+          "3": {
+            "title": "Telefon verbinden",
+            "description": "Registrieren Sie Android mit seiner eigenen Mobilnummer als Anrufgerät."
+          },
+          "4": {
+            "title": "Von Android anrufen",
+            "description": "Öffnen Sie die Lead-Warteschlange auf dem Telefon und tippen Sie auf Anrufen; SIM/eSIM und Mobilfunktarif werden verwendet."
+          }
+        },
+        "windows_iphone": {
+          "1": {
+            "title": "Smartphone-Link öffnen",
+            "description": "Öffnen Sie Microsoft Smartphone-Link unter Windows, wählen Sie iPhone und melden Sie sich bei Bedarf an."
+          },
+          "2": {
+            "title": "Über Bluetooth koppeln",
+            "description": "Scannen Sie den QR-Code mit dem iPhone und bestätigen Sie denselben Bluetooth-Code auf beiden Geräten."
+          },
+          "3": {
+            "title": "Berechtigungen erteilen",
+            "description": "Erlauben Sie Bluetooth, Mitteilungen, Kontakte und Anrufe auf dem iPhone."
+          },
+          "4": {
+            "title": "Anrufe überprüfen",
+            "description": "Öffnen Sie Anrufe in Smartphone-Link und prüfen Sie die Verbindung. Lassen Sie Bluetooth aktiv und das Telefon in der Nähe."
+          }
+        },
+        "windows_android": {
+          "1": {
+            "title": "Smartphone-Link öffnen",
+            "description": "Öffnen Sie Microsoft Smartphone-Link unter Windows und Link zu Windows auf dem Android-Telefon."
+          },
+          "2": {
+            "title": "Geräte koppeln",
+            "description": "Scannen Sie den QR-Code und schließen Sie die Bluetooth-Kopplung auf beiden Geräten ab."
+          },
+          "3": {
+            "title": "Berechtigungen erteilen",
+            "description": "Erlauben Sie Anrufe, Kontakte, Mikrofon und Bluetooth auf dem Telefon."
+          },
+          "4": {
+            "title": "Anrufe überprüfen",
+            "description": "Öffnen Sie Anrufe in Smartphone-Link und prüfen Sie die Verbindung. Lassen Sie Bluetooth aktiv und das Telefon in der Nähe."
+          }
+        }
+      }
+    },
     "platform": {
       "android": "Android öffnet den nativen Wähler mit der Rufnummer des Leads. Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet; Sie starten den Anruf weiterhin in der Telefon-App.",
       "ios": "Das iPhone übergibt die Nummer an die Telefon-App. Apple verlangt Ihre Bestätigung; Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet.",
-      "web": "Die System-Telefonfunktion öffnet sich mit der Rufnummer des Leads. Ihr verbundenes Gerät und dessen Anrufer-ID führen den Anruf nach Ihrer Bestätigung aus."
+      "web": "Nach der Verbindung sendet der Computer die Nummer über Apple-Anrufe auf anderen Geräten oder Microsoft Smartphone-Link. Tarif und Rufnummer des Telefons werden verwendet."
     },
     "stats": {
       "label": "Power-Dialer-Statistik",
