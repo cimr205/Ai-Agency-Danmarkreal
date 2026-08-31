@@ -446,8 +446,20 @@ export default function ConnectedAppsPage() {
 
       <ConnectDialog
         item={active}
+        existing={active ? byProvider.get(active.provider) : undefined}
         canConnect={active ? connectableSlugs.has(active.provider) : false}
         onClose={() => setActive(null)}
+        onDisconnect={() => {
+          if (!active) return;
+          const existing = byProvider.get(active.provider);
+          if (!existing) return;
+          if ((existing as Integration & { composio_connection_id?: string | null }).composio_connection_id) {
+            disconnectComposio.mutate(existing.id);
+          } else {
+            disconnect.mutate(existing.id);
+          }
+          setActive(null);
+        }}
       />
     </div>
   );
@@ -513,13 +525,59 @@ function AppRow({
 
 
 function ConnectDialog({
-  item, canConnect, onClose,
-}: { item: Catalog | null; canConnect: boolean; onClose: () => void }) {
+  item, existing, canConnect, onClose, onDisconnect,
+}: { item: Catalog | null; existing?: Integration; canConnect: boolean; onClose: () => void; onDisconnect: () => void }) {
   const { data: toolkitsData } = useComposioToolkits();
   const createComposioConnection = useCreateComposioConnection();
 
   if (!item) return null;
   const composioToolkit = toolkitsData?.toolkits.find((t) => t.slug === item.provider);
+  const isConnected = existing?.status === "connected";
+  const isPending = existing?.status === "pending";
+
+  // Already connected (or pending) — this is a status view, never a
+  // re-connect trigger. Clicking "Administrér" on an installed app must
+  // never redirect anywhere outside the CRM; the only action available
+  // here is disconnecting, which stays entirely in-app.
+  if (isConnected || isPending) {
+    return (
+      <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-9 w-9 rounded-lg border border-border/50 bg-card flex items-center justify-center">
+                <AppLogo logoUrl={composioToolkit?.meta?.logo} icon={item.icon} />
+              </div>
+              <div>
+                <DialogTitle>{item.name}</DialogTitle>
+                <DialogDescription className="text-xs">{item.surface}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className={`rounded-lg border p-3 text-xs leading-relaxed ${isConnected ? "border-emerald-500/30 bg-emerald-500/5 text-muted-foreground" : "border-border/40 bg-card/30 text-muted-foreground"}`}>
+              <div className={`flex items-center gap-1.5 mb-1 ${isConnected ? "text-emerald-500" : "text-foreground/80"}`}>
+                {isConnected ? <CheckCircle2 className="h-3 w-3" /> : <Loader2 className="h-3 w-3 animate-spin" />}
+                {isConnected ? "Forbundet" : "Afventer bekræftelse"}
+              </div>
+              {isConnected && existing?.connected_at && (
+                <span>Forbundet {new Date(existing.connected_at).toLocaleDateString("da-DK")}</span>
+              )}
+              {isPending && <span>Forbindelsen mangler stadig at blive bekræftet hos {item.name}.</span>}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={onClose}>Luk</Button>
+            <Button variant="outline" className="text-destructive hover:text-destructive" onClick={onDisconnect}>
+              Afbryd forbindelse
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
