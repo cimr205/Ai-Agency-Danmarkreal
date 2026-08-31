@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Mail, Calendar, MessagesSquare, CreditCard, FileText, BarChart3,
   Cloud, CheckCircle2, Sparkles, Search, Github, Linkedin, Loader2,
-  Database, ExternalLink, Puzzle, Lock,
+  Database, ExternalLink, Puzzle, Lock, ChevronDown, ChevronRight, ArrowRight,
   type LucideIcon,
 } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,10 +14,11 @@ import {
 import {
   useIntegrations, useDisconnectIntegration,
   useComposioToolkits, useCreateComposioConnection, useDisconnectComposioConnection,
-  useSyncComposioConnection,
+  useSyncComposioConnection, useModuleAvailability,
   type Integration,
 } from "@/hooks/api/useIntegrations";
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
+import { isLocale } from "@/lib/i18n";
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -161,6 +163,40 @@ function categoryFromComposio(t: { meta?: { categories?: Array<{ name: string }>
 // Danish copy and a lucide fallback icon — everything else (still real,
 // still connectable) is generated straight from Composio's own catalog
 // further down.
+// The honest split this page is built around: a handful of connections
+// actually power something in the app today (checked live against a real
+// consuming page), everything else is a real, working connection that
+// simply isn't wired to a feature yet. Featuring only what's proven here
+// is what stops "connect Gmail, expect Calendar to fill up" — each entry
+// names exactly which provider(s) satisfy it and where the result shows up.
+interface LiveModule {
+  module: string;
+  title: string;
+  outcome: string;
+  providers: string[]; // any one of these connected + active satisfies it
+  pageLink: string; // relative to /:locale/app/
+  icon: LucideIcon;
+}
+
+const LIVE_MODULES: LiveModule[] = [
+  {
+    module: "calendar",
+    title: "Kalender",
+    outcome: "Jeres møder fra Google Calendar eller Outlook vises automatisk på Kalender-siden.",
+    providers: ["googlecalendar", "outlook"],
+    pageLink: "work/calendar",
+    icon: Calendar,
+  },
+  {
+    module: "documents",
+    title: "Dokumenter",
+    outcome: "Jeres sider fra Notion vises automatisk på Dokumenter-siden.",
+    providers: ["notion"],
+    pageLink: "workspace/documents",
+    icon: FileText,
+  },
+];
+
 const catalog: Catalog[] = [
   { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Tråde",   icon: Mail,           category: "Communication" },
   { provider: "outlook",        name: "Outlook",         surface: "Mail · Kalender",             icon: Mail,           category: "Communication" },
@@ -178,9 +214,13 @@ const catalog: Catalog[] = [
 ];
 
 export default function ConnectedAppsPage() {
+  const params = useParams();
+  const locale = isLocale(params.locale) ? params.locale : "en";
   const [q, setQ] = useState("");
   const [active, setActive] = useState<Catalog | null>(null);
+  const [showFullCatalog, setShowFullCatalog] = useState(false);
   const { data: integrations = [], isLoading } = useIntegrations();
+  const { data: availability } = useModuleAvailability();
   const disconnect = useDisconnectIntegration();
   const disconnectComposio = useDisconnectComposioConnection();
   const syncComposio = useSyncComposioConnection();
@@ -254,8 +294,8 @@ export default function ConnectedAppsPage() {
               Forbundne apps
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Log ind med jeres rigtige konto — vi henter og opdaterer data direkte, ingen manuel opsætning.
-              Alle integrationer forbindes med rigtigt login eller API-nøgle, aldrig en manuel webhook.
+              To ting herunder gør faktisk noget lige nu — Kalender og Dokumenter — resten af kataloget kan I forbinde,
+              men det er ikke koblet til en funktion i CRM'et endnu.
             </p>
           </div>
           <div className="flex items-center gap-8 text-sm">
@@ -274,6 +314,49 @@ export default function ConnectedAppsPage() {
           />
         </div>
       </header>
+
+      <section className="space-y-3">
+        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Aktive moduler</div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {LIVE_MODULES.map((m) => {
+            const modAvail = availability?.modules.find((x) => x.module === m.module);
+            const isOn = !!modAvail?.available;
+            const activeProvider = modAvail?.resolvedConnections[0]?.provider;
+            const connectTarget = catalog.find((c) => c.provider === m.providers[0]);
+            return (
+              <div key={m.module} className={`rounded-xl border p-4 space-y-3 ${isOn ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/40 bg-card/20"}`}>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg border border-border/40 bg-card/50 flex items-center justify-center shrink-0">
+                    <m.icon className="h-4 w-4 text-foreground/80" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{m.title}</span>
+                      {isOn ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500"><CheckCircle2 className="h-3 w-3" /> Aktiv via {activeProvider}</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">Ikke forbundet</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{m.outcome}</p>
+                {isOn ? (
+                  <Link to={`/${locale}/app/${m.pageLink}`} className="inline-flex items-center gap-1 text-xs text-emerald-500 hover:underline">
+                    Gå til {m.title} <ArrowRight className="h-3 w-3" />
+                  </Link>
+                ) : (
+                  connectTarget && (
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setActive(connectTarget)}>
+                      Forbind {connectTarget.name}
+                    </Button>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -303,32 +386,52 @@ export default function ConnectedAppsPage() {
         </section>
       )}
 
-      {grouped.map(([cat, items]) => (
-        <section key={cat} className="space-y-1">
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 mb-3">{CATEGORY_LABELS_DA[cat]}</div>
-          <div className="divide-y divide-border/30 rounded-xl border border-border/30 overflow-hidden">
-            {items.map((c) => (
-              <AppRow
-                key={c.provider}
-                catalog={c}
-                integration={byProvider.get(c.provider)}
-                onConnect={() => setActive(c)}
-                onDisconnect={() => {
-                  const existing = byProvider.get(c.provider);
-                  if (!existing) return;
-                  if ((existing as Integration & { composio_connection_id?: string | null }).composio_connection_id) {
-                    disconnectComposio.mutate(existing.id);
-                  } else {
-                    disconnect.mutate(existing.id);
-                  }
-                }}
-                canConnect={connectableSlugs.has(c.provider)}
-                logoUrl={composioBySlug.get(c.provider)?.meta?.logo}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      {!q && !showFullCatalog ? (
+        <button
+          onClick={() => setShowFullCatalog(true)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full justify-between rounded-xl border border-border/30 px-4 py-3 transition-colors"
+        >
+          <span>Vis resten af kataloget ({fullCatalog.length - LIVE_MODULES.reduce((n, m) => n + m.providers.length, 0)} apps, endnu ikke koblet til en funktion)</span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </button>
+      ) : (
+        <>
+          {!q && (
+            <button
+              onClick={() => setShowFullCatalog(false)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground -mb-6"
+            >
+              <ChevronDown className="h-3.5 w-3.5" /> Skjul katalog
+            </button>
+          )}
+          {grouped.map(([cat, items]) => (
+            <section key={cat} className="space-y-1">
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 mb-3">{CATEGORY_LABELS_DA[cat]}</div>
+              <div className="divide-y divide-border/30 rounded-xl border border-border/30 overflow-hidden">
+                {items.map((c) => (
+                  <AppRow
+                    key={c.provider}
+                    catalog={c}
+                    integration={byProvider.get(c.provider)}
+                    onConnect={() => setActive(c)}
+                    onDisconnect={() => {
+                      const existing = byProvider.get(c.provider);
+                      if (!existing) return;
+                      if ((existing as Integration & { composio_connection_id?: string | null }).composio_connection_id) {
+                        disconnectComposio.mutate(existing.id);
+                      } else {
+                        disconnect.mutate(existing.id);
+                      }
+                    }}
+                    canConnect={connectableSlugs.has(c.provider)}
+                    logoUrl={composioBySlug.get(c.provider)?.meta?.logo}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </>
+      )}
 
       <div className="border-t border-border/40 pt-12">
         <AiClientsPanel />
@@ -439,7 +542,17 @@ function ConnectDialog({
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
                 <CheckCircle2 className="h-3 w-3" /> Rigtig konto-forbindelse
               </div>
-              Log ind med jeres {item.name}-konto — vi henter og opdaterer data direkte. Kræver kontoen en API-nøgle i stedet for login, beder {item.name} selv om den på næste skærm.
+              Log ind med jeres {item.name}-konto. Kræver kontoen en API-nøgle i stedet for login, beder {item.name} selv om den på næste skærm.
+              {(() => {
+                const poweredModule = LIVE_MODULES.find((m) => m.providers.includes(item.provider));
+                return poweredModule ? (
+                  <span className="block mt-1.5 text-foreground/70">{poweredModule.outcome}</span>
+                ) : (
+                  <span className="block mt-1.5 text-amber-500/90">
+                    Forbindelsen oprettes med det samme, men bruges endnu ikke af en specifik funktion i CRM'et — I forbinder den til senere brug.
+                  </span>
+                );
+              })()}
             </div>
           ) : (
             <div className="rounded-lg border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground leading-relaxed">
