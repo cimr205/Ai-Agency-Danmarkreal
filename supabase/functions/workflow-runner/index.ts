@@ -90,6 +90,35 @@ Deno.serve(async (req) => {
       } catch (e) {
         trace.push({ step: "action:webhook", status: "error", detail: e instanceof Error ? e.message : "fetch failed" });
       }
+    } else if (wf.action_type === "run_integration" && wf.action_capability && wf.action_tool_slug) {
+      // Runs a tool through whichever connected integration satisfies the
+      // declared capability — the same Capability Engine that powers
+      // Calendar and Documents, now reachable from a workflow action too.
+      // Resolution, ownership checks, and audit logging all live in
+      // composio-integration; this just forwards the caller's own auth.
+      try {
+        const resolveRes = await callComposioIntegration(authHeader, "resolve-capability", { capability: wf.action_capability });
+        const resolved = (resolveRes as { resolved?: { id: string; provider: string } | null }).resolved;
+        if (!resolved) {
+          trace.push({ step: "action:run_integration", status: "error", detail: `Ingen forbindelse understøtter ${wf.action_capability}` });
+        } else {
+          const filledArgs = interpolate(wf.action_arguments ?? {}, { ...payload, ai_output: aiOutput });
+          const execRes = await callComposioIntegration(authHeader, "execute-tool", {
+            integrationId: resolved.id,
+            toolSlug: wf.action_tool_slug,
+            actionCategory: categoryForCapability(wf.action_capability),
+            arguments: filledArgs,
+          });
+          trace.push({ step: `action:${wf.action_tool_slug}`, status: "ok", detail: `Kørt via ${resolved.provider}`, data: execRes });
+          await supabase.from("workflows")
+            .update({ run_count: (wf.run_count ?? 0) + 1, last_run_at: new Date().toISOString(), last_error: null })
+            .eq("id", wf.id);
+        }
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : "Handling fejlede";
+        trace.push({ step: "action:run_integration", status: "error", detail });
+        await supabase.from("workflows").update({ last_error: detail }).eq("id", wf.id);
+      }
     } else {
       trace.push({ step: `action:${wf.action_type}`, status: "skip", detail: "Handlingstype ikke understøttet endnu" });
     }
@@ -116,4 +145,47 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// Forwards the calling user's own auth to composio-integration so every
+// ownership check, capability resolution, and audit log entry there
+// applies exactly as if the frontend had called it directly.
+async function callComposioIntegration(authHeader: string, action: string, body: Record<string, unknown>) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/composio-integration`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: authHeader, apikey: anonKey },
+    body: JSON.stringify({ action, ...body }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data?.error) throw new Error(data?.error ?? `composio-integration fejlede (${res.status})`);
+  return data;
+}
+
+// Resolves {{field}} placeholders in string argument values against the
+// trigger payload. Deliberately shallow and string-only — this is a
+// workflow argument template, not a general expression language.
+function interpolate(args: Record<string, unknown>, context: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (typeof value === "string") {
+      out[key] = value.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, path: string) => {
+        const found = path.split(".").reduce<unknown>((acc, part) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[part] : undefined), context);
+        return found === undefined || found === null ? "" : String(found);
+      });
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+// actionCategory drives approval requirements in composio-integration —
+// derived from the capability's own shape so no per-provider mapping is
+// needed here. Conservative default (write) when the suffix is ambiguous.
+function categoryForCapability(capability: string): string {
+  if (capability.endsWith(".send")) return "communication";
+  if (capability.startsWith("payments")) return "financial";
+  if (capability.endsWith(".write")) return "write";
+  return "write";
 }

@@ -15,7 +15,24 @@ const VALID_EVENTS = [
   "email.sent", "email.opened",
 ];
 
-const VALID_ACTIONS = ["send_webhook", "create_task", "update_lead", "send_notification"];
+const VALID_ACTIONS = ["send_webhook", "create_task", "update_lead", "send_notification", "run_integration"];
+
+// A small, hand-verified catalog of real tool calls a "run_integration"
+// workflow action can perform — verified live against Composio's actual
+// tool schemas, not guessed. Extend this list (never invent a toolSlug
+// outside it) as more write-capable providers get connected and vetted.
+// The same capability→connection resolution as Calendar/Documents runs
+// server-side in workflow-runner; this catalog only fixes which
+// capability+tool pairs are safe to expose to the AI chat builder.
+const ACTION_CATALOG = [
+  {
+    capability: "documents.write",
+    label: "Opret en Notion-side",
+    toolSlug: "NOTION_CREATE_NOTION_PAGE",
+    requiredArgs: ["parent_id", "title"],
+    argHelp: "parent_id = UUID'en for den Notion-side eller -database den nye side skal oprettes under (findes i URL'en til siden i Notion). title må gerne indeholde {{felt}}-pladsholdere fra trigger-dataen.",
+  },
+];
 
 const EVENT_LABELS: Record<string, string> = {
   "lead.created": "et nyt lead bliver oprettet",
@@ -51,11 +68,23 @@ const tools = [
           action_type: {
             type: "string",
             enum: VALID_ACTIONS,
-            description: "Hvad der skal ske (send_webhook for Zapier/Make)",
+            description: "Hvad der skal ske (send_webhook for Zapier/Make, run_integration for at køre en handling gennem en rigtig forbundet konto som Notion)",
           },
           webhook_url: {
             type: "string",
             description: "Webhook URL (fra Zapier/Make). Sæt til tom streng hvis URL mangler.",
+          },
+          action_capability: {
+            type: "string",
+            description: "Kun for run_integration: capability-navnet fra kataloget, fx 'documents.write'.",
+          },
+          action_tool_slug: {
+            type: "string",
+            description: "Kun for run_integration: det præcise toolSlug fra kataloget, fx 'NOTION_CREATE_NOTION_PAGE'. Opfind aldrig et slug der ikke står i kataloget.",
+          },
+          action_arguments: {
+            type: "object",
+            description: "Kun for run_integration: argumenterne til værktøjet, fx { parent_id: '...', title: 'Ny sag: {{name}}' }.",
           },
           payload_fields: {
             type: "array",
@@ -136,6 +165,9 @@ interface ToolArgs {
   trigger_event?: string;
   action_type?: string;
   webhook_url?: string;
+  action_capability?: string;
+  action_tool_slug?: string;
+  action_arguments?: Record<string, unknown>;
   payload_fields?: string[];
   description?: string;
   workflow_id?: string;
@@ -152,7 +184,7 @@ async function executeTool(
   try {
     switch (toolName) {
       case "create_workflow": {
-        const { trigger_event, action_type, webhook_url, payload_fields, description } = args;
+        const { trigger_event, action_type, webhook_url, action_capability, action_tool_slug, action_arguments, payload_fields, description } = args;
         if (!trigger_event || !VALID_EVENTS.includes(trigger_event)) {
           return { success: false, result: `Ugyldig trigger: ${trigger_event}` };
         }
@@ -163,12 +195,25 @@ async function executeTool(
             result: `NEEDS_WEBHOOK_URL|${trigger_event}|${action_type}|${JSON.stringify(payload_fields || [])}|${description}`,
           };
         }
+        if (action_type === "run_integration") {
+          const catalogEntry = ACTION_CATALOG.find((c) => c.capability === action_capability && c.toolSlug === action_tool_slug);
+          if (!catalogEntry) {
+            return { success: false, result: `Ukendt handling. Vælg en fra kataloget: ${ACTION_CATALOG.map((c) => `${c.label} (${c.capability} → ${c.toolSlug})`).join(", ")}` };
+          }
+          const missing = catalogEntry.requiredArgs.filter((a) => !action_arguments || action_arguments[a] === undefined || action_arguments[a] === "");
+          if (missing.length > 0) {
+            return { success: false, result: `Mangler felter til "${catalogEntry.label}": ${missing.join(", ")}. ${catalogEntry.argHelp}` };
+          }
+        }
         const { data, error } = await supabase.from("workflows").insert({
           company_id: companyId,
           created_by: userId,
           trigger_event,
           action_type,
           webhook_url: webhook_url || null,
+          action_capability: action_type === "run_integration" ? action_capability : null,
+          action_tool_slug: action_type === "run_integration" ? action_tool_slug : null,
+          action_arguments: action_type === "run_integration" ? (action_arguments ?? {}) : {},
           payload_fields: payload_fields || [],
           description,
           is_active: true,
@@ -184,9 +229,14 @@ async function executeTool(
             is_active: true,
           });
         }
+        const actionLabel = action_type === "send_webhook"
+          ? "Send data til webhook"
+          : action_type === "run_integration"
+          ? ACTION_CATALOG.find((c) => c.toolSlug === action_tool_slug)?.label ?? action_tool_slug
+          : action_type;
         return {
           success: true,
-          result: `✅ **Workflow oprettet!**\n\n📋 **Trigger:** Når ${EVENT_LABELS[trigger_event] || trigger_event}\n⚡ **Handling:** ${action_type === "send_webhook" ? "Send data til webhook" : action_type}\n${webhook_url ? `🔗 **URL:** ${webhook_url}\n` : ""}${payload_fields?.length ? `📦 **Data:** ${payload_fields.join(", ")}\n` : ""}✅ **Status:** Aktiv\n🆔 **ID:** ${data.id}`,
+          result: `✅ **Workflow oprettet!**\n\n📋 **Trigger:** Når ${EVENT_LABELS[trigger_event] || trigger_event}\n⚡ **Handling:** ${actionLabel}\n${webhook_url ? `🔗 **URL:** ${webhook_url}\n` : ""}${payload_fields?.length ? `📦 **Data:** ${payload_fields.join(", ")}\n` : ""}✅ **Status:** Aktiv\n🆔 **ID:** ${data.id}`,
         };
       }
 
@@ -241,6 +291,9 @@ async function executeTool(
           .eq("company_id", companyId)
           .single();
         if (error || !wf) return { success: false, result: "Workflow ikke fundet." };
+        if (wf.action_type === "run_integration") {
+          return { success: true, result: "Dette workflow kører en handling gennem en forbundet konto — test det fra Workflow Studio's 'Kør test'-knap, hvor du kan se hele kæden (trigger → AI → handling) trin for trin." };
+        }
         if (!wf.webhook_url) return { success: false, result: "Workflowet har ingen webhook URL – kan ikke testes." };
         const testPayload = {
           event: wf.trigger_event,
@@ -363,14 +416,16 @@ ${VALID_EVENTS.map(e => `- ${e}: Når ${EVENT_LABELS[e]}`).join("\n")}
 
 HANDLINGER:
 - send_webhook: Send data til en Zapier/Make webhook URL
-- create_task: Opret en intern opgave
-- update_lead: Opdater et lead
-- send_notification: Send intern notifikation
+- run_integration: Kør en ægte handling gennem en konto brugeren allerede har forbundet under Forbundne apps — ikke en webhook, en rigtig handling i det andet system. Kun disse er understøttet lige nu:
+${ACTION_CATALOG.map((c) => `  - ${c.label}: capability="${c.capability}", toolSlug="${c.toolSlug}". ${c.argHelp}`).join("\n")}
+- create_task / update_lead / send_notification: endnu ikke understøttet af selve kørslen — opret dem ikke, sig at de er på vej
 
 VIGTIGT:
 - Svar altid på dansk
 - Hold svarene korte og venlige
-- Hvis brugeren nævner "Zapier", "Make", "Slack", "Google Sheets" osv., så brug send_webhook
+- Hvis brugeren nævner "Zapier", "Make", "Slack (via webhook)", "Google Sheets" osv. uden at have forbundet en konto, brug send_webhook
+- Hvis brugeren beder om en handling der matcher et af run_integration-kataloget ovenfor (fx "opret en Notion-side når..."), brug run_integration — spørg om de manglende felter (fx Notion parent_id) hvis de ikke er givet, opfind dem aldrig
+- Brug ALDRIG et toolSlug eller capability der ikke står i kataloget ovenfor — sig i stedet ærligt at den handling ikke er understøttet endnu
 - Hvis der mangler en webhook URL, brug create_workflow med tom webhook_url – systemet vil bede om URL
 - Foreslå automatisk relevante workflows når det giver mening
 - Brug markdown til pæn formatering

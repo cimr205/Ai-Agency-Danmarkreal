@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Plus, Filter, Send, Bot, ChevronRight, PlayCircle, History, Loader2, Mail, Calendar,
+  Plus, Filter, Send, Bot, ChevronRight, PlayCircle, History, Loader2, Mail, Calendar, Plug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -44,9 +44,11 @@ export default function WorkflowStudioPage() {
       { id: "a", kind: "ai" as StepKind, icon: Bot, title: "AI-trin", detail: aiPrompt.slice(0, 60) },
       {
         id: "x", kind: "action" as StepKind,
-        icon: active.action_type === "webhook" ? Send : Calendar,
-        title: `Handling: ${active.action_type}`,
-        detail: active.webhook_url ? "→ webhook" : "ingen destination",
+        icon: active.action_type === "webhook" ? Send : active.action_type === "run_integration" ? Plug : Calendar,
+        title: active.action_type === "run_integration" ? `Handling: ${active.action_tool_slug ?? "integration"}` : `Handling: ${active.action_type}`,
+        detail: active.action_type === "run_integration"
+          ? `→ ${active.action_capability ?? "capability"}`
+          : active.webhook_url ? "→ webhook" : "ingen destination",
       },
     ];
   }, [active, aiPrompt]);

@@ -4183,6 +4183,9 @@ export type Database = {
       }
       workflows: {
         Row: {
+          action_arguments: Json
+          action_capability: string | null
+          action_tool_slug: string | null
           action_type: string
           company_id: string
           created_at: string
@@ -4199,6 +4202,9 @@ export type Database = {
           webhook_url: string | null
         }
         Insert: {
+          action_arguments?: Json
+          action_capability?: string | null
+          action_tool_slug?: string | null
           action_type?: string
           company_id: string
           created_at?: string
@@ -4215,6 +4221,9 @@ export type Database = {
           webhook_url?: string | null
         }
         Update: {
+          action_arguments?: Json
+          action_capability?: string | null
+          action_tool_slug?: string | null
           action_type?: string
           company_id?: string
           created_at?: string

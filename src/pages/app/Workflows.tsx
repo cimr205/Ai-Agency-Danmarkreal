@@ -40,6 +40,12 @@ const EVENT_LABELS: Record<string, string> = {
   "email.opened": "Email åbnet",
 };
 
+function actionLabel(wf: { action_type: string; action_tool_slug?: string | null; webhook_url?: string | null }): string {
+  if (wf.action_type === "run_integration") return wf.action_tool_slug ? `Kør ${wf.action_tool_slug}` : "Kør handling";
+  if (wf.action_type === "send_webhook") return "Webhook";
+  return wf.action_type;
+}
+
 const QUICK_PROMPTS = [
   { label: "Ny lead → Zapier", prompt: "Når en ny lead bliver oprettet, send data til Zapier" },
   { label: "Deal vundet → Slack", prompt: "Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack" },
@@ -256,7 +262,7 @@ export default function WorkflowsPage() {
                               {wf.description || wf.trigger_event}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {EVENT_LABELS[wf.trigger_event] || wf.trigger_event} → {wf.action_type}
+                              {EVENT_LABELS[wf.trigger_event] || wf.trigger_event} → {actionLabel(wf)}
                             </p>
                           </div>
                           <Switch
