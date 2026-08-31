@@ -18,6 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { PhoneDeviceConnection } from '@/components/power-dialer/PhoneDeviceConnection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -39,6 +40,7 @@ import {
 } from '@/lib/deviceDialer';
 import { getErrorMessage } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
+import { loadConnectedPhone, type ConnectedPhone } from '@/lib/phoneDevice';
 import { cn } from '@/lib/utils';
 
 const PENDING_CALL_KEY = 'crm-power-dialer-pending-v1';
@@ -135,6 +137,7 @@ export default function ColdCallerPage() {
   const logCall = useLogPowerDialerCall();
 
   const [platform] = useState<DevicePlatform>(() => getDevicePlatform());
+  const [connectedPhone, setConnectedPhone] = useState<ConnectedPhone | null>(() => loadConnectedPhone());
   const [pendingCall, setPendingCall] = useState<PendingCall | null>(() => loadPendingCall());
   const [processedLeadIds, setProcessedLeadIds] = useState<Set<string>>(() => new Set());
   const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
@@ -206,6 +209,7 @@ export default function ColdCallerPage() {
     : platform === 'ios'
       ? t('devicePowerDialer.platform.ios')
       : t('devicePowerDialer.platform.web');
+  const canDialFromThisDevice = platform !== 'web' && Boolean(connectedPhone);
 
   const clearCallForm = useCallback(() => {
     setPendingCall(null);
@@ -216,8 +220,15 @@ export default function ColdCallerPage() {
   }, []);
 
   const handleCallHandoff = useCallback((event: MouseEvent<HTMLAnchorElement>) => {
-    if (!currentLead?.phone) {
+    if (!currentLead?.phone || !canDialFromThisDevice) {
       event.preventDefault();
+      if (!canDialFromThisDevice) {
+        toast({
+          title: t('devicePowerDialer.errors.connectPhoneTitle'),
+          description: t('devicePowerDialer.errors.connectPhoneDescription'),
+          variant: 'destructive',
+        });
+      }
       return;
     }
 
@@ -252,7 +263,7 @@ export default function ColdCallerPage() {
         });
       }
     }
-  }, [clearCallForm, currentLead, platform, t]);
+  }, [canDialFromThisDevice, clearCallForm, currentLead, platform, t]);
 
   const handleOutcomeChange = useCallback((nextOutcome: CallOutcome) => {
     setOutcome(nextOutcome);
@@ -337,23 +348,13 @@ export default function ColdCallerPage() {
               <p className="text-sm text-muted-foreground">{t('devicePowerDialer.subtitle')}</p>
             </div>
           </div>
-          <div className="flex max-w-3xl items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-foreground">{t('devicePowerDialer.ownNumber.title')}</p>
-                <Badge className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400">
-                  {t('devicePowerDialer.ownNumber.status')}
-                </Badge>
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {t('devicePowerDialer.ownNumber.description')}
-              </p>
-              {platform === 'web' ? (
-                <p className="text-xs font-medium text-foreground">{t('devicePowerDialer.ownNumber.desktopTip')}</p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">{platformMessage}</p>
-            </div>
+          <div className="max-w-3xl space-y-2">
+            <PhoneDeviceConnection
+              platform={platform}
+              connectedPhone={connectedPhone}
+              onConnectionChange={setConnectedPhone}
+            />
+            <p className="px-1 text-xs text-muted-foreground">{platformMessage}</p>
           </div>
         </div>
         {processedLeadIds.size > 0 ? (
@@ -445,7 +446,7 @@ export default function ColdCallerPage() {
                   </div>
                 ) : null}
 
-                {!pendingCall ? (
+                {!pendingCall && canDialFromThisDevice ? (
                   <div className="mt-7 space-y-3">
                     <Button
                       asChild
@@ -459,6 +460,16 @@ export default function ColdCallerPage() {
                     </Button>
                     <p className="text-center text-xs text-muted-foreground">
                       {t('devicePowerDialer.callConfirmation')}
+                    </p>
+                  </div>
+                ) : !pendingCall ? (
+                  <div className="mt-7 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
+                    <Smartphone className="mx-auto h-7 w-7 text-primary" />
+                    <p className="mt-3 text-sm font-semibold">{t('devicePowerDialer.pairing.callLockedTitle')}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {platform === 'web'
+                        ? t('devicePowerDialer.pairing.callLockedDesktop')
+                        : t('devicePowerDialer.pairing.callLockedMobile')}
                     </p>
                   </div>
                 ) : (

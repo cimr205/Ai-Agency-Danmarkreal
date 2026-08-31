@@ -79,6 +79,18 @@ function getCallLink(phoneNumber: string) {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
+  Object.defineProperty(window.navigator, 'userAgent', {
+    configurable: true,
+    value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)',
+  });
+  window.localStorage.setItem('crm-power-dialer-phone-v1', JSON.stringify({
+    version: 1,
+    deviceId: 'iphone-test-device',
+    phoneNumber: '+4511223344',
+    platform: 'ios',
+    connectedAt: new Date().toISOString(),
+  }));
   logCall.mockReset();
   logCall.mockResolvedValue('new-call-id');
 });
@@ -94,8 +106,8 @@ describe('Device Power Dialer page', () => {
     expect(screen.queryByText('No Phone')).not.toBeInTheDocument();
     expect(screen.queryByText(/Twilio/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/keypad/i)).not.toBeInTheDocument();
-    expect(screen.getByText('Your own number is used automatically')).toBeInTheDocument();
-    expect(screen.getByText('No connection required')).toBeInTheDocument();
+    expect(screen.getByText('Phone connected')).toBeInTheDocument();
+    expect(screen.getByText('+4511223344')).toBeInTheDocument();
   });
 
   it('stores the handoff, logs one of four outcomes, and advances to the next lead', async () => {
@@ -125,7 +137,7 @@ describe('Device Power Dialer page', () => {
         outcome: 'interested',
         notes: 'Send enterprise proposal.',
         callbackAt: null,
-        platform: 'web',
+        platform: 'ios',
         handoffMethod: 'system_tel',
       }));
     });
@@ -173,5 +185,33 @@ describe('Device Power Dialer page', () => {
 
     expect(screen.getByText('Recent call outcomes')).toBeInTheDocument();
     expect(screen.getByText('No answer')).toBeInTheDocument();
+  });
+
+  it('connects an iPhone number locally before enabling the call action', () => {
+    window.localStorage.clear();
+    renderPage();
+
+    expect(getCallLink('+4512345678')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Your own mobile number'), {
+      target: { value: '+45 20 30 40 50' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Connect this phone' }));
+
+    expect(getCallLink('+4512345678')).toBeInTheDocument();
+    expect(window.localStorage.getItem('crm-power-dialer-phone-v1')).toContain('+4520304050');
+    expect(screen.getByText('Phone connected')).toBeInTheDocument();
+  });
+
+  it('shows desktop QR handoff instead of a non-working desktop call button', () => {
+    window.localStorage.clear();
+    Object.defineProperty(window.navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+    });
+    renderPage();
+
+    expect(screen.getByLabelText('QR code for opening Power Dialer on a phone')).toBeInTheDocument();
+    expect(screen.getByText('Connect your phone')).toBeInTheDocument();
+    expect(getCallLink('+4512345678')).not.toBeInTheDocument();
   });
 });

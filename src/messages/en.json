@@ -1474,6 +1474,27 @@
       "description": "Power Dialer does not store or connect your private number. The call is made by your phone app using the SIM/eSIM and caller ID you normally call from. Change the active SIM or caller ID in your phone settings if needed.",
       "desktopTip": "To call from your own mobile number, open this Power Dialer page on that phone. A computer needs a paired phone or telephone app to handle the link."
     },
+    "pairing": {
+      "desktopTitle": "Connect your phone",
+      "desktopDescription": "Scan the QR code with an iPhone or Android. Sign in on the phone, connect your own number, and work through the lead queue directly there.",
+      "desktopSteps": "Phone camera → scan code → sign in → connect phone",
+      "qrLabel": "QR code for opening Power Dialer on a phone",
+      "mobileTitle": "Connect this phone",
+      "mobileDescription": "Register this phone as your calling device. Every call uses its active SIM/eSIM and normal mobile plan.",
+      "iosInstallTip": "iPhone: Choose Share → Add to Home Screen to use Power Dialer as an app.",
+      "androidInstallTip": "Android: Choose the browser menu → Install app to add Power Dialer to the home screen.",
+      "ownNumberLabel": "Your own mobile number",
+      "ownNumberPlaceholder": "+45 12 34 56 78",
+      "invalidNumber": "Enter a valid mobile number.",
+      "connectAction": "Connect this phone",
+      "privacy": "The number is stored only on this device as a device label. The active SIM/eSIM controls the caller ID the recipient sees.",
+      "connectedTitle": "Phone connected",
+      "connectedDescription": "Ready to call through this phone's active SIM/eSIM plan.",
+      "changePhone": "Change phone",
+      "callLockedTitle": "Connect the phone to call",
+      "callLockedDesktop": "Scan the QR code above and continue Power Dialer on the phone.",
+      "callLockedMobile": "Enter your number above and choose Connect this phone."
+    },
     "platform": {
       "android": "Android opens the native dialer with the lead's number ready. Your SIM/eSIM plan and caller ID are used; you still start the call in the phone app.",
       "ios": "iPhone hands the number to the system Phone app. Apple requires you to confirm the call; your SIM/eSIM plan and caller ID are used.",
@@ -1529,6 +1550,8 @@
       "empty": "No device calls have been logged yet."
     },
     "errors": {
+      "connectPhoneTitle": "Connect the phone first",
+      "connectPhoneDescription": "Power Dialer must be connected to this iPhone or Android before the Call button can be used.",
       "handoffTitle": "Could not open the phone app",
       "callbackTitle": "Choose a callback time",
       "callbackDescription": "A callback outcome needs a date and time.",

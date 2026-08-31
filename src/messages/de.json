@@ -1486,6 +1486,27 @@
       "description": "Power Dialer speichert oder verbindet Ihre private Nummer nicht. Der Anruf erfolgt über die Telefon-App mit der SIM/eSIM und Anrufer-ID, die Sie normalerweise verwenden. Ändern Sie bei Bedarf die aktive SIM oder Anrufer-ID in den Telefoneinstellungen.",
       "desktopTip": "Um von Ihrer eigenen Mobilnummer anzurufen, öffnen Sie diese Power-Dialer-Seite auf diesem Telefon. Ein Computer benötigt ein gekoppeltes Telefon oder eine Telefonie-App, um den Link zu verarbeiten."
     },
+    "pairing": {
+      "desktopTitle": "Mobiltelefon verbinden",
+      "desktopDescription": "Scannen Sie den QR-Code mit iPhone oder Android. Melden Sie sich auf dem Telefon an, verbinden Sie Ihre eigene Nummer und bearbeiten Sie die Lead-Warteschlange direkt dort.",
+      "desktopSteps": "Handykamera → Code scannen → anmelden → Telefon verbinden",
+      "qrLabel": "QR-Code zum Öffnen des Power Dialers auf dem Mobiltelefon",
+      "mobileTitle": "Dieses Telefon verbinden",
+      "mobileDescription": "Registrieren Sie dieses Telefon als Anrufgerät. Alle Anrufe nutzen die aktive SIM/eSIM und den normalen Mobilfunktarif.",
+      "iosInstallTip": "iPhone: Wählen Sie Teilen → Zum Home-Bildschirm, um Power Dialer als App zu verwenden.",
+      "androidInstallTip": "Android: Wählen Sie im Browsermenü → App installieren, um Power Dialer zum Startbildschirm hinzuzufügen.",
+      "ownNumberLabel": "Ihre eigene Mobilnummer",
+      "ownNumberPlaceholder": "+45 12 34 56 78",
+      "invalidNumber": "Geben Sie eine gültige Mobilnummer ein.",
+      "connectAction": "Dieses Telefon verbinden",
+      "privacy": "Die Nummer wird nur auf diesem Gerät als Gerätebezeichnung gespeichert. Die aktive SIM/eSIM bestimmt die angezeigte Anrufer-ID.",
+      "connectedTitle": "Telefon verbunden",
+      "connectedDescription": "Bereit für Anrufe über den aktiven SIM/eSIM-Tarif dieses Telefons.",
+      "changePhone": "Telefon wechseln",
+      "callLockedTitle": "Telefon zum Anrufen verbinden",
+      "callLockedDesktop": "Scannen Sie den QR-Code oben und setzen Sie den Power Dialer auf dem Telefon fort.",
+      "callLockedMobile": "Geben Sie oben Ihre Nummer ein und wählen Sie Dieses Telefon verbinden."
+    },
     "platform": {
       "android": "Android öffnet den nativen Wähler mit der Rufnummer des Leads. Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet; Sie starten den Anruf weiterhin in der Telefon-App.",
       "ios": "Das iPhone übergibt die Nummer an die Telefon-App. Apple verlangt Ihre Bestätigung; Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet.",
@@ -1541,6 +1562,8 @@
       "empty": "Es wurden noch keine Geräteanrufe erfasst."
     },
     "errors": {
+      "connectPhoneTitle": "Zuerst Telefon verbinden",
+      "connectPhoneDescription": "Power Dialer muss mit diesem iPhone oder Android verbunden sein, bevor die Anruftaste verwendet werden kann.",
       "handoffTitle": "Telefon-App konnte nicht geöffnet werden",
       "callbackTitle": "Rückrufzeit auswählen",
       "callbackDescription": "Ein Rückruf benötigt ein Datum und eine Uhrzeit.",

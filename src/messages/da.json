@@ -1491,6 +1491,27 @@
       "description": "Power Dialer gemmer eller forbinder ikke dit private nummer. Opkaldet foretages af telefonappen med det SIM/eSIM og caller ID, du normalt ringer fra. Skift aktivt SIM eller caller ID i telefonens indstillinger, hvis det er nødvendigt.",
       "desktopTip": "For at ringe fra dit eget mobilnummer skal du åbne denne Power Dialer-side på den telefon. En computer kræver en parret telefon eller telefoniapp for at håndtere linket."
     },
+    "pairing": {
+      "desktopTitle": "Forbind din mobil",
+      "desktopDescription": "Scan QR-koden med iPhone eller Android. Log ind på mobilen, forbind dit eget nummer, og gennemfør hele lead-køen direkte derfra.",
+      "desktopSteps": "Mobilkamera → scan koden → log ind → forbind telefonen",
+      "qrLabel": "QR-kode til Power Dialer på mobilen",
+      "mobileTitle": "Forbind denne telefon",
+      "mobileDescription": "Registrér mobilen som din opkaldsenhed. Alle opkald bruger telefonens aktive SIM/eSIM og dit normale mobilabonnement.",
+      "iosInstallTip": "iPhone: Vælg Del → Føj til hjemmeskærm for at bruge Power Dialer som en app.",
+      "androidInstallTip": "Android: Vælg browsermenuen → Installer app for at lægge Power Dialer på hjemmeskærmen.",
+      "ownNumberLabel": "Dit eget mobilnummer",
+      "ownNumberPlaceholder": "+45 12 34 56 78",
+      "invalidNumber": "Indtast et gyldigt mobilnummer.",
+      "connectAction": "Forbind denne telefon",
+      "privacy": "Nummeret gemmes kun lokalt på denne enhed som enheds-id. SIM/eSIM bestemmer det faktiske nummer, modtageren ser.",
+      "connectedTitle": "Telefon forbundet",
+      "connectedDescription": "Klar til at ringe via denne telefons aktive SIM/eSIM-abonnement.",
+      "changePhone": "Skift telefon",
+      "callLockedTitle": "Forbind mobilen for at ringe",
+      "callLockedDesktop": "Scan QR-koden ovenfor og fortsæt Power Dialer på mobilen.",
+      "callLockedMobile": "Indtast dit nummer ovenfor og tryk Forbind denne telefon."
+    },
     "platform": {
       "android": "Android åbner den indbyggede opkalder med leadets nummer klar. Dit SIM/eSIM-abonnement og nummer bruges; du starter stadig opkaldet i telefonappen.",
       "ios": "iPhone sender nummeret til systemets Telefon-app. Apple kræver, at du bekræfter opkaldet; dit SIM/eSIM-abonnement og nummer bruges.",
@@ -1546,6 +1567,8 @@
       "empty": "Der er endnu ikke logget opkald fra enheden."
     },
     "errors": {
+      "connectPhoneTitle": "Forbind telefonen først",
+      "connectPhoneDescription": "Power Dialer skal være forbundet til denne iPhone eller Android, før Ring-knappen kan bruges.",
       "handoffTitle": "Telefonappen kunne ikke åbnes",
       "callbackTitle": "Vælg et tidspunkt for callback",
       "callbackDescription": "Resultatet 'Ring tilbage' kræver dato og tidspunkt.",

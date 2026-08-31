@@ -17,3 +17,11 @@ createRoot(document.getElementById("root")!).render(<App />);
 // a chunk-load error, the app is healthy again — clear the guard so a later,
 // unrelated deploy can also trigger a one-time auto-recovery.
 setTimeout(clearChunkReloadGuard, 5000);
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // The CRM remains fully functional when installation is unsupported.
+    });
+  });
+}
