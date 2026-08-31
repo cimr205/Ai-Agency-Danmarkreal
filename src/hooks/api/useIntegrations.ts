@@ -267,3 +267,22 @@ export function useDocuments(enabled: boolean) {
     staleTime: 60_000,
   });
 }
+
+export interface ExternalCalendarEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string | null;
+  url: string | null;
+}
+
+export function useExternalCalendarEvents(start: string, end: string, enabled: boolean) {
+  const { profile } = useAuth();
+  return useQuery({
+    queryKey: ["module-calendar-events", profile?.company_id, start, end],
+    enabled: enabled && !!profile?.company_id,
+    queryFn: () =>
+      callComposioIntegration<{ provider: string; connectionId: string; events: ExternalCalendarEvent[] }>("list-events", { start, end }),
+    staleTime: 60_000,
+  });
+}

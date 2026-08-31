@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useMyCalendar, useCreateCalendarEvent } from '@/hooks/api/useCalendar';
 import { useTasks } from '@/hooks/api/useTasks';
+import { useModuleAvailability, useExternalCalendarEvents } from '@/hooks/api/useIntegrations';
+import { Link } from 'react-router-dom';
+import { Plug } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,10 +38,26 @@ export default function CalendarPage() {
   const { data: tasks } = useTasks();
   const createEvent = useCreateCalendarEvent();
 
+  // Real events from a connected external calendar (Google Calendar /
+  // Outlook), surfaced straight into the same grid — the Capability Engine
+  // in action: this page never checks "is Google Calendar connected?", it
+  // just asks "is calendar.read available?" via useModuleAvailability.
+  const { data: availability } = useModuleAvailability();
+  const calendarModule = availability?.modules.find((m) => m.module === 'calendar');
+  const hasExternalCalendar = !!calendarModule?.available;
+  const { data: externalData } = useExternalCalendarEvents(
+    startOfMonth(currentMonth).toISOString(),
+    endOfMonth(currentMonth).toISOString(),
+    hasExternalCalendar,
+  );
+  const externalEvents = (externalData?.events ?? []).map(e => ({
+    id: `ext-${e.id}`, title: e.title, start_time: e.startTime, isExternal: true, isTask: false,
+  }));
+
   // Tasks with due dates as calendar items
   const taskEvents = (tasks || [])
     .filter(t => t.due_date && t.status !== 'completed')
-    .map(t => ({ id: `task-${t.id}`, title: `📋 ${t.title}`, start_time: t.due_date!, isTask: true, priority: t.priority }));
+    .map(t => ({ id: `task-${t.id}`, title: `📋 ${t.title}`, start_time: t.due_date!, isTask: true, isExternal: false, priority: t.priority }));
 
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
 
@@ -61,10 +80,14 @@ export default function CalendarPage() {
 
   const getEventsForDay = (day: Date) => {
     const calEvents = events?.filter(event => isSameDay(new Date(event.start_time), day)) ?? [];
+    const extEvents = externalEvents.filter(e => isSameDay(new Date(e.start_time), day));
     const dayTasks = taskEvents.filter(t => isSameDay(new Date(t.start_time), day));
-    return [...calEvents.map(e => ({ ...e, isTask: false })), ...dayTasks];
+    return [...calEvents.map(e => ({ ...e, isTask: false, isExternal: false })), ...extEvents, ...dayTasks];
   };
-  const upcomingEvents = events?.filter(event => new Date(event.start_time) >= new Date()).slice(0, 5) ?? [];
+  const upcomingEvents = [...(events ?? []).map(e => ({ ...e, isExternal: false })), ...externalEvents]
+    .filter(event => new Date(event.start_time) >= new Date())
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+    .slice(0, 5);
   const upcomingTasks = taskEvents.filter(t => new Date(t.start_time) >= new Date()).slice(0, 3);
 
   return (
@@ -117,7 +140,14 @@ export default function CalendarPage() {
                     {dayEvents.length > 0 && (
                       <div className="mt-1">
                         {dayEvents.slice(0, 2).map((event) => (
-                          <div key={event.id} className={`text-xs rounded px-1 truncate mb-0.5 ${event.isTask ? 'bg-warning/20 text-warning' : 'bg-primary/20 text-primary'}`}>
+                          <div
+                            key={event.id}
+                            className={`text-xs rounded px-1 truncate mb-0.5 ${
+                              event.isTask ? 'bg-warning/20 text-warning'
+                              : event.isExternal ? 'bg-sky-500/20 text-sky-600'
+                              : 'bg-primary/20 text-primary'
+                            }`}
+                          >
                             {event.title}
                           </div>
                         ))}
@@ -143,15 +173,24 @@ export default function CalendarPage() {
             ) : (
               <div className="space-y-4">
                 {upcomingEvents.map((event) => (
-                  <div key={event.id} className="border-l-2 border-primary pl-3">
+                  <div key={event.id} className={`border-l-2 pl-3 ${event.isExternal ? 'border-sky-500' : 'border-primary'}`}>
                     <p className="font-medium">{event.title}</p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />{format(new Date(event.start_time), 'dd MMM', { locale: dateFnsLocale })}
                       <Clock className="h-3 w-3 ml-2" />{format(new Date(event.start_time), 'HH:mm')}
+                      {event.isExternal && <span className="ml-2 text-sky-600">· {calendarModule?.resolvedConnections[0]?.provider}</span>}
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+            {!hasExternalCalendar && (
+              <Link
+                to={`/${locale}/app/workspace/connected-apps`}
+                className="mt-4 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground border-t border-border pt-4"
+              >
+                <Plug className="h-3.5 w-3.5" /> Forbind Google Calendar eller Outlook for at se eksterne møder her
+              </Link>
             )}
             {/* Upcoming tasks */}
             {upcomingTasks.length > 0 && (

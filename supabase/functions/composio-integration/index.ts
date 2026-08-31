@@ -376,6 +376,80 @@ Deno.serve(async (req) => {
       return jsonResponse({ provider: resolved.provider, connectionId: resolved.id, documents: docs });
     }
 
+    // ─── Calendar module: second real feature on the Capability Engine.
+    // Same shape as list-documents — provider-specific tool calls/response
+    // shapes live ONLY here, the frontend only ever sees the normalized
+    // shape. Read-only (calendar.read); this never writes to the external
+    // calendar. ───
+    if (action === "list-events") {
+      const startParam = (body.start as string) || new Date().toISOString();
+      const endParam = (body.end as string) || new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+
+      const { data: connections } = await supabase
+        .from("integrations")
+        .select("id, provider, status, composio_connection_id")
+        .eq("company_id", companyId);
+      const resolved = findConnectionForCapability(connections ?? [], "calendar.read");
+      if (!resolved) throw new Error("Ingen forbindelse understøtter kalender endnu.");
+      const connection = (connections ?? []).find((c) => c.id === resolved.id);
+      if (!connection?.composio_connection_id) throw new Error("Forbindelsen mangler et Composio-connection-id.");
+
+      interface NormalizedEvent { id: string; title: string; startTime: string; endTime: string | null; url: string | null }
+
+      async function callTool(toolSlug: string, args: Record<string, unknown>) {
+        const res = await composioFetch(`/tools/execute/${toolSlug}`, {
+          method: "POST",
+          body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
+        });
+        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
+        return res.body as { data?: Record<string, unknown> };
+      }
+
+      let evts: NormalizedEvent[] = [];
+
+      if (resolved.provider === "googlecalendar") {
+        const result = await callTool("GOOGLECALENDAR_EVENTS_LIST", {
+          calendarId: "primary",
+          timeMin: startParam,
+          timeMax: endParam,
+          singleEvents: true,
+          orderBy: "startTime",
+          maxResults: 100,
+        });
+        interface GEvent {
+          id: string; summary?: string; htmlLink?: string;
+          start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string };
+        }
+        const items = (result.data?.items as GEvent[]) ?? [];
+        evts = items.map((e) => ({
+          id: e.id,
+          title: e.summary || "Uden titel",
+          startTime: e.start?.dateTime ?? e.start?.date ?? startParam,
+          endTime: e.end?.dateTime ?? e.end?.date ?? null,
+          url: e.htmlLink ?? null,
+        }));
+      } else if (resolved.provider === "outlook") {
+        const filter = `start/dateTime ge '${startParam}' and end/dateTime le '${endParam}'`;
+        const result = await callTool("OUTLOOK_OUTLOOK_LIST_EVENTS", { filter, top: 100 });
+        interface OEvent {
+          id: string; subject?: string; webLink?: string;
+          start?: { dateTime?: string }; end?: { dateTime?: string };
+        }
+        const items = (result.data?.value as OEvent[]) ?? (result.data?.items as OEvent[]) ?? [];
+        evts = items.map((e) => ({
+          id: e.id,
+          title: e.subject || "Uden titel",
+          startTime: e.start?.dateTime ?? startParam,
+          endTime: e.end?.dateTime ?? null,
+          url: e.webLink ?? null,
+        }));
+      } else {
+        throw new Error(`${resolved.provider} er forbundet, men understøttes ikke af kalender-modulet endnu.`);
+      }
+
+      return jsonResponse({ provider: resolved.provider, connectionId: resolved.id, events: evts });
+    }
+
     if (action === "execute-tool") {
       const integrationId = body.integrationId as string;
       const toolSlug = body.toolSlug as string;
@@ -436,6 +510,7 @@ Deno.serve(async (req) => {
         throw new Error(message);
       }
     }
+
 
 
     throw new Error(`Unknown action: ${action}`);
