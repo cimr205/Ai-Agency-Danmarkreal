@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
-import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -189,9 +189,9 @@ serve(async (req) => {
     });
 
     if (!aiResp.ok) {
-      const errText = await aiResp.text();
-      console.error("AI error:", errText);
-      throw new Error(`AI error: ${aiResp.status}`);
+      const { message } = await describeOpenAIError(aiResp);
+      console.error("AI error:", message);
+      throw new Error(message);
     }
 
     const aiData = await aiResp.json();

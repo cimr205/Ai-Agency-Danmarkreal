@@ -961,15 +961,10 @@ ${contextData}${pageSnapshotSection}`;
       });
 
       if (!toolResponse.ok) {
-        if (toolResponse.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limit nået. Prøv igen om lidt." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const t = await toolResponse.text();
-        console.error("AI gateway error:", toolResponse.status, t);
-        return new Response(JSON.stringify({ error: "AI gateway fejl" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const { status, message } = await describeOpenAIError(toolResponse);
+        console.error("AI gateway error:", status, message);
+        return new Response(JSON.stringify({ error: message }), {
+          status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -1044,10 +1039,10 @@ ${contextData}${pageSnapshotSection}`;
     });
 
     if (!finalResponse.ok) {
-      const t = await finalResponse.text();
-      console.error("Final stream error:", finalResponse.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway fejl" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const { status, message } = await describeOpenAIError(finalResponse);
+      console.error("Final stream error:", status, message);
+      return new Response(JSON.stringify({ error: message }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

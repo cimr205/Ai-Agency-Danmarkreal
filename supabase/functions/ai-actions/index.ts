@@ -3,7 +3,7 @@
 // authenticated user's company. Destructive tools require `confirm: true`.
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
-import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -153,9 +153,10 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ model: ai.model, messages: conversation, tools, tool_choice: "auto" }),
       });
 
-      if (aiRes.status === 429) return json({ error: "AI rate limited" }, 429);
-      if (aiRes.status === 402) return json({ error: "AI credits exhausted" }, 402);
-      if (!aiRes.ok) return json({ error: `AI error ${aiRes.status}` }, 500);
+      if (!aiRes.ok) {
+        const { status, message } = await describeOpenAIError(aiRes);
+        return json({ error: message }, status);
+      }
 
       const aiJson = await aiRes.json();
       const choice = aiJson.choices?.[0]?.message;

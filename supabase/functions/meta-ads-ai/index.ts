@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
-import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,12 +99,9 @@ Generate compelling ad copy with multiple variations.`;
       });
 
       if (!response.ok) {
-        const status = response.status;
-        const text = await response.text();
-        console.error("AI gateway error:", status, text);
-        if (status === 429) return new Response(JSON.stringify({ error: "Rate limit reached. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (status === 402) return new Response(JSON.stringify({ error: "Payment required. Add credits to continue." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ error: "AI generation failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { status, message } = await describeOpenAIError(response);
+        console.error("AI gateway error:", status, message);
+        return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       const data = await response.json();
@@ -154,12 +151,9 @@ Answer concisely and actionably. Use specific numbers. Keep answers under 150 wo
       });
 
       if (!response.ok) {
-        const status = response.status;
-        const text = await response.text();
-        console.error("AI gateway error:", status, text);
-        if (status === 429) return new Response(JSON.stringify({ error: "Rate limit reached." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (status === 402) return new Response(JSON.stringify({ error: "Payment required." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ error: "AI query failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const { status, message } = await describeOpenAIError(response);
+        console.error("AI gateway error:", status, message);
+        return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       const data = await response.json();

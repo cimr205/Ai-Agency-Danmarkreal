@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
-import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -460,21 +460,10 @@ VIGTIGT:
     });
 
     if (!response.ok) {
-      const status = response.status;
-      const t = await response.text();
-      if (status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit nået. Prøv igen om lidt." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "AI-kreditter opbrugt." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("AI error:", status, t);
-      return new Response(JSON.stringify({ error: "AI fejl" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const { status, message } = await describeOpenAIError(response);
+      console.error("AI error:", status, message);
+      return new Response(JSON.stringify({ error: message }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
