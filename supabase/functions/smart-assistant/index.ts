@@ -961,7 +961,7 @@ ${contextData}${pageSnapshotSection}`;
       });
 
       if (!toolResponse.ok) {
-        const { status, message } = await describeOpenAIError(toolResponse);
+        const { status, message } = await describeOpenAIError(toolResponse, ai.provider);
         console.error("AI gateway error:", status, message);
         return new Response(JSON.stringify({ error: message }), {
           status, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1039,7 +1039,7 @@ ${contextData}${pageSnapshotSection}`;
     });
 
     if (!finalResponse.ok) {
-      const { status, message } = await describeOpenAIError(finalResponse);
+      const { status, message } = await describeOpenAIError(finalResponse, ai.provider);
       console.error("Final stream error:", status, message);
       return new Response(JSON.stringify({ error: message }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },

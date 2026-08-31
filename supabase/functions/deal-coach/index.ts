@@ -103,7 +103,7 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
     });
 
     if (!response.ok) {
-      const { status, message } = await describeOpenAIError(response);
+      const { status, message } = await describeOpenAIError(response, ai.provider);
       return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

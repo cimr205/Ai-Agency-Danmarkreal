@@ -2815,6 +2815,7 @@ export type Database = {
           id: string
           last_error: string | null
           last_tested_at: string | null
+          provider: string
           status: string
           updated_at: string
         }
@@ -2826,6 +2827,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           last_tested_at?: string | null
+          provider?: string
           status?: string
           updated_at?: string
         }
@@ -2837,6 +2839,7 @@ export type Database = {
           id?: string
           last_error?: string | null
           last_tested_at?: string | null
+          provider?: string
           status?: string
           updated_at?: string
         }

@@ -115,7 +115,7 @@ Svar KUN med valid JSON.`;
     });
 
     if (!response.ok) {
-      const { status, message } = await describeOpenAIError(response);
+      const { status, message } = await describeOpenAIError(response, ai.provider);
       return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

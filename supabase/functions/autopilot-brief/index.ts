@@ -189,7 +189,7 @@ serve(async (req) => {
     });
 
     if (!aiResp.ok) {
-      const { message } = await describeOpenAIError(aiResp);
+      const { message } = await describeOpenAIError(aiResp, ai.provider);
       console.error("AI error:", message);
       throw new Error(message);
     }

@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       });
 
       if (!aiRes.ok) {
-        const { status, message } = await describeOpenAIError(aiRes);
+        const { status, message } = await describeOpenAIError(aiRes, ai.provider);
         return json({ error: message }, status);
       }
 

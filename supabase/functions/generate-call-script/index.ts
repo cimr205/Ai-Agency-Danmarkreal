@@ -64,7 +64,7 @@ ${email ? `- Email: ${email}` : ""}`;
     });
 
     if (!aiResp.ok) {
-      const { status, message } = await describeOpenAIError(aiResp);
+      const { status, message } = await describeOpenAIError(aiResp, ai.provider);
       return new Response(JSON.stringify({ error: message }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

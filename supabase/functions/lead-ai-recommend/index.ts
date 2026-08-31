@@ -133,7 +133,7 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
     });
 
     if (!response.ok) {
-      const { status, message } = await describeOpenAIError(response);
+      const { status, message } = await describeOpenAIError(response, ai.provider);
       return new Response(JSON.stringify({ error: message }), {
         status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

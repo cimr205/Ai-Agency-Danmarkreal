@@ -1,10 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PROVIDER_MODELS_URLS } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Historically OpenAI-only (hence the function/table names) — now also
+// accepts Groq, an OpenAI-API-compatible provider with a genuinely free
+// tier (no payment method required), as an alternative for tenants who
+// don't want to add billing. Both providers use the exact same
+// save/test/disconnect flow and the same openai_accounts row shape, just
+// tagged with which provider the stored key belongs to.
+const KEY_PREFIX: Record<string, string> = { openai: "sk-", groq: "gsk_" };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -30,6 +39,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action, apiKey } = body;
+    const provider = (body.provider === "groq" ? "groq" : "openai") as "openai" | "groq";
+    const providerLabel = provider === "groq" ? "Groq" : "OpenAI";
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -37,18 +48,19 @@ Deno.serve(async (req) => {
     );
 
     if (action === "save") {
-      if (!apiKey || typeof apiKey !== "string" || !apiKey.startsWith("sk-")) {
-        throw new Error("Invalid OpenAI API key format. Must start with sk-");
+      const prefix = KEY_PREFIX[provider];
+      if (!apiKey || typeof apiKey !== "string" || !apiKey.startsWith(prefix)) {
+        throw new Error(`Ugyldigt ${providerLabel}-nøgleformat. Skal starte med ${prefix}`);
       }
 
-      // Test the key against OpenAI
-      const testRes = await fetch("https://api.openai.com/v1/models", {
+      // Test the key against the provider's own models endpoint
+      const testRes = await fetch(PROVIDER_MODELS_URLS[provider], {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
 
       if (!testRes.ok) {
         const err = await testRes.text();
-        throw new Error(`OpenAI key validation failed: ${testRes.status} ${err.slice(0, 200)}`);
+        throw new Error(`${providerLabel}-nøglen kunne ikke bekræftes: ${testRes.status} ${err.slice(0, 200)}`);
       }
 
       // Upsert
@@ -56,6 +68,7 @@ Deno.serve(async (req) => {
         .from("openai_accounts")
         .upsert({
           company_id: profile.company_id,
+          provider,
           api_key: apiKey,
           status: "connected",
           last_tested_at: new Date().toISOString(),
@@ -65,7 +78,7 @@ Deno.serve(async (req) => {
 
       if (upsertErr) throw new Error(upsertErr.message);
 
-      return new Response(JSON.stringify({ success: true, status: "connected" }), {
+      return new Response(JSON.stringify({ success: true, status: "connected", provider }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -73,12 +86,13 @@ Deno.serve(async (req) => {
     if (action === "test") {
       const { data: acct } = await serviceClient
         .from("openai_accounts")
-        .select("api_key")
+        .select("api_key, provider")
         .eq("company_id", profile.company_id)
         .single();
       if (!acct) throw new Error("Not connected");
 
-      const testRes = await fetch("https://api.openai.com/v1/models", {
+      const acctProvider = (acct.provider === "groq" ? "groq" : "openai") as "openai" | "groq";
+      const testRes = await fetch(PROVIDER_MODELS_URLS[acctProvider], {
         headers: { Authorization: `Bearer ${acct.api_key}` },
       });
       const ok = testRes.ok;

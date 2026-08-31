@@ -99,7 +99,7 @@ Generate compelling ad copy with multiple variations.`;
       });
 
       if (!response.ok) {
-        const { status, message } = await describeOpenAIError(response);
+        const { status, message } = await describeOpenAIError(response, ai.provider);
         console.error("AI gateway error:", status, message);
         return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -151,7 +151,7 @@ Answer concisely and actionably. Use specific numbers. Keep answers under 150 wo
       });
 
       if (!response.ok) {
-        const { status, message } = await describeOpenAIError(response);
+        const { status, message } = await describeOpenAIError(response, ai.provider);
         console.error("AI gateway error:", status, message);
         return new Response(JSON.stringify({ error: message }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }

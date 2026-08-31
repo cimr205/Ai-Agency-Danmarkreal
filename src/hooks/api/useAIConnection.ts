@@ -2,15 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/errors";
+import { getErrorMessage, getFunctionErrorMessage } from "@/lib/errors";
 
 // Same table + edge function the voice agent's own OpenAI connect card
 // already uses (openai_accounts + voice-agent-connect-openai) — every AI
 // feature in the app (workflows, AI-email, deal coach, smart assistant,
 // m.fl.) resolves this same connection server-side, not a shared platform
-// key. One connect flow, used everywhere.
+// key. One connect flow, used everywhere. Groq is offered alongside
+// OpenAI as a genuinely free (no payment method required) alternative.
+export type AIProvider = "openai" | "groq";
+
 export interface AIConnectionStatus {
   id: string;
+  provider: AIProvider;
   status: "connected" | "error";
   last_tested_at: string | null;
   last_error: string | null;
@@ -24,7 +28,7 @@ export function useAIConnectionStatus() {
     queryFn: async (): Promise<AIConnectionStatus | null> => {
       const { data, error } = await supabase
         .from("openai_accounts")
-        .select("id, status, last_tested_at, last_error")
+        .select("id, provider, status, last_tested_at, last_error")
         .eq("company_id", profile!.company_id!)
         .maybeSingle();
       if (error) throw error;
@@ -37,12 +41,12 @@ export function useAIConnectionStatus() {
 export function useConnectAIProvider() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (apiKey: string) => {
-      const { error } = await supabase.functions.invoke("voice-agent-connect-openai", { body: { action: "save", apiKey } });
-      if (error) throw error;
+    mutationFn: async ({ apiKey, provider }: { apiKey: string; provider: AIProvider }) => {
+      const { error } = await supabase.functions.invoke("voice-agent-connect-openai", { body: { action: "save", apiKey, provider } });
+      if (error) throw new Error(await getFunctionErrorMessage(error));
     },
-    onSuccess: () => {
-      toast.success("ChatGPT forbundet");
+    onSuccess: (_d, v) => {
+      toast.success(`${v.provider === "groq" ? "Groq" : "ChatGPT"} forbundet`);
       qc.invalidateQueries({ queryKey: ["ai-connection-status"] });
     },
     onError: (e: Error) => toast.error(getErrorMessage(e) || "Kunne ikke forbinde"),
@@ -54,7 +58,7 @@ export function useDisconnectAIProvider() {
   return useMutation({
     mutationFn: async () => {
       const { error } = await supabase.functions.invoke("voice-agent-connect-openai", { body: { action: "disconnect" } });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
     },
     onSuccess: () => {
       toast.success("AI-udbyder afbrudt");
