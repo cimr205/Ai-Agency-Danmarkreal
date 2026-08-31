@@ -160,3 +160,105 @@ export function useTestConnection() {
     onError: (e: Error) => toast.error(e?.message ?? "Test fejlede"),
   });
 }
+
+// ─── Composio-backed connections (real OAuth, not webhook URLs) ───
+// All Composio traffic goes through the composio-integration edge
+// function — the platform API key never reaches the browser.
+
+async function callComposioIntegration<T = unknown>(action: string, body: Record<string, unknown> = {}): Promise<T> {
+  const { data, error } = await supabase.functions.invoke("composio-integration", { body: { action, ...body } });
+  if (error) {
+    const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    let message = error.message;
+    try {
+      const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
+      if (parsed?.error) message = parsed.error;
+    } catch {
+      // ignore, fall back to error.message
+    }
+    throw new Error(message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data as T;
+}
+
+export interface ComposioToolkit {
+  name: string;
+  slug: string;
+  meta?: { description?: string; tools_count?: number; logo?: string };
+  composio_managed_auth_schemes?: string[];
+}
+
+export function useComposioToolkits() {
+  return useQuery({
+    queryKey: ["composio-toolkits"],
+    queryFn: () => callComposioIntegration<{ toolkits: ComposioToolkit[] }>("list-toolkits"),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useCreateComposioConnection() {
+  return useMutation({
+    mutationFn: (toolkit: string) =>
+      callComposioIntegration<{ redirectUrl: string; connectionId: string }>("create-connection", { toolkit }),
+    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke starte forbindelse"),
+  });
+}
+
+export function useSyncComposioConnection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (connectionId: string) =>
+      callComposioIntegration<{ status: string }>("sync-connection-status", { connectionId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
+  });
+}
+
+export function useDisconnectComposioConnection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (integrationId: string) => callComposioIntegration("disconnect-connection", { integrationId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      toast.success("Forbindelse afbrudt");
+    },
+    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke afbryde forbindelsen"),
+  });
+}
+
+// ─── Capability Engine (frontend) ───
+
+export interface ModuleAvailability {
+  module: string;
+  available: boolean;
+  requiredCapabilities: string[];
+  resolvedConnections: Array<{ capability: string; connectionId: string; provider: string }>;
+}
+
+export function useModuleAvailability() {
+  const { profile } = useAuth();
+  return useQuery({
+    queryKey: ["module-availability", profile?.company_id],
+    enabled: !!profile?.company_id,
+    queryFn: () => callComposioIntegration<{ modules: ModuleAvailability[] }>("module-availability"),
+    staleTime: 30_000,
+  });
+}
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  url: string | null;
+  lastEditedAt: string | null;
+  icon: string | null;
+}
+
+export function useDocuments(enabled: boolean) {
+  const { profile } = useAuth();
+  return useQuery({
+    queryKey: ["module-documents", profile?.company_id],
+    enabled: enabled && !!profile?.company_id,
+    queryFn: () => callComposioIntegration<{ provider: string; connectionId: string; documents: DocumentItem[] }>("list-documents"),
+    staleTime: 60_000,
+  });
+}

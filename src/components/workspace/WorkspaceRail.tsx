@@ -95,6 +95,7 @@ function useNavGroups(): NavGroup[] {
       items: [
         { label: "Studio", path: "workspace/studio", icon: Workflow },
         { label: "Forbundne apps", path: "workspace/connected-apps", icon: Plug },
+        { label: "Dokumenter", path: "workspace/documents", icon: FileText },
         { label: "Intelligens", path: "workspace/intelligence", icon: Brain },
         { label: "Autopilot", path: "autopilot", icon: Zap },
         { label: t("nav.clowdbot") || "Assistent", path: "pa", icon: Bot, dataTour: "pa" },

@@ -86,6 +86,7 @@ const AdminLayout = lazy(() => import("@/components/admin/AdminLayout"));
 const ClientView = lazy(() => import("@/pages/app/clients/ClientView"));
 const ClientsListPage = lazy(() => import("@/pages/app/clients/ClientsListPage"));
 const ConnectedAppsPage = lazy(() => import("@/pages/app/workspace/ConnectedAppsPage"));
+const DocumentsPage = lazy(() => import("@/pages/app/workspace/DocumentsPage"));
 const WorkflowStudioPage = lazy(() => import("@/pages/app/workspace/WorkflowStudioPage"));
 const IntelligencePage = lazy(() => import("@/pages/app/workspace/IntelligencePage"));
 
@@ -288,6 +289,7 @@ const App = () => (
                   <Route path="settings/invitations" element={<RoleGate role="company_admin"><ErrorBoundary><InvitationsPage /></ErrorBoundary></RoleGate>} />
                   <Route path="settings/webhooks" element={<RoleGate role="company_admin"><ErrorBoundary><WebhooksPage /></ErrorBoundary></RoleGate>} />
                   <Route path="workspace/connected-apps" element={<ErrorBoundary><ConnectedAppsPage /></ErrorBoundary>} />
+                  <Route path="workspace/documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
                   <Route path="workspace/studio" element={<ErrorBoundary><WorkflowStudioPage /></ErrorBoundary>} />
                   <Route path="workspace/intelligence" element={<ErrorBoundary><IntelligencePage /></ErrorBoundary>} />
                   <Route path="monitoring" element={<RoleGate role="company_admin"><ErrorBoundary><MonitoringPage /></ErrorBoundary></RoleGate>} />
