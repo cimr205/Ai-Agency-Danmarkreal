@@ -1,25 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Mail, Calendar, MessagesSquare, CreditCard, FileText, Phone, BarChart3,
+  Mail, Calendar, MessagesSquare, CreditCard, FileText, BarChart3,
   Cloud, CheckCircle2, Sparkles, Search, Github, Linkedin, Loader2,
-  Database, Webhook, Zap, ExternalLink, Bot, Workflow, Puzzle,
+  Database, ExternalLink, Puzzle, Lock,
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  useIntegrations, useDisconnectIntegration, useConnectWebhook,
+  useIntegrations, useDisconnectIntegration,
   useComposioToolkits, useCreateComposioConnection, useDisconnectComposioConnection,
   useSyncComposioConnection,
   type Integration,
 } from "@/hooks/api/useIntegrations";
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 
-type Category = "Communication" | "Calendar" | "Finance" | "Data" | "Developer" | "Marketing" | "AI" | "Automation" | "Other";
+// Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
+// HR, workspace tools) so the same grouping the user already thinks in
+// (Marketing, Salg, Finans, …) is what they see here — not Composio's raw,
+// much finer-grained category list.
+type Category =
+  | "Marketing" | "Sales" | "Communication" | "Calendar" | "Finance"
+  | "Documents" | "Data" | "Ecommerce" | "HR" | "Developer" | "AI"
+  | "Productivity" | "Support" | "Other";
 
 interface Catalog {
   provider: string;
@@ -27,7 +33,6 @@ interface Catalog {
   surface: string;
   icon: LucideIcon;
   category: Category;
-  hint?: string;
 }
 
 function AppLogo({ logoUrl, icon: Icon, className }: { logoUrl?: string; icon: LucideIcon; className?: string }) {
@@ -38,37 +43,138 @@ function AppLogo({ logoUrl, icon: Icon, className }: { logoUrl?: string; icon: L
   return <Icon className={className ?? "h-4 w-4 text-foreground/80"} />;
 }
 
-const CATEGORY_LABELS_DA: Record<Catalog["category"], string> = {
-  Communication: "Kommunikation",
-  Calendar: "Kalender",
-  Finance: "Finans",
-  Data: "Data",
-  Developer: "Udvikler",
+const CATEGORY_LABELS_DA: Record<Category, string> = {
   Marketing: "Marketing",
+  Sales: "Salg & CRM",
+  Communication: "Kommunikation",
+  Calendar: "Kalender & booking",
+  Finance: "Finans & betaling",
+  Documents: "Dokumenter & filer",
+  Data: "Data & analyse",
+  Ecommerce: "E-handel",
+  HR: "HR",
+  Developer: "Udvikler",
   AI: "AI",
-  Automation: "Automatisering",
-  Other: "Alle andre integrationer",
+  Productivity: "Produktivitet & projekter",
+  Support: "Support",
+  Other: "Andre integrationer",
 };
 
+// Category display order — the topics most relevant to this CRM's own
+// modules come first, the long tail ("Other") always last.
+const CATEGORY_ORDER: Category[] = [
+  "Marketing", "Sales", "Communication", "Calendar", "Finance", "Ecommerce",
+  "Documents", "Data", "HR", "Productivity", "AI", "Developer", "Support", "Other",
+];
+
+// Maps Composio's own (much finer-grained) toolkit categories onto our
+// topic buckets. Anything not listed here falls into "Other" — safe by
+// construction, no toolkit is ever dropped, just under-categorized.
+const COMPOSIO_CATEGORY_MAP: Record<string, Category> = {
+  "marketing": "Marketing",
+  "marketing automation": "Marketing",
+  "social media marketing": "Marketing",
+  "social media accounts": "Marketing",
+  "ads & conversion": "Marketing",
+  "email newsletters": "Marketing",
+  "drip emails": "Marketing",
+  "forms & surveys": "Marketing",
+  "event management": "Marketing",
+
+  "crm": "Sales",
+  "sales & crm": "Sales",
+  "contact management": "Sales",
+  "ai sales tools": "Sales",
+
+  "email": "Communication",
+  "team chat": "Communication",
+  "communication": "Communication",
+  "video conferencing": "Communication",
+  "transactional email": "Communication",
+  "phone & sms": "Communication",
+  "notifications": "Communication",
+
+  "scheduling & booking": "Calendar",
+  "calendar": "Calendar",
+
+  "payment processing": "Finance",
+  "accounting": "Finance",
+  "fundraising": "Finance",
+
+  "ecommerce": "Ecommerce",
+  "commerce": "Ecommerce",
+
+  "documents": "Documents",
+  "notes": "Documents",
+  "spreadsheets": "Documents",
+  "file management & storage": "Documents",
+  "signatures": "Documents",
+  "content & files": "Documents",
+
+  "analytics": "Data",
+  "business intelligence": "Data",
+  "databases": "Data",
+  "dashboards": "Data",
+
+  "human resources": "HR",
+  "hr talent & recruitment": "HR",
+  "time tracking software": "HR",
+
+  "developer tools": "Developer",
+  "security & identity tools": "Developer",
+  "it operations": "Developer",
+  "server monitoring": "Developer",
+  "website builders": "Developer",
+  "app builder": "Developer",
+  "model context protocol": "Developer",
+  "internet of things": "Developer",
+
+  "artificial intelligence": "AI",
+  "ai agents": "AI",
+  "ai assistants": "AI",
+  "ai chatbots": "AI",
+  "ai content generation": "AI",
+  "ai document extraction": "AI",
+  "ai meeting assistants": "AI",
+  "ai models": "AI",
+  "ai safety compliance detection": "AI",
+  "ai web scraping": "AI",
+
+  "productivity": "Productivity",
+  "project management": "Productivity",
+  "task management": "Productivity",
+  "team collaboration": "Productivity",
+  "product management": "Productivity",
+  "bookmark managers": "Productivity",
+
+  "customer support": "Support",
+  "customer appreciation": "Support",
+};
+
+function categoryFromComposio(t: { meta?: { categories?: Array<{ name: string }> } }): Category {
+  const primary = t.meta?.categories?.[0]?.name?.toLowerCase();
+  if (primary && COMPOSIO_CATEGORY_MAP[primary]) return COMPOSIO_CATEGORY_MAP[primary];
+  return "Other";
+}
+
+// Hand-curated entries only exist to give the most common apps nicer
+// Danish copy and a lucide fallback icon — everything else (still real,
+// still connectable) is generated straight from Composio's own catalog
+// further down.
 const catalog: Catalog[] = [
-  { provider: "gmail",      name: "Gmail",            surface: "Indbakke · Email · Tråde",            icon: Mail,          category: "Communication", hint: "Zapier: New Email → Webhook" },
-  { provider: "outlook",    name: "Outlook",          surface: "Mail · Kalender",                     icon: Mail,          category: "Communication", hint: "Make: Outlook → HTTP" },
-  { provider: "slack",      name: "Slack",            surface: "Beskeder · Notifikationer",           icon: MessagesSquare, category: "Communication", hint: "Slack Incoming Webhook URL" },
-  { provider: "googlecalendar", name: "Google Calendar",  surface: "Møder · Booking",                icon: Calendar,      category: "Calendar",      hint: "n8n: Google Calendar Trigger" },
-  { provider: "stripe",     name: "Stripe",           surface: "Payments · Subscriptions",            icon: CreditCard,    category: "Finance",       hint: "Stripe → Make → Webhook" },
-  { provider: "hubspot",    name: "HubSpot",          surface: "CRM sync · Leads",                    icon: Database,      category: "Data",          hint: "HubSpot Workflow → Webhook" },
-  { provider: "notion",     name: "Notion",           surface: "Dokumenter · Klient-noter",           icon: FileText,      category: "Data",          hint: "Notion → Make → Webhook" },
-  { provider: "github",     name: "GitHub",           surface: "Issues · Releases",                   icon: Github,        category: "Developer",     hint: "GitHub Webhook (repo settings)" },
-  { provider: "linkedin",   name: "LinkedIn",         surface: "Outreach · Berigelse",                icon: Linkedin,      category: "Marketing",     hint: "Phantombuster → Webhook" },
-  { provider: "twilio",     name: "Twilio",           surface: "Voice · SMS",                         icon: Phone,         category: "Communication", hint: "Twilio Studio → HTTP" },
-  { provider: "metaads",    name: "Meta Ads",         surface: "Kampagner · Lead Ads",                icon: BarChart3,     category: "Marketing",     hint: "Meta Lead Ads → Zapier" },
-  { provider: "googledrive", name: "Google Drive",    surface: "Filer · Klient-data",                 icon: Cloud,         category: "Data",          hint: "Drive Trigger → Webhook" },
-  { provider: "claude",     name: "Claude",           surface: "AI handlinger via webhook",           icon: Bot,           category: "AI",            hint: "Self-hosted Claude proxy URL" },
-  { provider: "openai",     name: "ChatGPT",          surface: "AI handlinger via webhook",           icon: Bot,           category: "AI",            hint: "Self-hosted OpenAI proxy URL" },
-  { provider: "n8n",        name: "n8n",              surface: "Self-hosted workflows",               icon: Workflow,      category: "Automation",    hint: "n8n Webhook node URL" },
-  { provider: "activepieces", name: "Activepieces",   surface: "Open-source automation",              icon: Workflow,      category: "Automation",    hint: "Activepieces Webhook trigger" },
-  { provider: "zapier",     name: "Zapier",           surface: "Universal bro",                       icon: Zap,           category: "Automation",    hint: "Zapier Catch Hook URL" },
-  { provider: "make",       name: "Make",             surface: "Universal bro",                       icon: Zap,           category: "Automation",    hint: "Make Webhook URL" },
+  { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Tråde",   icon: Mail,           category: "Communication" },
+  { provider: "outlook",        name: "Outlook",         surface: "Mail · Kalender",             icon: Mail,           category: "Communication" },
+  { provider: "slack",          name: "Slack",           surface: "Beskeder · Notifikationer",   icon: MessagesSquare, category: "Communication" },
+  { provider: "googlecalendar", name: "Google Calendar", surface: "Møder · Booking",             icon: Calendar,       category: "Calendar" },
+  { provider: "stripe",         name: "Stripe",          surface: "Payments · Subscriptions",    icon: CreditCard,     category: "Finance" },
+  { provider: "hubspot",        name: "HubSpot",         surface: "CRM sync · Leads",            icon: Database,       category: "Sales" },
+  { provider: "pipedrive",      name: "Pipedrive",       surface: "CRM sync · Deals",            icon: Database,       category: "Sales" },
+  { provider: "notion",         name: "Notion",          surface: "Dokumenter · Klient-noter",   icon: FileText,       category: "Documents" },
+  { provider: "googledrive",    name: "Google Drive",    surface: "Filer · Klient-data",         icon: Cloud,          category: "Documents" },
+  { provider: "github",         name: "GitHub",          surface: "Issues · Releases",           icon: Github,         category: "Developer" },
+  { provider: "linkedin",       name: "LinkedIn",        surface: "Outreach · Berigelse",        icon: Linkedin,       category: "Marketing" },
+  { provider: "metaads",        name: "Meta Ads",        surface: "Kampagner · Lead Ads",        icon: BarChart3,      category: "Marketing" },
+  { provider: "shopify",        name: "Shopify",         surface: "Produkter · Ordrer",          icon: Cloud,          category: "Ecommerce" },
 ];
 
 export default function ConnectedAppsPage() {
@@ -79,8 +185,9 @@ export default function ConnectedAppsPage() {
   const disconnectComposio = useDisconnectComposioConnection();
   const syncComposio = useSyncComposioConnection();
 
-  // On return from a Composio OAuth redirect (or just periodically on load),
-  // resolve any connection this tenant left "pending" to its real status.
+  // On return from a Composio connect redirect (or just periodically on
+  // load), resolve any connection this tenant left "pending" to its real
+  // status.
   useEffect(() => {
     const pending = (integrations as (Integration & { composio_connection_id?: string | null })[]).filter(
       (i) => i.status === "pending" && i.composio_connection_id,
@@ -98,16 +205,16 @@ export default function ConnectedAppsPage() {
 
   // Every real Composio toolkit belongs in this catalog, not just the
   // hand-curated set — toolkits already listed above keep their nicer DA
-  // copy/icon/category; every other real toolkit Composio supports gets a
-  // generic entry so it's still searchable and connectable via real OAuth.
+  // copy/icon; every other real toolkit Composio supports gets a generic
+  // entry, categorized from Composio's own metadata, so it's still
+  // searchable and connectable via a real login/API key — never a webhook.
   const curatedProviders = useMemo(() => new Set(catalog.map(c => c.provider)), []);
   const composioBySlug = useMemo(
     () => new Map((toolkitsData?.toolkits ?? []).map(t => [t.slug, t])),
     [toolkitsData],
   );
-  const composioSlugs = useMemo(() => new Set(composioBySlug.keys()), [composioBySlug]);
-  const oauthCapableSlugs = useMemo(
-    () => new Set([...composioBySlug.values()].filter(t => t.composio_managed_auth_schemes?.includes("OAUTH2")).map(t => t.slug)),
+  const connectableSlugs = useMemo(
+    () => new Set([...composioBySlug.values()].filter(t => t.connectable).map(t => t.slug)),
     [composioBySlug],
   );
   const fullCatalog = useMemo(() => {
@@ -118,7 +225,7 @@ export default function ConnectedAppsPage() {
         name: t.name,
         surface: t.meta?.description?.slice(0, 60) ?? "Composio-integration",
         icon: Puzzle,
-        category: "Other" as const,
+        category: categoryFromComposio(t),
       }));
     return [...catalog, ...live];
   }, [toolkitsData, curatedProviders]);
@@ -130,9 +237,9 @@ export default function ConnectedAppsPage() {
 
   const liveCount = integrations.filter(i => i.status === "connected").length;
   const grouped = useMemo(() => {
-    const m = new Map<string, Catalog[]>();
+    const m = new Map<Category, Catalog[]>();
     filtered.forEach(a => m.set(a.category, [...(m.get(a.category) ?? []), a]));
-    return Array.from(m.entries());
+    return CATEGORY_ORDER.filter(cat => m.has(cat)).map(cat => [cat, m.get(cat)!] as const);
   }, [filtered]);
 
   return (
@@ -148,7 +255,7 @@ export default function ConnectedAppsPage() {
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
               Log ind med jeres rigtige konto — vi henter og opdaterer data direkte, ingen manuel opsætning.
-              For systemer uden direkte login kan I stadig bruge en webhook-bro (Zapier, Make, n8n, Activepieces).
+              Alle integrationer forbindes med rigtigt login eller API-nøgle, aldrig en manuel webhook.
             </p>
           </div>
           <div className="flex items-center gap-8 text-sm">
@@ -215,7 +322,7 @@ export default function ConnectedAppsPage() {
                     disconnect.mutate(existing.id);
                   }
                 }}
-                hasComposioOAuth={oauthCapableSlugs.has(c.provider)}
+                canConnect={connectableSlugs.has(c.provider)}
                 logoUrl={composioBySlug.get(c.provider)?.meta?.logo}
               />
             ))}
@@ -230,13 +337,13 @@ export default function ConnectedAppsPage() {
       <footer className="border-t border-border/40 pt-8 flex items-start gap-3 text-sm text-muted-foreground max-w-3xl">
         <Sparkles className="h-4 w-4 mt-0.5 text-primary/70 shrink-0" />
         <p className="leading-relaxed">
-          Workflows og AI-actions affyrer disse webhooks automatisk. Skift backend (Zapier → n8n → Activepieces) uden at ændre workspacet — kontrakten er den samme HTTPS POST.
+          Workflows og AI-actions bruger jeres forbundne konti direkte — ingen separate API-nøgler eller webhooks at vedligeholde.
         </p>
       </footer>
 
       <ConnectDialog
         item={active}
-        existing={active ? byProvider.get(active.provider) : undefined}
+        canConnect={active ? connectableSlugs.has(active.provider) : false}
         onClose={() => setActive(null)}
       />
     </div>
@@ -253,10 +360,10 @@ function Pulse({ value, label, muted }: { value: number; label: string; muted?: 
 }
 
 function AppRow({
-  catalog: c, integration, onConnect, onDisconnect, hasComposioOAuth, logoUrl,
+  catalog: c, integration, onConnect, onDisconnect, canConnect, logoUrl,
 }: {
   catalog: Catalog; integration?: Integration;
-  onConnect: () => void; onDisconnect: () => void; hasComposioOAuth: boolean; logoUrl?: string;
+  onConnect: () => void; onDisconnect: () => void; canConnect: boolean; logoUrl?: string;
 }) {
   const isConnected = integration?.status === "connected";
   const isPending = integration?.status === "pending";
@@ -287,10 +394,14 @@ function AppRow({
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
             <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> Afventer
           </Button>
-        ) : (
+        ) : canConnect ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
-            {hasComposioOAuth ? "Forbind" : "Forbind via webhook"}
+            Forbind
           </Button>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70" title="Kræver jeres egen OAuth-app hos udbyderen">
+            <Lock className="h-3 w-3" /> Kræver opsætning
+          </span>
         )}
       </div>
     </div>
@@ -299,24 +410,13 @@ function AppRow({
 
 
 function ConnectDialog({
-  item, existing, onClose,
-}: { item: Catalog | null; existing?: Integration; onClose: () => void }) {
-  const connect = useConnectWebhook();
+  item, canConnect, onClose,
+}: { item: Catalog | null; canConnect: boolean; onClose: () => void }) {
   const { data: toolkitsData } = useComposioToolkits();
   const createComposioConnection = useCreateComposioConnection();
-  const [url, setUrl] = useState("");
-  const [label, setLabel] = useState("");
-  const [showWebhookFallback, setShowWebhookFallback] = useState(false);
-
-  // Reset on item change
-  useMemo(() => {
-    setUrl((existing?.metadata as { webhook_url?: string } | undefined)?.webhook_url ?? "");
-    setLabel(existing?.account_label ?? "");
-  }, [item?.provider, existing?.id]);
 
   if (!item) return null;
-  const composioToolkitAny = toolkitsData?.toolkits.find((t) => t.slug === item.provider);
-  const composioToolkit = composioToolkitAny?.composio_managed_auth_schemes?.includes("OAUTH2") ? composioToolkitAny : undefined;
+  const composioToolkit = toolkitsData?.toolkits.find((t) => t.slug === item.provider);
 
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
@@ -324,7 +424,7 @@ function ConnectDialog({
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="h-9 w-9 rounded-lg border border-border/50 bg-card flex items-center justify-center">
-              <AppLogo logoUrl={composioToolkitAny?.meta?.logo} icon={item.icon} />
+              <AppLogo logoUrl={composioToolkit?.meta?.logo} icon={item.icon} />
             </div>
             <div>
               <DialogTitle>Forbind {item.name}</DialogTitle>
@@ -334,90 +434,47 @@ function ConnectDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {composioToolkit && !showWebhookFallback ? (
-            <div className="space-y-3">
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
-                <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-                  <CheckCircle2 className="h-3 w-3" /> Rigtig konto-forbindelse
-                </div>
-                Log ind med jeres {item.name}-konto — vi henter og opdaterer data direkte, ingen manuel webhook nødvendig.
+          {canConnect ? (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
+              <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
+                <CheckCircle2 className="h-3 w-3" /> Rigtig konto-forbindelse
               </div>
-              <Button
-                className="w-full gap-2"
-                disabled={createComposioConnection.isPending}
-                onClick={() =>
-                  createComposioConnection.mutate(item.provider, {
-                    onSuccess: (res) => { window.location.href = res.redirectUrl; },
-                  })
-                }
-              >
-                {createComposioConnection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Forbind {item.name}
-              </Button>
-              <button
-                className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
-                onClick={() => setShowWebhookFallback(true)}
-              >
-                Brug webhook i stedet (avanceret)
-              </button>
+              Log ind med jeres {item.name}-konto — vi henter og opdaterer data direkte. Kræver kontoen en API-nøgle i stedet for login, beder {item.name} selv om den på næste skærm.
             </div>
           ) : (
-          <>
-          <div className="rounded-lg border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground leading-relaxed">
-            <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-              <Webhook className="h-3 w-3" /> Open-source bro
+            <div className="rounded-lg border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground leading-relaxed">
+              <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
+                <Lock className="h-3 w-3" /> Kræver avanceret opsætning
+              </div>
+              {item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos {item.name}, ikke bare et login.
             </div>
-            Indsæt en webhook-URL fra <strong>Zapier (Catch Hook)</strong>, <strong>Make</strong>, <strong>n8n</strong> eller <strong>Activepieces</strong>.
-            Workspace sender JSON-events hertil — ingen API-nøgler kræves.
-            {item.hint && <div className="mt-1.5 text-foreground/60">Tip: {item.hint}</div>}
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="wh-url" className="text-xs">Webhook URL</Label>
-            <Input
-              id="wh-url"
-              placeholder="https://hooks.zapier.com/hooks/catch/…"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="wh-label" className="text-xs">Konto-navn (valgfrit)</Label>
-            <Input
-              id="wh-label"
-              placeholder={`fx ${item.name} – produktion`}
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-          </div>
-
-          <a
-            href="https://zapier.com/apps/webhook/help"
-            target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            <ExternalLink className="h-3 w-3" /> Sådan laver du en Catch Hook
-          </a>
-          </>
+          {composioToolkit?.meta?.description && (
+            <a
+              href={`https://mcp.composio.dev/${item.provider}`}
+              target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" /> Om {item.name}-integrationen
+            </a>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Annullér</Button>
-          {(!composioToolkit || showWebhookFallback) && (
+          {canConnect && (
             <Button
+              className="gap-2"
+              disabled={createComposioConnection.isPending}
               onClick={() =>
-                connect.mutate(
-                  { provider: item.provider, name: item.name, webhookUrl: url.trim(), accountLabel: label.trim() || undefined },
-                  { onSuccess: () => onClose() }
-                )
+                createComposioConnection.mutate(item.provider, {
+                  onSuccess: (res) => { window.location.href = res.redirectUrl; },
+                })
               }
-              disabled={!url.trim() || connect.isPending}
             >
-              {connect.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-              Forbind
+              {createComposioConnection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Forbind {item.name}
             </Button>
           )}
         </DialogFooter>

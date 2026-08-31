@@ -31,36 +31,66 @@ async function composioFetch(path: string, init?: RequestInit) {
 }
 
 // Composio-managed auth configs are per-toolkit, shared across every
-// tenant (they just describe "how do we OAuth with Gmail"), not per-company
-// secrets — so we look one up before creating a duplicate.
+// tenant (they just describe "how do we auth with Gmail" / "how do we auth
+// with Shopify"), not per-company secrets — so we look one up before
+// creating a duplicate.
 //
-// Not every toolkit supports one-click Composio-managed OAuth (e.g. Shopify
-// needs a per-store API key or the tenant's own OAuth app — Composio can't
-// broker that centrally). We check this BEFORE attempting connect, so the
-// UI can show an honest "not available as one-click yet" instead of a
-// confusing 400 from Composio.
-async function getOrCreateAuthConfig(toolkitSlug: string): Promise<string> {
-  const toolkitInfo = await composioFetch(`/toolkits/${encodeURIComponent(toolkitSlug)}`);
-  const managedSchemes = (toolkitInfo.body as { composio_managed_auth_schemes?: string[] })?.composio_managed_auth_schemes ?? [];
-  if (!managedSchemes.includes("OAUTH2")) {
-    throw new Error(
-      `${toolkitSlug} understøtter ikke automatisk login endnu — denne integration kræver en API-nøgle eller jeres egen OAuth-app hos udbyderen. Brug webhook-broen i stedet indtil videre.`,
-    );
-  }
+// Every toolkit gets a real, working connect flow through this function:
+// - If Composio brokers OAuth2 centrally (its own shared app credentials),
+//   we use that.
+// - Otherwise, if the toolkit supports any direct-credential scheme
+//   (API key, bearer token, basic auth — the vast majority of toolkits
+//   that aren't OAuth2), we create a "use_custom_auth" config for that
+//   scheme. Composio's own hosted connect page then collects the actual
+//   credential from the user — we never see or store it.
+// - Only toolkits that require the tenant's own OAuth app (their own
+//   client_id/client_secret registered with the provider) can't be
+//   connected in one click yet — that's a real, honest limit, not a
+//   fallback to a manual webhook bridge.
+const NON_OAUTH_SCHEME_PREFERENCE = ["API_KEY", "BEARER_TOKEN", "BASIC", "BASIC_WITH_JWT"];
 
+async function getOrCreateAuthConfig(toolkitSlug: string): Promise<string> {
   const existing = await composioFetch(`/auth_configs?toolkit_slug=${encodeURIComponent(toolkitSlug)}&limit=1`);
   const items = (existing.body as { items?: Array<{ id: string }> })?.items ?? [];
   if (items[0]?.id) return items[0].id;
 
+  const toolkitInfo = await composioFetch(`/toolkits/${encodeURIComponent(toolkitSlug)}`);
+  const info = toolkitInfo.body as { composio_managed_auth_schemes?: string[]; auth_schemes?: string[] };
+  const managedSchemes = info?.composio_managed_auth_schemes ?? [];
+  const allSchemes = info?.auth_schemes ?? [];
+
+  let authConfigBody: Record<string, unknown>;
+  if (managedSchemes.includes("OAUTH2")) {
+    authConfigBody = { type: "use_composio_managed_auth" };
+  } else {
+    const scheme = NON_OAUTH_SCHEME_PREFERENCE.find((s) => allSchemes.includes(s));
+    if (!scheme) {
+      throw new Error(
+        `${toolkitSlug} kræver jeres egen OAuth-app hos udbyderen og kan ikke forbindes automatisk endnu.`,
+      );
+    }
+    authConfigBody = { type: "use_custom_auth", authScheme: scheme, credentials: {} };
+  }
+
   const created = await composioFetch("/auth_configs", {
     method: "POST",
-    body: JSON.stringify({ toolkit: { slug: toolkitSlug }, auth_config: { type: "use_composio_managed_auth" } }),
+    body: JSON.stringify({ toolkit: { slug: toolkitSlug }, auth_config: authConfigBody }),
   });
   const authConfigId = (created.body as { auth_config?: { id?: string } })?.auth_config?.id;
   if (!created.ok || !authConfigId) {
     throw new Error(`Kunne ikke konfigurere ${toolkitSlug}: ${JSON.stringify(created.body)}`);
   }
   return authConfigId;
+}
+
+// Same scheme logic as getOrCreateAuthConfig, exposed read-only so the
+// frontend can decide whether to show a working "Forbind" button at all,
+// without creating an auth config just to render the catalog.
+function toolkitIsConnectable(t: { composio_managed_auth_schemes?: string[]; auth_schemes?: string[] }): boolean {
+  const managed = t.composio_managed_auth_schemes ?? [];
+  if (managed.includes("OAUTH2")) return true;
+  const all = t.auth_schemes ?? [];
+  return NON_OAUTH_SCHEME_PREFERENCE.some((s) => all.includes(s));
 }
 
 // action categorization drives approval requirements later — kept generic,
@@ -150,10 +180,12 @@ Deno.serve(async (req) => {
   try {
     // ─── Catalog: list toolkits available to connect ───
     if (action === "list-toolkits") {
-      const r = await composioFetch("/toolkits?limit=100");
+      const limit = Math.min(Math.max((body.limit as number) || 100, 1), 300);
+      const r = await composioFetch(`/toolkits?limit=${limit}`);
       if (!r.ok) throw new Error(`Kunne ikke hente integrationskatalog: ${JSON.stringify(r.body)}`);
-      const items = (r.body as { items?: unknown[] })?.items ?? [];
-      return jsonResponse({ toolkits: items });
+      const items = (r.body as { items?: Array<{ composio_managed_auth_schemes?: string[]; auth_schemes?: string[] }> })?.items ?? [];
+      const withConnectable = items.map((t) => ({ ...t, connectable: toolkitIsConnectable(t) }));
+      return jsonResponse({ toolkits: withConnectable });
     }
 
     // ─── This tenant's connections (local registry — no Composio call needed) ───
@@ -404,6 +436,7 @@ Deno.serve(async (req) => {
         throw new Error(message);
       }
     }
+
 
     throw new Error(`Unknown action: ${action}`);
   } catch (err) {

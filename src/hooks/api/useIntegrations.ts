@@ -185,14 +185,19 @@ async function callComposioIntegration<T = unknown>(action: string, body: Record
 export interface ComposioToolkit {
   name: string;
   slug: string;
-  meta?: { description?: string; tools_count?: number; logo?: string };
+  meta?: { description?: string; tools_count?: number; logo?: string; categories?: Array<{ id: string; name: string }> };
   composio_managed_auth_schemes?: string[];
+  auth_schemes?: string[];
+  // Server-computed: can this toolkit actually be connected in one click
+  // today (real OAuth2 or a direct-credential scheme Composio can broker),
+  // as opposed to needing the tenant's own OAuth app registered upstream.
+  connectable?: boolean;
 }
 
 export function useComposioToolkits() {
   return useQuery({
     queryKey: ["composio-toolkits"],
-    queryFn: () => callComposioIntegration<{ toolkits: ComposioToolkit[] }>("list-toolkits"),
+    queryFn: () => callComposioIntegration<{ toolkits: ComposioToolkit[] }>("list-toolkits", { limit: 300 }),
     staleTime: 10 * 60_000,
   });
 }
