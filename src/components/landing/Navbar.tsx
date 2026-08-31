@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Shield, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import logo from '@/assets/logo.png';
+import { BrandWordmark } from '@/components/brand/BrandMark';
 import LanguagePicker from '@/components/LanguagePicker';
 import { useI18n, isLocale } from '@/lib/i18n';
 
@@ -38,14 +38,8 @@ export function Navbar() {
         <div className="h-[54px] flex items-center justify-between gap-10">
           {/* Brand */}
           <div className="flex items-center gap-10">
-            <Link to={`/${locale}`} className="flex items-center gap-2.5 group shrink-0">
-              <div className="relative">
-                <img src={logo} alt="AI Agency Danmark" className="h-[26px] w-auto" loading="eager" width="26" height="26" />
-                <span className="absolute -inset-2 rounded-full bg-primary/15 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <span className="font-display text-[14px] font-semibold text-foreground tracking-[-0.025em] hidden sm:inline leading-none">
-                AI Agency<span className="text-primary">.</span>
-              </span>
+            <Link to={`/${locale}`} className="group shrink-0">
+              <BrandWordmark compact className="[&>span:last-child]:hidden sm:[&>span:last-child]:block" />
             </Link>
 
             {/* Inline nav — minimal, tight, premium */}

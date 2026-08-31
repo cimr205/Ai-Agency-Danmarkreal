@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink as RouterNavLink, useLocation, useNavigate, useParams } from "react-router-dom";
+import { NavLink as RouterNavLink, useNavigate, useParams } from "react-router-dom";
 import { isLocale, useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,15 +11,15 @@ import {
 import {
   LogOut, User, Settings, Menu, type LucideIcon,
   LayoutDashboard, Building2, Calendar, CheckSquare, Inbox,
-  Target, Briefcase, Sparkles,
+  Target, Briefcase, Radar,
   Send, Phone, Megaphone,
   FileText, CreditCard,
   UserCheck, Clock, CalendarDays, CalendarClock, Wallet, UserPlus, BarChart3,
-  Workflow, Plug, Brain, Zap, Bot, BookOpen,
+  Workflow, Plug, Activity, Route, MessageSquareText, BookOpen, ServerCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
 import { useMyBlockedModules, type ModuleKey } from "@/hooks/api/useModuleAccess";
+import { BrandWordmark } from "@/components/brand/BrandMark";
 
 interface NavItem {
   label: string;
@@ -54,7 +54,7 @@ function useNavGroups(): NavGroup[] {
       items: [
         { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target, dataTour: "leads" },
         { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase, dataTour: "pipeline" },
-        { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Sparkles },
+        { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Radar },
         { label: t("nav.coldCaller") || "Cold caller", path: "marketing/cold-caller", icon: Phone },
       ],
     },
@@ -96,10 +96,10 @@ function useNavGroups(): NavGroup[] {
         { label: "Studio", path: "workspace/studio", icon: Workflow },
         { label: "Forbundne apps", path: "workspace/connected-apps", icon: Plug },
         { label: "Dokumenter", path: "workspace/documents", icon: FileText },
-        { label: "AI-udbyder", path: "settings/ai", icon: Bot },
-        { label: "Intelligens", path: "workspace/intelligence", icon: Brain },
-        { label: "Autopilot", path: "autopilot", icon: Zap },
-        { label: t("nav.clowdbot") || "Assistent", path: "pa", icon: Bot, dataTour: "pa" },
+        { label: "Modeludbyder", path: "settings/ai", icon: ServerCog },
+        { label: "Signaler", path: "workspace/intelligence", icon: Activity },
+        { label: "Autopilot", path: "autopilot", icon: Route },
+        { label: t("nav.clowdbot") || "Assistent", path: "pa", icon: MessageSquareText, dataTour: "pa" },
         { label: "Hjælp", path: "help", icon: BookOpen },
         { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings, dataTour: "settings" },
       ],
@@ -128,17 +128,16 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
   const [filter, setFilter] = useState<string | null>(null);
 
   const toggleFilter = (label: string) => {
-    setFilter(prev => {
-      const next = prev === label ? null : label;
-      if (next) {
-        // Clicking a category should land you in it, not just filter the
-        // sidebar — otherwise the tab looks broken (URL/content never change).
-        const targetGroup = groups.find(g => g.label === next);
-        const firstItem = targetGroup?.items[0];
-        if (firstItem) { navigate(`${base}/${firstItem.path}`); onNavigate?.(); }
-      }
-      return next;
-    });
+    const next = filter === label ? null : label;
+    setFilter(next);
+    if (!next) return;
+
+    const targetGroup = groups.find(g => g.label === next);
+    const firstItem = targetGroup?.items[0];
+    if (firstItem) {
+      navigate(`${base}/${firstItem.path}`);
+      onNavigate?.();
+    }
   };
 
   const jumpLabels = [
@@ -152,28 +151,23 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar-background text-sidebar-foreground">
-      {/* Header: wordmark + filter pills */}
-      <div className="px-4 pt-5 pb-4 border-b border-sidebar-border shrink-0">
-        <div className="flex items-center gap-2.5 mb-4">
-          <img src={logo} alt="" className="h-6 w-6 object-contain shrink-0 opacity-95" />
-          <div
-            className="font-normal italic text-[18px] leading-none truncate"
-            style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}
-          >
-            AI Agency
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex h-[68px] shrink-0 items-center border-b border-sidebar-border px-4">
+        <BrandWordmark />
+      </div>
+
+      {/* Domain switcher: a compact index, not another row of decorative pills. */}
+      <div className="shrink-0 border-b border-sidebar-border px-4 py-3">
+        <div className="grid grid-cols-4 gap-0">
           {jumpLabels.map((jl) => (
             <button
               key={jl.key}
               type="button"
               onClick={() => toggleFilter(jl.label)}
               className={cn(
-                "text-[10.5px] font-medium px-2.5 py-1 rounded-full transition-colors",
+                "border-b px-1 py-1.5 text-center font-mono text-[9px] uppercase tracking-[0.1em] transition-colors",
                 filter === jl.label
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-sidebar-accent text-sidebar-foreground/55 hover:text-sidebar-foreground",
+                  ? "border-primary text-sidebar-foreground"
+                  : "border-transparent text-sidebar-foreground/40 hover:border-sidebar-border hover:text-sidebar-foreground",
               )}
             >
               {jl.label}
@@ -182,13 +176,12 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      {/* Nav: icon + label rows, soft rounded active pill */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {filter && (
           <button
             type="button"
             onClick={() => setFilter(null)}
-            className="flex items-center gap-1.5 text-[11.5px] text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors px-1"
+            className="flex items-center gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.12em] text-sidebar-foreground/45 transition-colors hover:text-sidebar-foreground"
           >
             ← {locale === "da" ? "Alle" : "All"}
           </button>
@@ -196,7 +189,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
         {visibleGroups.map((group, gi) => (
           <div key={group.label ?? `group-${gi}`}>
             {group.label && (
-              <div className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-sidebar-foreground/40">
+              <div className="mb-2 px-3 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-sidebar-foreground/35">
                 {group.label}
               </div>
             )}
@@ -209,10 +202,10 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                     data-tour={item.dataTour}
                     end
                     className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-xl text-[13.5px]",
+                      "relative flex items-center gap-3 border border-transparent px-3 py-2 text-[13px] transition-colors",
                       isActive
-                        ? "bg-primary/15 text-primary font-medium"
-                        : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
+                        ? "border-sidebar-border bg-sidebar-accent text-sidebar-foreground font-medium before:absolute before:-left-px before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:bg-primary"
+                        : "text-sidebar-foreground/58 hover:border-sidebar-border/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                     )}
                   >
                     <item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.75} />
@@ -225,14 +218,13 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      {/* Footer: user + account menu */}
-      <div className="p-3 border-t border-sidebar-border shrink-0 bg-sidebar-background">
+      <div className="shrink-0 border-t border-sidebar-border bg-sidebar-background p-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 px-2 py-1.5 w-full rounded-xl hover:bg-sidebar-accent transition-colors">
-              <Avatar className="h-7 w-7 shrink-0">
+            <button className="flex w-full items-center gap-3 border border-transparent px-2 py-2 transition-colors hover:border-sidebar-border hover:bg-sidebar-accent">
+              <Avatar className="h-8 w-8 shrink-0 rounded-sm">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/15 text-primary text-[11px]">{initials}</AvatarFallback>
+                <AvatarFallback className="rounded-sm bg-primary text-[10px] font-semibold text-primary-foreground">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-[13px] font-medium truncate leading-tight">{profile?.full_name || profile?.email}</p>
@@ -272,7 +264,7 @@ export function WorkspaceRail(_props: Props) {
   return (
     // Desktop: permanently expanded, normal flex sibling — never overlaps content, always legible
     <aside
-      className="hidden md:flex md:flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-sidebar-border/60"
+      className="sticky top-0 hidden h-screen w-[244px] shrink-0 border-r border-sidebar-border md:flex md:flex-col"
       aria-label="Workspace navigation"
     >
       <RailContent />
@@ -287,13 +279,13 @@ export function WorkspaceRailMobileTrigger() {
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
       <SheetTrigger asChild>
         <button
-          className="md:hidden grid place-items-center h-10 w-10 rounded-2xl bg-card border border-border/60 text-muted-foreground hover:text-foreground shrink-0"
+          className="grid h-9 w-9 shrink-0 place-items-center border border-border bg-card text-muted-foreground hover:text-foreground md:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-4 w-4" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-72">
+      <SheetContent side="left" className="w-[280px] p-0">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <RailContent onNavigate={() => setMobileOpen(false)} />
       </SheetContent>

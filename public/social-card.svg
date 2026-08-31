@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#F2F0E9"/>
+  <path d="M0 90H1200M0 180H1200M0 270H1200M0 360H1200M0 450H1200M0 540H1200" stroke="#171713" stroke-opacity=".06"/>
+  <path d="M90 0V630M180 0V630M270 0V630M360 0V630M450 0V630M540 0V630M630 0V630M720 0V630M810 0V630M900 0V630M990 0V630M1080 0V630" stroke="#171713" stroke-opacity=".06"/>
+  <rect x="72" y="65" width="62" height="62" rx="4" fill="#171713"/>
+  <path d="M86 112 99.5 80h6.6l12.4 32h-8.4l-2.4-6.7H95.2l-2.5 6.7H86Zm11.5-13.7h8l-3.8-11-4.2 11Z" fill="#F2F0E9"/>
+  <path d="M118 79v11" stroke="#F05A28" stroke-width="5"/>
+  <text x="158" y="91" fill="#171713" font-family="Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="3">AGENCY DANMARK</text>
+  <text x="158" y="116" fill="#6C6A63" font-family="monospace" font-size="12" letter-spacing="4">BUSINESS SYSTEMS</text>
+  <rect x="72" y="209" width="12" height="12" fill="#F05A28"/>
+  <text x="103" y="220" fill="#6C6A63" font-family="monospace" font-size="14" letter-spacing="4">ET SYSTEM. HELE VIRKSOMHEDEN.</text>
+  <text x="72" y="322" fill="#171713" font-family="Arial, sans-serif" font-size="74" font-weight="700" letter-spacing="-3">Drift uden friktion.</text>
+  <text x="72" y="395" fill="#171713" font-family="Arial, sans-serif" font-size="74" font-weight="700" letter-spacing="-3">Vækst med retning.</text>
+  <text x="75" y="470" fill="#6C6A63" font-family="Arial, sans-serif" font-size="24">CRM, HR, marketing og økonomi samlet i én arbejdsflade.</text>
+  <path d="M75 539H1125" stroke="#171713" stroke-opacity=".2"/>
+  <text x="75" y="579" fill="#171713" font-family="monospace" font-size="14" letter-spacing="2">AIAGENCYDANMARK.DK</text>
+  <text x="1125" y="579" fill="#F05A28" font-family="monospace" font-size="14" text-anchor="end" letter-spacing="2">KØBENHAVN / DK</text>
+</svg>

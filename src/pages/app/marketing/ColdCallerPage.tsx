@@ -204,11 +204,6 @@ export default function ColdCallerPage() {
     ? Math.round((processedLeadIds.size / leadsWithPhone.length) * 100)
     : 0;
 
-  const platformMessage = platform === 'android'
-    ? t('devicePowerDialer.platform.android')
-    : platform === 'ios'
-      ? t('devicePowerDialer.platform.ios')
-      : t('devicePowerDialer.platform.web');
   const canDialFromThisDevice = isDialerConnectionReady(connectedPhone, platform);
 
   const clearCallForm = useCallback(() => {
@@ -336,36 +331,55 @@ export default function ColdCallerPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Smartphone className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">{t('devicePowerDialer.title')}</h1>
-              <p className="text-sm text-muted-foreground">{t('devicePowerDialer.subtitle')}</p>
-            </div>
+    <div className="space-y-8">
+      <header className="grid gap-6 border-b border-border pb-7 lg:grid-cols-[minmax(0,0.8fr)_minmax(440px,1.2fr)] lg:items-start">
+        <div className="pt-1">
+          <div className="mb-5 flex items-center gap-3 font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="h-2 w-2 bg-primary" aria-hidden="true" />
+            {t('nav.crm')} / {t('devicePowerDialer.queue.title')}
           </div>
-          <div className="max-w-3xl space-y-2">
+          <h1 className="max-w-xl text-4xl font-semibold leading-[0.95] tracking-[-0.045em] sm:text-5xl">
+            {t('devicePowerDialer.title')}
+          </h1>
+          <p className="mt-4 max-w-xl text-[15px] leading-6 text-muted-foreground">
+            {t('devicePowerDialer.subtitle')}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            <span>{remainingQueue.length} {t('devicePowerDialer.stats.remaining')}</span>
+            <span className="h-3 w-px bg-border" aria-hidden="true" />
+            <span>{platform.toUpperCase()}</span>
+          </div>
+          {processedLeadIds.size > 0 ? (
+            <Button variant="outline" size="sm" onClick={handleResetQueue} className="mt-6 gap-2 rounded-none shadow-none">
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('devicePowerDialer.resetQueue')}
+            </Button>
+          ) : null}
+        </div>
+
+        <div className="border-l-2 border-primary pl-4 sm:pl-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{t('devicePowerDialer.relay.chooseCombination')}</p>
+              <p className="mt-1 text-sm font-medium">
+                {t(platform === 'web' ? 'devicePowerDialer.pairing.desktopTitle' : 'devicePowerDialer.pairing.mobileTitle')}
+              </p>
+            </div>
+            <span className="border border-border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+              {platform.toUpperCase()}
+            </span>
+          </div>
+          <div className="space-y-2">
             <PhoneDeviceConnection
               platform={platform}
               connectedPhone={connectedPhone}
               onConnectionChange={setConnectedPhone}
             />
-            <p className="px-1 text-xs text-muted-foreground">{platformMessage}</p>
           </div>
         </div>
-        {processedLeadIds.size > 0 ? (
-          <Button variant="outline" onClick={handleResetQueue} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            {t('devicePowerDialer.resetQueue')}
-          </Button>
-        ) : null}
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('devicePowerDialer.stats.label')}>
+      <section className="grid border-y border-border bg-card/70 sm:grid-cols-2 sm:divide-x sm:divide-border xl:grid-cols-4" aria-label={t('devicePowerDialer.stats.label')}>
         <StatCard icon={Users} label={t('devicePowerDialer.stats.remaining')} value={remainingQueue.length} />
         <StatCard icon={CheckCircle2} label={t('devicePowerDialer.stats.session')} value={processedLeadIds.size} />
         <StatCard icon={PhoneCall} label={t('devicePowerDialer.stats.today')} value={callsToday} />
@@ -380,19 +394,28 @@ export default function ColdCallerPage() {
       ) : null}
 
       {leadsWithPhone.length === 0 ? (
-        <Card className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <PhoneOff className="h-6 w-6 text-muted-foreground" />
+        <Card className="relative min-h-[380px] overflow-hidden border-border bg-card p-7 shadow-none sm:p-10">
+          <div className="absolute right-6 top-5 font-mono text-[72px] font-semibold leading-none tracking-[-0.08em] text-foreground/[0.035]" aria-hidden="true">00</div>
+          <div className="flex h-full min-h-[300px] max-w-xl flex-col justify-end">
+            <div className="mb-8 flex h-10 w-10 items-center justify-center border border-border bg-background">
+              <PhoneOff className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="mb-3 font-mono text-[9px] uppercase tracking-[0.2em] text-primary">{t('devicePowerDialer.empty.title')}</p>
+            <h2 className="text-3xl font-semibold tracking-[-0.035em]">{t('devicePowerDialer.empty.title')}</h2>
+            <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">{t('devicePowerDialer.empty.description')}</p>
+            <div className="mt-6 flex items-center gap-4">
+              <Button asChild className="rounded-none px-5 shadow-none hover:shadow-none">
+                <Link to={`/${locale}/app/crm/leads`}>
+                  {t('devicePowerDialer.empty.action')}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
-          <h2 className="text-lg font-semibold">{t('devicePowerDialer.empty.title')}</h2>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">{t('devicePowerDialer.empty.description')}</p>
-          <Button asChild className="mt-5">
-            <Link to={`/${locale}/app/crm/leads`}>{t('devicePowerDialer.empty.action')}</Link>
-          </Button>
         </Card>
       ) : remainingQueue.length === 0 ? (
-        <Card className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+        <Card className="flex min-h-[360px] flex-col items-center justify-center border-border p-8 text-center shadow-none">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center border border-emerald-500/30 bg-emerald-500/10">
             <CheckCircle2 className="h-7 w-7 text-emerald-500" />
           </div>
           <h2 className="text-lg font-semibold">{t('devicePowerDialer.complete.title')}</h2>
@@ -404,7 +427,7 @@ export default function ColdCallerPage() {
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-border shadow-none">
             <div className="border-b border-border/60 px-5 py-4">
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>{t('devicePowerDialer.progress')}</span>
@@ -417,7 +440,7 @@ export default function ColdCallerPage() {
               <div className="p-5 sm:p-7">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-border bg-background font-mono text-sm font-semibold text-primary">
                       {activeLead.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -438,7 +461,7 @@ export default function ColdCallerPage() {
                 </div>
 
                 {activeLead.notes ? (
-                  <div className="mt-5 rounded-xl border border-border/60 bg-muted/20 p-4">
+                  <div className="mt-5 border border-border bg-muted/20 p-4">
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       {t('devicePowerDialer.current.leadNotes')}
                     </p>
@@ -451,7 +474,7 @@ export default function ColdCallerPage() {
                     <Button
                       asChild
                       size="xl"
-                      className="h-16 w-full rounded-2xl bg-emerald-600 text-lg text-white shadow-lg shadow-emerald-950/20 hover:bg-emerald-700"
+                      className="h-16 w-full rounded-none bg-foreground text-lg text-background shadow-none hover:bg-foreground/90 hover:shadow-none"
                     >
                       <a href={getTelephoneUri(activeLead.phone ?? '')} onClick={handleCallHandoff}>
                         <PhoneCall className="h-6 w-6" />
@@ -465,7 +488,7 @@ export default function ColdCallerPage() {
                     </p>
                   </div>
                 ) : !pendingCall ? (
-                  <div className="mt-7 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
+                  <div className="mt-7 border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
                     <Smartphone className="mx-auto h-7 w-7 text-primary" />
                     <p className="mt-3 text-sm font-semibold">{t('devicePowerDialer.pairing.callLockedTitle')}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -557,7 +580,7 @@ export default function ColdCallerPage() {
             ) : null}
           </Card>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-border shadow-none">
             <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
@@ -594,7 +617,7 @@ export default function ColdCallerPage() {
         </div>
       )}
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-border shadow-none">
         <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
           <History className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold">{t('devicePowerDialer.history.title')}</h2>
@@ -647,14 +670,14 @@ function StatCard({
   value: number;
 }) {
   return (
-    <Card className="flex items-center gap-3 p-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
+    <div className="flex min-h-[92px] items-center gap-4 border-b border-border px-5 py-4 last:border-b-0 sm:border-b-0">
+      <div className="flex h-8 w-8 items-center justify-center border border-border bg-background text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" />
       </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold tabular-nums">{value}</p>
+      <div className="min-w-0">
+        <p className="truncate font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+        <p className="mt-1 text-2xl font-semibold tabular-nums tracking-[-0.04em]">{value.toString().padStart(2, '0')}</p>
       </div>
-    </Card>
+    </div>
   );
 }

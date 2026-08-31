@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { isLocale } from "@/lib/i18n";
 import { useAmbientInsights } from "@/hooks/useAmbientInsights";
-import { AlertTriangle, ArrowUpRight, Lightbulb, Sparkles, PanelRightClose, PanelRightOpen, Bell } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Lightbulb, Info, PanelRightClose, PanelRightOpen, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AmbientAIBar } from "./AmbientAIBar";
 
-const ICON = { risk: AlertTriangle, opportunity: ArrowUpRight, suggestion: Lightbulb, info: Sparkles };
+const ICON = { risk: AlertTriangle, opportunity: ArrowUpRight, suggestion: Lightbulb, info: Info };
 const TONE = {
   risk: "text-destructive",
   opportunity: "text-emerald-400",
@@ -19,7 +19,7 @@ const TONE = {
  * AmbientInsightsRibbon + AmbientPresence rows that cluttered the top chrome.
  */
 export function ContextPanel() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { data: insights } = useAmbientInsights();
   const navigate = useNavigate();
   const params = useParams();
@@ -29,10 +29,10 @@ export function ContextPanel() {
 
   if (!open) {
     return (
-      <aside className="hidden lg:flex sticky top-0 h-screen w-10 shrink-0 border-l border-border/60 bg-background/40 backdrop-blur-sm flex-col items-center py-3 gap-2">
+      <aside className="sticky top-0 hidden h-screen w-11 shrink-0 flex-col items-center gap-2 border-l border-border bg-background py-3 lg:flex">
         <button
           onClick={() => setOpen(true)}
-          className="grid place-items-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+          className="grid h-8 w-8 place-items-center border border-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground"
           aria-label="Open context panel"
         >
           <PanelRightOpen className="h-4 w-4" />
@@ -50,10 +50,10 @@ export function ContextPanel() {
   }
 
   return (
-    <aside className="hidden lg:flex sticky top-0 h-screen w-72 shrink-0 border-l border-border/60 bg-background/40 backdrop-blur-sm flex-col">
+    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-l border-border bg-background lg:flex">
       <div className="h-11 px-3 flex items-center justify-between border-b border-border/40 shrink-0">
         <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/70">
-          Kontekst
+          Signaler
         </span>
         <button
           onClick={() => setOpen(false)}
@@ -68,7 +68,7 @@ export function ContextPanel() {
         {/* AI quick trigger */}
         <section className="space-y-2">
           <h3 className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">
-            AI handlinger
+            Handlinger
           </h3>
           <AmbientAIBar />
         </section>
