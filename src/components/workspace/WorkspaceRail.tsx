@@ -180,7 +180,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 "flex h-[58px] flex-col items-start justify-center gap-1 px-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-25",
                 activeArea === workspace.id
-                  ? "bg-sidebar-foreground text-sidebar-background"
+                  ? "bg-sidebar-foreground text-sidebar"
                   : "text-sidebar-foreground/45 hover:bg-sidebar-accent hover:text-sidebar-foreground",
               )}
             >
@@ -219,7 +219,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                     className={({ isActive }) => cn(
                       "group relative grid min-h-9 grid-cols-[24px_minmax(0,1fr)_18px] items-center gap-2 px-2.5 text-[12.5px] transition-colors",
                       isActive
-                        ? "bg-sidebar-foreground font-medium text-sidebar-background"
+                        ? "bg-sidebar-foreground font-medium text-sidebar"
                         : "text-sidebar-foreground/62 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     )}
                   >
@@ -227,7 +227,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                       <>
                         <span className={cn(
                           "font-mono text-[8px] tabular-nums tracking-[0.12em]",
-                          isActive ? "text-sidebar-background/45" : "text-sidebar-foreground/28",
+                          isActive ? "text-sidebar/45" : "text-sidebar-foreground/28",
                         )}>
                           {String(itemIndex + 1).padStart(2, "0")}
                         </span>
