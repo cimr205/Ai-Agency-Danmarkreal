@@ -3,11 +3,11 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, CreditCard,
   Calendar, ClipboardList, Mail, Settings,
   TrendingUp, Clock, LogOut, Target,
-  Megaphone, AudioLines, Send, Radar, Phone, Route, Inbox, MessageSquareText,
+  Megaphone, Bot, Send, Sparkles, Phone, Zap,
   UserCheck, CalendarDays, Wallet, UserPlus, Activity, BarChart3, CalendarClock,
   Webhook, BookOpen, Menu,
 } from "lucide-react";
-import { BrandWordmark } from '@/components/brand/BrandMark';
+import logo from '@/assets/logo.png';
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useParams } from "react-router-dom";
@@ -38,15 +38,15 @@ function useNavData() {
     { title: t('nav.leads'), url: "crm/leads", icon: Users },
     { title: t('nav.deals'), url: "crm/deals", icon: Briefcase },
     { title: t('nav.pipeline'), url: "crm/pipeline", icon: TrendingUp },
-    { title: t('nav.leadGeneration'), url: "crm/lead-generation", icon: Radar },
+    { title: t('nav.leadGeneration'), url: "crm/lead-generation", icon: Sparkles },
     { title: t('nav.icp') || "ICP Finder", url: "crm/icp", icon: Target },
   ];
 
   const marketingItems: NavItem[] = [
     { title: t('nav.metaAds'), url: "marketing/meta-ads", icon: Megaphone },
     { title: t('nav.coldCaller'), url: "marketing/cold-caller", icon: Phone },
-    { title: t('nav.voiceAgent') || 'Voice Agent', url: "marketing/voice-agent", icon: AudioLines },
-    { title: t('nav.smartInbox'), url: "email/emails", icon: Inbox },
+    { title: t('nav.voiceAgent') || 'Voice Agent', url: "marketing/voice-agent", icon: Bot },
+    { title: t('nav.smartInbox'), url: "email/emails", icon: Sparkles },
     { title: t('nav.bulkEmail'), url: "email/bulk", icon: Send },
     { title: t('nav.emailTemplates'), url: "email/templates", icon: FileText },
   ];
@@ -82,8 +82,8 @@ function useNavData() {
   ];
 
   const systemItems: NavItem[] = [
-    { title: "Autopilot", url: "autopilot", icon: Route },
-    { title: t('nav.clowdbot'), url: "pa", icon: MessageSquareText },
+    { title: "Autopilot", url: "autopilot", icon: Zap },
+    { title: t('nav.clowdbot'), url: "pa", icon: Bot },
     { title: 'Hjælpecenter', url: "help", icon: BookOpen },
     { title: t('nav.settings'), url: "settings/company", icon: Settings },
     ...(isOwner ? [{ title: t('nav.webhooks'), url: "settings/webhooks", icon: Webhook }] : []),
@@ -122,8 +122,17 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-[68px] shrink-0 items-center border-b border-sidebar-border px-4">
-        <BrandWordmark />
+      {/* Header: logo + product name, always fully legible */}
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-sidebar-border shrink-0">
+        <img src={logo} alt="AI Agency Danmark" className="h-8 w-8 rounded-md shrink-0" />
+        <div className="min-w-0">
+          <div className="font-display font-semibold text-sm text-sidebar-foreground leading-tight truncate">
+            AI Agency Danmark
+          </div>
+          <div className="text-[11px] text-sidebar-foreground/50 leading-tight truncate">
+            {t('appName') === 'AI Agency Danmark' ? (locale === 'da' ? 'Alt-i-ét workspace' : 'All-in-one workspace') : t('appName')}
+          </div>
+        </div>
       </div>
 
       {/* Nav: solid background, generous contrast, clearly separated groups */}

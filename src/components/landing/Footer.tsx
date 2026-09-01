@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { BrandWordmark } from '@/components/brand/BrandMark';
+import logo from '@/assets/logo.png';
 import { useI18n, isLocale } from '@/lib/i18n';
 import { ArrowUpRight } from 'lucide-react';
 
@@ -56,8 +56,11 @@ export function Footer() {
         {/* Meta row */}
         <div className="grid grid-cols-12 gap-6 pt-12 border-t border-foreground/[0.06]">
           <div className="col-span-12 lg:col-span-4 flex flex-col gap-3">
-            <Link to={`/${locale}`}>
-              <BrandWordmark compact />
+            <Link to={`/${locale}`} className="flex items-center gap-2.5">
+              <img src={logo} alt="AI Agency Danmark logo" className="h-6 w-auto opacity-70" loading="lazy" width="24" height="24" />
+              <span className="font-display text-[14px] font-semibold text-foreground tracking-[-0.02em]">
+                AI Agency<span className="text-primary">.</span>
+              </span>
             </Link>
             <span className="text-[11px] text-muted-foreground/50 font-mono mt-2">
               CVR 45949923 · København, DK
