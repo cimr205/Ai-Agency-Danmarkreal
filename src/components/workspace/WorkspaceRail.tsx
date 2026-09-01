@@ -200,16 +200,16 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
         {visibleGroups.map((group, gi) => (
           <div key={group.label ?? `group-${gi}`}>
             <div className="mb-2.5 flex items-center gap-2 px-2">
-              <span className="font-mono text-[8px] tabular-nums tracking-[0.16em] text-primary">
-                {String(gi + 1).padStart(2, "0")}
-              </span>
-              <span className="font-mono text-[8px] font-medium uppercase tracking-[0.2em] text-sidebar-foreground/38">
+              <span className="font-mono text-[8px] font-medium uppercase tracking-[0.2em] text-sidebar-foreground/42">
                 {group.label || (locale === "da" ? "Fælles" : "Workspace")}
               </span>
               <span className="h-px flex-1 bg-sidebar-border" />
+              <span className="font-mono text-[8px] tabular-nums tracking-[0.12em] text-sidebar-foreground/28">
+                {String(group.items.length).padStart(2, "0")}
+              </span>
             </div>
             <ul className="space-y-px">
-              {group.items.map((item, itemIndex) => (
+              {group.items.map((item) => (
                 <li key={item.path}>
                   <RouterNavLink
                     to={`${base}/${item.path}`}
@@ -217,7 +217,7 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                     data-tour={item.dataTour}
                     end
                     className={({ isActive }) => cn(
-                      "group relative grid min-h-9 grid-cols-[24px_minmax(0,1fr)_18px] items-center gap-2 px-2.5 text-[12.5px] transition-colors",
+                      "group relative grid min-h-9 grid-cols-[20px_minmax(0,1fr)_12px] items-center gap-2.5 px-2.5 text-[12.5px] transition-colors",
                       isActive
                         ? "bg-sidebar-foreground font-medium text-sidebar"
                         : "text-sidebar-foreground/62 hover:bg-sidebar-accent hover:text-sidebar-foreground",
@@ -225,19 +225,16 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
                   >
                     {({ isActive }) => (
                       <>
-                        <span className={cn(
-                          "font-mono text-[8px] tabular-nums tracking-[0.12em]",
-                          isActive ? "text-sidebar/45" : "text-sidebar-foreground/28",
-                        )}>
-                          {String(itemIndex + 1).padStart(2, "0")}
-                        </span>
-                        <span className="truncate">{item.label}</span>
-                        <span className="grid h-[18px] w-[18px] place-items-center">
-                          {isActive ? (
-                            <span className="h-1.5 w-1.5 bg-primary" />
-                          ) : (
-                            <item.icon className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-45" strokeWidth={1.7} />
+                        <item.icon
+                          className={cn(
+                            "h-3.5 w-3.5 transition-colors",
+                            isActive ? "text-primary" : "text-sidebar-foreground/38 group-hover:text-sidebar-foreground/65",
                           )}
+                          strokeWidth={1.7}
+                        />
+                        <span className="truncate">{item.label}</span>
+                        <span className="grid h-3 w-3 place-items-center">
+                          {isActive ? <span className="h-1.5 w-1.5 bg-primary" /> : null}
                         </span>
                       </>
                     )}
