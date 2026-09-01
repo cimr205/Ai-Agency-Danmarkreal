@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
-import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToCustomer, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
+import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -158,7 +158,7 @@ export default function LeadsPage() {
   const createLead = useCreateLead();
   const deleteLead = useDeleteLead();
   const updateLead = useUpdateLead();
-  const convertToCustomer = useConvertLeadToCustomer();
+  const convertToDeal = useConvertLeadToDeal();
   const updateScore = useUpdateLeadScore();
   const { data: allDeals } = useDeals();
   const { data: allTags } = useAllLeadTags();
@@ -1089,27 +1089,25 @@ export default function LeadsPage() {
                   {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString()}</p>}
                 </div>
 
-                {/* Convert to Deal — creates a real linked customer record first,
-                    not just a pre-filled name/value on an orphan deal */}
+                {/* Convert to Deal — one atomic server-side conversion
+                    (convert_lead_to_deal RPC): finds-or-creates the linked
+                    customer and the deal together, so this can never leave
+                    an orphan deal (no customer_id) or a duplicate contact
+                    behind. Deal already exists on success, so this goes
+                    straight to it instead of a pre-fill dialog. */}
                 <Button
                   variant="default"
                   className="w-full gap-2"
-                  disabled={convertToCustomer.isPending}
+                  disabled={convertToDeal.isPending}
                   onClick={async () => {
                     const locale = isLocale(params.locale) ? params.locale : 'en';
                     try {
-                      const customer = await convertToCustomer.mutateAsync({
-                        id: selectedLead.id,
-                        name: selectedLead.name,
-                        email: selectedLead.email,
-                        phone: selectedLead.phone,
-                        company_name: selectedLead.company_name,
-                        address: selectedLead.address,
-                        city: selectedLead.city,
-                        company_id: selectedLead.company_id,
-                        created_by: selectedLead.created_by,
+                      await convertToDeal.mutateAsync({
+                        leadId: selectedLead.id,
+                        dealName: `Deal: ${selectedLead.name}`,
+                        value: selectedLead.value ?? undefined,
                       });
-                      navigate(`/${locale}/app/crm/deals?create=true&leadName=${encodeURIComponent(selectedLead.name)}&leadValue=${selectedLead.value || 0}&customer=${customer.id}`);
+                      navigate(`/${locale}/app/crm/deals`);
                     } catch {
                       toast.error(t('common.error'));
                     }

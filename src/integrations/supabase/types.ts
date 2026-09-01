@@ -720,7 +720,11 @@ export type Database = {
           ai_recommendation_at: string | null
           city: string | null
           company_id: string
+          campaign_id: string | null
           company_name: string | null
+          conversion_status: string
+          converted_at: string | null
+          converted_deal_id: string | null
           converted_from_lead_id: string | null
           country: string | null
           created_at: string
@@ -737,11 +741,14 @@ export type Database = {
           last_touched_at: string | null
           name: string
           next_followup_at: string | null
+          normalized_email: string | null
+          normalized_phone: string | null
           notes: string | null
           owner_id: string | null
           phone: string | null
           record_type: string
           score: number | null
+          source_id: string | null
           status: Database["public"]["Enums"]["lead_status"] | null
           tags: string[] | null
           updated_at: string
@@ -753,9 +760,13 @@ export type Database = {
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
+          campaign_id?: string | null
           city?: string | null
           company_id: string
           company_name?: string | null
+          conversion_status?: string
+          converted_at?: string | null
+          converted_deal_id?: string | null
           converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
@@ -772,11 +783,13 @@ export type Database = {
           last_touched_at?: string | null
           name: string
           next_followup_at?: string | null
+          normalized_phone?: string | null
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
           record_type?: string
           score?: number | null
+          source_id?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -788,9 +801,13 @@ export type Database = {
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
+          campaign_id?: string | null
           city?: string | null
           company_id?: string
           company_name?: string | null
+          conversion_status?: string
+          converted_at?: string | null
+          converted_deal_id?: string | null
           converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
@@ -807,11 +824,13 @@ export type Database = {
           last_touched_at?: string | null
           name?: string
           next_followup_at?: string | null
+          normalized_phone?: string | null
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
           record_type?: string
           score?: number | null
+          source_id?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -4368,6 +4387,21 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_sessions: { Args: never; Returns: number }
+      convert_lead_to_deal: {
+        Args: {
+          p_lead_id: string
+          p_deal_name: string
+          p_pipeline_stage_id?: string | null
+          p_value?: number | null
+          p_currency?: string
+        }
+        Returns: {
+          lead_id: string
+          customer_id: string
+          deal_id: string
+          dedupe_result: string
+        }[]
+      }
       create_invitation: {
         Args: {
           invite_email: string
@@ -4386,6 +4420,18 @@ export type Database = {
           _type: string
         }
         Returns: string
+      }
+      find_contact_duplicates: {
+        Args: { p_email: string | null; p_phone: string | null; p_workspace_id: string }
+        Returns: {
+          match_type: string
+          confidence: string
+          customer_id: string
+          record_type: string
+          name: string
+          email: string
+          phone: string | null
+        }[]
       }
       generate_activation_code: { Args: never; Returns: string }
       generate_employee_id: {

@@ -10,7 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { PIPELINE_STAGES, getStageLabel, daysSince, formatCurrency, type PipelineLead } from '@/lib/pipeline';
 import { useUpdateLead, useLeadAiRecommendation } from '@/hooks/api/usePipeline';
-import { useCreateDeal, useDeals } from '@/hooks/api/useDeals';
+import { useDeals } from '@/hooks/api/useDeals';
+import { useConvertLeadToDeal } from '@/hooks/api/useLeads';
 import { useCreateTask } from '@/hooks/api/useTasks';
 import { useActivityLogs } from '@/hooks/api/useActivityLogs';
 import { toast } from 'sonner';
@@ -37,7 +38,7 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
   const routeLocale = isLocale(params.locale) ? params.locale : 'en';
   const updateLead = useUpdateLead();
   const aiRecommend = useLeadAiRecommendation();
-  const createDeal = useCreateDeal();
+  const convertToDeal = useConvertLeadToDeal();
   const createTask = useCreateTask();
   const { data: allDeals } = useDeals();
   const { data: activityLogs } = useActivityLogs(20);
@@ -104,15 +105,16 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
 
   const handleConvertToDeal = async () => {
     try {
-      await createDeal.mutateAsync({
-        title: `Deal: ${lead.name}`,
+      // Atomic server-side conversion (convert_lead_to_deal RPC) — creates
+      // the linked customer (deduped by normalized email/phone) and the
+      // deal together in one transaction, instead of two separate calls
+      // that could leave a deal with no customer_id if the second call
+      // failed or the tab closed between them.
+      await convertToDeal.mutateAsync({
+        leadId: lead.id,
+        dealName: `Deal: ${lead.name}`,
         value: lead.value || 0,
-        stage: 'discovery',
-        notes: locale === 'da'
-          ? `Konverteret fra lead: ${lead.name}\nEmail: ${lead.email}\nTelefon: ${lead.phone || 'N/A'}`
-          : `Converted from lead: ${lead.name}\nEmail: ${lead.email}\nPhone: ${lead.phone || 'N/A'}`,
       });
-      await updateLead.mutateAsync({ id: lead.id, data: { status: 'customer' } });
       toast.success(locale === 'da' ? 'Deal oprettet!' : 'Deal created!');
       onClose();
       navigate(`/${routeLocale}/app/crm/deals`);
@@ -180,7 +182,7 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
           <div className="space-y-2">
             <Button
               className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-11 text-sm"
-              disabled={createDeal.isPending}
+              disabled={convertToDeal.isPending}
               onClick={handleConvertToDeal}
             >
               <Briefcase className="h-4 w-4" />

@@ -138,44 +138,41 @@ export function useCreateLead() {
   });
 }
 
-// Real lead→customer conversion: creates a new customers row
-// (record_type='customer') linked back to the source lead via
-// converted_from_lead_id, and marks the lead's status so it's visible at a
-// glance in the Leads list. The original lead row is never deleted or
-// mutated beyond that status flag — its history stays intact.
-export function useConvertLeadToCustomer() {
+// Atomic lead→customer→deal conversion via the convert_lead_to_deal RPC
+// (supabase/migrations/20260901000001_atomic_lead_conversion.sql). One
+// database transaction: locks the lead, finds-or-creates the customer by
+// normalized email/phone (never creates a duplicate contact), creates the
+// deal linked by customer_id, marks the lead converted. Idempotent — a
+// double-click or a retried request returns the same ids instead of
+// creating a second customer or deal. This replaces two previously
+// separate, non-atomic client flows (useConvertLeadToCustomer, which never
+// created a deal, and LeadDetailPanel's own deal-creation call, which
+// never created a customer — a real orphan-deal bug, deals.customer_id
+// was always null on that path).
+export interface ConvertLeadToDealResult {
+  lead_id: string;
+  customer_id: string;
+  deal_id: string;
+  dedupe_result: 'created' | 'matched_existing' | 'already_converted';
+}
+
+export function useConvertLeadToDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (lead: { id: string; name: string; email: string; phone: string | null; company_name: string | null; address: string | null; city: string | null; company_id: string; created_by: string }) => {
-      const { data: customer, error } = await supabase
-        .from('customers')
-        .insert({
-          name: lead.company_name || lead.name,
-          email: lead.email,
-          phone: lead.phone,
-          address: lead.address,
-          city: lead.city,
-          company_id: lead.company_id,
-          created_by: lead.created_by,
-          record_type: 'customer',
-          converted_from_lead_id: lead.id,
-        })
-        .select()
-        .single();
+    mutationFn: async (input: { leadId: string; dealName: string; value?: number; currency?: string }) => {
+      const { data, error } = await supabase.rpc('convert_lead_to_deal', {
+        p_lead_id: input.leadId,
+        p_deal_name: input.dealName,
+        p_value: input.value ?? null,
+        p_currency: input.currency ?? 'DKK',
+      });
       if (error) throw error;
-
-      const { error: statusError } = await supabase
-        .from('customers')
-        .update({ status: 'customer' as Enums<'lead_status'> })
-        .eq('id', lead.id)
-        .eq('record_type', 'lead');
-      if (statusError) throw statusError;
-
-      return customer;
+      return (data as ConvertLeadToDealResult[])[0];
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['leads'] });
       qc.invalidateQueries({ queryKey: ['customers'] });
+      qc.invalidateQueries({ queryKey: ['deals'] });
     },
   });
 }
