@@ -29,6 +29,7 @@ const DashboardPage = lazy(() => import("@/pages/app/Dashboard"));
 const LeadsPage = lazy(() => import("@/pages/app/crm/LeadsPage"));
 const DealsPage = lazy(() => import("@/pages/app/crm/DealsPage"));
 const ColdCallerPage = lazy(() => import("@/pages/app/marketing/ColdCallerPage"));
+const PhoneCompanionPage = lazy(() => import("@/pages/PhoneCompanionPage"));
 const VoiceAgentPage = lazy(() => import("@/pages/app/marketing/VoiceAgentPage"));
 const LeadGenerationPage = lazy(() => import("@/pages/app/crm/LeadGenerationPage"));
 const IcpPage = lazy(() => import("@/pages/app/crm/IcpPage"));
@@ -238,6 +239,7 @@ const App = () => (
                 <Route path="privacy" element={<PrivacyPolicyPage />} />
                 <Route path="terms" element={<TermsOfServicePage />} />
                 <Route path="dpa" element={<DataProcessingAgreementPage />} />
+                <Route path="phone-companion" element={<Suspense fallback={<PageLoader />}><PhoneCompanionPage /></Suspense>} />
                 <Route
                   path="app"
                   element={

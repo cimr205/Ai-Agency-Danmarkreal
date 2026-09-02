@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decryptMetaToken } from "../_shared/metaToken.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const META_API_VERSION = "v21.0";
+const META_API_VERSION = Deno.env.get("META_GRAPH_VERSION") || "v26.0";
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`;
 
 serve(async (req) => {
@@ -43,13 +44,16 @@ serve(async (req) => {
     // Get Meta connection
     const { data: conn } = await supabase
       .from("meta_connections")
-      .select("access_token, status")
+      .select("access_token_ciphertext, token_iv, status")
       .eq("company_id", companyId)
       .eq("status", "connected")
       .single();
     if (!conn) throw new Error("Meta Ads er ikke forbundet. Forbind din konto først.");
 
-    const accessToken = conn.access_token;
+    if (!conn.access_token_ciphertext || !conn.token_iv) {
+      throw new Error("Meta Ads skal forbindes igen sikkert, før du kan udgive.");
+    }
+    const accessToken = await decryptMetaToken(conn.access_token_ciphertext, conn.token_iv);
 
     // Get ad account
     const { data: adAccounts } = await supabase
@@ -86,7 +90,6 @@ serve(async (req) => {
       status: status || "ACTIVE",
       special_ad_categories: "[]",
       is_budget_schedule_enabled: "false",
-      access_token: accessToken,
     });
 
     // If campaign-level budget, set daily_budget on campaign
@@ -98,7 +101,7 @@ serve(async (req) => {
       `${META_API_BASE}/act_${adAccountId}/campaigns`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Bearer ${accessToken}` },
         body: campaignParams.toString(),
       }
     );
@@ -122,7 +125,6 @@ serve(async (req) => {
                          objective === "OUTCOME_AWARENESS" ? "REACH" : "LINK_CLICKS",
       status: status || "ACTIVE",
       targeting: JSON.stringify(targeting || { geo_locations: { countries: ["DK"] }, age_min: 18, age_max: 65 }),
-      access_token: accessToken,
     };
 
     // Only set daily_budget on ad set if not using campaign-level budget
@@ -140,7 +142,7 @@ serve(async (req) => {
       `${META_API_BASE}/act_${adAccountId}/adsets`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Bearer ${accessToken}` },
         body: adSetParams.toString(),
       }
     );
@@ -154,7 +156,6 @@ serve(async (req) => {
     // 3. Create Ad Creative
     const creativeBody: Record<string, unknown> = {
       name: `${campaign_name} – Creative`,
-      access_token: accessToken,
     };
 
     // Build object story spec
@@ -187,9 +188,9 @@ serve(async (req) => {
     }
 
     // Get page ID (needed for ad creative)
-    const pagesRes = await fetch(
-      `${META_API_BASE}/me/accounts?access_token=${accessToken}`
-    );
+    const pagesRes = await fetch(`${META_API_BASE}/me/accounts`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     const pagesData = await pagesRes.json();
     const pageId = pagesData.data?.[0]?.id;
 
@@ -208,7 +209,7 @@ serve(async (req) => {
       `${META_API_BASE}/act_${adAccountId}/adcreatives`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Bearer ${accessToken}` },
         body: creativeParams.toString(),
       }
     );
@@ -227,12 +228,11 @@ serve(async (req) => {
       adset_id: adSetId,
       creative: JSON.stringify({ creative_id: creativeId }),
       status: status || "ACTIVE",
-      access_token: accessToken,
     });
 
     const adRes = await fetch(`${META_API_BASE}/act_${adAccountId}/ads`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Bearer ${accessToken}` },
       body: adParams.toString(),
     });
 

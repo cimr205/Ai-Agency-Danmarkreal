@@ -1459,6 +1459,25 @@
     "sendToCustomer": "Send to customer",
     "status": "Status"
   },
+  "phoneCompanion": {
+    "pairTitle": "Connect this phone",
+    "pairDescription": "Pair this nearby phone securely with Power Dialer. Calls use this phone's SIM/eSIM, mobile plan and caller ID.",
+    "missingSession": "This pairing link is missing or expired. Create a new QR code on the computer.",
+    "manualPrompt": "If you opened this page manually, enter the six-digit code shown on the computer.",
+    "deviceName": "Device name",
+    "code": "Six-digit code",
+    "pairAction": "Pair phone securely",
+    "onlineTitle": "Phone is connected",
+    "online": "Online and ready",
+    "connecting": "Connecting securely…",
+    "incoming": "Call requested from Power Dialer",
+    "callAction": "Open phone app and call",
+    "completed": "Call finished",
+    "reject": "Decline",
+    "confirmation": "iPhone and web companions require a tap before the carrier call. Android native companion apps can call directly when permission is granted.",
+    "waitingTitle": "Waiting for a call",
+    "waitingDescription": "Keep this page open and the phone nearby. Press Call on the computer when you are ready."
+  },
   "devicePowerDialer": {
     "title": "Power Dialer",
     "subtitle": "Move through your lead queue using your own phone plan and caller ID.",
@@ -1494,6 +1513,26 @@
       "callLockedTitle": "Connect the phone to call",
       "callLockedDesktop": "Scan the QR code above and continue Power Dialer on the phone.",
       "callLockedMobile": "Enter your number above and choose Connect this phone."
+    },
+    "backendRelay": {
+      "title": "Connect a nearby phone",
+      "description": "Pair once with an encrypted, expiring QR code. The computer sends call requests to this verified phone while its own SIM/eSIM plan and caller ID remain in control.",
+      "startTitle": "Create a secure pairing code",
+      "startDescription": "Works with Mac or Windows and iPhone or Android. The phone must stay nearby and keep the companion page or app open.",
+      "startAction": "Start secure pairing",
+      "qrLabel": "Secure one-time phone pairing QR code",
+      "waitingTitle": "Finish on the phone",
+      "step1": "Scan the QR code with the nearby phone.",
+      "step2": "Choose Pair phone securely on the phone.",
+      "step3": "Keep the companion open; this screen unlocks Call automatically.",
+      "manualCode": "Manual pairing code",
+      "waiting": "Waiting for the verified phone heartbeat…",
+      "connectedTitle": "Verified phone online",
+      "connectedDescription": "Call requests now travel through the secure relay to this phone and use its mobile subscription.",
+      "privacy": "Pairing secrets expire after ten minutes and work once. Device tokens are stored hashed on the server and can be revoked at any time.",
+      "pairError": "Could not create pairing",
+      "loadError": "Phone status could not be loaded. Try again before calling.",
+      "disconnectError": "Could not disconnect phone"
     },
     "relay": {
       "title": "Call from your computer through your phone",

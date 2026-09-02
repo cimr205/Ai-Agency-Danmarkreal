@@ -12,36 +12,23 @@ export function useLeads(params?: { status?: string; page?: number; search?: str
   return useQuery({
     queryKey: ['leads', params],
     queryFn: async () => {
-      const from = page * LEADS_PAGE_SIZE;
-      const to = from + LEADS_PAGE_SIZE - 1;
-
-      let query = supabase
-        .from('customers')
-        .select('*, owner:profiles!customers_owner_id_fkey(full_name, email)', { count: 'exact' })
-        .eq('record_type', 'lead')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (params?.status) query = query.eq('status', params.status as Enums<'lead_status'>);
-      if (params?.search) {
-        query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,company_name.ilike.%${params.search}%`);
-      }
-      if (params?.industry) query = query.eq('industry', params.industry);
-      if (params?.tags && params.tags.length > 0) {
-        if (params.tagLogic === 'and') {
-          query = query.contains('tags', params.tags);
-        } else {
-          query = query.overlaps('tags', params.tags);
-        }
-      }
-      if (params?.folderId !== undefined) {
-        if (params.folderId === null) query = query.is('folder_id', null);
-        else query = query.eq('folder_id', params.folderId);
-      }
-
-      const { data, error, count } = await query;
+      const { data, error } = await supabase.rpc('list_leads', {
+        p_page: page,
+        p_page_size: LEADS_PAGE_SIZE,
+        p_search: params?.search ?? null,
+        p_status: params?.status ?? null,
+        p_folder_id: params?.folderId ?? null,
+        p_tags: params?.tags ?? null,
+        p_tag_logic: params?.tagLogic ?? 'or',
+        p_industry: params?.industry ?? null,
+      });
       if (error) throw error;
-      return { data: (data ?? []) as unknown as LeadWithOwner[], count: count ?? 0, pageSize: LEADS_PAGE_SIZE };
+      const result = data as unknown as { items?: LeadWithOwner[]; total_count?: number; page_size?: number };
+      return {
+        data: result.items ?? [],
+        count: result.total_count ?? 0,
+        pageSize: result.page_size ?? LEADS_PAGE_SIZE,
+      };
     },
     placeholderData: (prev) => prev,
     staleTime: 30_000,

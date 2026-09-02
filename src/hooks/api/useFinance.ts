@@ -199,9 +199,7 @@ export function useDeleteInvoice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Delete linked payments first (FK)
-      await supabase.from('payments').delete().eq('invoice_id', id);
-      const { error } = await supabase.from('invoices').delete().eq('id', id);
+      const { error } = await supabase.rpc('delete_draft_invoice', { p_invoice_id: id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -215,6 +213,29 @@ export function useUpdateInvoiceStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (status === 'paid') {
+        const [{ data: invoice, error: invoiceError }, { data: payments, error: paymentsError }] = await Promise.all([
+          supabase.from('invoices').select('amount').eq('id', id).single(),
+          supabase.from('payments').select('amount').eq('invoice_id', id).eq('status', 'completed'),
+        ]);
+        if (invoiceError || paymentsError) throw invoiceError || paymentsError;
+        const alreadyPaid = (payments ?? []).reduce((sum, payment) => sum + Number(payment.amount), 0);
+        const remaining = Number(invoice.amount) - alreadyPaid;
+        if (remaining <= 0) return invoice;
+        const { data, error } = await supabase.rpc('register_invoice_payment', {
+          p_invoice_id: id, p_amount: remaining, p_payment_method: 'manual',
+          p_idempotency_key: `manual-paid:${id}`,
+        });
+        if (error) throw error;
+        return data;
+      }
+      if (status === 'cancelled') {
+        const { data, error } = await supabase.rpc('void_invoice', {
+          p_invoice_id: id, p_reason: 'Cancelled from invoice interface',
+        });
+        if (error) throw error;
+        return data;
+      }
       const { data, error } = await supabase
         .from('invoices')
         .update({ status: status as Enums<'invoice_status'> })
@@ -247,20 +268,12 @@ export function useCreatePayment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { invoice_id: string; amount: number; payment_method?: string; status?: string }) => {
-      const { session, companyId } = await getProfileWithCompany();
-      const { data, error } = await supabase
-        .from('payments')
-        .insert({
-          invoice_id: input.invoice_id,
-          amount: input.amount,
-          payment_method: input.payment_method || null,
-          status: (input.status as Enums<'payment_status'>) || 'completed',
-          paid_at: input.status === 'completed' || !input.status ? new Date().toISOString() : null,
-          company_id: companyId,
-          created_by: session.user.id,
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('register_invoice_payment', {
+        p_invoice_id: input.invoice_id,
+        p_amount: input.amount,
+        p_payment_method: input.payment_method || 'manual',
+        p_idempotency_key: crypto.randomUUID(),
+      });
       if (error) throw error;
       return data;
     },

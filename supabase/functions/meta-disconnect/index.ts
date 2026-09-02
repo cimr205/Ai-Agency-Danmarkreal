@@ -62,7 +62,11 @@ Deno.serve(async (req) => {
       .update({
         status: "disconnected",
         disconnected_at: new Date().toISOString(),
-        access_token: "revoked",
+        access_token: null,
+        access_token_ciphertext: null,
+        token_iv: null,
+        sync_status: "idle",
+        sync_error: null,
         updated_at: new Date().toISOString(),
       })
       .eq("company_id", company_id);

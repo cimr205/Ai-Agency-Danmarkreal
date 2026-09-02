@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
 
-const META_APP_ID = "1461822492213512";
-const SCOPES = "ads_read,ads_management,business_management";
-
 type MetaConnection = {
   id: string;
   status: string;
@@ -18,6 +15,9 @@ type MetaConnection = {
   meta_user_id: string | null;
   connected_at: string;
   token_expires_at: string | null;
+  last_sync_at?: string | null;
+  sync_status?: string;
+  sync_error?: string | null;
 };
 
 type MetaAdAccount = {
@@ -44,79 +44,50 @@ export function MetaAccountConnection() {
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
 
-  const fetchConnection = async () => {
+  const fetchConnection = useCallback(async () => {
     if (!companyId) return;
     setLoading(true);
     try {
-      const { data: conn } = await supabase
-        .from("meta_connections")
-        .select("id, status, meta_user_name, meta_user_id, connected_at, token_expires_at")
-        .eq("company_id", companyId)
-        .maybeSingle();
-
-      setConnection(conn as MetaConnection | null);
-
-      if (conn && conn.status === "connected") {
-        const { data: accounts } = await supabase
-          .from("meta_ad_accounts")
-          .select("id, account_id, account_name, business_name, currency, account_status")
-          .eq("company_id", companyId);
-        setAdAccounts((accounts as MetaAdAccount[]) || []);
-      } else {
-        setAdAccounts([]);
-      }
+      const { data, error } = await supabase.rpc("get_meta_connection_status");
+      if (error) throw error;
+      const status = data as unknown as MetaConnection & { ad_accounts?: MetaAdAccount[] };
+      setConnection(status.status === "disconnected" ? null : status);
+      setAdAccounts(status.ad_accounts ?? []);
     } catch {
       // silent
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
   useEffect(() => {
     fetchConnection();
-  }, [companyId]);
+  }, [fetchConnection]);
 
-  // Handle OAuth callback code from URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("meta_code");
-    if (code && companyId) {
-      handleOAuthCallback(code);
-      // Clean URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("meta_code");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [companyId]);
-
-  const handleConnect = () => {
-    const redirectUri = "https://aiagencydanmark.dk/auth/meta/callback";
-    const authUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
-    authUrl.searchParams.set("client_id", META_APP_ID);
-    authUrl.searchParams.set("redirect_uri", redirectUri);
-    authUrl.searchParams.set("scope", SCOPES);
-    authUrl.searchParams.set("response_type", "code");
-    authUrl.searchParams.set("state", companyId || "");
-    window.location.href = authUrl.toString();
-  };
-
-  const handleOAuthCallback = async (code: string) => {
-    if (!companyId) return;
+  const handleConnect = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("meta-oauth-callback", {
-        body: { code, company_id: companyId },
-      });
+      const { data, error } = await supabase.functions.invoke("meta-oauth-start", { body: {} });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.detail || data.error);
-
-      toast({ title: "Meta Ads forbundet!", description: `${data.ad_accounts_count} annonce-konti fundet.` });
-      await fetchConnection();
+      if (!data?.authorization_url) throw new Error("Meta authorization URL mangler");
+      window.location.assign(data.authorization_url);
     } catch (err) {
       toast({ title: "Forbindelse fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleSync = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-sync", { body: {} });
+      if (error || data?.error) throw new Error(data?.detail || error?.message || data?.error);
+      toast({ title: "Meta Ads opdateret", description: `${data.records_synced} poster synkroniseret.` });
+      await fetchConnection();
+    } catch (err) {
+      toast({ title: "Synkronisering fejlede", description: getErrorMessage(err), variant: "destructive" });
+    } finally { setLoading(false); }
   };
 
   const handleDisconnect = async () => {
@@ -162,7 +133,7 @@ export function MetaAccountConnection() {
             </Button>
           ) : (
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" className="gap-2 text-muted-foreground" onClick={fetchConnection}>
+              <Button size="sm" variant="ghost" className="gap-2 text-muted-foreground" onClick={handleSync}>
                 <RefreshCw className="h-3.5 w-3.5" />
                 Opdater
               </Button>

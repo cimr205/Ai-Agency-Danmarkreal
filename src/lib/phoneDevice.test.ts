@@ -29,7 +29,7 @@ describe('phone device pairing', () => {
     expect(loadConnectedPhone()).toBeNull();
   });
 
-  it('stores a completed Mac and iPhone relay without pretending to control the SIM', () => {
+  it('does not unlock desktop calling from a local-only checklist relay', () => {
     const phone = connectComputerRelay('mac', 'ios');
 
     expect(phone).toMatchObject({
@@ -39,8 +39,21 @@ describe('phone device pairing', () => {
       phonePlatform: 'ios',
       phoneNumber: '',
     });
-    expect(isDialerConnectionReady(phone, 'web')).toBe(true);
+    expect(isDialerConnectionReady(phone, 'web')).toBe(false);
     expect(isDialerConnectionReady(phone, 'ios')).toBe(false);
+  });
+
+  it('unlocks desktop calling only for a server-verified online companion', () => {
+    expect(isDialerConnectionReady({
+      version: 1,
+      deviceId: 'verified-device',
+      phoneNumber: '',
+      platform: 'web',
+      connectionMode: 'backend_relay',
+      phonePlatform: 'ios',
+      status: 'online',
+      connectedAt: new Date().toISOString(),
+    }, 'web')).toBe(true);
   });
 
   it('supports Windows relay combinations and rejects Mac plus Android', () => {

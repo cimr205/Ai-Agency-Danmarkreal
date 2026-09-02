@@ -18,6 +18,12 @@ verify_jwt = false
 [functions.meta-oauth-callback]
 verify_jwt = false
 
+[functions.meta-oauth-start]
+verify_jwt = true
+
+[functions.meta-sync]
+verify_jwt = true
+
 [functions.meta-disconnect]
 verify_jwt = false
 
@@ -51,8 +57,20 @@ verify_jwt = false
 [functions.phone-release]
 verify_jwt = false
 
+[functions.phone-device-relay]
+verify_jwt = false
+
 [functions.process-email-queue]
 verify_jwt = true
+
+[functions.process-campaign-email-jobs]
+verify_jwt = true
+
+[functions.email-provider-webhook]
+verify_jwt = false
+
+[functions.email-track]
+verify_jwt = false
 
 [functions.cold-caller]
 verify_jwt = false

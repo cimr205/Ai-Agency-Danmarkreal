@@ -76,6 +76,33 @@ export default function QuotesPage() {
   const { data: leadsResult } = useLeads({ page: 0 });
   const allLeads = leadsResult?.data ?? [];
   const createQuote = useCreateQuote();
+  const queryClient = useQueryClient();
+  const transitionQuote = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.rpc('transition_quote', { p_quote_id: id, p_target_status: status });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotes'] }),
+  });
+  const convertQuote = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      if (!profile?.company_id) throw new Error('No company');
+      const { data: number, error: numberError } = await supabase.rpc('generate_invoice_number', { _company_id: profile.company_id });
+      if (numberError) throw numberError;
+      const { error } = await supabase.rpc('quote_to_invoice', {
+        p_quote_id: id, p_invoice_number: number as string,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success(t('quotes.created'));
+    },
+  });
 
   const filteredQuotes = (quotes ?? []).filter(q =>
     q.title?.toLowerCase().includes(search.toLowerCase())
@@ -201,6 +228,7 @@ export default function QuotesPage() {
                   <TableHead>{t('quotes.total')}</TableHead>
                   <TableHead>{t('quotes.validUntil')}</TableHead>
                   <TableHead>{t('common.created')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -211,6 +239,16 @@ export default function QuotesPage() {
                     <TableCell className="font-medium">{formatCurrency(quote.total)}</TableCell>
                     <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.sent')}</Button>}
+                        {quote.status === 'sent' && <>
+                          <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'accepted' })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t('quotes.accepted')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'rejected' })}>{t('quotes.rejected')}</Button>
+                        </>}
+                        {quote.status === 'accepted' && !quote.converted_invoice_id && <Button size="sm" onClick={() => convertQuote.mutate(quote.id)}><FileText className="h-3.5 w-3.5 mr-1" />{t('invoices.createInvoice')}</Button>}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

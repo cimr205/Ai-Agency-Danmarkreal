@@ -1476,6 +1476,25 @@
     "sendToCustomer": "Send til kunde",
     "status": "Status"
   },
+  "phoneCompanion": {
+    "pairTitle": "Forbind denne telefon",
+    "pairDescription": "Par den nærliggende telefon sikkert med Power Dialer. Opkald bruger telefonens SIM/eSIM, mobilabonnement og nummer.",
+    "missingSession": "Parringslinket mangler eller er udløbet. Opret en ny QR-kode på computeren.",
+    "manualPrompt": "Hvis du åbnede siden manuelt, skal du indtaste den sekscifrede kode fra computeren.",
+    "deviceName": "Enhedsnavn",
+    "code": "Sekscifret kode",
+    "pairAction": "Par telefon sikkert",
+    "onlineTitle": "Telefonen er forbundet",
+    "online": "Online og klar",
+    "connecting": "Opretter sikker forbindelse…",
+    "incoming": "Opkald anmodet fra Power Dialer",
+    "callAction": "Åbn telefonappen og ring",
+    "completed": "Opkald afsluttet",
+    "reject": "Afvis",
+    "confirmation": "iPhone og web-companion kræver ét tryk før mobilopkaldet. En native Android-companion kan ringe direkte, når tilladelsen er givet.",
+    "waitingTitle": "Venter på et opkald",
+    "waitingDescription": "Hold siden åben og telefonen i nærheden. Tryk Ring på computeren, når du er klar."
+  },
   "devicePowerDialer": {
     "title": "Power Dialer",
     "subtitle": "Arbejd dig gennem lead-køen med dit eget mobilabonnement og nummer.",
@@ -1511,6 +1530,26 @@
       "callLockedTitle": "Forbind mobilen for at ringe",
       "callLockedDesktop": "Scan QR-koden ovenfor og fortsæt Power Dialer på mobilen.",
       "callLockedMobile": "Indtast dit nummer ovenfor og tryk Forbind denne telefon."
+    },
+    "backendRelay": {
+      "title": "Forbind en nærliggende telefon",
+      "description": "Par én gang med en krypteret QR-kode, der udløber. Computeren sender opkald til den verificerede telefon, mens dens eget SIM/eSIM-abonnement og nummer bruges.",
+      "startTitle": "Opret en sikker parringskode",
+      "startDescription": "Virker med Mac eller Windows og iPhone eller Android. Telefonen skal være i nærheden og have companion-siden eller appen åben.",
+      "startAction": "Start sikker parring",
+      "qrLabel": "Sikker engangs-QR-kode til telefonparring",
+      "waitingTitle": "Færdiggør på telefonen",
+      "step1": "Scan QR-koden med telefonen i nærheden.",
+      "step2": "Tryk Par telefon sikkert på telefonen.",
+      "step3": "Hold companion åben; Ring låses automatisk op her.",
+      "manualCode": "Manuel parringskode",
+      "waiting": "Venter på telefonens verificerede heartbeat…",
+      "connectedTitle": "Verificeret telefon online",
+      "connectedDescription": "Opkald sendes nu gennem den sikre relay til telefonen og bruger dens mobilabonnement.",
+      "privacy": "Parringshemmeligheder udløber efter ti minutter og kan kun bruges én gang. Enhedstokens gemmes hashet på serveren og kan altid tilbagekaldes.",
+      "pairError": "Parringen kunne ikke oprettes",
+      "loadError": "Telefonstatus kunne ikke indlæses. Prøv igen før du ringer.",
+      "disconnectError": "Telefonen kunne ikke afbrydes"
     },
     "relay": {
       "title": "Ring fra computeren via din mobil",

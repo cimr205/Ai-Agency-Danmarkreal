@@ -1471,6 +1471,25 @@
     "sendToCustomer": "An Kunden senden",
     "status": "Status"
   },
+  "phoneCompanion": {
+    "pairTitle": "Dieses Telefon verbinden",
+    "pairDescription": "Koppeln Sie das nahe Telefon sicher mit Power Dialer. Anrufe verwenden SIM/eSIM, Mobilfunktarif und Rufnummer dieses Telefons.",
+    "missingSession": "Der Kopplungslink fehlt oder ist abgelaufen. Erstellen Sie am Computer einen neuen QR-Code.",
+    "manualPrompt": "Wenn Sie diese Seite manuell geöffnet haben, geben Sie den sechsstelligen Code vom Computer ein.",
+    "deviceName": "Gerätename",
+    "code": "Sechsstelliger Code",
+    "pairAction": "Telefon sicher koppeln",
+    "onlineTitle": "Telefon ist verbunden",
+    "online": "Online und bereit",
+    "connecting": "Sichere Verbindung wird aufgebaut…",
+    "incoming": "Anruf von Power Dialer angefordert",
+    "callAction": "Telefon-App öffnen und anrufen",
+    "completed": "Anruf beendet",
+    "reject": "Ablehnen",
+    "confirmation": "iPhone und Web-Companion benötigen eine Bestätigung vor dem Mobilfunkanruf. Native Android-Apps können mit erteilter Berechtigung direkt anrufen.",
+    "waitingTitle": "Warten auf einen Anruf",
+    "waitingDescription": "Lassen Sie diese Seite geöffnet und das Telefon in der Nähe. Drücken Sie am Computer auf Anrufen."
+  },
   "devicePowerDialer": {
     "title": "Power Dialer",
     "subtitle": "Bearbeiten Sie Ihre Lead-Warteschlange mit Ihrem eigenen Mobilfunktarif und Ihrer Rufnummer.",
@@ -1506,6 +1525,26 @@
       "callLockedTitle": "Telefon zum Anrufen verbinden",
       "callLockedDesktop": "Scannen Sie den QR-Code oben und setzen Sie den Power Dialer auf dem Telefon fort.",
       "callLockedMobile": "Geben Sie oben Ihre Nummer ein und wählen Sie Dieses Telefon verbinden."
+    },
+    "backendRelay": {
+      "title": "Telefon in der Nähe verbinden",
+      "description": "Einmalig mit einem verschlüsselten, ablaufenden QR-Code koppeln. Der Computer sendet Anrufanforderungen an das verifizierte Telefon; dessen SIM/eSIM-Tarif und Rufnummer bleiben maßgeblich.",
+      "startTitle": "Sicheren Kopplungscode erstellen",
+      "startDescription": "Funktioniert mit Mac oder Windows und iPhone oder Android. Das Telefon muss in der Nähe bleiben und die Companion-Seite oder App geöffnet haben.",
+      "startAction": "Sichere Kopplung starten",
+      "qrLabel": "Sicherer einmaliger QR-Code zur Telefonkopplung",
+      "waitingTitle": "Auf dem Telefon abschließen",
+      "step1": "QR-Code mit dem Telefon in der Nähe scannen.",
+      "step2": "Auf dem Telefon Sicher koppeln wählen.",
+      "step3": "Companion geöffnet lassen; Anrufen wird hier automatisch freigeschaltet.",
+      "manualCode": "Manueller Kopplungscode",
+      "waiting": "Warten auf den verifizierten Telefon-Heartbeat…",
+      "connectedTitle": "Verifiziertes Telefon online",
+      "connectedDescription": "Anrufanforderungen laufen jetzt sicher an dieses Telefon und verwenden seinen Mobilfunktarif.",
+      "privacy": "Kopplungsgeheimnisse laufen nach zehn Minuten ab und funktionieren einmal. Gerätetokens werden auf dem Server gehasht gespeichert und können widerrufen werden.",
+      "pairError": "Kopplung konnte nicht erstellt werden",
+      "loadError": "Telefonstatus konnte nicht geladen werden. Versuchen Sie es vor dem Anruf erneut.",
+      "disconnectError": "Telefon konnte nicht getrennt werden"
     },
     "relay": {
       "title": "Vom Computer über Ihr Mobiltelefon anrufen",

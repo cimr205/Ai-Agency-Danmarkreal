@@ -24,6 +24,12 @@ import { getErrorMessage } from '@/lib/errors';
 type Recipient = { email: string; name: string; firstName: string; lastName: string; verified?: boolean | null; verifyReason?: string };
 type Attachment = { filename: string; content_type: string; data: string; size: number };
 
+function decodeAttachment(attachment: Attachment): Blob {
+  const binary = atob(attachment.data);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new Blob([bytes], { type: attachment.content_type });
+}
+
 function parseCSV(text: string): Recipient[] {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
@@ -400,14 +406,13 @@ export default function BulkEmailPage() {
   const [tab, setTab] = useState('compose');
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [scheduledTime, setScheduledTime] = useState('');
-  const [includeUnsubscribe, setIncludeUnsubscribe] = useState(true);
+  const includeUnsubscribe = true;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const [verifying, setVerifying] = useState(false);
   const [verifyStats, setVerifyStats] = useState<{ valid: number; invalid: number; unverified?: number } | null>(null);
 
   const MAX_RECIPIENTS = 2000;
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
   const verifyEmails = useCallback(async (recipientsToVerify: Recipient[]) => {
     if (!recipientsToVerify.length) return;
@@ -451,13 +456,7 @@ export default function BulkEmailPage() {
     toast.success(locale === 'da' ? `${removed} ugyldige fjernet` : `${removed} invalid removed`);
   };
 
-  const handleCSVDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) readCSV(file);
-  }, []);
-
-  const readCSV = (file: File) => {
+  const readCSV = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -477,7 +476,13 @@ export default function BulkEmailPage() {
       verifyEmails(finalRecipients);
     };
     reader.readAsText(file);
-  };
+  }, [t, verifyEmails]);
+
+  const handleCSVDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) readCSV(file);
+  }, [readCSV]);
 
   const handleAttachFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -500,103 +505,67 @@ export default function BulkEmailPage() {
     if (!recipients.length || !subject.trim() || !body.trim()) { toast.error(t('bulkEmail.fillFields')); return; }
     if (!gmailAccount) { toast.error(t('bulkEmail.connectFirst')); return; }
 
+    const scheduledAt = scheduledTime ? new Date(scheduledTime) : null;
+    if (scheduledAt && (!Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now())) {
+      toast.error(locale === 'da' ? 'Vælg et tidspunkt i fremtiden' : 'Choose a time in the future');
+      return;
+    }
     setSending(true);
     setProgress({ sent: 0, total: recipients.length, errors: 0 });
-
-    // Create campaign record
     const companyId = user?.company_id;
     const userId = user?.user_id;
     if (!companyId || !userId) { toast.error(locale === 'da' ? 'Manglende virksomhedskontekst' : 'Missing company context'); setSending(false); return; }
-
-    const campaignId = crypto.randomUUID();
-    await supabase.from('bulk_email_campaigns').insert({
-      id: campaignId,
-      company_id: companyId,
-      user_id: userId,
-      subject: subject,
-      body_preview: body.slice(0, 200),
-      total_recipients: recipients.length,
-      status: 'sending',
-    });
-
-    let sent = 0;
-    let errors = 0;
-    const batchSize = 5;
-    const delayMs = 1500;
-
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
-      const promises = batch.map(async (r) => {
-        // Create recipient record first
-        const recipientId = crypto.randomUUID();
-        await supabase.from('bulk_email_recipients').insert({
-          id: recipientId,
-          campaign_id: campaignId,
-          company_id: companyId,
-          email: r.email,
-          name: r.name || null,
-          status: 'sending',
-        });
-
-        try {
-          const personalSubject = personalizeText(subject, r);
-          const personalBody = personalizeText(body, r);
-
-          // Build HTML with tracking pixel
-          const trackingPixelUrl = `${SUPABASE_URL}/functions/v1/email-track?rid=${recipientId}`;
-          const unsubUrl = `${SUPABASE_URL}/functions/v1/email-track?unsub=${recipientId}`;
-
-          let htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${personalBody
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>')}`;
-
-          if (includeUnsubscribe) {
-            htmlBody += `<br><br><hr style="border:none;border-top:1px solid #ddd;margin:20px 0;"><p style="font-size:12px;color:#999;"><a href="${unsubUrl}" style="color:#999;">Klik her for at afmelde</a></p>`;
-          }
-
-          // Add tracking pixel
-          htmlBody += `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
-          htmlBody += `</body></html>`;
-
-          const payload: { to: string; subject: string; message: string; html: string; attachments?: Attachment[] } = {
-            to: r.email,
-            subject: personalSubject,
-            message: personalBody,
-            html: htmlBody,
-          };
-          if (attachments.length > 0) payload.attachments = attachments;
-
-          const { data, error } = await supabase.functions.invoke('gmail-send', { body: payload });
-          if (error || data?.error) throw new Error(data?.error || error?.message);
-
-          await supabase.from('bulk_email_recipients').update({ status: 'sent' }).eq('id', recipientId);
-          sent++;
-        } catch (err) {
-          await supabase.from('bulk_email_recipients').update({
-            status: 'error',
-            error_message: getErrorMessage(err) || 'Unknown error',
-          }).eq('id', recipientId);
-          errors++;
-        }
+    try {
+      const campaignId = crypto.randomUUID();
+      const htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${body
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</body></html>`;
+      const { error: campaignError } = await supabase.from('bulk_email_campaigns').insert({
+        id: campaignId, company_id: companyId, user_id: userId, subject,
+        body_preview: body.slice(0, 200), total_recipients: recipients.length, status: 'queued',
       });
-      await Promise.all(promises);
-      setProgress({ sent, total: recipients.length, errors });
-      if (i + batchSize < recipients.length) await new Promise(res => setTimeout(res, delayMs));
+      if (campaignError) throw campaignError;
+
+      const recipientRows = recipients.map((recipient) => ({
+        id: crypto.randomUUID(), campaign_id: campaignId, company_id: companyId,
+        email: recipient.email, name: recipient.name || null, status: 'queued',
+      }));
+      for (let index = 0; index < recipientRows.length; index += 500) {
+        const { error } = await supabase.from('bulk_email_recipients').insert(recipientRows.slice(index, index + 500));
+        if (error) throw error;
+      }
+
+      for (const attachment of attachments) {
+        const safeName = attachment.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storagePath = `${companyId}/${campaignId}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from('campaign-assets')
+          .upload(storagePath, decodeAttachment(attachment), { contentType: attachment.content_type, upsert: false });
+        if (uploadError) throw uploadError;
+        const { error: assetError } = await supabase.from('campaign_assets').insert({
+          company_id: companyId, campaign_id: campaignId, storage_bucket: 'campaign-assets',
+          storage_path: storagePath, file_name: attachment.filename,
+          content_type: attachment.content_type, byte_size: attachment.size, created_by: userId,
+        });
+        if (assetError) throw assetError;
+      }
+
+      const { data, error } = await supabase.rpc('enqueue_email_campaign', {
+        p_campaign_id: campaignId,
+        p_idempotency_key: `campaign:${campaignId}`,
+        p_html_body: htmlBody,
+        p_text_body: body,
+        p_from_email: gmailAccount.email_address,
+        p_scheduled_at: scheduledAt?.toISOString() ?? null,
+      });
+      if (error) throw error;
+      setProgress({ sent: 0, total: recipients.length, errors: Number((data as { suppressed?: number })?.suppressed ?? 0) });
+      toast.success(locale === 'da'
+        ? `${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`
+        : `${recipients.length} emails are queued and will continue in the background`);
+    } catch (error) {
+      toast.error(getErrorMessage(error) || t('common.error'));
+    } finally {
+      setSending(false);
     }
-
-    // Update campaign totals
-    await supabase.from('bulk_email_campaigns').update({
-      total_sent: sent,
-      total_errors: errors,
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-    }).eq('id', campaignId);
-
-    setSending(false);
-    if (errors === 0) toast.success(t('bulkEmail.allSent').replace('{count}', String(sent)));
-    else toast.warning(t('bulkEmail.sentWithErrors').replace('{sent}', String(sent)).replace('{errors}', String(errors)));
   };
 
   const previewRecipient = recipients[0] || { email: 'kontakt@firma.dk', name: 'Hans Jensen', firstName: 'Hans', lastName: 'Jensen' };
@@ -726,7 +695,17 @@ export default function BulkEmailPage() {
                   <p className="text-sm font-medium">{t('bulkEmail.unsubscribeLink')}</p>
                   <p className="text-xs text-muted-foreground">{t('bulkEmail.unsubscribeDesc')}</p>
                 </div>
-                <Switch checked={includeUnsubscribe} onCheckedChange={setIncludeUnsubscribe} />
+                <Switch checked={includeUnsubscribe} disabled aria-label={t('bulkEmail.unsubscribeLink')} />
+              </div>
+              <div className="space-y-2 border-t pt-4">
+                <Label htmlFor="bulk-email-scheduled-time">{t('bulkEmail.scheduledTime')}</Label>
+                <Input
+                  id="bulk-email-scheduled-time"
+                  type="datetime-local"
+                  value={scheduledTime}
+                  min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                  onChange={(event) => setScheduledTime(event.target.value)}
+                />
               </div>
             </CardContent>
           </Card>

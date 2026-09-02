@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,31 +13,10 @@ export default function MetaOAuthCallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const state = params.get("state"); // company_id
-    const errorParam = params.get("error");
-    const errorDesc = params.get("error_description");
-
-    if (errorParam) {
-      setError(errorDesc || errorParam);
-      return;
-    }
-
-    if (!code || !state) {
-      setError("Manglende autorisationskode eller virksomheds-ID");
-      return;
-    }
-
-    exchangeCode(code, state);
-  }, []);
-
-  const exchangeCode = async (code: string, companyId: string) => {
+  const exchangeCode = useCallback(async (code: string, state: string) => {
     try {
-      const redirectUri = "https://aiagencydanmark.dk/auth/meta/callback";
       const { data, error: fnError } = await supabase.functions.invoke("meta-oauth-callback", {
-        body: { code, company_id: companyId, redirect_uri: redirectUri },
+        body: { code, state },
       });
 
       if (fnError) throw new Error(fnError.message);
@@ -47,13 +26,31 @@ export default function MetaOAuthCallbackPage() {
         title: "Meta Ads forbundet!",
         description: `${data.ad_accounts_count} annonce-konti fundet.`,
       });
-
-      // Redirect to Meta Ads page
       navigate("/en/app/marketing/meta-ads", { replace: true });
     } catch (err) {
       setError((getErrorMessage(err) || "Ukendt fejl"));
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    const errorParam = params.get("error");
+    const errorDesc = params.get("error_description");
+
+    if (errorParam) {
+      setError(errorDesc || errorParam);
+      return;
+    }
+
+    if (!code || !state) {
+      setError("Manglende autorisationskode eller sikker OAuth-state");
+      return;
+    }
+
+    void exchangeCode(code, state);
+  }, [exchangeCode]);
 
   if (error) {
     return (

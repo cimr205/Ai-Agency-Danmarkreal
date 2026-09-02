@@ -4,7 +4,7 @@ const CONNECTED_PHONE_KEY = 'crm-power-dialer-phone-v1';
 
 export type ComputerPlatform = 'mac' | 'windows';
 export type PhonePlatform = 'ios' | 'android';
-export type ConnectionMode = 'on_device' | 'computer_relay';
+export type ConnectionMode = 'on_device' | 'computer_relay' | 'backend_relay';
 
 export interface ConnectedPhone {
   version: 1;
@@ -14,6 +14,8 @@ export interface ConnectedPhone {
   connectionMode?: ConnectionMode;
   phonePlatform?: PhonePlatform;
   computerPlatform?: ComputerPlatform;
+  status?: 'online' | 'offline' | 'revoked';
+  lastHeartbeatAt?: string | null;
   connectedAt: string;
 }
 
@@ -90,7 +92,7 @@ export function getComputerPlatform(
 export function isDialerConnectionReady(phone: ConnectedPhone | null, platform: DevicePlatform): boolean {
   if (!phone) return false;
   if (platform === 'web') {
-    return phone.platform === 'web' && phone.connectionMode === 'computer_relay';
+    return phone.connectionMode === 'backend_relay' && phone.status === 'online';
   }
   return phone.platform === platform && phone.connectionMode !== 'computer_relay';
 }

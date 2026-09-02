@@ -42,31 +42,15 @@ export function MetaOverviewKPIs() {
   const [balanceView, setBalanceView] = useState<BalanceView>("funds");
   const [accounts, setAccounts] = useState<AdAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [data, setData] = useState<KpiData>(emptyKpi);
   const [loading, setLoading] = useState(false);
 
   // Fetch all ad accounts on mount
   useEffect(() => {
     async function fetchAccounts() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
-      if (!profile?.company_id) return;
-
-      const { data: conn } = await supabase
-        .from("meta_connections")
-        .select("access_token")
-        .eq("company_id", profile.company_id)
-        .eq("status", "connected")
-        .single();
-      if (!conn?.access_token) return;
-      setToken(conn.access_token);
-
-      const { data: adAccounts } = await supabase
-        .from("meta_ad_accounts")
-        .select("account_id, account_name, currency")
-        .eq("company_id", profile.company_id);
+      const { data } = await supabase.rpc("get_meta_connection_status");
+      const status = data as unknown as { status?: string; ad_accounts?: AdAccount[] };
+      const adAccounts = status.status === "connected" ? status.ad_accounts ?? [] : [];
 
       if (adAccounts && adAccounts.length > 0) {
         setAccounts(adAccounts);
@@ -77,64 +61,30 @@ export function MetaOverviewKPIs() {
   }, []);
 
   // Fetch KPIs when selected account changes
-  const fetchKpis = useCallback(async (actId: string, accessToken: string, cur: string) => {
+  const fetchKpis = useCallback(async (actId: string, cur: string) => {
     setLoading(true);
     try {
-      const accountResp = await fetch(
-        `https://graph.facebook.com/v21.0/act_${actId}?fields=balance,amount_spent,spend_cap,currency,funding_source_details&access_token=${accessToken}`
-      );
-
-      let balance: string | null = null;
-      let amountSpent: string | null = null;
-      let spendLimit: string | null = null;
-      let fundingAmount: string | null = null;
-      let detectedCurrency = cur;
-
-      if (accountResp.ok) {
-        const d = await accountResp.json();
-        if (d.currency) detectedCurrency = d.currency;
-        if (d.balance !== undefined) balance = (Math.abs(parseInt(d.balance)) / 100).toFixed(2);
-        if (d.amount_spent !== undefined) amountSpent = (parseInt(d.amount_spent) / 100).toFixed(2);
-        if (d.spend_cap !== undefined && d.spend_cap !== "0") spendLimit = (parseInt(d.spend_cap) / 100).toFixed(2);
-        if (d.funding_source_details) {
-          const fsd = d.funding_source_details;
-          if (fsd.display_string) fundingAmount = fsd.display_string;
-          if (fsd.current_balance !== undefined) {
-            const cb = Math.abs(parseInt(fsd.current_balance)) / 100;
-            if (cb > 0) balance = cb.toFixed(2);
-          }
-        }
-      }
-
-      const today = new Date();
-      const thirtyDaysAgo = new Date(today);
+      const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const since = thirtyDaysAgo.toISOString().split("T")[0];
-      const until = today.toISOString().split("T")[0];
-
-      let totalSpend: string | null = null;
-      let impressions: string | null = null;
-      let clicks: string | null = null;
-      let ctr: string | null = null;
-
-      const insightsResp = await fetch(
-        `https://graph.facebook.com/v21.0/act_${actId}/insights?fields=spend,impressions,clicks,ctr&time_range={"since":"${since}","until":"${until}"}&access_token=${accessToken}`
-      );
-      if (insightsResp.ok) {
-        const insData = await insightsResp.json();
-        if (insData.data && insData.data.length > 0) {
-          const row = insData.data[0];
-          if (row.spend) totalSpend = parseFloat(row.spend).toFixed(2);
-          if (row.impressions) impressions = parseInt(row.impressions).toLocaleString("da-DK");
-          if (row.clicks) clicks = parseInt(row.clicks).toLocaleString("da-DK");
-          if (row.ctr) ctr = parseFloat(row.ctr).toFixed(2) + "%";
-        }
-      }
+      const { data: account } = await supabase.from("meta_ad_accounts").select("id").eq("account_id", actId).single();
+      const { data: rows, error } = await supabase.from("meta_daily_insights")
+        .select("spend,impressions,clicks").eq("ad_account_id", account?.id ?? "").gte("insight_date", since);
+      if (error) throw error;
+      const totals = (rows ?? []).reduce((acc, row) => ({
+        spend: acc.spend + Number(row.spend || 0),
+        impressions: acc.impressions + Number(row.impressions || 0),
+        clicks: acc.clicks + Number(row.clicks || 0),
+      }), { spend: 0, impressions: 0, clicks: 0 });
+      const calculatedCtr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
 
       setData({
-        balance, amountSpent, spend_limit: spendLimit,
-        currency: detectedCurrency, accountId: actId,
-        fundingAmount, totalSpend, impressions, clicks, ctr,
+        balance: null, amountSpent: null, spend_limit: null,
+        currency: cur, accountId: actId, fundingAmount: null,
+        totalSpend: totals.spend.toFixed(2),
+        impressions: totals.impressions.toLocaleString("da-DK"),
+        clicks: totals.clicks.toLocaleString("da-DK"),
+        ctr: calculatedCtr.toFixed(2) + "%",
       });
     } catch (e) {
       console.error("Failed to fetch Meta KPIs:", e);
@@ -144,10 +94,10 @@ export function MetaOverviewKPIs() {
   }, []);
 
   useEffect(() => {
-    if (!selectedAccountId || !token) return;
+    if (!selectedAccountId) return;
     const account = accounts.find(a => a.account_id === selectedAccountId);
-    fetchKpis(selectedAccountId, token, account?.currency || "DKK");
-  }, [selectedAccountId, token, accounts, fetchKpis]);
+    fetchKpis(selectedAccountId, account?.currency || "DKK");
+  }, [selectedAccountId, accounts, fetchKpis]);
 
   const selectedAccount = accounts.find(a => a.account_id === selectedAccountId);
   const selectedLabel = selectedAccount?.account_name || selectedAccount?.account_id || t('metaAds.selectAccount');

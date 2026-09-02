@@ -405,6 +405,54 @@ export type Database = {
           },
         ]
       }
+      campaign_assets: {
+        Row: {
+          id: string
+          company_id: string
+          campaign_id: string
+          storage_bucket: string
+          storage_path: string
+          file_name: string
+          content_type: string
+          byte_size: number
+          content_id: string | null
+          disposition: string
+          checksum_sha256: string | null
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          campaign_id: string
+          storage_bucket: string
+          storage_path: string
+          file_name: string
+          content_type: string
+          byte_size: number
+          content_id?: string | null
+          disposition?: string
+          checksum_sha256?: string | null
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          campaign_id?: string
+          storage_bucket?: string
+          storage_path?: string
+          file_name?: string
+          content_type?: string
+          byte_size?: number
+          content_id?: string | null
+          disposition?: string
+          checksum_sha256?: string | null
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           company_id: string
@@ -724,6 +772,7 @@ export type Database = {
           company_name: string | null
           conversion_status: string
           converted_at: string | null
+          converted_customer_id: string | null
           converted_deal_id: string | null
           converted_from_lead_id: string | null
           country: string | null
@@ -766,6 +815,7 @@ export type Database = {
           company_name?: string | null
           conversion_status?: string
           converted_at?: string | null
+          converted_customer_id?: string | null
           converted_deal_id?: string | null
           converted_from_lead_id?: string | null
           country?: string | null
@@ -807,6 +857,7 @@ export type Database = {
           company_name?: string | null
           conversion_status?: string
           converted_at?: string | null
+          converted_customer_id?: string | null
           converted_deal_id?: string | null
           converted_from_lead_id?: string | null
           country?: string | null
@@ -992,6 +1043,7 @@ export type Database = {
       deals: {
         Row: {
           company_id: string
+          currency: string
           created_at: string
           created_by: string
           customer_id: string | null
@@ -1006,6 +1058,7 @@ export type Database = {
         }
         Insert: {
           company_id: string
+          currency?: string
           created_at?: string
           created_by: string
           customer_id?: string | null
@@ -1020,6 +1073,7 @@ export type Database = {
         }
         Update: {
           company_id?: string
+          currency?: string
           created_at?: string
           created_by?: string
           customer_id?: string | null
@@ -2601,6 +2655,75 @@ export type Database = {
           },
         ]
       }
+      meta_daily_insights: {
+        Row: {
+          id: string
+          company_id: string
+          ad_account_id: string
+          insight_date: string
+          level: string
+          external_object_id: string
+          campaign_id: string | null
+          adset_id: string | null
+          ad_id: string | null
+          spend: number
+          impressions: number
+          reach: number
+          clicks: number
+          ctr: number
+          cpc: number
+          cpm: number
+          actions: Json
+          conversions: number
+          raw: Json
+          synced_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          ad_account_id: string
+          insight_date: string
+          level: string
+          external_object_id: string
+          campaign_id?: string | null
+          adset_id?: string | null
+          ad_id?: string | null
+          spend?: number
+          impressions?: number
+          reach?: number
+          clicks?: number
+          ctr?: number
+          cpc?: number
+          cpm?: number
+          actions?: Json
+          conversions?: number
+          raw?: Json
+          synced_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          ad_account_id?: string
+          insight_date?: string
+          level?: string
+          external_object_id?: string
+          campaign_id?: string | null
+          adset_id?: string | null
+          ad_id?: string | null
+          spend?: number
+          impressions?: number
+          reach?: number
+          clicks?: number
+          ctr?: number
+          cpc?: number
+          cpm?: number
+          actions?: Json
+          conversions?: number
+          raw?: Json
+          synced_at?: string
+        }
+        Relationships: []
+      }
       meta_ad_accounts: {
         Row: {
           account_id: string
@@ -3113,6 +3236,71 @@ export type Database = {
           },
         ]
       }
+      phone_devices: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string
+          display_name: string
+          platform: string
+          os_version: string | null
+          app_version: string | null
+          device_token_hash: string
+          status: string
+          capabilities: Json
+          paired_at: string
+          last_heartbeat_at: string | null
+          last_seen_at: string | null
+          revoked_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id: string
+          display_name: string
+          platform: string
+          os_version?: string | null
+          app_version?: string | null
+          device_token_hash: string
+          status?: string
+          capabilities?: Json
+          paired_at?: string
+          last_heartbeat_at?: string | null
+          last_seen_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string
+          display_name?: string
+          platform?: string
+          os_version?: string | null
+          app_version?: string | null
+          device_token_hash?: string
+          status?: string
+          capabilities?: Json
+          paired_at?: string
+          last_heartbeat_at?: string | null
+          last_seen_at?: string | null
+          revoked_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_devices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3169,14 +3357,20 @@ export type Database = {
       }
       quotes: {
         Row: {
+          accepted_at: string | null
           company_id: string
+          converted_invoice_id: string | null
           created_at: string
           created_by: string
+          customer_id: string | null
           deal_id: string | null
+          expired_at: string | null
           id: string
           lead_id: string | null
           lines: Json
           notes: string | null
+          rejected_at: string | null
+          sent_at: string | null
           status: string
           subtotal: number
           title: string
@@ -3185,16 +3379,23 @@ export type Database = {
           valid_until: string | null
           vat_amount: number
           vat_rate: number
+          version: number
         }
         Insert: {
+          accepted_at?: string | null
           company_id: string
+          converted_invoice_id?: string | null
           created_at?: string
           created_by: string
+          customer_id?: string | null
           deal_id?: string | null
+          expired_at?: string | null
           id?: string
           lead_id?: string | null
           lines?: Json
           notes?: string | null
+          rejected_at?: string | null
+          sent_at?: string | null
           status?: string
           subtotal?: number
           title: string
@@ -3203,16 +3404,23 @@ export type Database = {
           valid_until?: string | null
           vat_amount?: number
           vat_rate?: number
+          version?: number
         }
         Update: {
+          accepted_at?: string | null
           company_id?: string
+          converted_invoice_id?: string | null
           created_at?: string
           created_by?: string
+          customer_id?: string | null
           deal_id?: string | null
+          expired_at?: string | null
           id?: string
           lead_id?: string | null
           lines?: Json
           notes?: string | null
+          rejected_at?: string | null
+          sent_at?: string | null
           status?: string
           subtotal?: number
           title?: string
@@ -3221,6 +3429,7 @@ export type Database = {
           valid_until?: string | null
           vat_amount?: number
           vat_rate?: number
+          version?: number
         }
         Relationships: [
           {
@@ -4421,6 +4630,21 @@ export type Database = {
         }
         Returns: string
       }
+      delete_draft_invoice: { Args: { p_invoice_id: string }; Returns: boolean }
+      enqueue_email_campaign: {
+        Args: {
+          p_campaign_id: string
+          p_idempotency_key: string
+          p_html_body: string
+          p_text_body?: string | null
+          p_from_email?: string | null
+          p_from_name?: string | null
+          p_reply_to?: string | null
+          p_scheduled_at?: string | null
+          p_max_attempts?: number
+        }
+        Returns: Json
+      }
       find_contact_duplicates: {
         Args: { p_email: string | null; p_phone: string | null; p_workspace_id: string }
         Returns: {
@@ -4432,6 +4656,48 @@ export type Database = {
           email: string
           phone: string | null
         }[]
+      }
+      list_leads: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_search?: string | null
+          p_sort_field?: string
+          p_sort_direction?: string
+          p_status?: string | null
+          p_owner_id?: string | null
+          p_source_id?: string | null
+          p_campaign_id?: string | null
+          p_folder_id?: string | null
+          p_tags?: string[] | null
+          p_tag_logic?: string
+          p_industry?: string | null
+        }
+        Returns: Json
+      }
+      register_invoice_payment: {
+        Args: {
+          p_invoice_id: string
+          p_amount: number
+          p_payment_method: string
+          p_paid_at?: string
+          p_idempotency_key?: string | null
+          p_external_reference?: string | null
+          p_metadata?: Json
+        }
+        Returns: Json
+      }
+      transition_quote: {
+        Args: { p_quote_id: string; p_target_status: string; p_expected_version?: number | null }
+        Returns: Json
+      }
+      quote_to_invoice: {
+        Args: { p_quote_id: string; p_invoice_number: string; p_due_date?: string | null }
+        Returns: Json
+      }
+      void_invoice: {
+        Args: { p_invoice_id: string; p_reason: string; p_expected_version?: number | null }
+        Returns: Json
       }
       generate_activation_code: { Args: never; Returns: string }
       generate_employee_id: {
@@ -4515,6 +4781,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_meta_connection_status: { Args: never; Returns: Json }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -4574,6 +4841,19 @@ export type Database = {
         }
         Returns: string
       }
+      create_phone_pairing_session: { Args: never; Returns: Json }
+      create_phone_call_command: {
+        Args: {
+          p_device_id: string
+          p_phone_number: string
+          p_lead_id?: string | null
+          p_display_name?: string | null
+          p_idempotency_key?: string | null
+          p_metadata?: Json
+        }
+        Returns: Json
+      }
+      revoke_phone_device: { Args: { p_device_id: string }; Returns: boolean }
       regenerate_activation_code: {
         Args: { _company_id: string }
         Returns: string

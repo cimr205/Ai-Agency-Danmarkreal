@@ -29,6 +29,7 @@ import {
   usePowerDialerCalls,
   type CallOutcome,
 } from '@/hooks/api/usePowerDialer';
+import { useCreatePhoneCallCommand } from '@/hooks/api/usePhoneDeviceRelay';
 import { toast } from '@/hooks/use-toast';
 import {
   getDevicePlatform,
@@ -135,6 +136,7 @@ export default function ColdCallerPage() {
   const { data: leadsResult, isLoading: leadsLoading } = useLeads();
   const { data: recentCalls = [], isLoading: callsLoading, error: callsError } = usePowerDialerCalls();
   const logCall = useLogPowerDialerCall();
+  const createCallCommand = useCreatePhoneCallCommand();
 
   const [platform] = useState<DevicePlatform>(() => getDevicePlatform());
   const [connectedPhone, setConnectedPhone] = useState<ConnectedPhone | null>(() => loadConnectedPhone());
@@ -219,7 +221,11 @@ export default function ColdCallerPage() {
     setCallbackAt('');
   }, []);
 
-  const handleCallHandoff = useCallback((event: MouseEvent<HTMLAnchorElement>) => {
+  const handleCallHandoff = useCallback(async (event: MouseEvent<HTMLAnchorElement>) => {
+    if (createCallCommand.isPending) {
+      event.preventDefault();
+      return;
+    }
     if (!currentLead?.phone || !canDialFromThisDevice) {
       event.preventDefault();
       if (!canDialFromThisDevice) {
@@ -240,6 +246,28 @@ export default function ColdCallerPage() {
       platform,
       handoffMethod,
     };
+
+    if (platform === 'web') {
+      event.preventDefault();
+      if (!connectedPhone) return;
+      try {
+        await createCallCommand.mutateAsync({
+          deviceId: connectedPhone.deviceId,
+          phoneNumber: currentLead.phone,
+          leadId: currentLead.id,
+          displayName: currentLead.name,
+          idempotencyKey: `${currentLead.id}:${nextPendingCall.startedAt}`,
+          metadata: { source: 'power_dialer_web' },
+        });
+      } catch (error) {
+        toast({
+          title: t('devicePowerDialer.errors.handoffTitle'),
+          description: getErrorMessage(error),
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
 
     setPendingCall(nextPendingCall);
     storePendingCall(nextPendingCall);
@@ -263,7 +291,7 @@ export default function ColdCallerPage() {
         });
       }
     }
-  }, [canDialFromThisDevice, clearCallForm, currentLead, platform, t]);
+  }, [canDialFromThisDevice, clearCallForm, connectedPhone, createCallCommand, currentLead, platform, t]);
 
   const handleOutcomeChange = useCallback((nextOutcome: CallOutcome) => {
     setOutcome(nextOutcome);
@@ -451,6 +479,7 @@ export default function ColdCallerPage() {
                     <Button
                       asChild
                       size="xl"
+                      disabled={createCallCommand.isPending}
                       className="h-16 w-full rounded-2xl bg-emerald-600 text-lg text-white shadow-lg shadow-emerald-950/20 hover:bg-emerald-700"
                     >
                       <a href={getTelephoneUri(activeLead.phone ?? '')} onClick={handleCallHandoff}>

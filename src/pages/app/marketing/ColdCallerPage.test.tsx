@@ -5,6 +5,8 @@ import { I18nProvider } from '@/lib/i18n';
 import ColdCallerPage from './ColdCallerPage';
 
 const logCall = vi.fn();
+const createPairingSession = vi.fn();
+let phoneDevices: Array<Record<string, unknown>> = [];
 
 const leads = [
   {
@@ -61,6 +63,13 @@ vi.mock('@/hooks/api/usePowerDialer', () => ({
   }),
 }));
 
+vi.mock('@/hooks/api/usePhoneDeviceRelay', () => ({
+  usePhoneDevices: () => ({ data: phoneDevices, error: null }),
+  useCreatePhonePairingSession: () => ({ data: null, isPending: false, mutate: createPairingSession }),
+  useRevokePhoneDevice: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useCreatePhoneCallCommand: () => ({ isPending: false, mutateAsync: vi.fn() }),
+}));
+
 vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
 
 function renderPage() {
@@ -93,6 +102,8 @@ beforeEach(() => {
   }));
   logCall.mockReset();
   logCall.mockResolvedValue('new-call-id');
+  createPairingSession.mockReset();
+  phoneDevices = [];
 });
 
 describe('Device Power Dialer page', () => {
@@ -202,7 +213,7 @@ describe('Device Power Dialer page', () => {
     expect(screen.getByText('Phone connected')).toBeInTheDocument();
   });
 
-  it('guides desktop pairing and enables calls only after every relay step is complete', () => {
+  it('starts secure desktop pairing without unlocking calls from a checklist', () => {
     window.localStorage.clear();
     Object.defineProperty(window.navigator, 'userAgent', {
       configurable: true,
@@ -210,35 +221,37 @@ describe('Device Power Dialer page', () => {
     });
     renderPage();
 
-    expect(screen.getByText('Call from your computer through your phone')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mac + iPhone' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Connect a nearby phone')).toBeInTheDocument();
+    expect(screen.getByText('Mac + iPhone')).toBeInTheDocument();
+    expect(screen.getByText('Mac + Android')).toBeInTheDocument();
+    expect(screen.getByText('Windows + iPhone')).toBeInTheDocument();
+    expect(screen.getByText('Windows + Android')).toBeInTheDocument();
     expect(getCallLink('+4512345678')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Prepare both devices' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow calls on iPhone' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow calls on Mac' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Keep iPhone nearby' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Connect and enable Call' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start secure pairing' }));
 
-    expect(getCallLink('+4512345678')).toBeInTheDocument();
-    expect(screen.getByText('Computer and phone connected')).toBeInTheDocument();
-    expect(window.localStorage.getItem('crm-power-dialer-phone-v1')).toContain('computer_relay');
+    expect(createPairingSession).toHaveBeenCalledOnce();
+    expect(getCallLink('+4512345678')).not.toBeInTheDocument();
   });
 
-  it('offers an honest Mac and Android phone fallback without claiming desktop relay', () => {
+  it('unlocks desktop calling only when the backend reports a fresh phone heartbeat', async () => {
     window.localStorage.clear();
     Object.defineProperty(window.navigator, 'userAgent', {
       configurable: true,
       value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
     });
+    phoneDevices = [{
+      id: 'verified-android',
+      display_name: 'Sales Android',
+      platform: 'android',
+      status: 'online',
+      paired_at: new Date().toISOString(),
+      last_heartbeat_at: new Date().toISOString(),
+    }];
     renderPage();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mac + Android' }));
-
-    expect(screen.getByLabelText('QR code for Power Dialer on Android')).toBeInTheDocument();
-    expect(screen.getByText('Mac + Android uses the phone directly')).toBeInTheDocument();
-    expect(screen.getByText(/not through the Mac microphone/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Connect and enable Call' })).not.toBeInTheDocument();
-    expect(getCallLink('+4512345678')).not.toBeInTheDocument();
+    await waitFor(() => expect(getCallLink('+4512345678')).toBeInTheDocument());
+    expect(screen.getByText('Verified phone online')).toBeInTheDocument();
+    expect(screen.getByText(/Sales Android/)).toBeInTheDocument();
   });
 });
