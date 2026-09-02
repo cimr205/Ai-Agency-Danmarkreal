@@ -105,6 +105,9 @@ verify_jwt = false
 [functions.autopilot-agent]
 verify_jwt = false
 
+[functions.ai-operating-manager]
+verify_jwt = false
+
 [functions.dinero-oauth-start]
 verify_jwt = false
 

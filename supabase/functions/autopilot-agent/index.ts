@@ -23,9 +23,9 @@ const SYSTEM = `You are the Autopilot — the operational AI brain inside a busi
 You have direct tools to read and act across CRM (leads, deals), Finance (invoices), Productivity (tasks), Communication (webhook bridge to Gmail/Slack/etc.), and the Event Bus.
 
 Operating rules:
-- Be decisive. Use tools immediately. Don't ask for confirmation unless an action is irreversible or sends external messages.
-- For external sends (email, Slack, webhook), create an entry in autopilot_actions with status='proposed' and surface it for human approval — do NOT fire it directly.
-- For internal CRM/finance/task updates, just do it and report back.
+- Be decisive when reading and analysing data.
+- Every mutation, including internal CRM/task updates, must create an awaiting_approval action. Never execute a mutation directly.
+- Surface a concise preview for human approval. The Operating Manager execution endpoint performs the real action after server-side permission checks.
 - When summarizing, be brief. Skip pleasantries. Use bullet points.
 - After acting, always emit a workspace_event so the rest of the system reacts.
 - Today is ${new Date().toISOString().slice(0, 10)}.`;
@@ -50,12 +50,16 @@ function buildTools(companyId: string, userId: string) {
   const propose = async (
     actionType: string, title: string, rationale: string, payload: Record<string, unknown>,
   ) => {
+    const idempotencyKey = crypto.randomUUID();
     const { data, error } = await sb.from("autopilot_actions").insert({
       company_id: companyId, user_id: userId,
-      action_id: crypto.randomUUID(), action_type: actionType, category: "Autopilot",
-      headline: title, status: "proposed",
+      action_id: idempotencyKey, idempotency_key: idempotencyKey,
+      action_type: actionType, category: actionType.split(".")[0],
+      headline: title, status: "awaiting_approval",
       rationale, payload, suggested_by: "autopilot",
       execution_function: actionType, execution_payload: payload,
+      confirmation_required: true,
+      preview: { title, fields: payload },
     }).select("id").single();
     if (error) throw new Error(error.message);
     return data.id;
@@ -127,48 +131,39 @@ function buildTools(companyId: string, userId: string) {
       inputSchema: z.object({}),
       execute: async () => {
         const { data, error } = await sb.from("integrations")
-          .select("provider,status,account_label,last_sync_at").eq("company_id", companyId);
+          .select("id,provider,status,account_label,last_sync_at").eq("company_id", companyId);
         if (error) throw new Error(error.message);
         return data;
       },
     }),
 
-    // ---- WRITE / INTERNAL ------------------------------------------------
+    // ---- PROPOSE MUTATIONS ------------------------------------------------
     create_task: tool({
-      description: "Create an internal task (no external send). Use freely.",
+      description: "Prepare an internal task for human approval. Does not create it yet.",
       inputSchema: z.object({
         title: z.string(), description: z.string().optional(),
         priority: z.enum(["low", "medium", "high"]).default("medium"),
         due_date: z.string().optional(), lead_id: z.string().optional(), deal_id: z.string().optional(),
       }),
       execute: async (i) => {
-        const { data, error } = await sb.from("tasks").insert({
-          company_id: companyId, created_by: userId,
-          title: i.title, description: i.description, priority: i.priority,
-          due_date: i.due_date, lead_id: i.lead_id, deal_id: i.deal_id, status: "pending",
-        }).select().single();
-        if (error) throw new Error(error.message);
-        return { id: data.id, title: data.title };
+        const id = await propose("tasks.create", `Opret opgave: ${i.title}`, "Opgaven er klargjort og kræver godkendelse.", i);
+        return { proposed_action_id: id, status: "awaiting_approval" };
       },
     }),
     update_lead_status: tool({
-      description: "Update a lead's pipeline status.",
+      description: "Prepare a lead status change for human approval.",
       inputSchema: z.object({ lead_id: z.string().uuid(), status: z.string() }),
       execute: async ({ lead_id, status }) => {
-        const { error } = await sb.from("customers").update({ status })
-          .eq("id", lead_id).eq("company_id", companyId).eq("record_type", "lead");
-        if (error) throw new Error(error.message);
-        return { ok: true };
+        const id = await propose("crm.lead.move_stage", `Flyt lead til ${status}`, "Statusændringen er klargjort og kræver godkendelse.", { lead_id, status });
+        return { proposed_action_id: id, status: "awaiting_approval" };
       },
     }),
     move_deal_stage: tool({
-      description: "Move a deal to a new pipeline stage (discovery, proposal, negotiation, won, lost).",
+      description: "Prepare a deal stage change for human approval (discovery, proposal, negotiation, won, lost).",
       inputSchema: z.object({ deal_id: z.string().uuid(), stage: z.string() }),
       execute: async ({ deal_id, stage }) => {
-        const { error } = await sb.from("deals").update({ stage })
-          .eq("id", deal_id).eq("company_id", companyId);
-        if (error) throw new Error(error.message);
-        return { ok: true };
+        const id = await propose("crm.deal.move_stage", `Flyt deal til ${stage}`, "Faseændringen er klargjort og kræver godkendelse.", { deal_id, stage });
+        return { proposed_action_id: id, status: "awaiting_approval" };
       },
     }),
 
@@ -180,20 +175,22 @@ function buildTools(companyId: string, userId: string) {
         related_entity_type: z.string().optional(), related_entity_id: z.string().optional(),
       }),
       execute: async (i) => {
-        const id = await propose("send_email", `Email → ${i.to}: ${i.subject}`,
+        const id = await propose("email.send", `Email → ${i.to}: ${i.subject}`,
           `Foreslået send via Gmail-integration.`, i);
         return { proposed_action_id: id, status: "awaiting_approval" };
       },
     }),
-    propose_webhook: tool({
-      description: "Propose firing an external webhook integration (Slack, HubSpot, n8n, Zapier, etc.). Awaits human approval.",
+    propose_integration_action: tool({
+      description: "Propose a tool action through an already-connected integration. Use an integration id returned by list_integrations. Awaits human approval.",
       inputSchema: z.object({
-        provider: z.string(), payload: z.record(z.string(), z.any()),
+        integration_id: z.string().uuid(), tool_slug: z.string(),
+        action_category: z.enum(["write", "destructive", "financial", "communication"]),
+        arguments: z.record(z.string(), z.any()),
         purpose: z.string(),
       }),
       execute: async (i) => {
-        const id = await propose("trigger_webhook", `Webhook → ${i.provider}`,
-          i.purpose, i);
+        const id = await propose("integration.tool.execute", `Forbundet app → ${i.tool_slug}`,
+          i.purpose, { integration_id: i.integration_id, tool_slug: i.tool_slug, action_category: i.action_category, arguments: i.arguments });
         return { proposed_action_id: id, status: "awaiting_approval" };
       },
     }),
@@ -204,7 +201,7 @@ function buildTools(companyId: string, userId: string) {
         due_date: z.string(), notes: z.string().optional(),
       }),
       execute: async (i) => {
-        const id = await propose("create_invoice", `Faktura → ${i.amount} kr`,
+        const id = await propose("invoice.create", `Faktura → ${i.amount} kr`,
           "Auto-genereret efter signal.", i);
         return { proposed_action_id: id, status: "awaiting_approval" };
       },

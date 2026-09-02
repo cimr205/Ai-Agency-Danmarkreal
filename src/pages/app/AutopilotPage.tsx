@@ -27,7 +27,7 @@ export default function AutopilotPage() {
   const actions = useAutopilotActions();
 
   const proposed = useMemo(
-    () => (actions.data ?? []).filter((a) => a.status === "proposed"),
+    () => (actions.data ?? []).filter((a) => ["proposed", "awaiting_approval"].includes(a.status)),
     [actions.data],
   );
 
@@ -389,7 +389,7 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
         <AnimatePresence initial={false}>
           {actions.map((a) => {
             const Icon = ACTION_ICON[a.action_type] ?? Sparkles;
-            const isProposed = a.status === "proposed";
+            const isProposed = ["proposed", "awaiting_approval"].includes(a.status);
             const tone = a.status === "executed" ? "text-emerald-300/80"
               : a.status === "dismissed" ? "text-muted-foreground/60"
               : a.status === "failed" ? "text-destructive"

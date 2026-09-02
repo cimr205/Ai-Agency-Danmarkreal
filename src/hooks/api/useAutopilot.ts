@@ -3,7 +3,6 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import type { Json } from "@/integrations/supabase/types";
 
 export interface WorkspaceEvent {
   id: string;
@@ -104,16 +103,12 @@ export function useAutopilotActions() {
 
 export function useUpdateActionStatus() {
   const qc = useQueryClient();
-  const { profile } = useAuth();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "executed" | "dismissed" | "failed" }) => {
-      const updates: { status: typeof status; executed_at?: string } = { status };
-      if (status === "executed") updates.executed_at = new Date().toISOString();
-      const { error } = await supabase
-        .from("autopilot_actions")
-        .update(updates)
-        .eq("id", id)
-        .eq("company_id", profile!.company_id!);
+      const operation = status === "dismissed" ? "reject" : status === "failed" ? "retry" : "approve";
+      const { error } = await supabase.functions.invoke("ai-operating-manager", {
+        body: { operation, actionId: id },
+      });
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
@@ -126,45 +121,15 @@ export function useUpdateActionStatus() {
 
 export function useExecuteAction() {
   const qc = useQueryClient();
-  const { profile } = useAuth();
   return useMutation({
     mutationFn: async (action: AutopilotAction) => {
-      // Execute the action by routing it to the right module.
-      // For now we support: trigger_webhook, send_email (as proposal -> webhook bridge).
-      const payload = (action.payload ?? {}) as Record<string, unknown> & { provider?: string; to?: string; subject?: string; body?: string };
-      let result: unknown = { ok: true };
-
-      if (action.action_type === "trigger_webhook") {
-        const provider = payload.provider as string;
-        const { data: integ } = await supabase
-          .from("integrations").select("metadata,status")
-          .eq("company_id", profile!.company_id!)
-          .eq("provider", provider).maybeSingle();
-        if (!integ || integ.status !== "connected") throw new Error(`${provider} ikke forbundet`);
-        const url = (integ.metadata as { webhook_url?: string } | null)?.webhook_url;
-        if (!url) throw new Error(`Mangler webhook URL for ${provider}`);
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: "autopilot", ...payload }),
-        });
-        result = { status: res.status };
-      } else if (action.action_type === "send_email") {
-        // gmail-send requires `message`, not `body` — this previously always
-        // failed with "Missing required fields: to, subject, message".
-        const { data, error } = await supabase.functions.invoke("gmail-send", {
-          body: { to: payload.to, subject: payload.subject, message: payload.body },
-        }).catch((e) => ({ data: null, error: e }));
-        if (error) throw new Error(error.message ?? "gmail-send fejlede");
-        result = data;
-      }
-
-      const { error } = await supabase
-        .from("autopilot_actions")
-        .update({ status: "executed", executed_at: new Date().toISOString(), result: result as Json })
-        .eq("id", action.id);
+      // Side effects are claimed atomically, permission-checked and executed
+      // server-side. The browser never receives connector secrets or webhook URLs.
+      const { data, error } = await supabase.functions.invoke("ai-operating-manager", {
+        body: { operation: action.status === "failed" ? "retry" : "approve", actionId: action.id },
+      });
       if (error) throw error;
-      return result;
+      return data;
     },
     onSuccess: () => {
       toast.success("Handling udført");
@@ -177,17 +142,19 @@ export function useExecuteAction() {
 export function useEventTypeStream(companyId: string | undefined, types: string[]) {
   // Optional helper for module-specific listeners (kept for future use).
   const [last, setLast] = useState<WorkspaceEvent | null>(null);
+  const typesKey = types.join(",");
   useEffect(() => {
     if (!companyId) return;
+    const acceptedTypes = typesKey ? typesKey.split(",") : [];
     const channel = supabase
-      .channel(`et-${companyId}-${types.join(",")}`)
+      .channel(`et-${companyId}-${typesKey}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "workspace_events", filter: `company_id=eq.${companyId}` },
         (p) => {
           const ev = p.new as WorkspaceEvent;
-          if (types.length === 0 || types.includes(ev.type)) setLast(ev);
+          if (acceptedTypes.length === 0 || acceptedTypes.includes(ev.type)) setLast(ev);
         })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [companyId, types.join(",")]);
+  }, [companyId, typesKey]);
   return last;
 }
