@@ -1554,19 +1554,19 @@
     "relay": {
       "title": "Ring fra computeren via din mobil",
       "oneTime": "Opsættes én gang",
-      "description": "Forbind en nærliggende iPhone eller Android til computeren. Du ringer og taler fra computeren, mens mobilens SIM/eSIM, abonnement og nummer bruges.",
+      "description": "Par en nærliggende iPhone eller Android én gang med en sikker QR-kode. Opkald sendes til telefonen, som bruger sit eget SIM/eSIM, abonnement og nummer.",
       "chooseCombination": "Vælg dine enheder",
       "guideTitle": "Gennemfør alle fire trin",
-      "keepNearby": "Telefonen skal være i nærheden med Bluetooth slået til. Mac + iPhone bruger også Wi-Fi.",
+      "keepNearby": "Telefonen skal være i nærheden og online med companion-siden eller appen åben.",
       "officialHelp": "Åbn den officielle vejledning",
       "finishAction": "Forbind og aktivér Ring",
       "completeAllSteps": "Gennemfør alle trin først",
-      "privacy": "CRM'et får ikke adgang til dit SIM-kort. Apple eller Microsoft håndterer den lokale forbindelse, og opkaldet afregnes på mobilabonnementet.",
-      "connectedTitle": "Computer og telefon er forbundet",
-      "connectedDescription": "Ring-knappen bruger computerens systemforbindelse til den nærliggende telefon og dens mobilabonnement.",
+      "privacy": "CRM'et får aldrig adgang til din Apple-konto, Google-konto eller SIM-oplysninger. Engangs-QR-koden godkender kun denne parrede telefon.",
+      "connectedTitle": "Telefon sikkert parret",
+      "connectedDescription": "Opkald sendes nu gennem den sikre companion-relay til denne telefon.",
       "reopenGuide": "Se systemvejledningen igen",
-      "callConfirmation": "Opkaldet åbnes på computeren via din forbundne telefon. Mobilens abonnement og nummer bruges.",
-      "callLockedDesktop": "Gennemfør forbindelsesguiden ovenfor for at aktivere Ring på computeren.",
+      "callConfirmation": "Anmodningen sendes til din parrede telefon. Bekræft opkaldet dér; dens SIM/eSIM, abonnement og nummer bruges.",
+      "callLockedDesktop": "Scan QR-koden og par telefonen for at aktivere Ring på computeren.",
       "macAndroid": {
         "title": "Mac + Android bruger telefonen direkte",
         "description": "macOS kan ikke overtage et almindeligt Android-SIM-opkald. Scan koden og fortsæt den samme Power Dialer-kø på Android, så alle opkald stadig bruger brugerens eget abonnement og nummer.",
@@ -1657,7 +1657,7 @@
     "platform": {
       "android": "Android åbner den indbyggede opkalder med leadets nummer klar. Dit SIM/eSIM-abonnement og nummer bruges; du starter stadig opkaldet i telefonappen.",
       "ios": "iPhone sender nummeret til systemets Telefon-app. Apple kræver, at du bekræfter opkaldet; dit SIM/eSIM-abonnement og nummer bruges.",
-      "web": "Når telefonen er forbundet, sender computeren nummeret til Apple Opkald på andre enheder eller Microsoft Telefonlink. Mobilens abonnement og nummer bruges."
+      "web": "Computeren sender opkald direkte til den sikkert parrede companion—ingen fælles Apple-, Google- eller Microsoft-konto kræves. Bekræft opkaldet på telefonen; dens SIM/eSIM, abonnement og nummer bruges."
     },
     "stats": {
       "label": "Power Dialer-statistik",

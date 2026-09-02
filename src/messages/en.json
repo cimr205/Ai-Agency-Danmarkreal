@@ -1537,19 +1537,19 @@
     "relay": {
       "title": "Call from your computer through your phone",
       "oneTime": "One-time setup",
-      "description": "Connect a nearby iPhone or Android to the computer. Call and talk from the computer while the phone's SIM/eSIM, plan and caller ID are used.",
+      "description": "Pair a nearby iPhone or Android once with a secure QR code. Call requests are sent to the phone, which uses its own SIM/eSIM, plan and caller ID.",
       "chooseCombination": "Choose your devices",
       "guideTitle": "Complete all four steps",
-      "keepNearby": "Keep the phone nearby with Bluetooth on. Mac + iPhone also uses Wi-Fi.",
+      "keepNearby": "Keep the phone nearby and online with the companion page or app open.",
       "officialHelp": "Open the official setup guide",
       "finishAction": "Connect and enable Call",
       "completeAllSteps": "Complete every step first",
-      "privacy": "The CRM does not access your SIM. Apple or Microsoft handles the local connection, and calls are charged to the mobile plan.",
-      "connectedTitle": "Computer and phone connected",
-      "connectedDescription": "The Call button now uses the computer's system connection to the nearby phone and its mobile plan.",
+      "privacy": "The CRM never accesses your Apple Account, Google Account or SIM credentials. The one-time QR code authorizes only this paired phone.",
+      "connectedTitle": "Phone securely paired",
+      "connectedDescription": "Call requests now go through the secure companion relay to this phone.",
       "reopenGuide": "View the system guide again",
-      "callConfirmation": "The call opens on the computer through your connected phone. The phone's plan and caller ID are used.",
-      "callLockedDesktop": "Complete the connection guide above to enable Call on the computer.",
+      "callConfirmation": "The request is sent to your paired phone. Confirm the call there; its SIM/eSIM, plan and caller ID are used.",
+      "callLockedDesktop": "Scan the QR code and pair the phone to enable Call on the computer.",
       "macAndroid": {
         "title": "Mac + Android uses the phone directly",
         "description": "macOS cannot take over a regular Android SIM call. Scan the code and continue the same Power Dialer queue on Android so every call still uses the user's own plan and caller ID.",
@@ -1640,7 +1640,7 @@
     "platform": {
       "android": "Android opens the native dialer with the lead's number ready. Your SIM/eSIM plan and caller ID are used; you still start the call in the phone app.",
       "ios": "iPhone hands the number to the system Phone app. Apple requires you to confirm the call; your SIM/eSIM plan and caller ID are used.",
-      "web": "Once the phone is connected, the computer sends the number through Apple Calls on Other Devices or Microsoft Phone Link. The phone's plan and caller ID are used."
+      "web": "The computer sends call requests directly to the securely paired companion—no shared Apple, Google or Microsoft account is required. Confirm the call on the phone; its SIM/eSIM, plan and caller ID are used."
     },
     "stats": {
       "label": "Power Dialer statistics",

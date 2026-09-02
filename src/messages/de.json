@@ -1549,19 +1549,19 @@
     "relay": {
       "title": "Vom Computer über Ihr Mobiltelefon anrufen",
       "oneTime": "Einmalige Einrichtung",
-      "description": "Verbinden Sie ein iPhone oder Android-Telefon in der Nähe. Sie telefonieren am Computer, während SIM/eSIM, Tarif und Rufnummer des Mobiltelefons verwendet werden.",
+      "description": "Koppeln Sie ein iPhone oder Android-Telefon einmalig über einen sicheren QR-Code. Anrufanfragen werden an das Telefon gesendet, das SIM/eSIM, Tarif und Rufnummer verwendet.",
       "chooseCombination": "Geräte auswählen",
       "guideTitle": "Alle vier Schritte abschließen",
-      "keepNearby": "Das Telefon muss mit aktiviertem Bluetooth in der Nähe bleiben. Mac + iPhone nutzt zusätzlich WLAN.",
+      "keepNearby": "Das Telefon muss in der Nähe und online sein; die Companion-Seite oder App bleibt geöffnet.",
       "officialHelp": "Offizielle Anleitung öffnen",
       "finishAction": "Verbinden und Anrufen aktivieren",
       "completeAllSteps": "Zuerst alle Schritte abschließen",
-      "privacy": "Das CRM greift nicht auf Ihre SIM zu. Apple oder Microsoft verwaltet die lokale Verbindung; Anrufe werden über den Mobilfunktarif abgerechnet.",
-      "connectedTitle": "Computer und Telefon verbunden",
-      "connectedDescription": "Die Anrufen-Schaltfläche nutzt jetzt die Systemverbindung zum Mobiltelefon und dessen Tarif.",
+      "privacy": "Das CRM greift nie auf Ihr Apple-, Google- oder Microsoft-Konto oder Ihre SIM-Zugangsdaten zu. Der einmalige QR-Code autorisiert nur dieses gekoppelte Telefon.",
+      "connectedTitle": "Telefon sicher gekoppelt",
+      "connectedDescription": "Anrufanfragen werden jetzt über das sichere Companion-Relay an dieses Telefon gesendet.",
       "reopenGuide": "Systemanleitung erneut anzeigen",
-      "callConfirmation": "Der Anruf wird über das verbundene Telefon am Computer geöffnet. Tarif und Rufnummer des Telefons werden verwendet.",
-      "callLockedDesktop": "Schließen Sie die Verbindungsanleitung oben ab, um Anrufen am Computer zu aktivieren.",
+      "callConfirmation": "Die Anfrage wird an das gekoppelte Telefon gesendet. Bestätigen Sie den Anruf dort; SIM/eSIM, Tarif und Rufnummer werden verwendet.",
+      "callLockedDesktop": "Scannen Sie den QR-Code und koppeln Sie das Telefon, um Anrufen am Computer zu aktivieren.",
       "macAndroid": {
         "title": "Mac + Android verwendet das Telefon direkt",
         "description": "macOS kann einen normalen Android-SIM-Anruf nicht übernehmen. Scannen Sie den Code und setzen Sie dieselbe Power-Dialer-Warteschlange auf Android fort.",
@@ -1652,7 +1652,7 @@
     "platform": {
       "android": "Android öffnet den nativen Wähler mit der Rufnummer des Leads. Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet; Sie starten den Anruf weiterhin in der Telefon-App.",
       "ios": "Das iPhone übergibt die Nummer an die Telefon-App. Apple verlangt Ihre Bestätigung; Ihr SIM/eSIM-Tarif und Ihre Anrufer-ID werden verwendet.",
-      "web": "Nach der Verbindung sendet der Computer die Nummer über Apple-Anrufe auf anderen Geräten oder Microsoft Smartphone-Link. Tarif und Rufnummer des Telefons werden verwendet."
+      "web": "Der Computer sendet Anrufanfragen direkt an den sicher gekoppelten Companion—kein gemeinsames Apple-, Google- oder Microsoft-Konto ist erforderlich. Bestätigen Sie den Anruf auf dem Telefon; SIM/eSIM, Tarif und Rufnummer werden verwendet."
     },
     "stats": {
       "label": "Power-Dialer-Statistik",
