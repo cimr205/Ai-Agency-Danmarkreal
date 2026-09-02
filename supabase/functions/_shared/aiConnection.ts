@@ -77,13 +77,24 @@ export async function describeOpenAIError(
   } catch {
     // ignore, body wasn't JSON
   }
-  const code = body?.error?.code ?? body?.error?.type;
+  const code = body?.error?.code;
+  const type = body?.error?.type;
   const providerLabel = provider === "groq" ? "Groq" : "OpenAI";
+
+  // OpenAI uses "insufficient_quota" for `type` consistently, but `code`
+  // varies by exactly how the account ran out (seen live:
+  // "credit_balance_exhausted" for a $0 balance, "insufficient_quota" for
+  // an exceeded plan limit) — check both instead of just one, or a real
+  // zero-credit account gets mislabeled as ordinary rate limiting and told
+  // to "try again shortly", which it never will.
+  const isQuotaExhausted = type === "insufficient_quota"
+    || code === "insufficient_quota"
+    || code === "credit_balance_exhausted";
 
   if (status === 401) {
     return { status, message: `${providerLabel} afviste nøglen — forbind den igen under Indstillinger → AI.` };
   }
-  if (status === 429 && code === "insufficient_quota") {
+  if (status === 429 && isQuotaExhausted) {
     return {
       status,
       message: provider === "groq"
