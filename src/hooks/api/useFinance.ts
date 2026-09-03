@@ -72,6 +72,7 @@ export function useUpdateCustomer() {
         .from('customers')
         .update(updates)
         .eq('id', id)
+        .eq('record_type', 'customer')
         .select()
         .single();
       if (error) throw error;
@@ -88,7 +89,7 @@ export function useDeleteCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('customers').delete().eq('id', id);
+      const { error } = await supabase.from('customers').delete().eq('id', id).eq('record_type', 'customer');
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
