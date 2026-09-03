@@ -386,6 +386,33 @@ const integrationsList: Capability = {
   },
 };
 
+// AI Integration Advisor grounding — the AI must never guess or
+// hallucinate what a workspace can do with its connected tools; these
+// two capabilities give it the exact same DNA/opportunity data the
+// Integration Centre's "Your Business" panel shows, so "what can I
+// automate?" answers are always traceable to real rows, never invented.
+const integrationsDna: Capability = {
+  id: "integrations.dna.read", domain: "integrations", name: "Hent Integration DNA", description: "Hent virksomhedens Integration DNA — score, forbundne systemer, kapabiliteter i brug/ubrugte",
+  inputSchema: z.object({}),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx) {
+    const { data, error } = await ctx.db.from("integration_dna").select("*").eq("company_id", ctx.workspaceId).maybeSingle();
+    if (error) return fail(error.message);
+    return ok(data ?? { score: 0, connected_count: 0, capability_count: 0, used_capability_count: 0, note: "DNA not yet computed — visit Connected Apps once to trigger it." });
+  },
+};
+
+const integrationsOpportunities: Capability = {
+  id: "integrations.opportunities.read", domain: "integrations", name: "Hent integrationsmuligheder", description: "Hent aktuelle, beregnede muligheder for automatisering baseret på forbundne systemer (READY_NOW, ONE_CONNECTION_AWAY, osv.)",
+  inputSchema: z.object({}),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx) {
+    const { data, error } = await ctx.db.from("integration_opportunities").select("type,title,description,reason,confidence,impacted_modules,estimated_manual_steps_removed")
+      .eq("company_id", ctx.workspaceId).eq("status", "open").order("confidence", { ascending: false });
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
 // ─── Invoices ──────────────────────────────────────────────────────────
 const invoicesSearch: Capability = {
   id: "invoices.search", domain: "finance", name: "Søg fakturaer", description: "Søg efter fakturaer",
@@ -450,6 +477,7 @@ export const CORE_CAPABILITIES: Capability[] = [
   filesSearch, filesRead,
   campaignsRead, campaignsCreate,
   integrationsSearch, integrationsStatus, integrationsList,
+  integrationsDna, integrationsOpportunities,
 ];
 
 export function registerCoreCapabilities(): void {
