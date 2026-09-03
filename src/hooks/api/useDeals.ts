@@ -5,7 +5,7 @@ import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
 type DealStage = string;
 
-export type DealWithCustomer = Tables<'deals'> & { customers: Pick<Tables<'customers'>, 'name'> | null };
+export type DealWithCustomer = Tables<'deals'> & { customers: Pick<Tables<'customers'>, 'name' | 'email'> | null };
 
 export function useDeals() {
   return useQuery({
@@ -13,7 +13,7 @@ export function useDeals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deals')
-        .select('*, customers(name)')
+        .select('*, customers(name, email)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as DealWithCustomer[];
@@ -57,7 +57,7 @@ export function useUpdateDeal() {
         .from('deals')
         .update(updates)
         .eq('id', id)
-        .select('*, customers(name)')
+        .select('*, customers(name, email)')
         .single();
       if (error) throw error;
       // Fire deal.won or deal.lost events

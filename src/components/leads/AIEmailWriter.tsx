@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, Copy, Send, RefreshCw } from 'lucide-react';
+import { Sparkles, Copy, Send, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
+import { useHasCapability } from '@/hooks/api/useCapabilities';
+import { useSendEmail } from '@/hooks/api/useEmail';
 
 interface AIEmailWriterProps {
   open: boolean;
@@ -26,6 +28,8 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
   const [customContext, setCustomContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ subject: string; body: string } | null>(null);
+  const hasEmailSend = useHasCapability('email.send');
+  const sendEmail = useSendEmail();
 
   const generate = async () => {
     setLoading(true);
@@ -52,6 +56,21 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
   const openInMailto = () => {
     if (!result) return;
     window.open(`mailto:${leadEmail}?subject=${encodeURIComponent(result.subject)}&body=${encodeURIComponent(result.body)}`);
+  };
+
+  const sendNow = () => {
+    if (!result) return;
+    sendEmail.mutate(
+      { to: leadEmail, subject: result.subject, message: result.body, module: 'leads' },
+      {
+        onSuccess: () => {
+          toast.success(`Email sendt til ${leadName}`);
+          onOpenChange(false);
+          setResult(null);
+        },
+        onError: (e: Error) => toast.error(e?.message ?? 'Kunne ikke sende email'),
+      },
+    );
   };
 
   return (
@@ -127,9 +146,16 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
                 <Button variant="outline" size="sm" onClick={copyToClipboard} className="gap-2">
                   <Copy className="h-3.5 w-3.5" /> {t('common.copy')}
                 </Button>
-                <Button size="sm" onClick={openInMailto} className="gap-2">
-                  <Send className="h-3.5 w-3.5" /> {t('aiEmail.openInEmail')}
-                </Button>
+                {hasEmailSend ? (
+                  <Button size="sm" onClick={sendNow} disabled={sendEmail.isPending} className="gap-2">
+                    {sendEmail.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    Send nu
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={openInMailto} className="gap-2">
+                    <Send className="h-3.5 w-3.5" /> {t('aiEmail.openInEmail')}
+                  </Button>
+                )}
               </div>
             </div>
           )}

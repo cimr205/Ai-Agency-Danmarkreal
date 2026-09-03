@@ -47,6 +47,7 @@
     "https://esm.sh/@supabase/supabase-js@2.114.0": "946ce759db4e6549badf08f6fb26bf763a1740a20d044931769535162c45e1a3",
     "https://esm.sh/@supabase/supabase-js@2.114.0/denonext/dist/tracingRegistry.mjs": "568dc522e57c82725c15a2e041e362bfa45b1b782be024b8ca3ded60089f3759",
     "https://esm.sh/@supabase/supabase-js@2.114.0/denonext/supabase-js.mjs": "1e5d746df3e3564f40644efbe6eca60d43cc125038b8f1ad0d906adf9ce6e780",
+    "https://esm.sh/@supabase/supabase-js@2.91.0": "c0c9a7e3a3eb32cba766252b703ab34312fa13e231066ef63795e5f6ec8630e9",
     "https://esm.sh/iceberg-js@0.8.1/denonext/iceberg-js.mjs": "d839d81a2e3966500ca2cdd0c1cb458e9608bacfc91f7bb67a69b2e878dcdb4f",
     "https://esm.sh/iceberg-js@0.8.1?target=denonext": "58c849d7fe2bf4eca4a84eb501e83c161a7d8c34ca1bec15a962b3bec3062633",
     "https://esm.sh/tslib@2.8.1/denonext/tslib.mjs": "c38da5dd6da6281964435002ce204cd586634fe3bdfb24a0ee116f48cf3292e9"

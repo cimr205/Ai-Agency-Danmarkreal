@@ -23,6 +23,7 @@ import { useI18n } from '@/lib/i18n';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
+import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
 
 const DATE_LOCALES: Record<string, typeof da> = { da, en: enUS, de };
 
@@ -46,6 +47,7 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Record<string, unknown>>({});
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const dateFnsLocale = DATE_LOCALES[locale] || da;
   const { setEntity, clearEntity } = useActiveEntity();
@@ -207,11 +209,15 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
                 <ListTodo className="h-3.5 w-3.5" />
                 {locale === 'da' ? 'Opret opgave' : 'Create Task'}
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" asChild>
-                <a href={`mailto:${lead.email}`}>
-                  <Send className="h-3.5 w-3.5" />
-                  {locale === 'da' ? 'Send email' : 'Send Email'}
-                </a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-9"
+                onClick={() => setComposeOpen(true)}
+                disabled={!lead.email}
+              >
+                <Send className="h-3.5 w-3.5" />
+                {locale === 'da' ? 'Send email' : 'Send Email'}
               </Button>
               {lead.phone && (
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" asChild>
@@ -548,6 +554,13 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
         leadId={lead.id}
         leadName={lead.name}
         leadEmail={lead.email}
+      />
+      <ComposeEmailDialog
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        to={lead.email}
+        toName={lead.name}
+        module="leads"
       />
     </Sheet>
   );

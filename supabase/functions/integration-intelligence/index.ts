@@ -32,12 +32,30 @@ async function recalculate(supabase: any, companyId: string) {
   const connected = connections.filter((c) => c.status === "connected");
 
   // ─── 1. Recompute workspace_capabilities from connected providers ───
-  const nextCapabilities = new Map<string, { capabilityId: CapabilityId; provider: string; connectionId: string }>();
+  // "connectionId" is nullable here on purpose: a native (non-Composio)
+  // connection — e.g. a personal Gmail OAuth account in email_accounts —
+  // has no row in `integrations` to point at, but the capability it
+  // unlocks is exactly as real. Provider survives regardless of path
+  // (native vs Composio), matching the no-lock-in design principle.
+  const nextCapabilities = new Map<string, { capabilityId: CapabilityId; provider: string; connectionId: string | null }>();
   for (const conn of connected) {
     const caps = PROVIDER_CAPABILITIES[conn.provider] ?? [];
     for (const capId of caps) {
       nextCapabilities.set(`${capId}::${conn.provider}`, { capabilityId: capId, provider: conn.provider, connectionId: conn.id });
     }
+  }
+
+  // Native Gmail OAuth (email_accounts) bypasses the `integrations`
+  // table entirely — checked here so a company using only the personal
+  // connect flow still gets full DNA/opportunity credit for email.send.
+  const { count: nativeGmailCount } = await supabase
+    .from("email_accounts")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("provider", "gmail")
+    .eq("status", "connected");
+  if ((nativeGmailCount ?? 0) > 0) {
+    nextCapabilities.set("email.send::gmail-native", { capabilityId: "email.send", provider: "gmail-native", connectionId: null });
   }
 
   const { data: existingCapsRaw } = await supabase
@@ -276,7 +294,8 @@ async function recalculate(supabase: any, companyId: string) {
   }, { onConflict: "company_id" });
 
   const { data: dna } = await supabase.from("integration_dna").select("*").eq("company_id", companyId).single();
-  return dna;
+  const capabilities = [...nextCapabilities.values()].map((c) => ({ capability_id: c.capabilityId, provider: c.provider, status: "available" as const }));
+  return { dna, capabilities };
 }
 
 Deno.serve(async (req) => {
@@ -291,9 +310,9 @@ Deno.serve(async (req) => {
   const action = body.action as string | undefined;
 
   try {
-    if (action === "recalculate" || action === "get-dna") {
-      const dna = await recalculate(supabase, companyId);
-      return jsonResponse({ dna });
+    if (action === "recalculate" || action === "get-dna" || action === "get-capabilities") {
+      const { dna, capabilities } = await recalculate(supabase, companyId);
+      return jsonResponse({ dna, capabilities });
     }
 
     if (action === "list-opportunities") {

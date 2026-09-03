@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { recordCapabilityUsage } from "../_shared/capability-usage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     const body = await req.json();
-    const { to, subject, message, cc, reply_to_message_id, attachments, html } = body;
+    const { to, subject, message, cc, reply_to_message_id, attachments, html, module: usageModule } = body;
 
     // If html is provided use it directly; otherwise convert plain text to HTML
     const htmlBody = html ? html : `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${message
@@ -94,6 +95,8 @@ Deno.serve(async (req) => {
             ...(cc ? { cc: [cc] } : {}),
           },
           agentId: "gmail-send",
+          capabilityId: "email.send",
+          module: usageModule ?? "email",
         }),
       });
       const body2 = await result.json().catch(() => ({}));
@@ -226,12 +229,17 @@ Deno.serve(async (req) => {
 
     const sendData = await sendRes.json();
 
+    const { data: senderProfile } = await supabaseAdmin.from("profiles").select("company_id").eq("user_id", userId).maybeSingle();
+    if (senderProfile?.company_id) {
+      await recordCapabilityUsage(supabaseAdmin, senderProfile.company_id, "email.send", usageModule ?? "email", true).catch(() => { /* best-effort */ });
+    }
+
     return new Response(JSON.stringify({ success: true, message_id: sendData.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("gmail-send error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -128,7 +128,7 @@ export function useEmails(filter?: { unread?: boolean; priority?: boolean; starr
 // Send email via Gmail
 export function useSendEmail() {
   return useMutation({
-    mutationFn: async (params: { to: string; subject: string; message: string; cc?: string; reply_to_message_id?: string }) => {
+    mutationFn: async (params: { to: string; subject: string; message: string; cc?: string; reply_to_message_id?: string; module?: string }) => {
       const { data, error } = await supabase.functions.invoke('gmail-send', {
         body: params,
       });
