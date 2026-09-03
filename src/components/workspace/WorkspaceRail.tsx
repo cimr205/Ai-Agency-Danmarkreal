@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 import { useMyBlockedModules, type ModuleKey } from "@/hooks/api/useModuleAccess";
+import { ClockWidget } from "@/components/workspace/ClockWidget";
 
 interface NavItem {
   label: string;
@@ -224,6 +225,9 @@ function RailContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </nav>
+
+      {/* Clock in/out — high-frequency action, must not be buried in HR */}
+      {!blockedModules.has("hr") && <ClockWidget />}
 
       {/* Footer: user + account menu */}
       <div className="p-3 border-t border-sidebar-border shrink-0 bg-sidebar-background">
