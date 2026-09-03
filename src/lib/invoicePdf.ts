@@ -14,6 +14,12 @@ export interface InvoicePdfData {
   companyEmail: string;
   companyPhone: string;
   companyLogoUrl: string;
+  bankName: string;
+  bankRegNumber: string;
+  bankAccountNumber: string;
+  iban: string;
+  swift: string;
+  paymentReferenceNote: string;
   customerName: string;
   customerEmail: string;
   customerCountry: string;
@@ -97,6 +103,30 @@ const TEMPLATES: Record<InvoiceTemplate, {
   },
 };
 
+async function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; width: number; height: number } | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const dims: { width: number; height: number } = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.width, height: img.height });
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+    return { dataUrl, ...dims };
+  } catch {
+    // Logo is a nice-to-have — never fail invoice generation over it.
+    return null;
+  }
+}
+
 export function getTemplateOptions(locale: string) {
   return Object.entries(TEMPLATES).map(([key, t]) => ({
     value: key as InvoiceTemplate,
@@ -135,10 +165,21 @@ export async function generateInvoicePdf(data: InvoicePdfData, template: Invoice
   doc.text(`#${data.invoiceNumber}`, pageWidth - margin, y + 8, { align: 'right' });
 
   // ─── Company info (left) ──────────────────────
+  let companyTextX = margin;
+  if (data.companyLogoUrl) {
+    const logo = await loadImageAsDataUrl(data.companyLogoUrl);
+    if (logo) {
+      const logoHeight = 14;
+      const logoWidth = (logo.width / logo.height) * logoHeight;
+      doc.addImage(logo.dataUrl, margin, y - 4, logoWidth, logoHeight);
+      companyTextX = margin + logoWidth + 5;
+    }
+  }
+
   doc.setFontSize(14);
   doc.setTextColor(...t.primary);
   doc.setFont(t.font, 'bold');
-  doc.text(data.companyName || '', margin, y);
+  doc.text(data.companyName || '', companyTextX, y);
 
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
@@ -311,6 +352,35 @@ export async function generateInvoicePdf(data: InvoicePdfData, template: Invoice
     doc.setFontSize(8);
     doc.setTextColor(120, 53, 15);
     doc.text(data.notes, margin + 5, y + 12, { maxWidth: contentWidth - 10 });
+  }
+
+  // ─── Payment details ───────────────────────────
+  const hasPaymentInfo = data.bankName || data.bankRegNumber || data.bankAccountNumber || data.iban || data.swift || data.paymentReferenceNote;
+  if (hasPaymentInfo) {
+    if (data.notes) y += 26;
+    doc.setFillColor(...t.bodyBg);
+    const paymentLines = [
+      data.bankName,
+      data.bankRegNumber && data.bankAccountNumber ? `${isDa ? 'Reg./konto' : 'Reg./account'}: ${data.bankRegNumber} / ${data.bankAccountNumber}` : '',
+      data.iban ? `IBAN: ${data.iban}` : '',
+      data.swift ? `SWIFT/BIC: ${data.swift}` : '',
+      data.paymentReferenceNote,
+    ].filter(Boolean);
+    const boxHeight = 8 + paymentLines.length * 4.5;
+    doc.roundedRect(margin, y, contentWidth, boxHeight, 3, 3, 'F');
+    doc.setFontSize(8);
+    doc.setFont(t.font, 'bold');
+    doc.setTextColor(...t.primary);
+    doc.text(isDa ? 'Betalingsoplysninger' : 'Payment details', margin + 5, y + 6);
+    doc.setFont(t.font, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(60, 60, 60);
+    let py = y + 11;
+    for (const line of paymentLines) {
+      doc.text(line, margin + 5, py);
+      py += 4.5;
+    }
+    y += boxHeight + 6;
   }
 
   // ─── Footer ───────────────────────────────────

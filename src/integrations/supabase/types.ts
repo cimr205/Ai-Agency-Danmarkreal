@@ -1008,6 +1008,9 @@ export type Database = {
           address: string | null
           applicant_role: string | null
           automation_rules: Json | null
+          bank_account_number: string | null
+          bank_name: string | null
+          bank_reg_number: string | null
           billing_mode: string
           company_size: string | null
           compliance_checklist: Json | null
@@ -1015,6 +1018,7 @@ export type Database = {
           cvr: string | null
           disabled: boolean
           email: string | null
+          iban: string | null
           id: string
           industry: string | null
           lead_scoring_config: Json | null
@@ -1023,6 +1027,7 @@ export type Database = {
           name: string
           onboarding_completed: boolean
           onboarding_step: number
+          payment_reference_note: string | null
           phone: string | null
           purchased_seats: number | null
           seat_limit_trial: number | null
@@ -1030,6 +1035,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string | null
+          swift: string | null
           trial_ends_at: string | null
           updated_at: string
           website: string | null
@@ -1039,6 +1045,9 @@ export type Database = {
           address?: string | null
           applicant_role?: string | null
           automation_rules?: Json | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          bank_reg_number?: string | null
           billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
@@ -1046,6 +1055,7 @@ export type Database = {
           cvr?: string | null
           disabled?: boolean
           email?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
           lead_scoring_config?: Json | null
@@ -1054,6 +1064,7 @@ export type Database = {
           name: string
           onboarding_completed?: boolean
           onboarding_step?: number
+          payment_reference_note?: string | null
           phone?: string | null
           purchased_seats?: number | null
           seat_limit_trial?: number | null
@@ -1061,6 +1072,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
+          swift?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -1070,6 +1082,9 @@ export type Database = {
           address?: string | null
           applicant_role?: string | null
           automation_rules?: Json | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          bank_reg_number?: string | null
           billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
@@ -1077,6 +1092,7 @@ export type Database = {
           cvr?: string | null
           disabled?: boolean
           email?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
           lead_scoring_config?: Json | null
@@ -1085,6 +1101,7 @@ export type Database = {
           name?: string
           onboarding_completed?: boolean
           onboarding_step?: number
+          payment_reference_note?: string | null
           phone?: string | null
           purchased_seats?: number | null
           seat_limit_trial?: number | null
@@ -1092,6 +1109,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string | null
+          swift?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -6451,11 +6469,15 @@ export type Database = {
         Args: { _company_id: string }
         Returns: {
           address: string
+          bank_account_number: string
+          bank_name: string
+          bank_reg_number: string
           company_size: string
           compliance_checklist: Json
           created_at: string
           cvr: string
           email: string
+          iban: string
           id: string
           industry: string
           logo_url: string
@@ -6463,11 +6485,13 @@ export type Database = {
           name: string
           onboarding_completed: boolean
           onboarding_step: number
+          payment_reference_note: string
           phone: string
           purchased_seats: number
           seat_limit_trial: number
           status: string
           subscription_status: string
+          swift: string
           trial_ends_at: string
           updated_at: string
           website: string
