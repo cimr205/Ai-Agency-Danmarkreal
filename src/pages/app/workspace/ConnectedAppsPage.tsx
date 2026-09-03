@@ -218,7 +218,12 @@ export default function ConnectedAppsPage() {
   const locale = isLocale(params.locale) ? params.locale : "en";
   const [q, setQ] = useState("");
   const [active, setActive] = useState<Catalog | null>(null);
-  const [showFullCatalog, setShowFullCatalog] = useState(false);
+  // Full categorized catalog visible by default — it was previously
+  // collapsed behind a click, which made it look like all non-"active
+  // module" integrations had disappeared. The category list is the
+  // primary way users discover and connect anything beyond the handful
+  // of curated modules above it.
+  const [showFullCatalog, setShowFullCatalog] = useState(true);
   const { data: integrations = [], isLoading } = useIntegrations();
   const { data: availability } = useModuleAvailability();
   const disconnect = useDisconnectIntegration();
