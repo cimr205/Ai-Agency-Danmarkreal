@@ -1,5 +1,7 @@
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { PROVIDER_CAPABILITIES, MODULE_REQUIREMENTS, type CapabilityId } from "../_shared/integration-taxonomy.ts";
+import { recordCapabilityUsage } from "../_shared/capability-usage.ts";
 
 // Central, generic integration service (IntegrationService). No feature in
 // the app talks to Composio directly — everything goes through this
@@ -20,6 +22,21 @@ function composioHeaders() {
   const apiKey = Deno.env.get("COMPOSIO_API_KEY");
   if (!apiKey) throw new Error("COMPOSIO_API_KEY is not configured");
   return { "x-api-key": apiKey, "Content-Type": "application/json" };
+}
+
+// Fire-and-forget recalculation trigger — never awaited on the OAuth
+// completion path (per the "connection should feel fast" requirement).
+// A transient failure here just means the DNA/opportunities snapshot is
+// stale until the next connection change or page load; never blocks or
+// fails the connect/disconnect action itself.
+function triggerRecalculate(authHeader: string) {
+  const url = Deno.env.get("SUPABASE_URL");
+  if (!url) return;
+  fetch(`${url}/functions/v1/integration-intelligence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: authHeader },
+    body: JSON.stringify({ action: "recalculate" }),
+  }).catch(() => { /* best-effort — see comment above */ });
 }
 
 async function composioFetch(path: string, init?: RequestInit) {
@@ -99,55 +116,13 @@ const VALID_CATEGORIES = ["read", "write", "destructive", "financial", "communic
 
 // ─── Capability Engine ───────────────────────────────────────────────────
 // The generic layer the whole "connect once, use everywhere" architecture
-// hangs off: CONNECTED ACCOUNT → CAPABILITIES → MODULE. Only two static
-// maps need editing to plug in a new toolkit or module — no per-provider
-// backend code. Real product modules ask "do we have email.read?", never
-// "is Gmail connected?".
-type Capability =
-  | "email.read" | "email.send"
-  | "calendar.read" | "calendar.write"
-  | "crm.read" | "crm.write"
-  | "commerce.products.read" | "commerce.products.write" | "commerce.orders.read"
-  | "ads.read" | "ads.write"
-  | "payments.read"
-  | "documents.read" | "documents.write"
-  | "analytics.read"
-  | "messaging.send";
-
-const TOOLKIT_CAPABILITIES: Record<string, Capability[]> = {
-  gmail: ["email.read", "email.send"],
-  outlook: ["email.read", "email.send", "calendar.read", "calendar.write"],
-  googlecalendar: ["calendar.read", "calendar.write"],
-  calendly: ["calendar.read"],
-  slack: ["messaging.send"],
-  hubspot: ["crm.read", "crm.write"],
-  pipedrive: ["crm.read", "crm.write"],
-  salesforce: ["crm.read", "crm.write"],
-  shopify: ["commerce.products.read", "commerce.products.write", "commerce.orders.read"],
-  metaads: ["ads.read", "ads.write", "analytics.read"],
-  stripe: ["payments.read"],
-  googledrive: ["documents.read", "documents.write"],
-  notion: ["documents.read", "documents.write"],
-  github: ["documents.read"],
-  klaviyo: ["ads.read", "messaging.send"],
-  mailchimp: ["email.send", "ads.read"],
-  posthog: ["analytics.read"],
-  mixpanel: ["analytics.read"],
-  googlesheets: ["documents.read", "documents.write"],
-  googledocs: ["documents.read", "documents.write"],
-  airtable: ["documents.read", "documents.write"],
-};
-
-const MODULE_REQUIREMENTS: Record<string, Capability[]> = {
-  smartInbox: ["email.read"],
-  calendar: ["calendar.read"],
-  shopOptimizer: ["commerce.products.read", "commerce.orders.read"],
-  marketing: ["ads.read"],
-  finance: ["payments.read"],
-  crmSync: ["crm.read"],
-  documents: ["documents.read"],
-  notifications: ["messaging.send"],
-};
+// hangs off: CONNECTED ACCOUNT → CAPABILITIES → MODULE. Provider→capability
+// and module→capability mappings live in one shared place
+// (_shared/integration-taxonomy.ts) so this endpoint, the DNA engine, and
+// the Opportunity engine can never drift out of sync — no per-provider
+// backend code here. Real product modules ask "do we have email.read?",
+// never "is Gmail connected?".
+type Capability = CapabilityId;
 
 // Resolves which of this company's CONNECTED integrations satisfies a
 // capability. Only ever reads rows already scoped to companyId by the
@@ -157,7 +132,7 @@ function findConnectionForCapability(
   capability: Capability,
 ): { id: string; provider: string } | null {
   const match = connections.find(
-    (c) => c.status === "connected" && (TOOLKIT_CAPABILITIES[c.provider] ?? []).includes(capability),
+    (c) => c.status === "connected" && (PROVIDER_CAPABILITIES[c.provider] ?? []).includes(capability),
   );
   return match ? { id: match.id, provider: match.provider } : null;
 }
@@ -254,6 +229,8 @@ Deno.serve(async (req) => {
         .eq("id", row.id);
       if (updateError) throw new Error(updateError.message);
 
+      if (localStatus === "connected") triggerRecalculate(req.headers.get("Authorization") ?? "");
+
       return jsonResponse({ status: localStatus });
     }
 
@@ -279,6 +256,8 @@ Deno.serve(async (req) => {
         .update({ status: "disconnected", composio_connection_id: null })
         .eq("id", row.id);
       if (updateError) throw new Error(updateError.message);
+
+      triggerRecalculate(req.headers.get("Authorization") ?? "");
 
       return jsonResponse({ success: true });
     }
@@ -332,7 +311,7 @@ Deno.serve(async (req) => {
         .from("integrations")
         .select("id, provider, status, composio_connection_id")
         .eq("company_id", companyId);
-      const resolved = findConnectionForCapability(connections ?? [], "documents.read");
+      const resolved = findConnectionForCapability(connections ?? [], "files.read");
       if (!resolved) throw new Error("Ingen forbindelse understøtter dokumenter endnu.");
       const connection = (connections ?? []).find((c) => c.id === resolved.id);
       if (!connection?.composio_connection_id) throw new Error("Forbindelsen mangler et Composio-connection-id.");
@@ -456,6 +435,12 @@ Deno.serve(async (req) => {
       const actionCategory = body.actionCategory as string;
       const toolArguments = (body.arguments as Record<string, unknown>) ?? {};
       const agentId = body.agentId as string | undefined;
+      // Optional — callers that already know which product capability/module
+      // this tool call fulfils (frontend CapabilityAction components, the AI
+      // engine) pass these so the Value Engine records real usage. Calls
+      // that omit them still execute normally; they just aren't attributed.
+      const capabilityId = body.capabilityId as string | undefined;
+      const usageModule = body.module as string | undefined;
 
       if (!integrationId || !toolSlug || !actionCategory) throw new Error("Missing integrationId, toolSlug, or actionCategory");
       if (!VALID_CATEGORIES.includes(actionCategory)) throw new Error(`Invalid actionCategory: ${actionCategory}`);
@@ -500,6 +485,8 @@ Deno.serve(async (req) => {
           .update({ status: "success", completed_at: new Date().toISOString() })
           .eq("id", logRow.id);
 
+        if (capabilityId && usageModule) await recordCapabilityUsage(supabase, companyId, capabilityId, usageModule, true);
+
         return jsonResponse({ result: result.body });
       } catch (execErr) {
         const message = execErr instanceof Error ? execErr.message : String(execErr);
@@ -507,6 +494,7 @@ Deno.serve(async (req) => {
           .from("integration_execution_logs")
           .update({ status: "failed", error: message, completed_at: new Date().toISOString() })
           .eq("id", logRow.id);
+        if (capabilityId && usageModule) await recordCapabilityUsage(supabase, companyId, capabilityId, usageModule, false);
         throw new Error(message);
       }
     }

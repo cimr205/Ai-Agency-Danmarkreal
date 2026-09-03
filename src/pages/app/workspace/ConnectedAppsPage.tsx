@@ -17,8 +17,107 @@ import {
   useSyncComposioConnection, useModuleAvailability,
   type Integration,
 } from "@/hooks/api/useIntegrations";
+import {
+  useIntegrationDNA, useIntegrationOpportunities, useDismissOpportunity, useActivateOpportunity,
+  type IntegrationOpportunity,
+} from "@/hooks/api/useIntegrationDNA";
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { isLocale } from "@/lib/i18n";
+
+const OPPORTUNITY_TYPE_LABELS: Record<IntegrationOpportunity["type"], string> = {
+  READY_NOW: "Klar nu",
+  ONE_CONNECTION_AWAY: "Én forbindelse væk",
+  UNUSED_CAPABILITY: "Ubrugt kapabilitet",
+  CROSS_MODULE: "På tværs af moduler",
+  WORKFLOW_COMBINATION: "Kombination",
+  REDUNDANCY: "Overlap",
+  BROKEN_CHAIN: "Manglende led",
+};
+
+function IntegrationDNAPanel() {
+  const { data: dna, isLoading: dnaLoading } = useIntegrationDNA();
+  const { data: opportunities = [], isLoading: oppsLoading } = useIntegrationOpportunities();
+  const dismiss = useDismissOpportunity();
+  const activate = useActivateOpportunity();
+
+  if (dnaLoading || !dna) {
+    return (
+      <section className="rounded-xl border border-border/40 bg-card/20 p-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Beregner jeres Integration DNA…
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Jeres Integration DNA</div>
+      <div className="rounded-xl border border-border/40 bg-card/20 p-6 space-y-6">
+        <div className="flex items-center gap-8 flex-wrap">
+          <div>
+            <div className="text-4xl font-semibold tracking-tight font-display">{dna.score}%</div>
+            <div className="text-xs text-muted-foreground mt-1">Integration DNA-score</div>
+          </div>
+          <div className="flex gap-6 text-sm">
+            <Pulse value={dna.connected_count} label="Forbundne systemer" />
+            <Pulse value={dna.capability_count} label="Kapabiliteter" />
+            <Pulse value={dna.used_capability_count} label="I brug" />
+            <Pulse value={dna.unused_capability_count} label="Ubrugte" muted />
+            {dna.broken_chain_count > 0 && <Pulse value={dna.broken_chain_count} label="Manglende led" />}
+            {dna.needs_attention_count > 0 && <Pulse value={dna.needs_attention_count} label="Kræver opmærksomhed" />}
+          </div>
+        </div>
+
+        {oppsLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Henter muligheder…
+          </div>
+        ) : opportunities.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Ingen nye muligheder lige nu — forbind flere systemer for at låse mere op.</div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">
+              Topmuligheder ({opportunities.length})
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {opportunities.map((opp) => (
+                <div key={opp.id} className="rounded-lg border border-border/40 bg-background/40 p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-primary/80">
+                      {OPPORTUNITY_TYPE_LABELS[opp.type]}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{Math.round(opp.confidence * 100)}% sikker</span>
+                  </div>
+                  <div className="font-medium text-sm">{opp.title}</div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{opp.description}</p>
+                  <p className="text-[11px] text-muted-foreground/70 italic">{opp.reason}</p>
+                  {opp.impacted_modules.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {opp.impacted_modules.map((m) => (
+                        <span key={m} className="text-[10px] rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{m}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-2">
+                    {opp.type === "READY_NOW" || opp.type === "UNUSED_CAPABILITY" ? (
+                      <Button size="sm" variant="secondary" onClick={() => activate.mutate(opp.id)} disabled={activate.isPending}>
+                        Aktivér
+                      </Button>
+                    ) : null}
+                    <Button size="sm" variant="ghost" onClick={() => dismiss.mutate(opp.id)} disabled={dismiss.isPending}>
+                      Afvis
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -325,6 +424,8 @@ export default function ConnectedAppsPage() {
           />
         </div>
       </header>
+
+      <IntegrationDNAPanel />
 
       <section className="space-y-3">
         <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Aktive moduler</div>
