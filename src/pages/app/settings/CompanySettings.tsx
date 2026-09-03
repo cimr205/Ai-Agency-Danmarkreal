@@ -44,6 +44,9 @@ export default function CompanySettingsPage() {
     const { error } = await supabase.from('companies').update({
       name: company.name, cvr: company.cvr || null, address: company.address || null,
       phone: company.phone || null, email: company.email || null, website: company.website || null,
+      bank_name: company.bank_name || null, bank_reg_number: company.bank_reg_number || null,
+      bank_account_number: company.bank_account_number || null, iban: company.iban || null,
+      swift: company.swift || null, payment_reference_note: company.payment_reference_note || null,
     }).eq('id', company.id);
     if (error) toast({ title: t('auth.error'), description: error.message, variant: 'destructive' });
     else toast({ title: t('common.saved'), description: t('companySettings.savedDesc') });
@@ -184,6 +187,25 @@ export default function CompanySettingsPage() {
         <div className="flex items-center gap-4">
           <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.status')}</div><Badge variant={company.status === 'active' ? 'default' : 'secondary'}>{t(`companySettings.status${(company.status || 'setup').replace(/^./, c => c.toUpperCase())}`)}</Badge></div>
           <div className="flex-1"><div className="text-xs text-muted-foreground mb-1">{t('companySettings.mode')}</div><Badge variant="outline">{t(`companySettings.mode${(company.mode || 'setup').replace(/^./, c => c.toUpperCase())}`)}</Badge></div>
+        </div>
+        {isAdmin && (
+          <Button onClick={handleSave} disabled={saving}>{saving ? t('common.loading') : t('settings.updateCta')}</Button>
+        )}
+      </Card>
+
+      {/* Payment details — used on invoice PDFs (masterprompt §22) */}
+      <Card className="p-6 space-y-4 bg-card/70 backdrop-blur border-border">
+        <div className="text-sm font-medium">Betalingsoplysninger</div>
+        <p className="text-xs text-muted-foreground -mt-2">Vises på fakturaer, så kunder ved hvor de skal betale til.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div><div className="text-xs text-muted-foreground mb-1">Bank</div><Input value={company.bank_name || ''} onChange={(e) => setCompany({ ...company, bank_name: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><div className="text-xs text-muted-foreground mb-1">Reg. nr.</div><Input value={company.bank_reg_number || ''} onChange={(e) => setCompany({ ...company, bank_reg_number: e.target.value })} /></div>
+            <div><div className="text-xs text-muted-foreground mb-1">Kontonr.</div><Input value={company.bank_account_number || ''} onChange={(e) => setCompany({ ...company, bank_account_number: e.target.value })} /></div>
+          </div>
+          <div><div className="text-xs text-muted-foreground mb-1">IBAN</div><Input value={company.iban || ''} onChange={(e) => setCompany({ ...company, iban: e.target.value })} /></div>
+          <div><div className="text-xs text-muted-foreground mb-1">SWIFT/BIC</div><Input value={company.swift || ''} onChange={(e) => setCompany({ ...company, swift: e.target.value })} /></div>
+          <div className="md:col-span-2"><div className="text-xs text-muted-foreground mb-1">Betalingsnote (valgfri)</div><Input value={company.payment_reference_note || ''} onChange={(e) => setCompany({ ...company, payment_reference_note: e.target.value })} placeholder="Fx: Angiv fakturanummer som reference" /></div>
         </div>
         {isAdmin && (
           <Button onClick={handleSave} disabled={saving}>{saving ? t('common.loading') : t('settings.updateCta')}</Button>

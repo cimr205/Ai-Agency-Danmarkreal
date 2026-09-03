@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { useGmailAccount } from '@/hooks/api/useEmail';
+import { useGmailAccount, useConnectGmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
@@ -397,6 +397,15 @@ export default function BulkEmailPage() {
   const { t, locale } = useI18n();
   const { user } = useAuth();
   const { data: gmailAccount, isLoading: gmailLoading } = useGmailAccount();
+  const connectGmail = useConnectGmail();
+  const handleConnectGmail = useCallback(async () => {
+    try {
+      const result = await connectGmail.mutateAsync();
+      if (result.auth_url) window.location.href = result.auth_url;
+    } catch (err) {
+      toast.error(getErrorMessage(err) || 'Kunne ikke forbinde Gmail');
+    }
+  }, [connectGmail]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -572,6 +581,28 @@ export default function BulkEmailPage() {
 
   if (gmailLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">{t('common.loading')}</div>;
 
+  if (!gmailAccount) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            <Send className="h-6 w-6 text-primary" /> {t('bulkEmail.title')}
+          </h1>
+        </div>
+        <EmptyState
+          icon={Mail}
+          title="Forbind din email for at sende kampagner"
+          hint="Bulk email kræver en forbundet mailkonto, så afsendelsen sker fra jeres egen adresse."
+          action={{
+            label: connectGmail.isPending ? t('common.loading') : 'Forbind Gmail',
+            onClick: handleConnectGmail,
+            icon: Send,
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -580,14 +611,6 @@ export default function BulkEmailPage() {
         </h1>
         <p className="text-sm text-muted-foreground">{t('bulkEmail.subtitle').replace('{max}', String(MAX_RECIPIENTS))}</p>
       </div>
-
-      {!gmailAccount && (
-        <Card className="border-destructive bg-destructive/5">
-          <CardContent className="py-4">
-            <p className="text-sm text-destructive font-medium">⚠️ {t('bulkEmail.connectFirst')}</p>
-          </CardContent>
-        </Card>
-      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
