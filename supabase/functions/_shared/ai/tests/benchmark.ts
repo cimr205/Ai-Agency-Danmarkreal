@@ -1,12 +1,10 @@
-// Benchmark script for the deterministic routing layer (§AC).
+// Benchmark script for the deterministic routing layer.
 //
 // HONEST SCOPE: this exercises RequestRouter.route() in-process — router
 // accuracy and router_ms are real, measured numbers. It does NOT exercise
 // llm_ms/planning_ms/execution_ms end-to-end, because that requires a live
-// authenticated user session against the deployed ai-message function,
-// which this environment doesn't have. Re-run against a real deployment
-// with AI_BENCHMARK_TOKEN set to get full-stack numbers — the harness
-// below is ready for that (see runFullStack, currently unused).
+// authenticated user session against the deployed ai-message function with
+// a real GROQ_API_KEY configured, neither of which this environment has.
 //
 // Run with: deno run --allow-env --allow-net supabase/functions/_shared/ai/tests/benchmark.ts
 import { RequestRouter, type Domain, type ActionType } from "../router/request-router.ts";
@@ -82,10 +80,9 @@ async function run() {
     wrongDomain.forEach((w) => console.log(`  - ${w}`));
   }
   console.log(`\nNOTE: llm_ms/planning_ms/execution_ms are NOT included — those require`);
-  console.log(`a live authenticated call to the deployed ai-message function, which this`);
-  console.log(`environment doesn't have. The Ollama backend was also confirmed down`);
-  console.log(`(HTTP 502 after 300s) during this benchmark run — full-stack numbers`);
-  console.log(`would be meaningless against a non-responding model right now.`);
+  console.log(`a live authenticated call to the deployed ai-message function with a real`);
+  console.log(`GROQ_API_KEY configured, which this environment doesn't have. Re-run against`);
+  console.log(`a real deployment for full-stack numbers.`);
 }
 
 await run();

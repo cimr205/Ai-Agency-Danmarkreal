@@ -1,4 +1,4 @@
-import { OllamaClient } from "../model/ollama.client.ts";
+import { AIModel } from "../model/model-router.ts";
 import { PlanSchema, type Plan } from "./plan.schema.ts";
 import { plannerPrompt } from "../prompts/planner.ts";
 import type { Capability } from "../capabilities/capability.types.ts";
@@ -28,7 +28,7 @@ export async function generatePlan(
     .map((c) => `- ${c.id}: ${c.description} (risk=${c.risk}, input=${JSON.stringify(zodShapeHint(c))})`)
     .join("\n");
 
-  const result = await OllamaClient.structured(
+  const result = await AIModel.generateStructured(
     [
       { role: "system", content: plannerPrompt(candidateDescriptions) },
       ...memoryMessages,

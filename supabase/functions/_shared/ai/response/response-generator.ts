@@ -1,4 +1,4 @@
-import { OllamaClient } from "../model/ollama.client.ts";
+import { AIModel } from "../model/model-router.ts";
 import { responsePrompt } from "../prompts/response.ts";
 import type { StepExecutionRecord } from "../execution/execution-engine.ts";
 import type { SupportedLanguage } from "../model/model.types.ts";
@@ -55,7 +55,7 @@ export async function generateResponse(records: StepExecutionRecord[], language:
 
   const summary = records.map((r) => `${r.capability}: ${r.status}${r.error ? ` — ${r.error}` : ""}`).join("; ");
   try {
-    return await OllamaClient.chat([
+    return await AIModel.generate([
       { role: "system", content: responsePrompt() },
       { role: "user", content: `Language: ${language}. Results: ${summary}` },
     ], { timeoutMs: 15000 });

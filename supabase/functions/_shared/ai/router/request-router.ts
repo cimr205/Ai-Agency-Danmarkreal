@@ -1,6 +1,6 @@
 import { z } from "npm:zod@3.23.8";
 import { detectLanguage } from "./language.ts";
-import { OllamaClient } from "../model/ollama.client.ts";
+import { AIModel } from "../model/model-router.ts";
 import type { SupportedLanguage } from "../model/model.types.ts";
 
 export const DOMAINS = [
@@ -65,7 +65,7 @@ export class RequestRouter {
       actionType: z.enum(["answer", "read", "execute", "multi_step"]),
       confidence: z.number().min(0).max(1),
     });
-    const result = await OllamaClient.structured(
+    const result = await AIModel.generateStructured(
       [
         { role: "system", content: `Classify the user's message into exactly one domain from: ${DOMAINS.join(", ")}. Also give actionType (answer/read/execute/multi_step) and a confidence 0-1. Return ONLY JSON: {"domain":string,"actionType":string,"confidence":number}.` },
         { role: "user", content: message },

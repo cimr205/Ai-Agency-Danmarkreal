@@ -6,7 +6,7 @@ import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { loadRoles } from "../_shared/ai/context/workspace-context.ts";
 import { handleAIMessage, resumeConfirmedExecution } from "../_shared/ai/index.ts";
-import { OllamaClient } from "../_shared/ai/model/ollama.client.ts";
+import { AIModel } from "../_shared/ai/model/model-router.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -21,8 +21,8 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return jsonError("Invalid JSON", 400); }
 
   if (body.operation === "health") {
-    const health = await OllamaClient.healthCheck();
-    return new Response(JSON.stringify(health), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const health = await AIModel.healthCheck();
+    return new Response(JSON.stringify({ ...health, provider: AIModel.name }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   const roles = await loadRoles(db, user.id);
@@ -68,12 +68,17 @@ Deno.serve(async (req) => {
       conversationId: typeof body.conversationId === "string" ? body.conversationId : undefined,
       locale: typeof body.locale === "string" ? (body.locale as "da" | "en" | "de") : undefined,
     });
+    // §26: per-request latency breakdown, so it's obvious where time went
+    // without needing to reproduce a slow request to diagnose it.
+    if ("timings" in result) console.log(`[ai-message] status=${result.status} timings=${JSON.stringify(result.timings)}`);
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    // §AD failsafe: a model-offline or unexpected error becomes a clean
-    // 503/500 JSON response, never an unhandled crash of the function.
+    // §AD/§23 failsafe: a model-offline or unexpected error becomes a
+    // clean 503/500 JSON response, never an unhandled crash of the
+    // function — Fast Path requests never reach this catch at all since
+    // they don't touch the model provider.
     const message = error instanceof Error ? error.message : "AI engine failed";
-    const status = /ollama|model|timeout|fetch failed/i.test(message) ? 503 : 500;
+    const status = /ollama|groq|model|timeout|fetch failed|rate limit/i.test(message) ? 503 : 500;
     return jsonError(message, status);
   }
 });

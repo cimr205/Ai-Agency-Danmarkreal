@@ -1,37 +1,51 @@
 // deno-lint-ignore-file no-explicit-any
 import { z } from "npm:zod@3.23.8";
 import { aiConfig } from "../config/ai.config.ts";
-import type { ChatMessage, ChatOptions, StructuredResult } from "./model.types.ts";
-import type { AIModelProvider, ToolDefinition, ToolCall } from "../providers/model-provider.types.ts";
-import { ProviderUnavailableError } from "../providers/model-provider.types.ts";
+import type { ChatMessage, ChatOptions, StructuredResult } from "../model/model.types.ts";
+import type { AIModelProvider, ToolDefinition, ToolCall } from "./model-provider.types.ts";
+import { RateLimitedError, ProviderUnavailableError } from "./model-provider.types.ts";
 
 function chatCompletionsUrl(): string {
-  const base = aiConfig.ollama.baseUrl;
-  if (!base) throw new Error("OLLAMA_BASE_URL/LOCAL_LLM_BASE_URL is not configured");
-  return base.endsWith("/chat/completions") ? base : `${base}/v1/chat/completions`;
+  return `${aiConfig.groq.baseUrl}/chat/completions`;
+}
+
+function parseRetryAfterMs(res: Response): number | null {
+  const header = res.headers.get("retry-after");
+  if (header) {
+    const seconds = Number(header);
+    if (Number.isFinite(seconds)) return seconds * 1000;
+  }
+  return null;
 }
 
 async function postChat(messages: ChatMessage[], opts: ChatOptions & { json?: boolean; tools?: ToolDefinition[] } = {}): Promise<any> {
+  if (!aiConfig.groq.apiKey) throw new ProviderUnavailableError("GROQ_API_KEY is not configured");
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? aiConfig.ollama.timeoutMs);
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? aiConfig.groq.timeoutMs);
   try {
     const res = await fetch(chatCompletionsUrl(), {
       method: "POST",
       signal: controller.signal,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiConfig.ollama.apiKey}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiConfig.groq.apiKey}` },
       body: JSON.stringify({
-        model: aiConfig.ollama.model,
+        model: aiConfig.groq.model,
         temperature: opts.temperature ?? 0.1,
         ...(opts.json ? { response_format: { type: "json_object" } } : {}),
         ...(opts.tools ? { tools: opts.tools.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } })) } : {}),
         messages,
       }),
     });
+
+    if (res.status === 429) throw new RateLimitedError(parseRetryAfterMs(res));
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new ProviderUnavailableError(`Ollama request failed (${res.status}): ${text.slice(0, 200)}`);
+      throw new ProviderUnavailableError(`Groq request failed (${res.status}): ${text.slice(0, 300)}`);
     }
     return await res.json();
+  } catch (e) {
+    if (e instanceof RateLimitedError || e instanceof ProviderUnavailableError) throw e;
+    if (e instanceof DOMException && e.name === "AbortError") throw new ProviderUnavailableError("Groq request timed out");
+    throw new ProviderUnavailableError(e instanceof Error ? e.message : String(e));
   } finally {
     clearTimeout(timer);
   }
@@ -41,13 +55,13 @@ function stripFences(text: string): string {
   return text.replace(/^```json\s*|^```\s*|\s*```$/g, "").trim();
 }
 
-export const OllamaProvider: AIModelProvider = {
-  name: "ollama",
+export const GroqProvider: AIModelProvider = {
+  name: "groq",
 
   async generate(messages: ChatMessage[], opts: ChatOptions = {}): Promise<string> {
     const body = await postChat(messages, opts);
     const content = body?.choices?.[0]?.message?.content;
-    if (typeof content !== "string") throw new Error("Ollama returned no content");
+    if (typeof content !== "string") throw new Error("Groq returned no content");
     return content;
   },
 
@@ -57,10 +71,13 @@ export const OllamaProvider: AIModelProvider = {
       try {
         body = await postChat(msgs, { ...opts, json: true });
       } catch (e) {
+        // Rate limit / unavailable propagate as typed errors so the
+        // orchestrator can distinguish them from "model produced garbage".
+        if (e instanceof RateLimitedError || e instanceof ProviderUnavailableError) throw e;
         return { error: e instanceof Error ? e.message : String(e) };
       }
       const raw = body?.choices?.[0]?.message?.content;
-      if (typeof raw !== "string") return { error: "Ollama returned no content" };
+      if (typeof raw !== "string") return { error: "Groq returned no content" };
       try {
         return { raw, parsed: JSON.parse(stripFences(raw)) };
       } catch {
@@ -74,6 +91,7 @@ export const OllamaProvider: AIModelProvider = {
       if (validated.success) return { ok: true, data: validated.data, error: null, repaired: false };
     }
 
+    // Never repair-retry a rate limit or outage — only a genuine bad-output case.
     const failureReason = "error" in first ? first.error : "Output did not match the required schema";
     const repairMessages: ChatMessage[] = [
       ...messages,
@@ -101,16 +119,18 @@ export const OllamaProvider: AIModelProvider = {
   },
 
   async *stream(messages: ChatMessage[], opts: ChatOptions = {}): AsyncGenerator<string> {
+    if (!aiConfig.groq.apiKey) throw new ProviderUnavailableError("GROQ_API_KEY is not configured");
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? aiConfig.ollama.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? aiConfig.groq.timeoutMs);
     try {
       const res = await fetch(chatCompletionsUrl(), {
         method: "POST",
         signal: controller.signal,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiConfig.ollama.apiKey}` },
-        body: JSON.stringify({ model: aiConfig.ollama.model, temperature: opts.temperature ?? 0.3, stream: true, messages }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiConfig.groq.apiKey}` },
+        body: JSON.stringify({ model: aiConfig.groq.model, temperature: opts.temperature ?? 0.3, stream: true, messages }),
       });
-      if (!res.ok || !res.body) throw new ProviderUnavailableError(`Ollama stream request failed (${res.status})`);
+      if (res.status === 429) throw new RateLimitedError(parseRetryAfterMs(res));
+      if (!res.ok || !res.body) throw new ProviderUnavailableError(`Groq stream request failed (${res.status})`);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -138,15 +158,16 @@ export const OllamaProvider: AIModelProvider = {
   },
 
   async healthCheck(): Promise<{ online: boolean; model: string; detail?: string }> {
+    if (!aiConfig.groq.apiKey) return { online: false, model: aiConfig.groq.model, detail: "GROQ_API_KEY not configured" };
     try {
-      const res = await fetch(chatCompletionsUrl().replace(/\/chat\/completions$/, "/models"), {
-        headers: { Authorization: `Bearer ${aiConfig.ollama.apiKey}` },
+      const res = await fetch(`${aiConfig.groq.baseUrl}/models`, {
+        headers: { Authorization: `Bearer ${aiConfig.groq.apiKey}` },
         signal: AbortSignal.timeout(5000),
       });
-      if (!res.ok) return { online: false, model: aiConfig.ollama.model, detail: `HTTP ${res.status}` };
-      return { online: true, model: aiConfig.ollama.model };
+      if (!res.ok) return { online: false, model: aiConfig.groq.model, detail: `HTTP ${res.status}` };
+      return { online: true, model: aiConfig.groq.model };
     } catch (e) {
-      return { online: false, model: aiConfig.ollama.model, detail: e instanceof Error ? e.message : String(e) };
+      return { online: false, model: aiConfig.groq.model, detail: e instanceof Error ? e.message : String(e) };
     }
   },
 };

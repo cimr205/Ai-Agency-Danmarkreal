@@ -376,16 +376,80 @@ const integrationsStatus: Capability = {
   },
 };
 
+const integrationsList: Capability = {
+  id: "integrations.list", domain: "integrations", name: "List integrationer", description: "List alle tilgængelige/forbundne integrationer i workspacet",
+  inputSchema: z.object({}),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx) {
+    const { data, error } = await ctx.db.from("integrations").select("id,provider,status,account_label").eq("company_id", ctx.workspaceId);
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
+// ─── Invoices ──────────────────────────────────────────────────────────
+const invoicesSearch: Capability = {
+  id: "invoices.search", domain: "finance", name: "Søg fakturaer", description: "Søg efter fakturaer",
+  inputSchema: z.object({ status: z.string().optional(), limit: z.number().max(50).default(10) }),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx, input) {
+    const { status, limit } = input as { status?: string; limit: number };
+    let q = ctx.db.from("invoices").select("id,invoice_number,amount,status,due_date,customer_id").eq("company_id", ctx.workspaceId).order("created_at", { ascending: false }).limit(limit);
+    if (status) q = q.eq("status", status);
+    const { data, error } = await q;
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
+const invoicesCreate: Capability = {
+  id: "invoices.create", domain: "finance", name: "Opret fakturakladde", description: "Opret en fakturakladde",
+  inputSchema: z.object({ customer_id: z.string().uuid(), amount: z.number() }),
+  risk: "financial", requiresConfirmation: true, requiredPermissions: MANAGER, supportedProviders: ["native"],
+  async execute(ctx, input) {
+    const inputObj = input as { customer_id: string; amount: number };
+    const number = `AI-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;
+    const { data, error } = await ctx.db.from("invoices").insert({ ...inputObj, company_id: ctx.workspaceId, created_by: ctx.userId, status: "draft", invoice_number: number }).select("id,invoice_number,amount,status").single();
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
+// ─── HR ────────────────────────────────────────────────────────────────
+const hrEmployeesSearch: Capability = {
+  id: "hr.employees.search", domain: "hr", name: "Søg medarbejdere", description: "Søg efter medarbejdere",
+  inputSchema: z.object({ query: z.string().optional(), limit: z.number().max(50).default(10) }),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx, input) {
+    const { query, limit } = input as { query?: string; limit: number };
+    let q = ctx.db.from("employee_profiles").select("id,full_name,email,department").eq("company_id", ctx.workspaceId).limit(limit);
+    if (query) q = q.ilike("full_name", `%${query}%`);
+    const { data, error } = await q;
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
+// ─── Reporting ─────────────────────────────────────────────────────────
+const reportingDashboard: Capability = {
+  id: "reporting.dashboard.read", domain: "reporting", name: "Hent dashboard", description: "Hent nøgletal for virksomheden",
+  inputSchema: z.object({}),
+  risk: "read", requiresConfirmation: false, requiredPermissions: MEMBER, supportedProviders: ["native"],
+  async execute(ctx) {
+    const { data, error } = await ctx.db.rpc("get_dashboard_summary");
+    return error ? fail(error.message) : ok(data);
+  },
+};
+
 export const CORE_CAPABILITIES: Capability[] = [
   leadsSearch, leadsGet, leadsCreate, leadsUpdate,
   contactsSearch, contactsGet, contactsCreate, contactsUpdate,
   dealsSearch, dealsCreate, dealsUpdate,
   tasksSearch, tasksCreate, tasksUpdate, tasksComplete,
   emailSend, emailSearch, emailRead,
+  invoicesSearch, invoicesCreate,
+  hrEmployeesSearch,
+  reportingDashboard,
   calendarSearch, calendarCreate, calendarUpdate, calendarCancel,
   filesSearch, filesRead,
   campaignsRead, campaignsCreate,
-  integrationsSearch, integrationsStatus,
+  integrationsSearch, integrationsStatus, integrationsList,
 ];
 
 export function registerCoreCapabilities(): void {
