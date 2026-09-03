@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ...health, provider: AIModel.name }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
-  const roles = await loadRoles(db, user.id);
+  const roles = await loadRoles(db, user.id, companyId);
   if (!roles.length) return jsonError("No workspace role", 403);
 
   try {

@@ -202,6 +202,139 @@ export type Database = {
           },
         ]
       }
+      ai_conversations: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_execution_runs: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          conversation_id: string | null
+          id: string
+          intent: string
+          plan: Json
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          id?: string
+          intent: string
+          plan?: Json
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          id?: string
+          intent?: string
+          plan?: Json
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_execution_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_execution_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_execution_steps: {
+        Row: {
+          capability: string
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          execution_run_id: string
+          id: string
+          input: Json
+          output: Json | null
+          provider: string
+          status: string
+        }
+        Insert: {
+          capability: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          execution_run_id: string
+          id?: string
+          input?: Json
+          output?: Json | null
+          provider: string
+          status: string
+        }
+        Update: {
+          capability?: string
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          execution_run_id?: string
+          id?: string
+          input?: Json
+          output?: Json | null
+          provider?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_execution_steps_execution_run_id_fkey"
+            columns: ["execution_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_execution_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_generations: {
         Row: {
           company_id: string
@@ -263,6 +396,51 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          company_id: string
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -5678,6 +5856,7 @@ export type Database = {
       user_roles: {
         Row: {
           can_grant_permissions: boolean
+          company_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -5685,6 +5864,7 @@ export type Database = {
         }
         Insert: {
           can_grant_permissions?: boolean
+          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -5692,12 +5872,21 @@ export type Database = {
         }
         Update: {
           can_grant_permissions?: boolean
+          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_sessions: {
         Row: {
@@ -6206,6 +6395,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workforce_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_ai_preferences: {
+        Row: {
+          company_id: string
+          default_email_provider: string | null
+          default_language: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          default_email_provider?: string | null
+          default_language?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          default_email_provider?: string | null
+          default_language?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_ai_preferences_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: true
             referencedRelation: "companies"

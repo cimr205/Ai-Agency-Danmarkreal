@@ -27,8 +27,11 @@ function response(data: unknown, status = 200) {
   });
 }
 
-async function getRoles(db: any, userId: string): Promise<Role[]> {
-  const { data } = await db.from("user_roles").select("role").eq("user_id", userId);
+// Company-scoped: see 20260903000007_scope_user_roles_to_company.sql —
+// without this filter a user with roles in more than one company would
+// get every role back regardless of which company they're acting in.
+async function getRoles(db: any, userId: string, companyId: string): Promise<Role[]> {
+  const { data } = await db.from("user_roles").select("role").eq("user_id", userId).eq("company_id", companyId);
   return (data ?? []).map((row: { role: Role }) => row.role);
 }
 
@@ -442,7 +445,7 @@ Deno.serve(async (req) => {
   const operation = typeof body.operation === "string" ? body.operation : "brief";
 
   try {
-    const roles = await getRoles(db, user.id);
+    const roles = await getRoles(db, user.id, companyId);
     if (!roles.length) return jsonError("No workspace role", 403);
 
     if (operation === "brief") return response(await loadBrief(db, companyId));

@@ -14,7 +14,8 @@ serve(async (req) => {
   try {
     const { code, action, companyId, disabled } = await req.json();
 
-    // Verify admin code on every request
+    // Verify admin code (defense in depth — kept, not removed, to avoid
+    // breaking the existing admin flow).
     const adminCode = Deno.env.get("ADMIN_ACCESS_CODE");
     if (!adminCode || !code || code.trim() !== adminCode.trim()) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -26,6 +27,32 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Real fix: the code alone used to be the entire authorization
+    // boundary for a platform-wide data dump (every company/profile/
+    // employee/role, no tenant filtering) — any authenticated user who
+    // obtained the shared code could use it, with no per-user
+    // accountability and no way to revoke one person's access without
+    // rotating the secret for everyone. Now also requires the CALLING
+    // USER to hold the global 'system_admin' role.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: isSystemAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "system_admin" });
+    if (!isSystemAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden — system_admin role required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Toggle company disabled status
     if (action === "toggle_company") {
