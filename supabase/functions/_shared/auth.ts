@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient, User } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "./cors.ts";
 
 export function jsonError(message: string, status: number): Response {
@@ -11,7 +11,7 @@ export function jsonError(message: string, status: number): Response {
 export interface AuthedCompanyContext {
   // deno-lint-ignore no-explicit-any
   supabase: SupabaseClient<any, any, any>;
-  user: { id: string; [key: string]: unknown };
+  user: User;
   companyId: string;
 }
 
