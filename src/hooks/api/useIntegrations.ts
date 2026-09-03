@@ -215,7 +215,12 @@ export function useSyncComposioConnection() {
   return useMutation({
     mutationFn: (connectionId: string) =>
       callComposioIntegration<{ status: string }>("sync-connection-status", { connectionId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      qc.invalidateQueries({ queryKey: ["integration-dna"] });
+      qc.invalidateQueries({ queryKey: ["integration-opportunities"] });
+      qc.invalidateQueries({ queryKey: ["workspace-capabilities"] });
+    },
   });
 }
 

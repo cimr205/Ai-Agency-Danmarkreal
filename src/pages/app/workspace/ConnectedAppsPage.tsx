@@ -21,6 +21,7 @@ import {
   useIntegrationDNA, useIntegrationOpportunities, useDismissOpportunity, useActivateOpportunity,
   type IntegrationOpportunity,
 } from "@/hooks/api/useIntegrationDNA";
+import { WorkspaceUpgradeDialog } from "@/components/workspace/WorkspaceUpgradeDialog";
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { isLocale } from "@/lib/i18n";
 
@@ -328,15 +329,26 @@ export default function ConnectedAppsPage() {
   const disconnect = useDisconnectIntegration();
   const disconnectComposio = useDisconnectComposioConnection();
   const syncComposio = useSyncComposioConnection();
+  const [upgradeProvider, setUpgradeProvider] = useState<{ slug: string; name: string } | null>(null);
 
   // On return from a Composio connect redirect (or just periodically on
   // load), resolve any connection this tenant left "pending" to its real
-  // status.
+  // status. A transition into "connected" triggers the Workspace Upgrade
+  // moment — never shown for a connection that was already connected
+  // before this render (only genuinely new connections).
   useEffect(() => {
     const pending = (integrations as (Integration & { composio_connection_id?: string | null })[]).filter(
       (i) => i.status === "pending" && i.composio_connection_id,
     );
-    pending.forEach((i) => syncComposio.mutate(i.composio_connection_id!));
+    pending.forEach((i) => {
+      syncComposio.mutate(i.composio_connection_id!, {
+        onSuccess: (res) => {
+          if (res.status === "connected") {
+            setUpgradeProvider({ slug: i.provider, name: catalog.find((c) => c.provider === i.provider)?.name ?? i.provider });
+          }
+        },
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [integrations.length]);
   const { data: toolkitsData, isLoading: toolkitsLoading } = useComposioToolkits();
@@ -572,6 +584,13 @@ export default function ConnectedAppsPage() {
           }
           setActive(null);
         }}
+      />
+
+      <WorkspaceUpgradeDialog
+        open={!!upgradeProvider}
+        onOpenChange={(open) => { if (!open) setUpgradeProvider(null); }}
+        provider={upgradeProvider?.slug ?? ""}
+        providerName={upgradeProvider?.name ?? ""}
       />
     </div>
   );
