@@ -2,14 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
-export function useTasks() {
+export function useTasks(opts: { archived?: boolean } = {}) {
+  const archived = opts.archived ?? false;
   return useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', { archived }],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
         .select('*, assigned_profile:profiles!tasks_assigned_to_fkey(full_name, email)')
-        .order('created_at', { ascending: false });
+        .eq('archived', archived)
+        .order('due_date', { ascending: true, nullsFirst: false })
+        .limit(1000);
       if (error) throw error;
       return data;
     },
@@ -67,7 +70,7 @@ export function useUpdateTask() {
         .select()
         .single();
       if (error) throw error;
-      if (data && updateData.status === 'done') fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
+      if (data && updateData.status === 'completed') fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
@@ -82,6 +85,28 @@ export function useDeleteTask() {
         .from('tasks')
         .delete()
         .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
+export function useBulkUpdateTasks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, data: updateData }: { ids: string[]; data: Record<string, unknown> }) => {
+      const { error } = await supabase.from('tasks').update(updateData).in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
+export function useBulkDeleteTasks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('tasks').delete().in('id', ids);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

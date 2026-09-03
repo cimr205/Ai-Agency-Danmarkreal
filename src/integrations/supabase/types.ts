@@ -5285,6 +5285,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          archived: boolean
           assigned_to: string | null
           company_id: string
           completed_at: string | null
@@ -5301,6 +5302,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
           assigned_to?: string | null
           company_id: string
           completed_at?: string | null
@@ -5317,6 +5319,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
           assigned_to?: string | null
           company_id?: string
           completed_at?: string | null
