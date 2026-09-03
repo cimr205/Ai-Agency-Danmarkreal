@@ -78,16 +78,14 @@ Deno.serve(async (req) => {
 
 async function transcribeRecording(serviceClient: SupabaseClient, callId: string, companyId: string, recordingUrl: string) {
   try {
-    // Get OpenAI key for this company
-    const { data: openai } = await serviceClient
-      .from("openai_accounts")
-      .select("api_key")
-      .eq("company_id", companyId)
-      .single();
-    if (!openai) {
-      console.log("transcribeRecording: no OpenAI key — skipping Whisper transcription");
-      return;
-    }
+    // Whisper transcription required an OpenAI key (openai_accounts table),
+    // removed per the approved AI stack (Ollama/llama.cpp only — no hosted
+    // LLM APIs). There is no self-hosted speech-to-text service in this
+    // stack today, so recording transcription is disabled rather than
+    // silently querying a table that no longer exists. Revisit if/when a
+    // self-hosted STT service (e.g. whisper.cpp) is added.
+    console.log("transcribeRecording: disabled — no self-hosted speech-to-text service configured");
+    return;
 
     // Get twilio creds (tenant first, else platform)
     const { data: tenantTwilio } = await serviceClient

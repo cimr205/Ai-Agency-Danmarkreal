@@ -18,7 +18,6 @@ import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Spark
 import { formatDistanceToNow } from 'date-fns';
 import { getErrorMessage } from '@/lib/errors';
 
-interface OpenAIAccount { id: string; status: string; last_tested_at: string | null; last_error: string | null; }
 interface TwilioAccount { account_sid: string; }
 interface VoiceAgent { id: string; name: string; voice: string; language: string; system_prompt: string; greeting: string; is_active: boolean; }
 interface VoiceCall { id: string; status: string; to_number: string; from_number: string | null; duration_seconds: number; recording_url: string | null; summary: string | null; started_at: string | null; agent_id: string | null; }
@@ -34,7 +33,6 @@ export default function VoiceAgentPage() {
   const connectVoiceProvider = useConnectVoiceTelephony();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
-  const [openai, setOpenai] = useState<OpenAIAccount | null>(null);
   const [agents, setAgents] = useState<VoiceAgent[]>([]);
   const [calls, setCalls] = useState<VoiceCall[]>([]);
   const [events, setEvents] = useState<VoiceCallEvent[]>([]);
@@ -119,11 +117,6 @@ export default function VoiceAgentPage() {
   }, [twilioConnected, hasTwilioNumber, companyId, user, twilioInfo]);
 
 
-  // Connect OpenAI dialog
-  const [openaiDialog, setOpenaiDialog] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [savingKey, setSavingKey] = useState(false);
-
   // New agent dialog
   const [agentDialog, setAgentDialog] = useState(false);
   const [agentName, setAgentName] = useState('');
@@ -146,12 +139,10 @@ export default function VoiceAgentPage() {
       if (!profile?.company_id) { setLoading(false); return; }
       setCompanyId(profile.company_id);
 
-      const [oai, ag, cl] = await Promise.all([
-        supabase.from('openai_accounts').select('*').eq('company_id', profile.company_id).maybeSingle(),
+      const [ag, cl] = await Promise.all([
         supabase.from('voice_agents').select('*').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
         supabase.from('voice_calls').select('*').eq('company_id', profile.company_id).order('created_at', { ascending: false }).limit(50),
       ]);
-      setOpenai(oai.data);
       setAgents(ag.data || []);
       setCalls(cl.data || []);
       loadLastStatusChange(profile.company_id);
@@ -204,34 +195,6 @@ export default function VoiceAgentPage() {
     return data;
   };
 
-  const saveOpenAIKey = async () => {
-    if (!apiKey.trim()) return;
-    setSavingKey(true);
-    try {
-      await invokeWithError('voice-agent-connect-openai', { action: 'save', apiKey: apiKey.trim() });
-      toast.success(t('voiceAgent.openaiConnected'));
-      setOpenaiDialog(false);
-      setApiKey('');
-      // Optimistic update so UI immediately shows connected state
-      setOpenai({ id: 'pending', status: 'connected', last_tested_at: new Date().toISOString(), last_error: null });
-      await loadAll();
-    } catch (e) {
-      toast.error(getErrorMessage(e) || t('voiceAgent.openaiSaveFailed'));
-    } finally {
-      setSavingKey(false);
-    }
-  };
-
-  const disconnectOpenAI = async () => {
-    if (!confirm(t('voiceAgent.disconnectOpenaiConfirm'))) return;
-    try {
-      await invokeWithError('voice-agent-connect-openai', { action: 'disconnect' });
-      toast.success(t('voiceAgent.openaiDisconnected'));
-      setOpenai(null);
-      loadAll();
-    } catch (e) { toast.error(getErrorMessage(e) || String(e)); }
-  };
-
   const createAgent = async () => {
     if (!agentName.trim() || !companyId) return;
     const { error } = await supabase.from('voice_agents').insert({
@@ -268,7 +231,7 @@ export default function VoiceAgentPage() {
     }
   };
 
-  // OpenAI is optional — backend falls back to platform AI gateway when no tenant key is set.
+  // AI is always available (shared self-hosted Ollama instance).
   // Twilio connection alone is enough to manage agents; a phone number is required to actually place a call.
   const isReady = !!twilio;
   const canCall = isReady && hasTwilioNumber;
@@ -388,35 +351,18 @@ export default function VoiceAgentPage() {
                 </CardContent>
               </Card>
 
-              {/* OpenAI card (optional) */}
+              {/* AI model — shared self-hosted Ollama instance, platform-wide.
+                  No per-company connection needed (was previously a
+                  bring-your-own-OpenAI-key card; removed per the approved
+                  AI stack — Ollama/llama.cpp only, no hosted LLM APIs). */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> OpenAI <span className="text-xs font-normal text-muted-foreground">({t('voiceAgent.optional')})</span></CardTitle>
-                    {openai?.status === 'connected'
-                      ? <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" />{t('voiceAgent.yourKey')}</Badge>
-                      : <Badge variant="secondary" className="gap-1">{t('voiceAgent.platformAi')}</Badge>}
+                    <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI-model</CardTitle>
+                    <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Ollama (selv-hostet)</Badge>
                   </div>
-                  <CardDescription>{t('voiceAgent.openaiCardDesc')}</CardDescription>
+                  <CardDescription>Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {openai?.last_error && (
-                    <div className="flex items-start gap-2 text-sm text-destructive">
-                      <AlertCircle className="h-4 w-4 mt-0.5" />
-                      <span>{openai.last_error}</span>
-                    </div>
-                  )}
-                  {openai ? (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setOpenaiDialog(true)}>{t('voiceAgent.replaceKey')}</Button>
-                      <Button variant="ghost" size="sm" onClick={disconnectOpenAI}>{t('voiceAgent.disconnect')}</Button>
-                    </div>
-                  ) : (
-                    <Button onClick={() => setOpenaiDialog(true)} className="w-full gap-2">
-                      <Plus className="h-4 w-4" /> {t('voiceAgent.connectOpenai')}
-                    </Button>
-                  )}
-                </CardContent>
               </Card>
             </div>
           )}
@@ -527,27 +473,6 @@ export default function VoiceAgentPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Connect OpenAI Dialog */}
-      <Dialog open={openaiDialog} onOpenChange={setOpenaiDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('voiceAgent.connectOpenai')}</DialogTitle>
-            <DialogDescription>{t('voiceAgent.connectOpenaiDialogDesc')}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Label>{t('voiceAgent.apiKeyLabel')}</Label>
-            <Input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-..." />
-            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-xs text-primary inline-flex items-center gap-1">
-              {t('voiceAgent.getKeyFromOpenai')} <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenaiDialog(false)}>{t('voiceAgent.cancel')}</Button>
-            <Button onClick={saveOpenAIKey} disabled={savingKey || !apiKey.trim()}>{savingKey ? t('voiceAgent.validating') : t('voiceAgent.connectCta')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* New Agent Dialog */}
       <Dialog open={agentDialog} onOpenChange={setAgentDialog}>

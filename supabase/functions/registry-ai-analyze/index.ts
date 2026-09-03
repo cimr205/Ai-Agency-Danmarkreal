@@ -17,22 +17,26 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const baseUrl = Deno.env.get("LOCAL_LLM_BASE_URL");
+    const model = Deno.env.get("LOCAL_LLM_MODEL");
+    if (!baseUrl || !model) throw new Error("LOCAL_LLM_BASE_URL/LOCAL_LLM_MODEL not configured");
+    const endpoint = baseUrl.replace(/\/$/, "").endsWith("/chat/completions")
+      ? baseUrl.replace(/\/$/, "")
+      : `${baseUrl.replace(/\/$/, "")}/v1/chat/completions`;
 
     const body = await req.json();
     const { company_name, company_number, address, type, status, country } = body;
 
     const countryNames: Record<string, string> = { DK: "Danmark", NO: "Norge", UK: "Storbritannien" };
 
-    const response = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${Deno.env.get("LOCAL_LLM_API_KEY") ?? "ollama"}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3.2:3b",
+        model,
         messages: [
           {
             role: "system",

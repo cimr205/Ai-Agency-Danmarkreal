@@ -2948,53 +2948,6 @@ export type Database = {
           },
         ]
       }
-      openai_accounts: {
-        Row: {
-          api_key: string
-          company_id: string
-          connected_by: string | null
-          created_at: string
-          id: string
-          last_error: string | null
-          last_tested_at: string | null
-          provider: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          api_key: string
-          company_id: string
-          connected_by?: string | null
-          created_at?: string
-          id?: string
-          last_error?: string | null
-          last_tested_at?: string | null
-          provider?: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          api_key?: string
-          company_id?: string
-          connected_by?: string | null
-          created_at?: string
-          id?: string
-          last_error?: string | null
-          last_tested_at?: string | null
-          provider?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "openai_accounts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: true
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payments: {
         Row: {
           amount: number

@@ -75,6 +75,11 @@ serve(async (req) => {
 
     const genId = genRecord.id;
 
+    // Explicit, user-approved exception to the STRICT STACK RULE (Ollama/
+    // llama.cpp only for text): image generation (ad creative for Meta Ads)
+    // has no self-hosted equivalent in the approved stack, so this one
+    // capability keeps using a hosted provider (Gemini via Lovable's AI
+    // Gateway). Every text-generation AI feature in the app stays on Ollama.
     const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
     if (!LOVABLE_API_KEY) {
       await adminClient.from("ai_generations").update({

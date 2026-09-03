@@ -1,69 +1,35 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { getErrorMessage, getFunctionErrorMessage } from "@/lib/errors";
 
-// Same table + edge function the voice agent's own OpenAI connect card
-// already uses (openai_accounts + voice-agent-connect-openai) — every AI
-// feature in the app (workflows, AI-email, deal coach, smart assistant,
-// m.fl.) resolves this same connection server-side, not a shared platform
-// key. One connect flow, used everywhere. Groq is offered alongside
-// OpenAI as a genuinely free (no payment method required) alternative.
-export type AIProvider = "openai" | "groq";
-
-export interface AIConnectionStatus {
-  id: string;
-  provider: AIProvider;
-  status: "connected" | "error";
-  last_tested_at: string | null;
-  last_error: string | null;
+// AI runs on one shared, self-hosted Ollama instance (approved stack:
+// Ollama/llama.cpp only — no OpenAI, no Groq, no other hosted LLM API).
+// There is no more per-company "connect your AI provider" step — every
+// company gets AI automatically. This just reports whether the shared
+// model is currently reachable, via the same resolve+call path every
+// real AI feature uses (ai-actions, a near-zero-cost call).
+export interface AIStatus {
+  online: boolean;
+  detail: string;
 }
 
-export function useAIConnectionStatus() {
-  const { profile } = useAuth();
+export function useAIStatus() {
   return useQuery({
-    queryKey: ["ai-connection-status", profile?.company_id],
-    enabled: !!profile?.company_id,
-    queryFn: async (): Promise<AIConnectionStatus | null> => {
-      const { data, error } = await supabase
-        .from("openai_accounts")
-        .select("id, provider, status, last_tested_at, last_error")
-        .eq("company_id", profile!.company_id!)
-        .maybeSingle();
-      if (error) throw error;
-      return data as AIConnectionStatus | null;
+    queryKey: ["ai-status"],
+    queryFn: async (): Promise<AIStatus> => {
+      const { data, error } = await supabase.functions.invoke("ai-health", { body: {} });
+      if (error) {
+        const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+        let message = error.message;
+        try {
+          const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
+          if (parsed?.error) message = parsed.error;
+        } catch {
+          // ignore, fall back to error.message
+        }
+        return { online: false, detail: message };
+      }
+      return { online: true, detail: (data as { model?: string } | null)?.model ?? "Ollama" };
     },
-    staleTime: 30_000,
-  });
-}
-
-export function useConnectAIProvider() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ apiKey, provider }: { apiKey: string; provider: AIProvider }) => {
-      const { error } = await supabase.functions.invoke("voice-agent-connect-openai", { body: { action: "save", apiKey, provider } });
-      if (error) throw new Error(await getFunctionErrorMessage(error));
-    },
-    onSuccess: (_d, v) => {
-      toast.success(`${v.provider === "groq" ? "Groq" : "ChatGPT"} forbundet`);
-      qc.invalidateQueries({ queryKey: ["ai-connection-status"] });
-    },
-    onError: (e: Error) => toast.error(getErrorMessage(e) || "Kunne ikke forbinde"),
-  });
-}
-
-export function useDisconnectAIProvider() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.functions.invoke("voice-agent-connect-openai", { body: { action: "disconnect" } });
-      if (error) throw new Error(await getFunctionErrorMessage(error));
-    },
-    onSuccess: () => {
-      toast.success("AI-udbyder afbrudt");
-      qc.invalidateQueries({ queryKey: ["ai-connection-status"] });
-    },
-    onError: (e: Error) => toast.error(getErrorMessage(e) || "Kunne ikke afbryde"),
+    staleTime: 60_000,
   });
 }
