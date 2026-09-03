@@ -82,7 +82,7 @@ export async function generateStructured(
   model: RoutedModel,
   system: string,
   user: string,
-  timeoutMs = 12_000,
+  timeoutMs = 55_000,
 ): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -97,7 +97,8 @@ export async function generateStructured(
       body: JSON.stringify({
         model: model.model,
         temperature: 0.1,
-        response_format: { type: "json_object" },
+        max_tokens: 192,
+        stream: false,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
@@ -108,7 +109,48 @@ export async function generateStructured(
     const body = await response.json();
     const content = body?.choices?.[0]?.message?.content;
     if (typeof content !== "string") throw new Error("Local model returned no JSON content");
-    return JSON.parse(content.replace(/^```json\s*|\s*```$/g, ""));
+    const clean = content.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    return JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function generateText(
+  model: RoutedModel,
+  system: string,
+  user: string,
+  timeoutMs = 22_000,
+  maxTokens = 96,
+): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(model.endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${model.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model.model,
+        temperature: 0.1,
+        max_tokens: maxTokens,
+        stream: false,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!response.ok) throw new Error(`Local model returned HTTP ${response.status}`);
+    const body = await response.json();
+    const content = body?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim()) throw new Error("Local model returned no text");
+    return content.trim();
   } finally {
     clearTimeout(timer);
   }

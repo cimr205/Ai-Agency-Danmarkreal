@@ -58,10 +58,16 @@ export function OperatingManagerPanel() {
   const submit = async (text = commandText) => {
     const clean = text.trim();
     if (!clean || command.isPending) return;
-    const result = await command.mutateAsync(clean);
-    setAnswer(result.reply);
-    setCommandText("");
-    if (result.proposals.length) setView("approvals");
+    try {
+      const result = await command.mutateAsync(clean);
+      setAnswer(result.reply);
+      setCommandText("");
+      if (result.proposals.length) setView("approvals");
+    } catch (error) {
+      setAnswer(error instanceof Error
+        ? `Jeg kunne ikke færdiggøre svaret: ${error.message}`
+        : "Jeg kunne ikke færdiggøre svaret. Prøv igen om et øjeblik.");
+    }
   };
 
   const openSignal = (signal: OperatingSignal) => {
