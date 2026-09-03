@@ -7,6 +7,7 @@ import { ClientDeals } from "@/components/clients/ClientDeals";
 import { ClientLedger } from "@/components/clients/ClientLedger";
 import { ClientRelationshipBar } from "@/components/clients/ClientRelationshipBar";
 import { ClientContextSidebar } from "@/components/clients/ClientContextSidebar";
+import { LogActivityForm } from "@/components/clients/LogActivityForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveClientSignals, buildAiSummary } from "@/lib/clientIntelligence";
 
@@ -64,8 +65,9 @@ export default function ClientView() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-x-16 gap-y-14">
-        <section>
+        <section className="space-y-5">
           <SectionLabel>Tidslinje</SectionLabel>
+          <LogActivityForm entityType="customer" entityId={customer.id} />
           <ClientTimeline events={timeline.slice(0, 60)} />
         </section>
 

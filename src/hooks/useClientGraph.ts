@@ -7,6 +7,14 @@ type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "de
 
 export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity";
 
+const ACTIVITY_TYPE_LABELS: Record<string, string> = {
+  call: "Opkald", email_sent: "Email sendt", email_received: "Email modtaget",
+  meeting: "Møde", note: "Note", task: "Opgave", status_change: "Status ændret",
+  deal_stage_change: "Deal-stadie ændret", quote_sent: "Tilbud sendt",
+  quote_accepted: "Tilbud accepteret", invoice_sent: "Faktura sendt",
+  payment_received: "Betaling modtaget",
+};
+
 const DEAL_STAGE_LABELS: Record<string, string> = {
   discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
   negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
@@ -41,7 +49,7 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, emailsRes, calRes] = await Promise.all([
+      const [dealsRes, invoicesRes, emailsRes, calRes, activitiesRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
         customerEmailLower
@@ -56,6 +64,12 @@ export function useClientGraph(customerId: string | undefined) {
           .or(`title.ilike.${nameLike},description.ilike.${nameLike}`)
           .order("start_time", { ascending: false })
           .limit(20),
+        supabase.from("crm_activities")
+          .select("id,type,body,created_at,next_step_at,completed_at")
+          .eq("entity_type", "customer")
+          .eq("entity_id", customerId)
+          .order("created_at", { ascending: false })
+          .limit(50),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
@@ -65,6 +79,7 @@ export function useClientGraph(customerId: string | undefined) {
       const invoices = invoicesRes.data ?? [];
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
+      const activities = activitiesRes.data ?? [];
 
       // Payments tied to this customer's invoices
       const invoiceIds = invoices.map(i => i.id);
@@ -118,6 +133,14 @@ export function useClientGraph(customerId: string | undefined) {
           amount: Number(d.value),
         });
       }
+      for (const a of activities) {
+        tl.push({
+          id: `a:${a.id}`, kind: "activity",
+          at: a.created_at,
+          title: ACTIVITY_TYPE_LABELS[a.type] || a.type,
+          meta: a.body || undefined,
+        });
+      }
 
       tl.sort((a, b) => +new Date(b.at) - +new Date(a.at));
 
@@ -134,7 +157,7 @@ export function useClientGraph(customerId: string | undefined) {
 
       return {
         customer,
-        deals, invoices, payments, emails, meetings,
+        deals, invoices, payments, emails, meetings, activities,
         timeline: tl,
         stats: {
           openDeals: deals.filter(d => !["won", "lost"].includes(d.stage)).length,

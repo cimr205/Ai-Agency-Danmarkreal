@@ -24,7 +24,7 @@ export interface DashboardData {
 }
 
 export interface FocusItem {
-  kind: 'invoice' | 'deal' | 'lead';
+  kind: 'invoice' | 'deal' | 'lead' | 'followup';
   id: string;
   label: string;
   company: string | null;
@@ -73,6 +73,45 @@ export function useDashboard() {
       if (!summary.pipeline?.stages?.length) {
         summary.pipeline = { stages: DEFAULT_PIPELINE_STAGES.map(s => ({ name: s.name, color: s.color, count: 0 })) };
       }
+
+      // Manually logged follow-ups (crm_activities.next_step_at) due today
+      // or overdue — merged client-side since they're a separate table from
+      // the RPC's invoice/deal/lead signals.
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      const { data: followups } = await supabase
+        .from('crm_activities')
+        .select('id, entity_type, entity_id, body, next_step_at, type')
+        .is('completed_at', null)
+        .not('next_step_at', 'is', null)
+        .lte('next_step_at', endOfToday.toISOString())
+        .order('next_step_at', { ascending: true })
+        .limit(10);
+
+      if (followups?.length) {
+        const customerIds = followups.filter(f => f.entity_type === 'customer').map(f => f.entity_id);
+        const { data: customers } = customerIds.length
+          ? await supabase.from('customers').select('id, name').in('id', customerIds)
+          : { data: [] as { id: string; name: string }[] };
+        const nameById = new Map((customers ?? []).map(c => [c.id, c.name]));
+
+        const followupItems: FocusItem[] = followups.map(f => {
+          const dueAt = new Date(f.next_step_at!);
+          const days = Math.floor((Date.now() - +dueAt) / 86400000);
+          return {
+            kind: 'followup',
+            id: f.entity_type === 'customer' ? f.entity_id : f.id,
+            label: f.body || 'Opfølgning',
+            company: f.entity_type === 'customer' ? (nameById.get(f.entity_id) ?? null) : null,
+            amount: null,
+            days: Math.max(days, 0),
+            stage: null,
+            overdue: days > 0,
+          };
+        });
+        summary.focusItems = [...followupItems, ...(summary.focusItems ?? [])];
+      }
+
       return summary;
     },
   });

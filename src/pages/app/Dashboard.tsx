@@ -14,8 +14,8 @@ import {
   Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RTooltip, XAxis,
 } from "recharts";
 
-const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall } as const;
-const FOCUS_CTA = { invoice: "Send rykker", deal: "Følg op", lead: "Ring" } as const;
+const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall, followup: CheckCircle2 } as const;
+const FOCUS_CTA = { invoice: "Send rykker", deal: "Følg op", lead: "Ring", followup: "Åbn" } as const;
 
 function focusItemText(item: FocusItem): string {
   if (item.kind === "invoice") {
@@ -23,6 +23,12 @@ function focusItemText(item: FocusItem): string {
   }
   if (item.kind === "deal") {
     return `Deal "${item.label}" har stået i ${item.stage} i ${item.days} dag${item.days === 1 ? "" : "e"}`;
+  }
+  if (item.kind === "followup") {
+    const who = item.company ? ` — ${item.company}` : "";
+    return item.overdue
+      ? `Opfølgning overskredet med ${item.days} dag${item.days === 1 ? "" : "e"}${who}: ${item.label}`
+      : `Opfølgning i dag${who}: ${item.label}`;
   }
   const who = item.company ? `${item.label} hos ${item.company}` : item.label;
   return item.overdue ? `${who} — opfølgning er overskredet` : `${who} — ${item.days} dage uden kontakt`;
@@ -194,7 +200,10 @@ export default function Dashboard() {
             <ul className="space-y-3">
               {focusItems.map(item => {
                 const Icon = FOCUS_ICON[item.kind];
-                const href = item.kind === "invoice" ? "finance/invoices" : item.kind === "deal" ? "crm/deals?view=board" : "crm/leads";
+                const href = item.kind === "invoice" ? "finance/invoices"
+                  : item.kind === "deal" ? "crm/deals?view=board"
+                  : item.kind === "followup" ? `clients/${item.id}`
+                  : "crm/leads";
                 const urgent = item.overdue || item.kind === "invoice";
                 return (
                   <li key={`${item.kind}-${item.id}`} className="flex items-start gap-3">
