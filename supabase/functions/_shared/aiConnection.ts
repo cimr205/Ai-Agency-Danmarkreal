@@ -22,7 +22,8 @@ export interface CompanyAI {
 
 function normalizeEndpoint(url: string) {
   const clean = url.replace(/\/$/, "");
-  return clean.endsWith("/chat/completions") ? clean : `${clean}/v1/chat/completions`;
+  if (clean.endsWith("/chat/completions")) return clean;
+  return clean.endsWith("/v1") ? `${clean}/chat/completions` : `${clean}/v1/chat/completions`;
 }
 
 export async function getCompanyAI(
