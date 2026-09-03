@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore-file no-explicit-any
 import { RequestRouter } from "./router/request-router.ts";
 import { matchFastIntent } from "./router/fast-intent-router.ts";

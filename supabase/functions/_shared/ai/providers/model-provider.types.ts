@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { z } from "npm:zod@3.23.8";
 import type { ChatMessage, ChatOptions, StructuredResult } from "../model/model.types.ts";
 

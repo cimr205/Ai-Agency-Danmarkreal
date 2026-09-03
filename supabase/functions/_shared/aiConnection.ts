@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore no-explicit-any
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 

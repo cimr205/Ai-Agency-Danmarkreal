@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore-file no-explicit-any
 import { z } from "npm:zod@3.23.8";
 import { aiConfig } from "../config/ai.config.ts";

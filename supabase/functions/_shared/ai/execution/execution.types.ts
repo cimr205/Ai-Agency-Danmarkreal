@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore-file no-explicit-any
 export type Role = "system_admin" | "owner" | "company_admin" | "manager" | "employee" | "readonly" | "partner";
 

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Copy, Users, Key, Shield, Loader2 } from 'lucide-react';
+import { Users, Key, Shield, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
@@ -44,12 +44,6 @@ export default function AdminEmployees() {
     } finally {
       setCreating(false);
     }
-  };
-
-  const handleCopyLink = (token: string) => {
-    const link = `${window.location.origin}/en/invite?token=${token}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Invite-link kopieret');
   };
 
   if (!isAdmin) {
@@ -96,11 +90,6 @@ export default function AdminEmployees() {
                         {inv.status}
                       </span>
                     </div>
-                    {inv.status === 'pending' && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopyLink(inv.token)}>
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                    )}
                   </div>
                 ))}
               </div>

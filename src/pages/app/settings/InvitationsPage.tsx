@@ -23,7 +23,6 @@ type Invitation = {
   status: string;
   created_at: string;
   expires_at: string;
-  token: string;
 };
 
 export default function InvitationsPage() {
@@ -36,12 +35,16 @@ export default function InvitationsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<string>('employee');
   const [creating, setCreating] = useState(false);
+  // The raw invitation token is only ever returned once, right here, by
+  // create_invitation() — the database only stores a hash of it, so
+  // there is no way to recover this link later. Shown once, then gone.
+  const [justCreatedLink, setJustCreatedLink] = useState<string | null>(null);
 
   const loadInvitations = async () => {
     setLoading(true);
     const { data } = await supabase
       .from('invitations')
-      .select('id, email, role, status, created_at, expires_at, token')
+      .select('id, email, role, status, created_at, expires_at')
       .order('created_at', { ascending: false });
     setInvitations((data || []) as Invitation[]);
     setLoading(false);
@@ -61,16 +64,31 @@ export default function InvitationsPage() {
         invite_role: newRole as Enums<'app_role'>,
       });
       if (error) throw error;
-      toast.success(t('invitations.invitationSentTo').replace('{email}', newEmail));
+      // data is the raw token — the only place it will ever be visible.
+      // No email is actually sent (there's no email-sending wired to
+      // this flow yet); the admin must copy this link and send it
+      // themselves.
+      const baseUrl = window.location.origin;
+      setJustCreatedLink(`${baseUrl}/${locale || 'en'}/invite?token=${data}`);
       setNewEmail('');
       setNewRole('employee');
-      setIsCreateOpen(false);
       await loadInvitations();
     } catch (err) {
       toast.error(getErrorMessage(err) || t('invitations.couldNotCreate'));
     } finally {
       setCreating(false);
     }
+  };
+
+  const copyJustCreatedLink = () => {
+    if (!justCreatedLink) return;
+    navigator.clipboard.writeText(justCreatedLink);
+    toast.success(t('invitations.invitationLinkCopied'));
+  };
+
+  const closeCreateDialog = () => {
+    setIsCreateOpen(false);
+    setJustCreatedLink(null);
   };
 
   const handleRevoke = async (id: string) => {
@@ -82,13 +100,6 @@ export default function InvitationsPage() {
     } catch (err) {
       toast.error(getErrorMessage(err) || t('invitations.couldNotRevoke'));
     }
-  };
-
-  const copyLink = (token: string) => {
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/${locale || 'en'}/invite?token=${token}`;
-    navigator.clipboard.writeText(link);
-    toast.success(t('invitations.invitationLinkCopied'));
   };
 
   const statusBadge = (status: string, expiresAt: string) => {
@@ -114,36 +125,56 @@ export default function InvitationsPage() {
           <h1 className="text-2xl font-bold text-foreground">{t('invitations.title')}</h1>
           <p className="text-muted-foreground">{t('invitations.subtitle')}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { if (!open) closeCreateDialog(); else setIsCreateOpen(true); }}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" />{t('invitations.inviteMember')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('invitations.inviteTeamMember')}</DialogTitle>
-              <DialogDescription>{t('invitations.inviteDesc')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('auth.email')} *</Label>
-                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('invitations.roleLabel')}</Label>
-                <Select value={newRole} onValueChange={setNewRole}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="employee">{t('roles.employee')}</SelectItem>
-                    <SelectItem value="manager">{t('roles.manager')}</SelectItem>
-                    <SelectItem value="company_admin">{t('invitations.adminRole')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleCreate} disabled={creating} className="w-full">
-                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-                {creating ? t('common.loading') : t('settings.sendInvitation')}
-              </Button>
-            </div>
+            {justCreatedLink ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{t('invitations.inviteTeamMember')}</DialogTitle>
+                  <DialogDescription>
+                    Invitationen er oprettet. Dette link vises kun én gang — kopiér det og send det til medarbejderen nu.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input readOnly value={justCreatedLink} className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+                    <Button variant="outline" size="icon" onClick={copyJustCreatedLink}><Copy className="h-4 w-4" /></Button>
+                  </div>
+                  <Button onClick={closeCreateDialog} className="w-full">{t('common.done') || 'Færdig'}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{t('invitations.inviteTeamMember')}</DialogTitle>
+                  <DialogDescription>{t('invitations.inviteDesc')}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t('auth.email')} *</Label>
+                    <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('invitations.roleLabel')}</Label>
+                    <Select value={newRole} onValueChange={setNewRole}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employee">{t('roles.employee')}</SelectItem>
+                        <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+                        <SelectItem value="company_admin">{t('invitations.adminRole')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleCreate} disabled={creating} className="w-full">
+                    {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                    {creating ? t('common.loading') : t('settings.sendInvitation')}
+                  </Button>
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -192,14 +223,9 @@ export default function InvitationsPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center gap-1 justify-end">
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
-                          <>
-                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title={t('invitations.copyLink')}>
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
-                              <XCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
+                          <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>

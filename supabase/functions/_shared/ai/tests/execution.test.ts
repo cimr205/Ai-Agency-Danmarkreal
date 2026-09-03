@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore-file no-explicit-any
 import { assertEquals, assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { executePlan } from "../execution/execution-engine.ts";
