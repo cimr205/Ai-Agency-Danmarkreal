@@ -41,7 +41,7 @@ const ACTIONS: Record<string, ActionDefinition> = {
   "crm.customer.update": {
     name: "crm.customer.update", description: "Opdatér en eksisterende kunde", requiredRoles: MEMBER_ROLES,
     requiredFields: { customer_id: "uuid" },
-    optionalFields: { name: "string", email: "email", phone: "string", company_name: "string", address: "string", status: "string" },
+    optionalFields: { name: "string", email: "email", phone: "string", company_name: "string", address: "string" },
     risk: "medium", connector: "internal", rollback: "Ændringerne fremgår af handlingsloggen.",
   },
   "crm.lead.create": {
@@ -437,7 +437,7 @@ async function executeRegisteredAction(db: any, authHeader: string, companyId: s
   if (name === "crm.customer.create" || name === "crm.lead.create") {
     const { data, error } = await db.from("customers").insert({
       company_id: companyId, created_by: userId, record_type: name.endsWith("lead.create") ? "lead" : "customer",
-      status: name.endsWith("lead.create") ? "new" : "active", ...input,
+      status: name.endsWith("lead.create") ? "new" : "customer", ...input,
     }).select("id,name,email,record_type,status").single();
     if (error) throw new Error(error.message); return data;
   }
