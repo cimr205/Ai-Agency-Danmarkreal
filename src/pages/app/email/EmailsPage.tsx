@@ -291,16 +291,24 @@ export default function EmailsPage() {
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => setDisconnectConfirmOpen(true)} disabled={disconnectGmail.isPending}>
-            <LogOut className="h-4 w-4 mr-1" />{t('pages.email.disconnect')}
-          </Button>
+          {gmailAccount.data?.source === 'composio' ? (
+            <p className="text-xs text-muted-foreground self-center">
+              Forbundet via Integrationer — administrer forbindelsen der. Afsendelse virker; indbakke-synkronisering kræver endnu en personlig Gmail-forbindelse.
+            </p>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setDisconnectConfirmOpen(true)} disabled={disconnectGmail.isPending}>
+              <LogOut className="h-4 w-4 mr-1" />{t('pages.email.disconnect')}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => { setComposeRecipients(['']); setComposeOpen(true); }}>
             <Send className="h-4 w-4 mr-2" />{t('pages.email.compose')}
           </Button>
-          <Button onClick={handleSync} disabled={syncEmails.isPending}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncEmails.isPending ? 'animate-spin' : ''}`} />
-            {t('pages.email.sync')}
-          </Button>
+          {gmailAccount.data?.source !== 'composio' && (
+            <Button onClick={handleSync} disabled={syncEmails.isPending}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncEmails.isPending ? 'animate-spin' : ''}`} />
+              {t('pages.email.sync')}
+            </Button>
+          )}
         </div>
       </div>
 

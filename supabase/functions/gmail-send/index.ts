@@ -59,11 +59,51 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .eq("provider", "gmail")
       .eq("status", "connected")
-      .single();
+      .maybeSingle();
 
+    // No personal Gmail OAuth account — fall back to a company-wide Gmail
+    // connected through the Integrations page (Composio). Otherwise
+    // "Connected" there was a dead end: nothing else in the app actually
+    // used that connection to send mail.
     if (!account) {
-      return new Response(JSON.stringify({ error: "No Gmail account connected" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const { data: profile } = await supabaseAdmin.from("profiles").select("company_id").eq("user_id", userId).maybeSingle();
+      const { data: composioIntegration } = profile?.company_id
+        ? await supabaseAdmin.from("integrations").select("id, composio_connection_id")
+            .eq("company_id", profile.company_id).eq("provider", "gmail").eq("status", "connected").maybeSingle()
+        : { data: null };
+
+      if (!composioIntegration?.composio_connection_id) {
+        return new Response(JSON.stringify({ error: "No Gmail account connected" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const result = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/composio-integration`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: authHeader, apikey: Deno.env.get("SUPABASE_ANON_KEY")! },
+        body: JSON.stringify({
+          action: "execute-tool",
+          integrationId: composioIntegration.id,
+          toolSlug: "GMAIL_SEND_EMAIL",
+          actionCategory: "communication",
+          arguments: {
+            recipient_email: to,
+            subject,
+            body: htmlBody,
+            is_html: true,
+            ...(cc ? { cc: [cc] } : {}),
+          },
+          agentId: "gmail-send",
+        }),
+      });
+      const body2 = await result.json().catch(() => ({}));
+      if (!result.ok) {
+        return new Response(JSON.stringify({ error: body2.error ?? "Failed to send email via connected Gmail" }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, via: "composio" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

@@ -1,7 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Gmail connection status
+// Gmail connection status. Checks the personal Gmail OAuth connection
+// first (email_accounts), then falls back to a company-wide Gmail
+// connected via the Integrations page (Composio) — gmail-send has the
+// matching fallback, so a Gmail connected either way is actually usable
+// for sending, not just displayed as "Connected".
 export function useGmailAccount() {
   return useQuery({
     queryKey: ['gmail-account'],
@@ -16,9 +20,27 @@ export function useGmailAccount() {
         .eq('provider', 'gmail')
         .eq('status', 'connected')
         .maybeSingle();
-
       if (error) throw error;
-      return data;
+      if (data) return { ...data, source: 'native' as const };
+
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).maybeSingle();
+      if (!profile?.company_id) return null;
+      const { data: composioIntegration } = await supabase
+        .from('integrations')
+        .select('id, account_label')
+        .eq('company_id', profile.company_id)
+        .eq('provider', 'gmail')
+        .eq('status', 'connected')
+        .maybeSingle();
+      if (!composioIntegration) return null;
+      return {
+        id: composioIntegration.id,
+        email_address: composioIntegration.account_label || 'Fælles Gmail (Integrationer)',
+        provider: 'gmail',
+        status: 'connected',
+        last_synced_at: null as string | null,
+        source: 'composio' as const,
+      };
     },
   });
 }
