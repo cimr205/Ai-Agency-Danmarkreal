@@ -46,6 +46,14 @@ export interface OperatingBrief {
   actions: OperatingAction[];
   integrations: Array<{ id: string; provider: string; status: string; account_label: string | null; last_sync_at: string | null }>;
   stats: { critical: number; today: number; opportunities: number; awaitingApproval: number };
+  model: {
+    configured: boolean;
+    online: boolean;
+    provider: string | null;
+    name: string | null;
+    checkedAt: string;
+    error?: string;
+  } | null;
   generatedAt: string;
 }
 
@@ -118,4 +126,3 @@ export function useOperatingAction() {
     onError: (error: Error) => toast.error(error.message || "Handlingen fejlede"),
   });
 }
-

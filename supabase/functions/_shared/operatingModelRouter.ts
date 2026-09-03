@@ -17,6 +17,15 @@ export interface RoutedModel {
   tier: "fast" | "reasoning";
 }
 
+export interface ModelHealth {
+  configured: boolean;
+  online: boolean;
+  provider: string | null;
+  name: string | null;
+  checkedAt: string;
+  error?: string;
+}
+
 const PURPOSE_TIER: Record<ModelPurpose, RoutedModel["tier"]> = {
   route: "fast",
   extract: "fast",
@@ -100,6 +109,41 @@ export async function generateStructured(
     const content = body?.choices?.[0]?.message?.content;
     if (typeof content !== "string") throw new Error("Local model returned no JSON content");
     return JSON.parse(content.replace(/^```json\s*|\s*```$/g, ""));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function checkModelHealth(
+  model: RoutedModel | null,
+  timeoutMs = 3_000,
+): Promise<ModelHealth> {
+  const checkedAt = new Date().toISOString();
+  if (!model) {
+    return { configured: false, online: false, provider: null, name: null, checkedAt };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const modelsEndpoint = model.endpoint.replace(/\/chat\/completions$/, "/models");
+    const response = await fetch(modelsEndpoint, {
+      method: "GET",
+      signal: controller.signal,
+      headers: { Authorization: `Bearer ${model.apiKey}` },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const body = await response.json().catch(() => ({}));
+    const advertised = Array.isArray(body?.data)
+      ? body.data.some((item: unknown) => typeof item === "object" && item !== null && (item as { id?: unknown }).id === model.model)
+      : true;
+    if (!advertised) throw new Error("Den valgte model findes ikke på serveren");
+    return { configured: true, online: true, provider: model.provider, name: model.model, checkedAt };
+  } catch (error) {
+    const message = error instanceof DOMException && error.name === "AbortError"
+      ? "Modelserveren svarede ikke inden timeout"
+      : error instanceof Error ? error.message : "Modelserveren kunne ikke nås";
+    return { configured: true, online: false, provider: model.provider, name: model.model, checkedAt, error: message };
   } finally {
     clearTimeout(timer);
   }

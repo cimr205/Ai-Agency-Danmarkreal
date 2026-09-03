@@ -48,6 +48,12 @@ export function OperatingManagerPanel() {
   const history = useMemo(() => (brief.data?.actions ?? []).filter((item) => !["proposed", "awaiting_approval"].includes(item.status)), [brief.data?.actions]);
   const signals = useMemo(() => brief.data?.signals ?? [], [brief.data?.signals]);
   const today = useMemo(() => signals.filter((item) => item.category === "today" || item.severity === "critical").slice(0, 8), [signals]);
+  const model = brief.data?.model;
+  const modelLabel = !brief.data
+    ? "Kontrollerer AI…"
+    : model?.online
+      ? `Open-source AI online${model.name ? ` · ${model.name}` : ""}`
+      : model?.configured ? "AI-server kan ikke nås" : "Handlingsmotor klar · AI mangler";
 
   const submit = async (text = commandText) => {
     const clean = text.trim();
@@ -69,10 +75,10 @@ export function OperatingManagerPanel() {
           <div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/50" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                {model?.online && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/50" />}
+                <span className={cn("relative inline-flex h-2 w-2 rounded-full", model?.online ? "bg-emerald-500" : model?.configured ? "bg-amber-500" : "bg-slate-400")} />
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground">Driftsleder aktiv</span>
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground" title={model?.error}>{modelLabel}</span>
             </div>
             <p className="mt-1 text-sm font-medium text-foreground">Hvad skal virksomheden gøre nu?</p>
           </div>
@@ -166,7 +172,7 @@ export function OperatingManagerPanel() {
       </div>
 
       <div className="flex h-9 shrink-0 items-center justify-between border-t border-border/40 px-4 text-[9px] uppercase tracking-[0.14em] text-muted-foreground/60">
-        <span>Faktiske data · Godkend før ændring</span>
+        <span>{model?.online ? "AI + faktiske data" : "Faktiske data"} · Godkend før ændring</span>
         <span>{brief.data ? formatTime(brief.data.generatedAt) : "—"}</span>
       </div>
     </div>
