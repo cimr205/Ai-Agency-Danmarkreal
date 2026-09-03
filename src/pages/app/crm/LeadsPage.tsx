@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
+import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
@@ -19,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare } from 'lucide-react';
+import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare, Send as SendIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
@@ -96,6 +97,7 @@ export default function LeadsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [aiEmailLead, setAiEmailLead] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [saveListOpen, setSaveListOpen] = useState(false);
   const [newListName, setNewListName] = useState('');
@@ -941,7 +943,12 @@ export default function LeadsPage() {
               <div className="space-y-6 mt-6">
                 {/* Contact Info */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" /><span>{selectedLead.email}</span></div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" /><span>{selectedLead.email}</span>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1 ml-auto" onClick={() => setComposeOpen(true)}>
+                      <SendIcon className="h-3 w-3" />Send
+                    </Button>
+                  </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">{t('common.phone')}</Label>
                     <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} placeholder={t('common.phone')} />
@@ -1142,6 +1149,16 @@ export default function LeadsPage() {
           leadId={aiEmailLead.id}
           leadName={aiEmailLead.name}
           leadEmail={aiEmailLead.email}
+        />
+      )}
+
+      {selectedLead && (
+        <ComposeEmailDialog
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          to={selectedLead.email}
+          toName={selectedLead.name}
+          module="leads"
         />
       )}
     </div>
