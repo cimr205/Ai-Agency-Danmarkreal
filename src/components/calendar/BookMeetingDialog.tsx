@@ -17,17 +17,27 @@ interface BookMeetingDialogProps {
   onBooked?: () => void;
 }
 
+// <input type="datetime-local"> expects and displays a naive local
+// wall-clock string (no timezone) — building these via toISOString()
+// (which is UTC) silently shifted the displayed time by the local
+// offset, so end could render before start despite being 30 minutes
+// later. Pad manually instead of touching ISO/UTC until submit time.
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function defaultStart(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   d.setHours(10, 0, 0, 0);
-  return d.toISOString().slice(0, 16);
+  return toLocalInputValue(d);
 }
 
 function defaultEnd(start: string): string {
   const d = new Date(start);
   d.setMinutes(d.getMinutes() + 30);
-  return d.toISOString().slice(0, 16);
+  return toLocalInputValue(d);
 }
 
 // Books directly into the workspace's own internal calendar
