@@ -20,7 +20,7 @@ export function useMyCalendar(params: { start: string; end: string }) {
 export function useCreateCalendarEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { title: string; description?: string; start_time: string; end_time: string; event_type?: string }) => {
+    mutationFn: async (input: { title: string; description?: string; start_time: string; end_time: string; event_type?: string; related_type?: 'lead' | 'customer' | 'deal'; related_id?: string }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
       const { data: profile } = await supabase

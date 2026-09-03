@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
+import { BookMeetingDialog } from '@/components/calendar/BookMeetingDialog';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
@@ -20,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare, Send as SendIcon } from 'lucide-react';
+import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare, Send as SendIcon, CalendarClock as CalendarClockIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
@@ -98,6 +99,7 @@ export default function LeadsPage() {
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [aiEmailLead, setAiEmailLead] = useState<{ id: string; name: string; email: string } | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [bookMeetingOpen, setBookMeetingOpen] = useState(false);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [saveListOpen, setSaveListOpen] = useState(false);
   const [newListName, setNewListName] = useState('');
@@ -945,9 +947,14 @@ export default function LeadsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" /><span>{selectedLead.email}</span>
-                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1 ml-auto" onClick={() => setComposeOpen(true)}>
-                      <SendIcon className="h-3 w-3" />Send
-                    </Button>
+                    <div className="ml-auto flex gap-1">
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={() => setComposeOpen(true)}>
+                        <SendIcon className="h-3 w-3" />Send
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={() => setBookMeetingOpen(true)}>
+                        <CalendarClockIcon className="h-3 w-3" />Book
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted-foreground">{t('common.phone')}</Label>
@@ -1159,6 +1166,16 @@ export default function LeadsPage() {
           to={selectedLead.email}
           toName={selectedLead.name}
           module="leads"
+        />
+      )}
+
+      {selectedLead && (
+        <BookMeetingDialog
+          open={bookMeetingOpen}
+          onOpenChange={setBookMeetingOpen}
+          defaultTitle={`Møde med ${selectedLead.name}`}
+          relatedType="lead"
+          relatedId={selectedLead.id}
         />
       )}
     </div>

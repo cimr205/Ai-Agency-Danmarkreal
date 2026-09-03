@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Trophy, XCircle, Mic, Send } from 'lucide-react';
+import { Briefcase, Trophy, XCircle, Mic, Send, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { DealCoachPanel } from '@/components/deals/DealCoachPanel';
 import { MeetingSummaryDialog } from '@/components/deals/MeetingSummaryDialog';
 import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
+import { BookMeetingDialog } from '@/components/calendar/BookMeetingDialog';
 import type { DealWithCustomer } from '@/hooks/api/useDeals';
 import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
@@ -39,6 +40,7 @@ export function DealDetailSheet({
 }) {
   const [meetingSummaryOpen, setMeetingSummaryOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [bookMeetingOpen, setBookMeetingOpen] = useState(false);
   const { setEntity, clearEntity } = useActiveEntity();
 
   useEffect(() => {
@@ -140,6 +142,10 @@ export function DealDetailSheet({
                   </Button>
                 )}
 
+                <Button variant="outline" className="w-full gap-2" onClick={() => setBookMeetingOpen(true)}>
+                  <CalendarClock className="h-4 w-4" /> {locale === 'da' ? 'Book møde' : 'Book meeting'}
+                </Button>
+
                 <div className="flex gap-2">
                   {deal.stage !== 'won' && (
                     <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onMarkWon(deal.id)} disabled={!canMarkDealWon(deal)}>
@@ -171,6 +177,15 @@ export function DealDetailSheet({
           toName={deal.customers.name ?? undefined}
           defaultSubject={locale === 'da' ? `Opfølgning: ${deal.title}` : `Follow-up: ${deal.title}`}
           module="deals"
+        />
+      )}
+      {deal && (
+        <BookMeetingDialog
+          open={bookMeetingOpen}
+          onOpenChange={setBookMeetingOpen}
+          defaultTitle={locale === 'da' ? `Møde: ${deal.title}` : `Meeting: ${deal.title}`}
+          relatedType="deal"
+          relatedId={deal.id}
         />
       )}
     </>

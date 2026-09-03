@@ -24,6 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
+import { BookMeetingDialog } from '@/components/calendar/BookMeetingDialog';
 
 const DATE_LOCALES: Record<string, typeof da> = { da, en: enUS, de };
 
@@ -48,6 +49,7 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
   const [editData, setEditData] = useState<Record<string, unknown>>({});
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [bookMeetingOpen, setBookMeetingOpen] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const dateFnsLocale = DATE_LOCALES[locale] || da;
   const { setEntity, clearEntity } = useActiveEntity();
@@ -198,7 +200,7 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
               <Briefcase className="h-4 w-4" />
               {locale === 'da' ? 'Konverter til Deal' : 'Convert to Deal'}
             </Button>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -218,6 +220,15 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
               >
                 <Send className="h-3.5 w-3.5" />
                 {locale === 'da' ? 'Send email' : 'Send Email'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-9"
+                onClick={() => setBookMeetingOpen(true)}
+              >
+                <CalendarClock className="h-3.5 w-3.5" />
+                {locale === 'da' ? 'Book møde' : 'Book Meeting'}
               </Button>
               {lead.phone && (
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs h-9" asChild>
@@ -561,6 +572,13 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
         to={lead.email}
         toName={lead.name}
         module="leads"
+      />
+      <BookMeetingDialog
+        open={bookMeetingOpen}
+        onOpenChange={setBookMeetingOpen}
+        defaultTitle={locale === 'da' ? `Møde med ${lead.name}` : `Meeting with ${lead.name}`}
+        relatedType="lead"
+        relatedId={lead.id}
       />
     </Sheet>
   );
