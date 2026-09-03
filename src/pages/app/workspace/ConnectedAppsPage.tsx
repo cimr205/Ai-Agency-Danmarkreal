@@ -197,20 +197,20 @@ const LIVE_MODULES: LiveModule[] = [
   },
 ];
 
+// Only integrations that actually power something in this app once
+// connected — every entry here must be traceable to a real downstream
+// consumer (a LIVE_MODULES entry, or a dedicated feature). Previously this
+// list also included Stripe, HubSpot, Pipedrive, Google Drive, GitHub,
+// LinkedIn, Shopify, Slack, and a second "Meta Ads" entry that duplicated
+// the real one in Marketing → Meta Ads — none of those had any code
+// reading the connection they created, so "Connected" was a dead end.
+// Meta Ads has its own dedicated OAuth flow (MetaAccountConnection.tsx,
+// meta_connections table) — it belongs in Marketing, not here.
 const catalog: Catalog[] = [
-  { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Tråde",   icon: Mail,           category: "Communication" },
-  { provider: "outlook",        name: "Outlook",         surface: "Mail · Kalender",             icon: Mail,           category: "Communication" },
-  { provider: "slack",          name: "Slack",           surface: "Beskeder · Notifikationer",   icon: MessagesSquare, category: "Communication" },
-  { provider: "googlecalendar", name: "Google Calendar", surface: "Møder · Booking",             icon: Calendar,       category: "Calendar" },
-  { provider: "stripe",         name: "Stripe",          surface: "Payments · Subscriptions",    icon: CreditCard,     category: "Finance" },
-  { provider: "hubspot",        name: "HubSpot",         surface: "CRM sync · Leads",            icon: Database,       category: "Sales" },
-  { provider: "pipedrive",      name: "Pipedrive",       surface: "CRM sync · Deals",            icon: Database,       category: "Sales" },
-  { provider: "notion",         name: "Notion",          surface: "Dokumenter · Klient-noter",   icon: FileText,       category: "Documents" },
-  { provider: "googledrive",    name: "Google Drive",    surface: "Filer · Klient-data",         icon: Cloud,          category: "Documents" },
-  { provider: "github",         name: "GitHub",          surface: "Issues · Releases",           icon: Github,         category: "Developer" },
-  { provider: "linkedin",       name: "LinkedIn",        surface: "Outreach · Berigelse",        icon: Linkedin,       category: "Marketing" },
-  { provider: "metaads",        name: "Meta Ads",        surface: "Kampagner · Lead Ads",        icon: BarChart3,      category: "Marketing" },
-  { provider: "shopify",        name: "Shopify",         surface: "Produkter · Ordrer",          icon: Cloud,          category: "Ecommerce" },
+  { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Afsendelse", icon: Mail,     category: "Communication" },
+  { provider: "outlook",        name: "Outlook",         surface: "Kalender",                       icon: Mail,     category: "Communication" },
+  { provider: "googlecalendar", name: "Google Calendar", surface: "Møder · Booking",                icon: Calendar, category: "Calendar" },
+  { provider: "notion",         name: "Notion",          surface: "Dokumenter · Klient-noter",      icon: FileText, category: "Documents" },
 ];
 
 export default function ConnectedAppsPage() {
@@ -262,6 +262,11 @@ export default function ConnectedAppsPage() {
     () => new Set([...composioBySlug.values()].filter(t => t.connectable).map(t => t.slug)),
     [composioBySlug],
   );
+  // The long tail of every other toolkit Composio supports (often 100+,
+  // most irrelevant to a Danish B2B CRM) is real and connectable, but
+  // showing it by default is exactly what made the catalog feel random —
+  // none of them power a specific feature the way the curated set does.
+  // Only surface it when someone explicitly searches for something.
   const fullCatalog = useMemo(() => {
     const live: Catalog[] = (toolkitsData?.toolkits ?? [])
       .filter(t => !curatedProviders.has(t.slug))
@@ -275,9 +280,10 @@ export default function ConnectedAppsPage() {
     return [...catalog, ...live];
   }, [toolkitsData, curatedProviders]);
 
+  const browsable = q.trim() ? fullCatalog : catalog;
   const filtered = useMemo(
-    () => fullCatalog.filter(a => a.name.toLowerCase().includes(q.toLowerCase()) || a.surface.toLowerCase().includes(q.toLowerCase())),
-    [q, fullCatalog]
+    () => browsable.filter(a => a.name.toLowerCase().includes(q.toLowerCase()) || a.surface.toLowerCase().includes(q.toLowerCase())),
+    [q, browsable]
   );
 
   const liveCount = integrations.filter(i => i.status === "connected").length;
@@ -305,8 +311,8 @@ export default function ConnectedAppsPage() {
           </div>
           <div className="flex items-center gap-8 text-sm">
             <Pulse value={liveCount} label="Live forbindelser" />
-            <Pulse value={fullCatalog.length - liveCount} label="Tilgængelige" muted />
-            <Pulse value={fullCatalog.length} label={toolkitsLoading ? "Henter…" : "I kataloget"} muted />
+            <Pulse value={catalog.length - liveCount} label="Tilgængelige" muted />
+            <Pulse value={fullCatalog.length - catalog.length} label={toolkitsLoading ? "Henter…" : "Flere via søgning"} muted />
           </div>
         </div>
 
