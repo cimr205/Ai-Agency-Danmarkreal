@@ -8,9 +8,10 @@ import {
 import { isLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
-  useOperatingAction, useOperatingBrief, useOperatingCommand,
-  type OperatingAction, type OperatingSignal,
+  useOperatingAction, useOperatingBrief, useOperatingCommand, useEntityContext,
+  type OperatingAction, type OperatingSignal, type EntityContext,
 } from "@/hooks/api/useOperatingManager";
+import { useActiveEntity } from "@/contexts/ActiveEntityContext";
 
 type View = "today" | "approvals" | "signals" | "history";
 
@@ -43,6 +44,9 @@ export function OperatingManagerPanel() {
   const navigate = useNavigate();
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : "en";
+  const { entity: activeEntity } = useActiveEntity();
+  const entityRef = activeEntity ? { type: activeEntity.type, id: activeEntity.id } : null;
+  const entityContext = useEntityContext(entityRef);
 
   const awaiting = useMemo(() => (brief.data?.actions ?? []).filter((item) => ["proposed", "awaiting_approval"].includes(item.status)), [brief.data?.actions]);
   const history = useMemo(() => (brief.data?.actions ?? []).filter((item) => !["proposed", "awaiting_approval"].includes(item.status)), [brief.data?.actions]);
@@ -52,7 +56,7 @@ export function OperatingManagerPanel() {
   const submit = async (text = commandText) => {
     const clean = text.trim();
     if (!clean || command.isPending) return;
-    const result = await command.mutateAsync(clean);
+    const result = await command.mutateAsync({ text: clean, entity: entityRef });
     setAnswer(result.reply);
     setCommandText("");
     if (result.proposals.length) setView("approvals");
@@ -129,6 +133,10 @@ export function OperatingManagerPanel() {
         </div>
       </div>
 
+      {activeEntity && (
+        <EntityContextCard entity={activeEntity} context={entityContext.data} loading={entityContext.isLoading} />
+      )}
+
       <div className="grid grid-cols-4 border-b border-border/50 px-2" role="tablist" aria-label="Driftsleder visninger">
         {VIEWS.map(({ id, label, icon: Icon }) => {
           const count = id === "approvals" ? awaiting.length : id === "signals" ? signals.length : id === "today" ? today.length : 0;
@@ -169,6 +177,59 @@ export function OperatingManagerPanel() {
         <span>Faktiske data · Godkend før ændring</span>
         <span>{brief.data ? formatTime(brief.data.generatedAt) : "—"}</span>
       </div>
+    </div>
+  );
+}
+
+const ENTITY_LABEL: Record<string, string> = { customer: "Kunde", lead: "Lead", deal: "Deal", task: "Opgave" };
+
+function EntityContextCard({ entity, context, loading }: {
+  entity: { type: string; id: string; label: string };
+  context: EntityContext | undefined;
+  loading: boolean;
+}) {
+  const summary = context?.summary as Record<string, unknown> | undefined;
+  const topSignal = context?.relevantSignals?.[0];
+  const lastActivity = context?.recentActivities?.[0];
+  const openFollowup = context?.recentActivities?.find((a) => a.next_step_at && !a.completed_at);
+
+  return (
+    <div className="border-b border-border/50 bg-primary/[0.03] px-4 py-3">
+      <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-[0.14em] text-primary/80">
+        <Target className="h-3 w-3" /> {ENTITY_LABEL[entity.type] ?? entity.type} i fokus
+      </div>
+      <p className="mt-1 text-xs font-medium text-foreground truncate">{entity.label}</p>
+
+      {loading ? (
+        <div className="mt-2 h-3 w-24 animate-pulse rounded bg-muted" />
+      ) : summary ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-muted-foreground">
+          {typeof summary.status === "string" && <span className="rounded border border-border/50 px-1.5 py-0.5">{summary.status}</span>}
+          {typeof summary.stage === "string" && <span className="rounded border border-border/50 px-1.5 py-0.5">{summary.stage}</span>}
+          {typeof summary.value === "number" && <span>{summary.value.toLocaleString("da-DK")} kr.</span>}
+          {typeof summary.score === "number" && <span>Score {summary.score}</span>}
+        </div>
+      ) : null}
+
+      {lastActivity && (
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          Seneste aktivitet: {lastActivity.body || lastActivity.type} · {formatTime(lastActivity.created_at)}
+        </p>
+      )}
+      {openFollowup?.next_step_at && (
+        <p className="mt-1 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+          Opfølgning planlagt: {formatTime(openFollowup.next_step_at)}
+        </p>
+      )}
+      {topSignal && (
+        <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-border/50 bg-card/40 p-2">
+          <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", SEVERITY_STYLE[topSignal.severity])} />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-foreground leading-snug">{topSignal.title}</p>
+            {topSignal.recommended_action && <p className="mt-0.5 text-[10.5px] text-muted-foreground">{topSignal.recommended_action}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

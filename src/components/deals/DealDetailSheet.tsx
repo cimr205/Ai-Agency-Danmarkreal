@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useActiveEntity } from '@/contexts/ActiveEntityContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,6 +37,13 @@ export function DealDetailSheet({
   onMarkLost: (dealId: string) => void;
 }) {
   const [meetingSummaryOpen, setMeetingSummaryOpen] = useState(false);
+  const { setEntity, clearEntity } = useActiveEntity();
+
+  useEffect(() => {
+    if (!open || !deal) return;
+    setEntity({ type: "deal", id: deal.id, label: deal.title });
+    return () => clearEntity(deal.id);
+  }, [open, deal, setEntity, clearEntity]);
   const notesPlaceholder = locale === 'da'
     ? 'Tilføj næste skridt, indvendinger og kontekst...'
     : locale === 'de'

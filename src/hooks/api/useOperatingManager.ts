@@ -55,6 +55,16 @@ interface CommandResult {
   route: string;
   localModelAvailable?: boolean;
   latencyMs?: number;
+  entity?: { type: string; id: string; label: string } | null;
+}
+
+export interface EntityContext {
+  entity: { type: string; id: string; label: string };
+  summary: Record<string, unknown>;
+  deals?: Array<Record<string, unknown>>;
+  openInvoices?: Array<Record<string, unknown>>;
+  recentActivities: Array<{ id: string; type: string; body: string | null; created_at: string; next_step_at: string | null; completed_at: string | null }>;
+  relevantSignals: OperatingSignal[];
 }
 
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
@@ -99,9 +109,21 @@ export function useOperatingBrief() {
 export function useOperatingCommand() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => invoke<CommandResult>({ operation: "command", text }),
+    mutationFn: ({ text, entity }: { text: string; entity?: { type: string; id: string } | null }) =>
+      invoke<CommandResult>({ operation: "command", text, ...(entity ? { entity } : {}) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["operating-manager"] }),
     onError: (error: Error) => toast.error(error.message || "Kommandoen kunne ikke behandles"),
+  });
+}
+
+// Selective, entity-scoped context (masterprompt §4/§19) — shown at the top
+// of the panel when the user has an active lead/deal/customer/task open.
+export function useEntityContext(entity: { type: string; id: string } | null) {
+  return useQuery({
+    queryKey: ["operating-manager-entity", entity?.type, entity?.id],
+    enabled: !!entity,
+    queryFn: () => invoke<EntityContext>({ operation: "entityContext", entityType: entity!.type, entityId: entity!.id }),
+    staleTime: 30_000,
   });
 }
 

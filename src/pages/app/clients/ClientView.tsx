@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useActiveEntity } from "@/contexts/ActiveEntityContext";
 import { useClientGraph } from "@/hooks/useClientGraph";
 import { ClientHeader } from "@/components/clients/ClientHeader";
 import { ClientTimeline } from "@/components/clients/ClientTimeline";
@@ -22,6 +23,13 @@ function SectionLabel({ children }: { children: string }) {
 export default function ClientView() {
   const { id } = useParams();
   const { data, isLoading, error } = useClientGraph(id);
+  const { setEntity, clearEntity } = useActiveEntity();
+
+  useEffect(() => {
+    if (!data?.customer) return;
+    setEntity({ type: "customer", id: data.customer.id, label: data.customer.name });
+    return () => clearEntity(data.customer.id);
+  }, [data?.customer, setEntity, clearEntity]);
 
   const intelligence = useMemo(() => {
     if (!data) return null;

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useActiveEntity } from '@/contexts/ActiveEntityContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,13 @@ export default function LeadDetailPanel({ lead, open, onClose }: Props) {
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const dateFnsLocale = DATE_LOCALES[locale] || da;
+  const { setEntity, clearEntity } = useActiveEntity();
+
+  useEffect(() => {
+    if (!open || !lead) return;
+    setEntity({ type: "lead", id: lead.id, label: lead.name });
+    return () => clearEntity(lead.id);
+  }, [open, lead, setEntity, clearEntity]);
 
   if (!lead) return null;
 
