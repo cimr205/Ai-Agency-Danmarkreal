@@ -199,7 +199,7 @@ async function loadEntityContext(db: any, companyId: string, entityType: string,
 
   if (entityType === "deal") {
     const [dealQ, activities, signals] = await Promise.all([
-      db.from("deals").select("id,title,stage,value,expected_close_date,updated_at,customer_id,customers(name)").eq("id", entityId).eq("company_id", companyId).maybeSingle(),
+      db.from("deals").select("id,title,stage,value,expected_close_date,updated_at,customer_id,customers!deals_customer_id_fkey(name)").eq("id", entityId).eq("company_id", companyId).maybeSingle(),
       activitiesQ, signalsQ,
     ]);
     if (dealQ.error) throw new Error(dealQ.error.message);

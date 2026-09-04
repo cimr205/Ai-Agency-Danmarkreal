@@ -79,13 +79,15 @@ serve(async (req) => {
       supabase.from("customers").select("id, name, email, score, company_name, status, created_at")
         .eq("company_id", companyId).eq("record_type", "lead").gte("created_at", twentyFourHoursAgo).order("created_at", { ascending: false }).limit(20),
       // All open deals
-      supabase.from("deals").select("id, title, value, stage, customer_id, expected_close_date, updated_at, notes, customers(name)")
+      supabase.from("deals").select("id, title, value, stage, customer_id, expected_close_date, updated_at, notes, customers!deals_customer_id_fkey(name)")
         .eq("company_id", companyId).not("stage", "in", "(won,lost)").order("value", { ascending: false }).limit(50),
       // Invoices
       supabase.from("invoices").select("id, invoice_number, amount, status, due_date, customers(name)")
         .eq("company_id", companyId).in("status", ["sent", "overdue"]).order("due_date", { ascending: true }).limit(30),
-      // Recent payments (24h)
-      supabase.from("payments").select("id, amount, paid_at, customers(name)")
+      // Recent payments (24h). E2E-008: payments has no customer_id column
+      // (only invoice_id) — the customer name can only be reached by
+      // embedding through invoices, never directly.
+      supabase.from("payments").select("id, amount, paid_at, invoices(customers(name))")
         .eq("company_id", companyId).gte("paid_at", twentyFourHoursAgo).limit(10),
       // Employees
       supabase.from("employee_profiles").select("id, full_name, position, department, start_date, is_active")
@@ -128,7 +130,7 @@ serve(async (req) => {
     // Process payments
     const recentPayments = (paymentsRes.data || []).map(p => ({
       amount: p.amount,
-      customer_name: (p as { customers?: { name?: string } }).customers?.name || "Unknown",
+      customer_name: (p as { invoices?: { customers?: { name?: string } } }).invoices?.customers?.name || "Unknown",
     }));
 
     // High ICP uncontacted leads
