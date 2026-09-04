@@ -30,12 +30,17 @@ serve(async (req) => {
     const { lead_id, tone, purpose, custom_context } = await req.json();
     if (!lead_id) return new Response(JSON.stringify({ error: "lead_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    // Fetch lead data, scoped to the caller's own company
+    // Fetch lead data, scoped to the caller's own company. E2E-005: reads
+    // from `customers` (record_type='lead') — the `leads` table this used
+    // to query is a stale pre-merge table (see B2/B2a lead↔customer merge
+    // migrations); it no longer receives new leads, so any lead created
+    // since then would 404 here even though it's real and visible in the UI.
     const { data: lead, error: leadErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("id", lead_id)
       .eq("company_id", callerProfile.company_id)
+      .eq("record_type", "lead")
       .single();
     if (leadErr || !lead) return new Response(JSON.stringify({ error: "Lead not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

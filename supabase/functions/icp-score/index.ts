@@ -40,11 +40,13 @@ Deno.serve(async (req) => {
       .single();
     if (icpErr || !icp) return new Response(JSON.stringify({ error: "ICP not found" }), { status: 404, headers: corsHeaders });
 
-    // Load leads
+    // Load leads. E2E-005: `customers` (record_type='lead') is the live
+    // table post lead/customer merge — the old `leads` table is stale.
     const { data: leads, error: leadsErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("company_id", profile.company_id)
+      .eq("record_type", "lead")
       .limit(1000);
     if (leadsErr) throw leadsErr;
     if (!leads || leads.length === 0) {

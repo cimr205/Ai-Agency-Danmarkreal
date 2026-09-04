@@ -1,29 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// deno-lint-ignore no-explicit-any
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
-// Every AI feature in the app resolves the same model — a self-hosted
-// Ollama instance (LOCAL_LLM_BASE_URL / LOCAL_LLM_MODEL), per the approved
-// stack (Ollama/llama.cpp only — no OpenAI, no Groq, no other hosted LLM
-// API). This used to be a per-company "connect your own OpenAI/Groq key"
-// system (openai_accounts table) — removed per explicit instruction.
-// Ollama is one shared platform-level instance (Railway-hosted), not a
-// per-tenant credential, so there is no more "connect your AI provider"
-// step: every company gets AI automatically once LOCAL_LLM_BASE_URL is
-// configured. `companyId` is kept as a parameter for call-site
-// compatibility and because a genuinely per-tenant local endpoint (e.g. a
-// company's own on-prem Ollama box) is a plausible future need — it's
-// currently unused.
+// E2E-004 (docs/full-system-e2e-audit.md): this used to resolve
+// exclusively to a shared self-hosted Ollama instance (LOCAL_LLM_BASE_URL
+// / LOCAL_LLM_MODEL). That instance is confirmed down (same root cause as
+// E2E-001, which fixed the Operating Manager panel's separate model
+// router) — every one of the 17 edge functions that import this file
+// (autopilot-brief, meta-ads-ai, deal-coach, gmail-sync, ai-email-writer,
+// generate-call-script, csv-import-leads, ai-actions, ai-health,
+// lead-ai-recommend, workflow-assistant, workflow-runner, autopilot-agent,
+// voice-agent-respond, smart-assistant, lead-gen-api, meeting-summary)
+// was therefore non-functional in production. All of them call a plain
+// OpenAI-compatible chat-completions endpoint via `ai.url`/`ai.model`/
+// `ai.apiKey` (or, for autopilot-agent, the Vercel AI SDK's
+// createOpenAICompatible against the same fields) — no caller branches on
+// `ai.provider`, so routing this one shared resolver to Groq (the
+// explicitly-approved, deployed, tested provider for the newer AI Action
+// Engine this session) fixes all 17 without touching any of them.
+// `companyId` is kept as a parameter for call-site compatibility and
+// because a genuinely per-tenant model endpoint is a plausible future
+// need — it's currently unused, same as before.
 export interface CompanyAI {
   url: string;
   apiKey: string;
   model: string;
-  provider: "local";
-}
-
-function normalizeEndpoint(url: string) {
-  const clean = url.replace(/\/$/, "");
-  return clean.endsWith("/chat/completions") ? clean : `${clean}/v1/chat/completions`;
+  provider: "groq";
 }
 
 export async function getCompanyAI(
@@ -31,31 +32,27 @@ export async function getCompanyAI(
   _supabase: SupabaseClient<any, any, any>,
   _companyId: string,
 ): Promise<CompanyAI | null> {
-  const baseUrl = Deno.env.get("LOCAL_LLM_BASE_URL");
-  const model = Deno.env.get("LOCAL_LLM_MODEL");
-  if (!baseUrl || !model) return null;
+  const apiKey = Deno.env.get("GROQ_API_KEY");
+  if (!apiKey) return null;
+  const baseUrl = (Deno.env.get("GROQ_BASE_URL") ?? "https://api.groq.com/openai/v1").replace(/\/$/, "");
   return {
-    url: normalizeEndpoint(baseUrl),
-    apiKey: Deno.env.get("LOCAL_LLM_API_KEY") ?? "ollama",
-    model,
-    provider: "local",
+    url: `${baseUrl}/chat/completions`,
+    apiKey,
+    model: Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-20b",
+    provider: "groq",
   };
 }
 
-export const AI_NOT_CONNECTED_MESSAGE =
-  "AI-modellen er ikke tilgængelig lige nu (LOCAL_LLM_BASE_URL er ikke konfigureret eller den selv-hostede model svarer ikke).";
+export const AI_NOT_CONNECTED_MESSAGE = "AI-modellen er ikke tilgængelig lige nu (GROQ_API_KEY er ikke konfigureret).";
 
 /**
- * Explains a non-ok response from the local Ollama endpoint. Kept as a
- * function (not inlined at call sites) because every caller needs the
- * same "read the body once, degrade to a generic message if it isn't
- * JSON" handling, and because Ollama's OpenAI-compatible surface can
- * still return the same shape of { error: { message } } object OpenAI
- * does for a bad request (e.g. unknown model name).
+ * Explains a non-ok response from the model endpoint. Kept as a function
+ * (not inlined at call sites) because every caller needs the same "read
+ * the body once, degrade to a generic message if it isn't JSON" handling.
  */
 export async function describeOpenAIError(
   response: Response,
-  _provider: "local" = "local",
+  _provider: "groq" = "groq",
 ): Promise<{ status: number; message: string }> {
   const status = response.status;
   let body: { error?: { message?: string } } | null = null;
@@ -64,13 +61,13 @@ export async function describeOpenAIError(
   } catch {
     // ignore, body wasn't JSON
   }
-  if (status === 404) {
-    return { status, message: "Den konfigurerede model er ikke hentet på den selv-hostede Ollama-instans." };
+  if (status === 429) {
+    return { status, message: "AI-modellen er midlertidigt overbelastet — prøv igen om lidt." };
   }
   return {
     status,
     message: body?.error?.message
       ? `AI-fejl: ${body.error.message}`
-      : `Den selv-hostede model svarede ikke korrekt (HTTP ${status}).`,
+      : `AI-modellen svarede ikke korrekt (HTTP ${status}).`,
   };
 }

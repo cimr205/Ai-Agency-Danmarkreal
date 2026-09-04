@@ -74,9 +74,10 @@ serve(async (req) => {
       leadsRes, dealsRes, invoicesRes, paymentsRes, employeesRes,
       attendanceRes, recentActionsRes, companyRes
     ] = await Promise.all([
-      // New leads 24h
-      supabase.from("leads").select("id, name, email, score, company_name, status, created_at")
-        .eq("company_id", companyId).gte("created_at", twentyFourHoursAgo).order("created_at", { ascending: false }).limit(20),
+      // New leads 24h. E2E-005: `customers` (record_type='lead') is the
+      // live table post lead/customer merge — `leads` is stale.
+      supabase.from("customers").select("id, name, email, score, company_name, status, created_at")
+        .eq("company_id", companyId).eq("record_type", "lead").gte("created_at", twentyFourHoursAgo).order("created_at", { ascending: false }).limit(20),
       // All open deals
       supabase.from("deals").select("id, title, value, stage, customer_id, expected_close_date, updated_at, notes, customers(name)")
         .eq("company_id", companyId).not("stage", "in", "(won,lost)").order("value", { ascending: false }).limit(50),
