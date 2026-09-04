@@ -174,23 +174,36 @@ export function useCreateInvoice() {
   return useMutation({
     mutationFn: async (input: CreateInvoiceInput) => {
       const { session, companyId } = await getProfileWithCompany();
-      // Generate invoice number
-      const { data: invoiceNumber, error: numErr } = await supabase.rpc('generate_invoice_number', { _company_id: companyId });
-      if (numErr) throw numErr;
 
-      const { data, error } = await supabase
-        .from('invoices')
-        .insert({
-          ...input,
-          invoice_number: invoiceNumber as string,
-          lines: input.lines as unknown as Json,
-          company_id: companyId,
-          created_by: session.user.id,
-        })
-        .select('*, customers(name)')
-        .single();
-      if (error) throw error;
-      return data;
+      // generate_invoice_number() computes MAX(existing)+1 with no
+      // locking; a concurrent second request can compute the same
+      // number before either has inserted. The invoices table now has a
+      // unique (company_id, invoice_number) constraint as the real
+      // backstop — a collision surfaces as postgres error 23505, which
+      // we retry against a freshly-generated number rather than let the
+      // user see a raw constraint-violation error or, worse, believe the
+      // request silently failed.
+      const MAX_ATTEMPTS = 3;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const { data: invoiceNumber, error: numErr } = await supabase.rpc('generate_invoice_number', { _company_id: companyId });
+        if (numErr) throw numErr;
+
+        const { data, error } = await supabase
+          .from('invoices')
+          .insert({
+            ...input,
+            invoice_number: invoiceNumber as string,
+            lines: input.lines as unknown as Json,
+            company_id: companyId,
+            created_by: session.user.id,
+          })
+          .select('*, customers(name)')
+          .single();
+
+        if (!error) return data;
+        if (error.code !== '23505' || attempt === MAX_ATTEMPTS) throw error;
+      }
+      throw new Error('Could not allocate a unique invoice number after retrying');
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
   });
