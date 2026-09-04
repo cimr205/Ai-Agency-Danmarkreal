@@ -17,6 +17,14 @@ export function useMyCalendar(params: { start: string; end: string }) {
   });
 }
 
+export interface ExternalPushResult {
+  pushed: boolean;
+  provider?: string;
+  reason?: string;
+  externalId?: string | null;
+  externalUrl?: string | null;
+}
+
 export function useCreateCalendarEvent() {
   const qc = useQueryClient();
   return useMutation({
@@ -35,7 +43,30 @@ export function useCreateCalendarEvent() {
         .select()
         .single();
       if (error) throw error;
-      return data;
+
+      // Best-effort push to a connected external calendar (calendar.write).
+      // The native row above is the real, durable record regardless of
+      // whether this succeeds — never rolled back for an external-push
+      // failure — but the caller gets the honest outcome to show, never a
+      // silent "synced" claim that didn't actually happen.
+      let externalPush: ExternalPushResult = { pushed: false, reason: 'not_attempted' };
+      try {
+        const { data: pushResult, error: pushError } = await supabase.functions.invoke('composio-integration', {
+          body: {
+            action: 'create-event',
+            title: input.title,
+            description: input.description,
+            startTime: input.start_time,
+            endTime: input.end_time,
+          },
+        });
+        if (pushError) throw pushError;
+        externalPush = (pushResult as ExternalPushResult) ?? { pushed: false, reason: 'unknown' };
+      } catch (e) {
+        externalPush = { pushed: false, reason: e instanceof Error ? e.message : 'push_failed' };
+      }
+
+      return { ...data, externalPush };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['calendar'] }),
   });

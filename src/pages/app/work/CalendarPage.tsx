@@ -71,8 +71,15 @@ export default function CalendarPage() {
       toast.error(t('pages.calendar.required')); return;
     }
     try {
-      await createEvent.mutateAsync(newEvent);
-      toast.success(t('pages.calendar.created_success'));
+      const created = await createEvent.mutateAsync(newEvent);
+      // Honest about what actually happened: the local event is always
+      // real once we get here, but "synced to Google Calendar" is only
+      // claimed when the external push genuinely succeeded.
+      if (created.externalPush?.pushed) {
+        toast.success(`${t('pages.calendar.created_success')} · synkroniseret til ${created.externalPush.provider === 'googlecalendar' ? 'Google Calendar' : created.externalPush.provider}`);
+      } else {
+        toast.success(t('pages.calendar.created_success'));
+      }
       setNewEvent({ title: '', description: '', start_time: '', end_time: '' });
       setIsCreateOpen(false);
     } catch { toast.error(t('pages.calendar.created_error')); }

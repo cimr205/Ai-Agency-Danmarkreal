@@ -72,8 +72,12 @@ export function BookMeetingDialog({ open, onOpenChange, defaultTitle, relatedTyp
         related_id: relatedId,
       },
       {
-        onSuccess: () => {
-          toast.success("Møde booket");
+        onSuccess: (created) => {
+          toast.success(
+            created.externalPush?.pushed
+              ? `Møde booket · synkroniseret til ${created.externalPush.provider === 'googlecalendar' ? 'Google Calendar' : created.externalPush.provider}`
+              : "Møde booket",
+          );
           onOpenChange(false);
           onBooked?.();
         },

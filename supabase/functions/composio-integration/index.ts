@@ -163,6 +163,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ toolkits: withConnectable });
     }
 
+    // ─── Composio Discovery: real per-toolkit action metadata, so a new
+    // capability (e.g. "create calendar event") can be wired against a
+    // confirmed real tool slug instead of a guess. Any company member can
+    // call this — it only reads Composio's own public tool catalog, no
+    // tenant data involved. ───
+    if (action === "list-tools") {
+      const toolkit = body.toolkit as string;
+      if (!toolkit) throw new Error("Missing toolkit");
+      const limit = Math.min(Math.max((body.limit as number) || 50, 1), 200);
+      const r = await composioFetch(`/tools?toolkit_slug=${encodeURIComponent(toolkit)}&limit=${limit}`);
+      if (!r.ok) throw new Error(`Kunne ikke hente værktøjer: ${JSON.stringify(r.body)}`);
+      return jsonResponse(r.body as unknown);
+    }
+
     // ─── This tenant's connections (local registry — no Composio call needed) ───
     if (action === "list-connections") {
       const { data, error } = await supabase
@@ -427,6 +441,69 @@ Deno.serve(async (req) => {
       }
 
       return jsonResponse({ provider: resolved.provider, connectionId: resolved.id, events: evts });
+    }
+
+    // ─── Push a native calendar_events row out to the connected external
+    // calendar (calendar.write). Tool slugs follow this codebase's one
+    // confirmed-working precedent (GOOGLECALENDAR_EVENTS_LIST) — never
+    // silently treated as successful: any non-ok Composio response throws
+    // a real error the caller must surface, exactly like every other tool
+    // call in this file. ───
+    if (action === "create-event") {
+      const title = body.title as string;
+      const startTime = body.startTime as string;
+      const endTime = body.endTime as string;
+      const description = (body.description as string) ?? "";
+      if (!title || !startTime || !endTime) throw new Error("Missing title, startTime, or endTime");
+
+      const { data: connections } = await supabase
+        .from("integrations")
+        .select("id, provider, status, composio_connection_id")
+        .eq("company_id", companyId);
+      const resolved = findConnectionForCapability(connections ?? [], "calendar.write");
+      if (!resolved) return jsonResponse({ pushed: false, reason: "no_calendar_write_connection" });
+      const connection = (connections ?? []).find((c) => c.id === resolved.id);
+      if (!connection?.composio_connection_id) throw new Error("Forbindelsen mangler et Composio-connection-id.");
+
+      async function callTool(toolSlug: string, args: Record<string, unknown>) {
+        const res = await composioFetch(`/tools/execute/${toolSlug}`, {
+          method: "POST",
+          body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
+        });
+        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
+        return res.body as { data?: Record<string, unknown> };
+      }
+
+      let externalId: string | null = null;
+      let externalUrl: string | null = null;
+
+      if (resolved.provider === "googlecalendar") {
+        const result = await callTool("GOOGLECALENDAR_CREATE_EVENT", {
+          calendarId: "primary",
+          summary: title,
+          description,
+          start_datetime: startTime,
+          event_duration_hour: 0,
+          timezone: "Europe/Copenhagen",
+        });
+        const created = result.data as { id?: string; htmlLink?: string } | undefined;
+        externalId = created?.id ?? null;
+        externalUrl = created?.htmlLink ?? null;
+      } else if (resolved.provider === "outlook") {
+        const result = await callTool("OUTLOOK_CREATE_EVENT", {
+          subject: title,
+          body: description,
+          start_datetime: startTime,
+          end_datetime: endTime,
+        });
+        const created = result.data as { id?: string; webLink?: string } | undefined;
+        externalId = created?.id ?? null;
+        externalUrl = created?.webLink ?? null;
+      } else {
+        return jsonResponse({ pushed: false, reason: `${resolved.provider}_not_supported` });
+      }
+
+      return jsonResponse({ pushed: true, provider: resolved.provider, externalId, externalUrl });
     }
 
     if (action === "execute-tool") {
