@@ -819,6 +819,7 @@
     "empty": "No quotes yet",
     "createFirst": "Create your first quote",
     "created": "Quote created",
+    "invoiceCreated": "Invoice created",
     "status": "Status"
   },
   "roles": {

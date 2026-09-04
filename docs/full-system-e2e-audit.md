@@ -152,3 +152,19 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `deal-coach/index.ts`, `ai-operating-manager/index.ts`, `autopilot-brief/index.ts` — each `customers(...)` embed off `deals` disambiguated to `customers!deals_customer_id_fkey(...)`, matching the frontend fix. Also found and fixed a genuinely separate, pre-existing bug while touching `autopilot-brief`: its "recent payments" query tried to embed `customers(name)` directly off `payments`, but `payments` has no `customer_id` column at all (only `invoice_id`) — that embed could never have worked; repointed to `invoices(customers(name))` and updated the corresponding extraction code. (Caught only because a blind find-and-replace across the file first applied the wrong constraint name to this line and to the `invoices` line too — both reverted to correct forms before deploying; the `invoices` line needed no change at all, `payments` needed the real structural fix.)
 **Test added:** none (same test-infra gap).
 **Status:** FIXED and VERIFIED for `deal-coach` — live re-test: "Analyze Deal" on "Deal: Cimraan" now returns a real analysis (30% win probability, Medium risk, an accurate narrative referencing the deal's actual early-discovery/no-value state, and two concrete recommended actions) instead of 404ing. `ai-operating-manager` and `autopilot-brief` received the identical embed fix (plus the separate payments-embed structural fix for the latter) and were deployed, but were NOT independently click-tested in this pass — flagged honestly, not verified per-feature.
+
+---
+
+## E2E-009
+
+**Severity:** P3
+**Area:** Finance — Quote → Invoice conversion, wrong success toast + missing race-condition retry
+**Persona/Environment:** Any company member accepting a quote and clicking "Create Invoice" — production
+**Reproduction:** Continued the live business-journey test: created a real quote ("TEST E2E Quote", 10.000 kr. + 25% VAT = 12.500 kr.) for lead "Cimraan", sent it, accepted it, clicked "Create Invoice". A real invoice was created correctly (confirmed on the Invoices page: `2026-0003`, Cimraan, 12.500 kr., Draft) — the underlying feature works — but the success toast said **"Quote created"** instead of "Invoice created".
+**Expected:** A toast confirming an invoice was created.
+**Actual:** Misleading toast claiming a quote was created, right after the user just accepted an existing quote and asked for an invoice.
+**Root cause:** `QuotesPage.tsx`'s `convertQuote` mutation's `onSuccess` reused `t('quotes.created')` ("Quote created") — the same key used for actual quote creation elsewhere in the same file — instead of a distinct invoice-created message. Copy-paste, not a logic bug.
+**Secondary finding, fixed in the same pass:** this mutation hand-rolls its own `generate_invoice_number()` + `quote_to_invoice()` RPC pair with no retry, instead of going through the already-fixed `useCreateInvoice()` (E2E-002/003). The new `invoices.(company_id,invoice_number)` unique constraint means a race here would now surface as an uncaught `23505` error rather than a silent duplicate, but it would still fail the user's request outright instead of transparently retrying.
+**Files changed:** `src/messages/{en,da,de}.json` — added a distinct `quotes.invoiceCreated` key. `src/pages/app/finance/QuotesPage.tsx` — `convertQuote` now shows `t('quotes.invoiceCreated')` on success, and wraps the number-generate-then-convert flow in the same 3-attempt retry-on-`23505` pattern already used by `useCreateInvoice`.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED. VERIFICATION IN PROGRESS — type/lint-checked clean; live re-test of the corrected toast text pending next deploy (the retry-loop path specifically was not force-raced, same reasoning as E2E-002/003: a real DB constraint plus narrow correct error-code matching is high-confidence without a forced race).

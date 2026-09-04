@@ -836,6 +836,7 @@
     "empty": "Noch keine Angebote",
     "createFirst": "Erstellen Sie Ihr erstes Angebot",
     "created": "Angebot erstellt",
+    "invoiceCreated": "Rechnung erstellt",
     "status": "Status"
   },
   "roles": {

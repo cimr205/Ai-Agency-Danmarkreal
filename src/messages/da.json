@@ -836,6 +836,7 @@
     "empty": "Ingen tilbud endnu",
     "createFirst": "Opret dit første tilbud",
     "created": "Tilbud oprettet",
+    "invoiceCreated": "Faktura oprettet",
     "status": "Status"
   },
   "roles": {

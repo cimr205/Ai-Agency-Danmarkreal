@@ -90,17 +90,25 @@ export default function QuotesPage() {
       if (!user) throw new Error('Not authenticated');
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
       if (!profile?.company_id) throw new Error('No company');
-      const { data: number, error: numberError } = await supabase.rpc('generate_invoice_number', { _company_id: profile.company_id });
-      if (numberError) throw numberError;
-      const { error } = await supabase.rpc('quote_to_invoice', {
-        p_quote_id: id, p_invoice_number: number as string,
-      });
-      if (error) throw error;
+      // Same non-locking generate_invoice_number() race as useCreateInvoice
+      // (E2E-002/003) — invoices.(company_id,invoice_number) now has a real
+      // unique constraint, so a collision surfaces as 23505 instead of a
+      // silent duplicate; retry with a fresh number rather than fail outright.
+      const MAX_ATTEMPTS = 3;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const { data: number, error: numberError } = await supabase.rpc('generate_invoice_number', { _company_id: profile.company_id });
+        if (numberError) throw numberError;
+        const { error } = await supabase.rpc('quote_to_invoice', {
+          p_quote_id: id, p_invoice_number: number as string,
+        });
+        if (!error) return;
+        if (error.code !== '23505' || attempt === MAX_ATTEMPTS) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success(t('quotes.created'));
+      toast.success(t('quotes.invoiceCreated'));
     },
   });
 
