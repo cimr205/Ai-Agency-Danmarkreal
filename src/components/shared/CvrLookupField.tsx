@@ -7,8 +7,19 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { getErrorMessage } from '@/lib/errors';
 
+export interface CvrLookupResult {
+  name: string;
+  address: string;
+  cvr: string;
+  zipcode: string;
+  city: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
 interface CvrLookupFieldProps {
-  onResult: (result: { name: string; address: string; cvr: string }) => void;
+  onResult: (result: CvrLookupResult) => void;
   className?: string;
 }
 
@@ -17,9 +28,14 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
   const [loading, setLoading] = useState(false);
 
   const lookup = async () => {
-    const clean = cvr.replace(/\D/g, '');
-    if (clean.length < 2) {
-      toast.error('CVR-nummer skal være mindst 2 tegn');
+    // The backend (cvrapi.dk via cvr-search) genuinely supports searching
+    // by CVR number OR company name through the same `search` param —
+    // stripping non-digit characters here (as this used to do) silently
+    // destroyed every name search into an empty string, even though the
+    // placeholder text below has always invited both.
+    const search = cvr.trim();
+    if (search.length < 2) {
+      toast.error('Indtast mindst 2 tegn');
       return;
     }
     setLoading(true);
@@ -37,7 +53,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ search: clean }),
+          body: JSON.stringify({ search }),
         }
       );
 
@@ -45,16 +61,27 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       if (!res.ok) throw new Error(data.error || 'Opslag fejlede');
 
       if (!data.results?.length) {
-        toast.error(`Ingen virksomhed fundet for "${clean}"`);
+        toast.error(`Ingen virksomhed fundet for "${search}"`);
         return;
       }
 
       const company = data.results[0];
       const address = [company.address, company.zipcode, company.city].filter(Boolean).join(', ');
-      onResult({ name: company.name || '', address, cvr: company.cvr || clean });
+      // Only prefill what the registry actually returned — never invent
+      // phone/email/website when the source didn't provide them.
+      onResult({
+        name: company.name || '',
+        address,
+        cvr: company.cvr || search,
+        zipcode: company.zipcode || '',
+        city: company.city || '',
+        phone: company.phone || '',
+        email: company.email || '',
+        website: company.website || '',
+      });
       toast.success(`Fandt: ${company.name}`);
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke slå CVR op'));
+      toast.error((getErrorMessage(e) || 'Kunne ikke slå virksomhed op'));
     } finally {
       setLoading(false);
     }

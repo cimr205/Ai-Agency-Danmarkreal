@@ -63,8 +63,17 @@ export default function ClientsListPage() {
           <DialogDescription>{t('clients.createSubtitle')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <CvrLookupField onResult={({ name, address, cvr }) => {
-            setNewClient(prev => ({ ...prev, name, address, vat_number: cvr }));
+          <CvrLookupField onResult={({ name, address, cvr, phone, email }) => {
+            // Only prefill phone/email if the registry actually returned
+            // them and the user hasn't already typed something — never
+            // overwrite real input, and never invent contact data the
+            // lookup didn't provide.
+            setNewClient(prev => ({
+              ...prev,
+              name, address, vat_number: cvr,
+              phone: prev.phone || phone,
+              email: prev.email || email,
+            }));
           }} />
           <div className="space-y-2">
             <Label htmlFor="client-name">{t('pages.leads.name')} *</Label>

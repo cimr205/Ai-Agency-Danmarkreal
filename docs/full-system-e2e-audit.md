@@ -168,3 +168,33 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `src/messages/{en,da,de}.json` — added a distinct `quotes.invoiceCreated` key. `src/pages/app/finance/QuotesPage.tsx` — `convertQuote` now shows `t('quotes.invoiceCreated')` on success, and wraps the number-generate-then-convert flow in the same 3-attempt retry-on-`23505` pattern already used by `useCreateInvoice`.
 **Test added:** none (same test-infra gap).
 **Status:** FIXED, VERIFIED. Live re-test post-deploy: created a fresh test quote, sent it, accepted it, clicked "Create Invoice" — toast now correctly reads "Invoice created". (The retry-loop path specifically was not force-raced, same reasoning as E2E-002/003: a real DB constraint plus narrow correct error-code matching is high-confidence without a forced race.)
+
+---
+
+## E2E-010
+
+**Severity:** P2
+**Area:** Marketing/Voice — hardcoded, always-green AI status badge
+**Persona/Environment:** Any company member on the Voice Agent page — production
+**Reproduction:** Open Marketing → Power Dialer/Voice Agent (once Twilio is connected). The "AI-model" card always showed a static `Badge variant="default"` reading "Ollama (selv-hostet)" with a green checkmark — this was never wired to any real health check, just always-rendered JSX.
+**Expected:** The badge reflects the actual, live AI provider status (matching the pattern already correctly used on `AIConnectionPage.tsx`).
+**Actual:** Category-4 invalid hardcoded state per this pass's own classification rule — claims "Ollama, online" unconditionally, even during the period this session confirmed Ollama was completely down, and even now that the real active provider is Groq.
+**Root cause:** The card was written as static JSX with no data binding at all — not stale in the sense of "used to be true," it was never live.
+**Files changed:** `src/pages/app/marketing/VoiceAgentPage.tsx` — now calls `useAIStatus()` (the same real health-check hook `AIConnectionPage.tsx` uses) and renders online/offline/loading states from the actual response.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED. Type/lint-checked clean; not yet live-clicked (requires a connected Twilio account to reach this card — not attempted live this pass to avoid touching telephony state unnecessarily).
+
+---
+
+## E2E-011
+
+**Severity:** P1
+**Area:** Clients — CVR/company-name lookup silently broken for name search
+**Persona/Environment:** Any company member creating a new client via "New Client" — production
+**Reproduction:** Click "New Client", type a company name (e.g. "AI Agency Danmark") into the lookup field, whose own placeholder text explicitly invites "Indtast CVR-nummer eller virksomhedsnavn..." (CVR number or company name).
+**Expected:** Per the placeholder's own promise, and per the backend's actual capability (confirmed: `cvr-search` passes the raw search term straight to `cvrapi.dk`, which genuinely supports name search), a name search should return the matching company.
+**Actual:** `CvrLookupField.tsx` ran `cvr.replace(/\D/g, '')` (strip everything but digits) on the input before sending it — for a company name with zero digits, this produces an empty string, which then fails the `< 2 chars` check with a confusing "CVR-nummer skal være mindst 2 tegn" (CVR number must be at least 2 characters) error. Every name search was silently impossible despite the UI's own promise. Separately: the backend already returns `phone`/`email`/`website` when the registry has them, but the component's `onResult` callback only ever extracted `{name, address, cvr}` — that real data was fetched and then thrown away.
+**Root cause:** The digit-stripping assumed CVR-only input from an earlier version of this field, never updated when the placeholder copy was changed to promise name search too. The discarded fields were a separate, smaller oversight in the same component.
+**Files changed:** `src/components/shared/CvrLookupField.tsx` — removed the digit-stripping (the raw trimmed search term is now sent as-is; `cvrapi.dk` itself determines whether it's a CVR number or a name), and extended the result shape to include `zipcode`/`city`/`phone`/`email`/`website` (never fabricated — only passed through when the registry actually returned them). `src/pages/app/clients/ClientsListPage.tsx` (the only *live*-routed consumer — `CustomersPage.tsx` is confirmed dead/unrouted from earlier session work and was left untouched) — now prefills `phone`/`email` from the lookup result when the user hasn't already typed something, never overwriting real input.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED. Type/lint-checked clean; live re-test pending next deploy.

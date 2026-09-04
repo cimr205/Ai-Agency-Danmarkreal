@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { useConnectVoiceTelephony, useVoiceTelephonyAccount } from '@/hooks/api/useVoiceTelephony';
+import { useAIStatus } from '@/hooks/api/useAIConnection';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -231,9 +232,10 @@ export default function VoiceAgentPage() {
     }
   };
 
-  // AI is always available (shared self-hosted Ollama instance).
   // Twilio connection alone is enough to manage agents; a phone number is required to actually place a call.
+  // AI availability is checked separately (real health check below), not assumed.
   const isReady = !!twilio;
+  const { data: aiStatus, isLoading: aiStatusLoading } = useAIStatus();
   const canCall = isReady && hasTwilioNumber;
 
   const connectVoiceTelephony = async () => {
@@ -351,17 +353,28 @@ export default function VoiceAgentPage() {
                 </CardContent>
               </Card>
 
-              {/* AI model — shared self-hosted Ollama instance, platform-wide.
-                  No per-company connection needed (was previously a
-                  bring-your-own-OpenAI-key card; removed per the approved
-                  AI stack — Ollama/llama.cpp only, no hosted LLM APIs). */}
+              {/* AI model — one shared, platform-wide provider (currently
+                  Groq). No per-company connection needed. Status below is a
+                  real health check (useAIStatus), never a static badge —
+                  this card used to hardcode "Ollama (selv-hostet) ✓ Online"
+                  regardless of actual reachability. */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI-model</CardTitle>
-                    <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Ollama (selv-hostet)</Badge>
+                    {aiStatusLoading ? (
+                      <Badge variant="outline" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Tjekker…</Badge>
+                    ) : aiStatus?.online ? (
+                      <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Online</Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive"><XCircle className="h-3 w-3" /> Ikke tilgængelig</Badge>
+                    )}
                   </div>
-                  <CardDescription>Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.</CardDescription>
+                  <CardDescription>
+                    {aiStatus?.online
+                      ? 'Samtalens svar genereres af en delt AI-model — ingen opsætning nødvendig.'
+                      : (aiStatus?.detail || 'AI-modellen svarer ikke lige nu — dette kræver ingen handling fra jer.')}
+                  </CardDescription>
                 </CardHeader>
               </Card>
             </div>
