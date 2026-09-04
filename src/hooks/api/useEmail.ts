@@ -13,14 +13,22 @@ export function useGmailAccount() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase
+      // Deliberately not filtering by status='connected' here: an
+      // 'expired' row is a real, distinct state the UI needs to show
+      // (Smart Inbox's reconnect prompt) — filtering it out here would
+      // make it invisible and fall through to "never connected", losing
+      // the real reason. Only 'disconnected' (an intentional past
+      // disconnect) is treated as absent.
+      const { data: rows, error } = await supabase
         .from('email_accounts')
         .select('*')
         .eq('user_id', user.id)
         .eq('provider', 'gmail')
-        .eq('status', 'connected')
-        .maybeSingle();
+        .neq('status', 'disconnected')
+        .order('updated_at', { ascending: false })
+        .limit(1);
       if (error) throw error;
+      const data = rows?.[0];
       if (data) return { ...data, source: 'native' as const };
 
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).maybeSingle();

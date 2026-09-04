@@ -86,12 +86,19 @@ export default function EmailsPage() {
     }
   }, []);
 
+  const isExpired = gmailAccount.data?.status === 'expired';
+  // Composio-connected-only accounts have no working sync path (see
+  // gmail-sync's COMPOSIO_ONLY_NOT_SYNCABLE) — auto-syncing here would
+  // just silently fail on every page load. Also never auto-sync an
+  // expired connection; that needs a real reconnect, not a retry.
+  const canAutoSync = isConnected && gmailAccount.data?.source !== 'composio' && !isExpired;
+
   useEffect(() => {
-    if (isConnected && !emailsLoading && emails.length === 0 && !syncEmails.isPending) {
+    if (canAutoSync && !emailsLoading && emails.length === 0 && !syncEmails.isPending) {
       toast.info(t('pages.email.syncing'));
       syncEmails.mutate(500);
     }
-  }, [isConnected, emailsLoading, emails.length]);
+  }, [canAutoSync, emailsLoading, emails.length]);
 
   useEffect(() => { setPage(0); }, [activeTab, search]);
 
@@ -244,6 +251,33 @@ export default function EmailsPage() {
           <Loader2 className="h-6 w-6 animate-spin" />
           <p>{t('pages.email.checkingConnection')}</p>
         </div>
+      </div>
+    );
+  }
+
+  // Expired: was genuinely connected once, but the refresh token was
+  // revoked (gmail-sync marks this on a real "invalid_grant" from
+  // Google) — a real, distinct state, never conflated with "never
+  // connected". Reconnecting replaces the token; nothing else to lose.
+  if (isExpired) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
+        </div>
+        <Card className="max-w-lg mx-auto mt-12 border-destructive/30 bg-destructive/5">
+          <CardHeader className="text-center">
+            <AlertTriangle className="h-16 w-16 mx-auto text-destructive mb-4" />
+            <CardTitle>Gmail-forbindelsen er udløbet</CardTitle>
+            <CardDescription>Adgangen til {gmailAccount.data?.email_address || 'din Gmail-konto'} er blevet trukket tilbage. Forbind igen for at genoptage synkronisering.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Button onClick={handleConnect} disabled={connectGmail.isPending} size="lg">
+              {connectGmail.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+              Forbind igen
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

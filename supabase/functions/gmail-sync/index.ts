@@ -70,7 +70,16 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Get email account
+    // Get email account. Smart Inbox syncing only ever reads real Gmail
+    // messages via a personal OAuth grant (email_accounts) — there is no
+    // Composio-based fetch path implemented (unlike gmail-send, which can
+    // fall back to a company-wide Composio Gmail connection for sending).
+    // useGmailAccount() on the frontend correctly reports "connected" for
+    // either path, which used to make this endpoint 404 with a generic,
+    // misleading "No Gmail account connected" for any company that only
+    // has the Composio connection — the UI said connected, sync silently
+    // could never work. Distinguish that case explicitly instead of
+    // collapsing both into the same unhelpful error.
     const { data: account, error: accErr } = await supabaseAdmin
       .from("email_accounts")
       .select("*")
@@ -80,7 +89,19 @@ Deno.serve(async (req) => {
       .single();
 
     if (accErr || !account) {
-      return new Response(JSON.stringify({ error: "No Gmail account connected" }), {
+      const { data: profile } = await supabaseAdmin.from("profiles").select("company_id").eq("user_id", userId).maybeSingle();
+      const { data: composioIntegration } = profile?.company_id
+        ? await supabaseAdmin.from("integrations").select("id").eq("company_id", profile.company_id).eq("provider", "gmail").eq("status", "connected").maybeSingle()
+        : { data: null };
+
+      if (composioIntegration) {
+        return new Response(JSON.stringify({
+          error: "Gmail er forbundet via Integrationer, men Smart Inbox kræver en direkte, personlig forbindelse for at synkronisere din indbakke.",
+          code: "COMPOSIO_ONLY_NOT_SYNCABLE",
+        }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({ error: "No Gmail account connected", code: "NOT_CONNECTED" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -140,7 +161,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("gmail-sync error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -163,6 +184,13 @@ async function refreshAccessToken(refreshToken: string, supabaseAdmin: SupabaseC
 
   const data = await res.json();
   if (data.error) {
+    // A revoked/expired refresh_token (e.g. "invalid_grant") is permanent
+    // until the user reconnects — mark the account so the frontend can
+    // show a real EXPIRED state instead of an indefinite generic sync
+    // error on every future attempt.
+    if (data.error === "invalid_grant") {
+      await supabaseAdmin.from("email_accounts").update({ status: "expired" }).eq("id", accountId);
+    }
     throw new Error(`Token refresh failed: ${data.error}`);
   }
 
