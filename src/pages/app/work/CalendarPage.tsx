@@ -71,7 +71,20 @@ export default function CalendarPage() {
       toast.error(t('pages.calendar.required')); return;
     }
     try {
-      const created = await createEvent.mutateAsync(newEvent);
+      // Live-verified bug (same class as an earlier BookMeetingDialog fix
+      // this session): datetime-local's value is a naive local wall-clock
+      // string with no timezone, but calendar_events.start_time is
+      // timestamptz — inserting it raw gets interpreted as UTC, silently
+      // shifting the stored time by the local offset (confirmed live: a
+      // 10:00 Copenhagen entry landed as 10:00 UTC = 11:00 local on
+      // reload). Converting to a real ISO string here, at the one place
+      // the form hands off to the mutation, fixes both the native row and
+      // the external push (which uses these exact same values).
+      const created = await createEvent.mutateAsync({
+        ...newEvent,
+        start_time: new Date(newEvent.start_time).toISOString(),
+        end_time: new Date(newEvent.end_time).toISOString(),
+      });
       // Honest about what actually happened: the local event is always
       // real once we get here, but "synced to Google Calendar" is only
       // claimed when the external push genuinely succeeded.
