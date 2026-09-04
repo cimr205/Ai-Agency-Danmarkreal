@@ -105,3 +105,35 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `ai-email-writer/index.ts`, `icp-score/index.ts`, `lead-ai-recommend/index.ts`, `autopilot-brief/index.ts`, `meeting-summary/index.ts`, `workflow-assistant/index.ts` — each `.from("leads")` call repointed to `.from("customers")...eq("record_type", "lead")`, same filters otherwise preserved.
 **Test added:** none (same test-infra gap).
 **Status:** FIXED and VERIFIED for `ai-email-writer` — live re-test after redeploy: "Generate AI Email" on the same lead ("Cimraan") now returns a real, coherent, personalized Danish draft ("Optimer kundeoplevelsen med vores testløsninger", referencing the lead's actual company name and phone number) instead of 404ing. The other 5 (`icp-score`, `lead-ai-recommend`, `autopilot-brief`, `meeting-summary`, `workflow-assistant`) received the identical fix and were deployed, but were NOT independently click-tested in this pass — flagged honestly, not verified per-feature.
+
+---
+
+## E2E-006
+
+**Severity:** P0
+**Area:** Security — cross-tenant privilege escalation via SECURITY DEFINER RPCs
+**Persona/Environment:** Any authenticated `company_admin`, any company — production
+**Reproduction:** Found via a full read-only SQL sweep of every `SECURITY DEFINER` function in `public` (checking each one that takes a caller-supplied `_company_id`/`_user_id` parameter for whether it actually verifies that id belongs to the caller). `set_company_mode(_company_id, _mode)` and `update_compliance_item(_company_id, _item, _value)` both checked only `is_company_admin(auth.uid())` — which confirms the caller is an admin of *their own* company, never that the caller-supplied `_company_id` argument is that same company. Contrast with `regenerate_activation_code(_company_id)`, which gets it right: `get_user_company_id(auth.uid()) = _company_id AND has_role(auth.uid(),'company_admin')`.
+**Expected:** A company_admin can only change settings for their own company.
+**Actual:** Any company_admin, of any company, could call either RPC with an arbitrary victim `_company_id` and silently overwrite that other company's `mode` setting or `compliance_checklist` — a real cross-tenant write, not just a read leak.
+**Root cause:** Missing `_company_id` ownership check — ownership of the resource being mutated was never verified against the authenticated caller.
+**Files changed:** `supabase/migrations/20260904000002_fix_cross_tenant_company_settings_functions.sql` — both functions now also require `get_user_company_id(auth.uid()) = _company_id`, matching `regenerate_activation_code`'s correct pattern. Applied live.
+**Test added:** none (same test-infra gap noted throughout this doc).
+**Status:** FIXED, VERIFIED via `pg_get_functiondef` re-read post-migration confirming the new check is live in both function bodies. NOT re-tested with an actual live cross-tenant call attempt (would require a second real tenant/admin session — this pass has credentials for only one tenant, see the scope-honesty statement at the top of this doc). The fix is a straightforward, correct SQL predicate addition with a proven-correct sibling function as the pattern, so this is high-confidence without a live attack retest, reported honestly as not literally re-attacked.
+
+---
+
+## E2E-007
+
+**Severity:** P1
+**Area:** CRM — Deals list completely empty (PostgREST ambiguous-embed error)
+**Persona/Environment:** Any company member viewing the Deals page — production
+**Reproduction:** Live business-journey test: converted a real lead ("Cimraan") to a deal via "Convert to Deal". Redirected to `/crm/deals`. Page showed "No deals yet" despite 3 real deal rows existing in the `deals` table for this exact company (verified via direct DB query — the newly converted deal, an existing "QA Test Deal", and a peer session's "TEST E2E Audit Deal" test row). Confirmed via network-request inspection: the `GET /rest/v1/deals?select=*,customers(name,email)&order=created_at.desc` request returned **HTTP 300** (PostgREST's "ambiguous embedded resource" error) — the request was failing silently (no toast, `useDeals()`'s `error` state wasn't being surfaced to the UI), and `isEmpty` in `DealsPage.tsx` (`!isLoading && deals.length === 0`) can't distinguish "genuinely no deals" from "the query errored out to zero results" — a second, smaller bug worth separately noting.
+**Expected:** The Deals page lists every deal belonging to the company, including newly converted ones.
+**Actual:** Deals page always showed empty, for every deal, regardless of how many actually existed.
+**Root cause:** `customers.converted_deal_id → deals.id` is a foreign key added by this session's earlier lead→customer/deal merge work (the "convert lead to deal" feature creates a linked customer row with `converted_deal_id` pointing back at the new deal). Combined with the pre-existing `deals.customer_id → customers.id` FK, there are now **two** distinct relationship paths between `deals` and `customers` — PostgREST can no longer infer which one `select=*, customers(name,email)` should embed through, and returns HTTP 300 instead of guessing. Every `useDeals()`/`useUpdateDeal()` call was affected identically, so this broke the Deals page (and DealsPage's own row-update path) universally, not just for the newly converted deal.
+**Files changed:** `src/hooks/api/useDeals.ts` — both `.select('*, customers(name, email)')` call sites now use the explicit relationship hint `.select('*, customers!deals_customer_id_fkey(name, email)')`, disambiguating in favor of the intended forward relationship. Checked the rest of the frontend for the same `customers(...)` embed pattern on other tables (`invoices` in `useFinance.ts`) — confirmed via `pg_constraint` that `invoices`↔`customers` has only one FK path each direction, so those were not affected and needed no change.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED. VERIFICATION IN PROGRESS — fix applied and type/lint-checked clean; live re-test (confirm the Deals page now lists the converted deal, and the network request returns 200) was interrupted mid-session by a Chrome extension disconnect and is being resumed next.
+
+**Secondary, smaller finding (not separately numbered):** `useDeals()`'s query error is never surfaced to the user — a failed fetch renders identically to "no deals exist," which is exactly how this P1 stayed invisible in the UI (no error toast, no visible signal something was wrong) despite the network tab showing a clear 300. Worth adding real error-state UI to `DealsPage.tsx` as a follow-up; not fixed in this pass (scope: fixing the actual data bug took priority over the error-surfacing UX gap).

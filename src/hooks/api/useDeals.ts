@@ -13,7 +13,7 @@ export function useDeals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deals')
-        .select('*, customers(name, email)')
+        .select('*, customers!deals_customer_id_fkey(name, email)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as DealWithCustomer[];
@@ -57,7 +57,7 @@ export function useUpdateDeal() {
         .from('deals')
         .update(updates)
         .eq('id', id)
-        .select('*, customers(name, email)')
+        .select('*, customers!deals_customer_id_fkey(name, email)')
         .single();
       if (error) throw error;
       // Fire deal.won or deal.lost events
