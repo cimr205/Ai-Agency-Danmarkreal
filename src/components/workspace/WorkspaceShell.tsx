@@ -11,12 +11,12 @@ export default function WorkspaceShell({ children }: { basePath?: string; childr
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
-    <div className="h-screen flex w-full bg-background text-foreground relative overflow-hidden">
+    <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
       <WorkspaceRail onOpenPalette={() => setPaletteOpen(true)} />
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen relative">
+      <div className="relative flex h-screen min-w-0 flex-1 flex-col">
         <ContextBar onOpenPalette={() => setPaletteOpen(true)} />
-        <main className="flex-1 min-h-0 overflow-y-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--muted)/0.45)_100%)]">
           <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-[1400px] mx-auto w-full">
             {children}
           </div>
