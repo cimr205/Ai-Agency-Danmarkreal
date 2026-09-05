@@ -15,7 +15,7 @@ export interface DashboardData {
   employees: { total: number; active: number };
   tasks: { pending: number; completed: number; inProgress: number };
   emails: { total: number; unread: number };
-  pipeline: { stages: { name: string; count: number; color: string }[] };
+  pipeline: { stages: { name: string; count: number; color: string; value: number; stalled: number }[] };
   customers: { total: number };
   invoices: {
     total: number; paid: number; overdue: number; totalValue: number;
@@ -71,7 +71,7 @@ export function useDashboard() {
 
       const summary = data as unknown as DashboardSummary;
       if (!summary.pipeline?.stages?.length) {
-        summary.pipeline = { stages: DEFAULT_PIPELINE_STAGES.map(s => ({ name: s.name, color: s.color, count: 0 })) };
+        summary.pipeline = { stages: DEFAULT_PIPELINE_STAGES.map(s => ({ name: s.name, color: s.color, count: 0, value: 0, stalled: 0 })) };
       }
 
       // Manually logged follow-ups (crm_activities.next_step_at) due today

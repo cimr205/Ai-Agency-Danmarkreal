@@ -87,6 +87,7 @@ export default {
       fontFamily: {
         sans: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
         display: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
+        serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       keyframes: {
