@@ -310,3 +310,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Status:** FIXED, VERIFIED. Live: approved the real pending Sep 2 action → toast "Handling udført" → row updated in place (realtime subscription, no reload needed) to "COMPLETED 5.9.2026, 11.49.21" — the actual approval instant, confirmed to match the DB's `executed_at` to the second.
 
 **Also observed, not fixed (stale/non-reproducible):** two `dismissed` rows from 2026-08-23 show corrupted Danish text — literal `Bekr\xe5ftelse` (unescaped hex sequence) and `Bekrèftelse` (wrong accent) where "Bekræftelse" was clearly intended. Traced to whatever AI provider was active on that date (this session's history shows several AI-provider migrations — Ollama → Groq → local-model routing — since then). Not reproducible today: a fresh Autopilot action created live during this same pass rendered Danish characters (æ/ø/å) correctly throughout ("Følg op på varme leads"), and the exact DB column carrying the corrupted title couldn't be pinned down in `preview`/`metadata` (likely computed into `result` or a since-changed field). Given it's an already-dismissed, three-week-old artifact with no live reproduction path, this was not chased further — flagged here rather than guessed at.
+
+---
+
+## E2E-019
+
+**Severity:** P3 (informational — investigated as a potential security issue, confirmed non-exploitable)
+**Area:** Klienter — leftover stored-XSS test payload found in production client data
+**Persona/Environment:** Full-business-journey pass (master-list item 20), browsing the live Klienter (customers) list.
+**Reproduction:** N/A — this was found data, not a reproduction of a code path.
+**Expected:** No synthetic test/attack payloads in production customer data; any such string that IS present must render as inert text everywhere it's used.
+**Actual:** A `customers` row named `Æblegård & Søn <script>alert(1)</script> 😀` (repeated four times concatenated) with `email = "not-an-email"`, created 2026-08-19 — unmistakably a prior stored-XSS test payload, not a real client. Traced every place this record's name is genuinely rendered: the Klienter list page, the client detail page, and an AI "relationship summary" that had echoed the raw string back into its own generated text — all three rendered it as inert literal text (React's default JSX escaping neutralizes `<script>` tags automatically). The invoice PDF path (`src/lib/invoicePdf.ts`) uses jsPDF's `.text()` API, which draws glyphs onto a canvas and has no HTML/script interpretation at all, so it's a dead end for this class of attack regardless of input.
+**Root cause:** N/A (no vulnerability found) — this was leftover data from an earlier, unlogged manual XSS test, not a code defect.
+**Files changed:** none (data cleanup only) — deleted the single test row from `customers` after confirming it was synthetic and non-exploitable everywhere it renders.
+**Test added:** none.
+**Status:** CLOSED — investigated, confirmed not exploitable in this codebase's current rendering paths, test data removed. Flagged here rather than silently deleted, since "we tested for X and it's safe" is worth recording even when no code changes.
