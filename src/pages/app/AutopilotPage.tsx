@@ -410,7 +410,12 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                     {a.rationale && <div className="text-[11px] text-muted-foreground leading-relaxed">{a.rationale}</div>}
                     <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.16em]">
                       <span className={tone}>{a.status}</span>
-                      <span className="text-muted-foreground/50">{new Date(a.created_at).toLocaleString("da-DK")}</span>
+                      {/* Live-verified bug (2026-09-05): this always showed
+                          created_at, so an action approved/executed days
+                          after it was proposed displayed its ORIGINAL
+                          proposal time next to "completed" — reading as
+                          "this finished back then" when it just ran now. */}
+                      <span className="text-muted-foreground/50">{new Date(a.executed_at ?? a.approved_at ?? a.rejected_at ?? a.created_at).toLocaleString("da-DK")}</span>
                     </div>
                   </div>
                 </div>

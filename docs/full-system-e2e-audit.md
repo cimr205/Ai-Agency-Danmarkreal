@@ -293,3 +293,20 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `src/components/marketing/meta/MetaAccountConnection.tsx` — added a `reconnect_required` entry to `statusConfig` ("Kræver genforbindelse", amber) and a `needsReconnect` flag that swaps the top-right button to an amber "Genopret forbindelse" (reusing the existing `handleConnect`/re-auth flow) instead of the generic "Forbind Meta Ads".
 **Test added:** none (same test-infra gap).
 **Status:** FIXED, VERIFIED. Live re-test on this exact workspace (real `reconnect_required` state, not simulated): badge now reads "Kræver genforbindelse" (amber) and the button reads "Genopret forbindelse" — both honestly reflect that this was previously connected and needs re-auth, consistent with the still-visible cached account list.
+
+---
+
+## E2E-018
+
+**Severity:** P3
+**Area:** Autopilot — action timeline showed the proposal date, not the completion date, next to "completed"
+**Persona/Environment:** Any company with a real Autopilot action that sits `awaiting_approval` for more than a moment before being approved — production. This exact workspace's real state: a genuine pending action ("Opret intern opgave", proposed 2026-09-02) was approved live during this pass.
+**Reproduction:** Have an Autopilot action proposed on day A, approve/execute it on day B; look at its row in the Autopilot feed.
+**Expected:** The timestamp next to a "completed" (or "dismissed") status badge reflects when that happened.
+**Actual:** `AutopilotPage.tsx` always rendered `a.created_at` regardless of status — approving the Sep 2 action live (real task created: "Følg op på varme leads", confirmed via direct query with `executed_at`/`approved_at` = the actual approval instant) still displayed "COMPLETED 2.9.2026, 13.31.19" — the original proposal time, three days stale, reading as if the action had finished back then.
+**Root cause:** The row only ever read one field (`created_at`); `useAutopilotActions()`'s query already does `select("*")` and the DB row already has `approved_at`/`rejected_at`/`executed_at` populated correctly — the frontend `AutopilotAction` TypeScript interface simply never declared them, so nothing downstream could use them.
+**Files changed:** `src/hooks/api/useAutopilot.ts` — added `approved_at`/`rejected_at` to the `AutopilotAction` interface (`executed_at` already existed but was unused for this purpose). `src/pages/app/AutopilotPage.tsx` — the timestamp now resolves `executed_at ?? approved_at ?? rejected_at ?? created_at`, so a resolved action shows when it resolved, not when it was proposed.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Live: approved the real pending Sep 2 action → toast "Handling udført" → row updated in place (realtime subscription, no reload needed) to "COMPLETED 5.9.2026, 11.49.21" — the actual approval instant, confirmed to match the DB's `executed_at` to the second.
+
+**Also observed, not fixed (stale/non-reproducible):** two `dismissed` rows from 2026-08-23 show corrupted Danish text — literal `Bekr\xe5ftelse` (unescaped hex sequence) and `Bekrèftelse` (wrong accent) where "Bekræftelse" was clearly intended. Traced to whatever AI provider was active on that date (this session's history shows several AI-provider migrations — Ollama → Groq → local-model routing — since then). Not reproducible today: a fresh Autopilot action created live during this same pass rendered Danish characters (æ/ø/å) correctly throughout ("Følg op på varme leads"), and the exact DB column carrying the corrupted title couldn't be pinned down in `preview`/`metadata` (likely computed into `result` or a since-changed field). Given it's an already-dismissed, three-week-old artifact with no live reproduction path, this was not chased further — flagged here rather than guessed at.

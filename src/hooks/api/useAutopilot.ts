@@ -66,6 +66,8 @@ export interface AutopilotAction {
   suggested_by: string | null;
   created_at: string;
   executed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
 }
 
 export function useAutopilotActions() {
