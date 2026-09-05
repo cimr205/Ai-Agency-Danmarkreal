@@ -30,7 +30,7 @@ const LANGUAGES = [{ v: 'da', l: 'Dansk' }, { v: 'en', l: 'English' }, { v: 'de'
 export default function VoiceAgentPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const { data: twilioInfo, refetch: refetchTwilio } = useVoiceTelephonyAccount();
+  const { data: twilioInfo, isLoading: twilioInfoLoading, refetch: refetchTwilio } = useVoiceTelephonyAccount();
   const connectVoiceProvider = useConnectVoiceTelephony();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -257,7 +257,17 @@ export default function VoiceAgentPage() {
           </h1>
           <p className="text-muted-foreground mt-1">{t('voiceAgent.subtitle') || 'AI-powered phone calls — every step recorded and transcribed.'}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {canCall ? (
+            {twilioInfoLoading ? (
+              // Live-verified bug (2026-09-05): before this query resolved,
+              // twilioInfo was undefined, twilioConnected defaulted to
+              // false, and this banner rendered a decisive "Twilio not
+              // connected" for a real, already-connected account — a
+              // flash-of-wrong-status on every page load.
+              <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {t('common.loading') || 'Loading…'}
+              </Badge>
+            ) : canCall ? (
               <Badge variant="default" className="gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 {t('voiceAgent.twilioConnected')} · {twilioPhoneNumbers.length} {twilioPhoneNumbers.length === 1 ? t('voiceAgent.numberSingular') : t('voiceAgent.numberPlural')} {t('voiceAgent.readySuffix')}

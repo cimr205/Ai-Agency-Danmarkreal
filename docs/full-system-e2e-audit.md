@@ -340,3 +340,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `src/hooks/api/useIcp.ts` — aliased the embed to `leads:customers(...)` (keeps the exact `s.leads?.name` shape every caller already uses, since `lead_icp_scores` has only one FK to `customers`); updated the return type from `Tables<'leads'>` to `Tables<'customers'>`. `src/pages/app/crm/IcpPage.tsx` — now destructures and renders `error` from the hook as a distinct, visible error state instead of falling through to the identical-looking empty state.
 **Test added:** none (same test-infra gap).
 **Status:** FIXED, VERIFIED. Live: re-loaded Lead Matches for the same ICP — now correctly shows "2 leads scored" with both real leads ("QA Test Lead", "Cimraan"), their scores (16, tier "Poor"), and working per-lead detail/skip actions. Cleaned up the test ICP and its two score rows after verification.
+
+---
+
+## E2E-021
+
+**Severity:** P2
+**Area:** Voice Agent — connection banner flashed "Twilio not connected" for a real, already-connected account
+**Persona/Environment:** Any company with a real connected Voice Agent Twilio account, on first navigation to Marketing → Voice Agent — production. This exact workspace's real state (a genuinely connected Twilio account, SID `ACe13b24...`) reproduced it.
+**Reproduction:** Navigate fresh to the Voice Agent page (`marketing/voice-agent`) with an already-connected Twilio account.
+**Expected:** Either a neutral loading state, or the correct "Connected" badge, while the connection status is being fetched.
+**Actual:** On first paint, the header banner decisively rendered the red "Twilio not connected" badge — for an account that genuinely was connected (confirmed: switching tabs and back showed "Connected" with the real Account SID, and after this fix, a full reload showed the correct state throughout).
+**Root cause:** `twilioConnected = twilioInfo?.connected === true` evaluates to `false` while `twilioInfo` is still `undefined` (query in flight) — `useVoiceTelephonyAccount()`'s own `isLoading` was fetched but never used anywhere in the component, so the banner had no way to distinguish "loading" from "genuinely disconnected" and defaulted to the wrong one.
+**Files changed:** `src/pages/app/marketing/VoiceAgentPage.tsx` — destructured `isLoading` from the hook and added a neutral loading badge shown while the query is in flight, before falling through to the real connected/no-number/disconnected states.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Deployed and reloaded the page — no incorrect "not connected" flash observed on the connected account (fast production load made it hard to catch the loading badge itself mid-flight, but the underlying guard is a direct, minimal fix for the confirmed root cause and the end state is correct on every reload since).
