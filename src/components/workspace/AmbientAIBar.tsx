@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X, Send, Loader2 } from "lucide-react";
+import { Command, X, Send, Loader2 } from "lucide-react";
 import { useAiActions, type AiActionMessage } from "@/hooks/useAiActions";
 import { Input } from "@/components/ui/input";
 
 /**
- * Ambient AI bar — discreet trigger in the workspace shell.
+ * Workspace action bar — discreet trigger in the workspace shell.
  * Press the dot to open a single-line action prompt that performs real
  * tool calls via the `ai-actions` edge function.
  */
@@ -34,14 +34,14 @@ export function AmbientAIBar() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 h-8 rounded-full border border-border/40 bg-card/30 hover:bg-card/60 text-xs text-muted-foreground transition-colors"
-        aria-label="Ambient AI"
+        className="flex h-8 items-center gap-2 rounded-md border border-border/60 bg-background px-3 text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+        aria-label="Åbn handlingsfelt"
       >
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+          <span className="absolute inline-flex h-full w-full rounded-full bg-stamp/30" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-stamp" />
         </span>
-        <span className="hidden sm:inline font-mono uppercase tracking-[0.18em] text-[10px]">AI klar</span>
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] sm:inline">Klar</span>
       </button>
 
       <AnimatePresence>
@@ -55,12 +55,14 @@ export function AmbientAIBar() {
               initial={{ y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -8, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xl rounded-2xl border border-border/50 bg-card/95 shadow-2xl overflow-hidden"
+              className="w-full max-w-xl overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-2xl"
             >
               <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/70">
-                  Operationel AI
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-stamp text-stamp-foreground">
+                  <Command className="h-4 w-4" />
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Handlingsfelt
                 </span>
                 <button onClick={() => setOpen(false)} className="ml-auto text-muted-foreground hover:text-foreground">
                   <X className="h-4 w-4" />
@@ -83,17 +85,17 @@ export function AmbientAIBar() {
 
                 <div className="flex items-center justify-between gap-3 pt-2">
                   <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/40">
-                    {pendingConfirm ? "Bekræftelse påkrævet" : "Jeres forbundne AI"}
+                    {pendingConfirm ? "Bekræftelse påkrævet" : "Klar til sikre handlinger"}
                   </span>
                   <div className="flex items-center gap-2">
                     {pendingConfirm && (
                       <button type="button" onClick={() => run(true)}
-                        className="px-3 h-8 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90">
+                        className="h-8 rounded-md bg-foreground px-3 text-xs font-medium text-background hover:opacity-90">
                         Bekræft & udfør
                       </button>
                     )}
                     <button type="submit" disabled={ai.isPending || (!value.trim() && !pendingConfirm)}
-                      className="h-8 w-8 flex items-center justify-center rounded-md bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40">
+                      className="flex h-8 w-8 items-center justify-center rounded-md bg-stamp/10 text-stamp hover:bg-stamp/20 disabled:opacity-40">
                       {ai.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                     </button>
                   </div>
