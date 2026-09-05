@@ -23,5 +23,5 @@ An earlier planning pass in this session (recorded plan, "Phase D") designed a T
 ## Remaining, unverified pieces
 
 - `supabase/functions/phone-provision` and `phone-release` still exist in the codebase — their exact current role (company-purchased virtual numbers as a fallback/alternate calling path, versus dead code left over from the pre-Companion architecture) was not traced in this pass; flagged for a follow-up rather than guessed at here.
-- `src/pages/app/marketing/ColdCallerPage.test.tsx` exists but likely tests against the pre-rewrite component shape — worth checking in the dead-code/test-suite sweep (not fixed in this pass; flagged only).
+- `src/pages/app/marketing/ColdCallerPage.test.tsx` — checked in this pass: it already tests the current Phone Companion component (pairing session, device polling, leads-without-phone handling), not a stale pre-rewrite shape. Ran it live: 7/7 tests pass. No action needed.
 - End-to-end pairing and a real call command round-trip (phone actually rings, employee confirms, status reaches `connected`/`completed`) was not live-tested — doing so would require a second physical device paired to this workspace, which wasn't available in this pass.
