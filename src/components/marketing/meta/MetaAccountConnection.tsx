@@ -34,6 +34,12 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
   disconnected: { label: "Ikke forbundet", color: "border-muted bg-muted text-muted-foreground", icon: XCircle },
   error: { label: "Fejl", color: "border-destructive/30 bg-destructive/10 text-destructive", icon: AlertCircle },
   pending: { label: "Afventer", color: "border-amber-500/30 bg-amber-500/10 text-amber-400", icon: Loader2 },
+  // Live-verified bug (2026-09-05): a real, distinct backend status
+  // ("token expired, needs re-auth" — different from "never connected")
+  // fell through to the disconnected fallback below, so the header badge
+  // said "Ikke forbundet" while this same card kept showing real cached
+  // ad accounts — a contradictory "disconnected but here's your data" UI.
+  reconnect_required: { label: "Kræver genforbindelse", color: "border-amber-500/30 bg-amber-500/10 text-amber-400", icon: AlertCircle },
 };
 
 export function MetaAccountConnection() {
@@ -108,6 +114,7 @@ export function MetaAccountConnection() {
   };
 
   const isConnected = connection?.status === "connected";
+  const needsReconnect = connection?.status === "reconnect_required";
   const cfg = statusConfig[connection?.status || "disconnected"] || statusConfig.disconnected;
   const StatusIcon = cfg.icon;
 
@@ -126,7 +133,12 @@ export function MetaAccountConnection() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-[14px] font-medium">Meta Ads Forbindelse</CardTitle>
-          {!isConnected ? (
+          {needsReconnect ? (
+            <Button size="sm" variant="outline" className="gap-2 border-amber-500/40 text-amber-600 hover:text-amber-700" onClick={handleConnect}>
+              <RefreshCw className="h-4 w-4" />
+              Genopret forbindelse
+            </Button>
+          ) : !isConnected ? (
             <Button size="sm" className="gap-2" onClick={handleConnect}>
               <Link2 className="h-4 w-4" />
               Forbind Meta Ads

@@ -278,3 +278,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `src/pages/app/crm/LeadsPage.tsx` — added a third quick-action button ("Task") next to Send/Book, reusing the exact same `useCreateTask` pattern (title `Follow up: {name}`, description, `due_date` = today+3, `priority: 'medium'`, `lead_id`) already proven correct in `LeadDetailPanel.tsx`.
 **Test added:** none (same test-infra gap).
 **Status:** FIXED, VERIFIED. Live: clicked "Task" on the Cimraan lead → "Task created!" toast → confirmed via direct query the new `tasks` row has `lead_id` correctly set and `due_date` three days out; the task then correctly appeared under the Tasks page's relevant filters.
+
+---
+
+## E2E-017
+
+**Severity:** P2
+**Area:** Meta Ads — expired-token state collapsed into "disconnected", contradicting the same card's own account list
+**Persona/Environment:** Any company whose Meta connection has entered `reconnect_required` (Meta access token expired/revoked, common — Meta long-lived tokens expire periodically) — production. This exact test workspace's real state (confirmed via query: `meta_connections.status = 'reconnect_required'`).
+**Reproduction:** Open Marketing → Meta Ads Management with a `reconnect_required` connection.
+**Expected:** An honest, correctly-labeled state distinct from "never connected" — this is the master prompt's own lead example ("UI says X, but is actually Y") applied to Meta instead of Calendar/Gmail.
+**Actual, before this pass:** The header badge read "Ikke forbundet" (Not connected) and the top-right action was the plain "Forbind Meta Ads" (Connect) button — while the SAME card, one section down, still showed the real cached Meta user identity and "Annonce-konti (2)" with both ad accounts marked "Aktiv". A user would reasonably conclude either "nothing is connected" (contradicted by the account list) or "everything is fine" (contradicted by the disconnected badge) — neither is true.
+**Root cause:** `statusConfig` (the badge label/color/icon map) only defined `connected`/`disconnected`/`error`/`pending` — the real backend value `reconnect_required` fell through to the `disconnected` fallback via `statusConfig[status] || statusConfig.disconnected`, and `isConnected` (which also drives the top-right button choice) only checked for `=== "connected"`, so `reconnect_required` was treated identically to true disconnection for UI purposes despite the component's own JSX already correctly branching on it one level down (the ad-accounts panel renders for any non-`disconnected` status, so accounts were never hidden — only the badge/button were wrong).
+**Files changed:** `src/components/marketing/meta/MetaAccountConnection.tsx` — added a `reconnect_required` entry to `statusConfig` ("Kræver genforbindelse", amber) and a `needsReconnect` flag that swaps the top-right button to an amber "Genopret forbindelse" (reusing the existing `handleConnect`/re-auth flow) instead of the generic "Forbind Meta Ads".
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Live re-test on this exact workspace (real `reconnect_required` state, not simulated): badge now reads "Kræver genforbindelse" (amber) and the button reads "Genopret forbindelse" — both honestly reflect that this was previously connected and needs re-auth, consistent with the still-visible cached account list.
