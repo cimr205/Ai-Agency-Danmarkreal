@@ -100,6 +100,7 @@ export function useDeleteWebhook() {
 }
 
 export function useTestWebhook() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ webhookId, event, companyId }: { webhookId: string; event: string; companyId: string }) => {
       const { data, error } = await supabase.functions.invoke("webhook-dispatch", {
@@ -117,6 +118,12 @@ export function useTestWebhook() {
       if (error) throw error;
       return data;
     },
+    // Live-verified bug (2026-09-05): webhook-dispatch genuinely updates
+    // success_count/fail_count for a test delivery (same deliverWithRetry
+    // path as a real event), but this mutation never invalidated the
+    // webhooks list query — the row's counters stayed frozen at "0" even
+    // right after a toast confirmed a real, logged 200 delivery.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["webhooks"] }),
   });
 }
 

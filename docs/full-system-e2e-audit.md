@@ -355,3 +355,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `src/pages/app/marketing/VoiceAgentPage.tsx` — destructured `isLoading` from the hook and added a neutral loading badge shown while the query is in flight, before falling through to the real connected/no-number/disconnected states.
 **Test added:** none (same test-infra gap).
 **Status:** FIXED, VERIFIED. Deployed and reloaded the page — no incorrect "not connected" flash observed on the connected account (fast production load made it hard to catch the loading badge itself mid-flight, but the underlying guard is a direct, minimal fix for the confirmed root cause and the end state is correct on every reload since).
+
+---
+
+## E2E-022
+
+**Severity:** P2
+**Area:** Webhooks — success/failure counters on the webhook list never updated after a real, successful test delivery
+**Persona/Environment:** Any company member using Settings → Webhooks & Integrations — production.
+**Reproduction:** Create a webhook, click "Test".
+**Expected:** The success counter increments and the "last delivered" timestamp updates, matching the real delivery the toast just confirmed.
+**Actual:** The toast correctly said "Test webhook delivered successfully!" and the separate Logs tab correctly showed a real `200 OK` delivery — but the webhook's own row kept showing "0 / 0" for success/failure count, with no timestamp, even after a full page reload. Confirmed via direct query that `webhooks.success_count` was genuinely `1` in the database — the data was correct, only the list view never showed it.
+**Root cause:** `webhook-dispatch` calls the same `deliverWithRetry()` → `update_webhook_counters()` RPC path for both real events and test deliveries, so the counters were always being written correctly. `useTestWebhook()` (`src/hooks/api/useWebhooks.ts`) simply never invalidated the `["webhooks"]` React Query cache on success — unlike every sibling mutation in the same file (create/update/delete), which all already do this.
+**Files changed:** `src/hooks/api/useWebhooks.ts` — added `onSuccess: () => qc.invalidateQueries({ queryKey: ["webhooks"] })` to `useTestWebhook()`, matching the pattern already used by the other webhook mutations.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Live: clicked "Test" again post-deploy — the row's counter updated from "1" to "2" and the timestamp refreshed immediately, with no manual reload, confirming the cache now invalidates correctly. Test webhook deleted after verification.
