@@ -263,3 +263,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** `supabase/migrations/20260905000001_integration_opportunities_unique_open_title.sql` — new partial unique index on `(company_id, title) where status = 'open'`, making the race structurally impossible rather than just less likely. `supabase/functions/integration-intelligence/index.ts` — the insert now tolerates a `23505` (unique-violation) error as an expected "a concurrent run already inserted this" outcome instead of failing the whole recalculation; a plain `insert` was kept (not `.upsert()`) since PostgREST's `on_conflict` resolution can't reliably target a partial index.
 **Test added:** none (same test-infra gap noted throughout this doc).
 **Status:** FIXED, VERIFIED. Deleted the duplicate row live, applied the migration, deployed the function, reloaded Connected Apps: "Topmuligheder" now correctly shows 3 (was 4), with exactly one "Prepare a meeting booking" card.
+
+---
+
+## E2E-016
+
+**Severity:** P2
+**Area:** Tasks — no way to create a lead-linked task from the live CRM → Leads page
+**Persona/Environment:** Any company member opening a lead's detail sheet from CRM → Leads (`LeadsPage.tsx`) — production. Found while verifying item 3 of the master prompt (Tasks — contextual triggers and cross-module behavior): New Task's own dialog already supports linking a `Leads`/`Deals` dropdown, so the reverse direction (create-a-task-from-a-lead) was checked next.
+**Reproduction:** Open CRM → Leads, click a lead to open its detail sheet.
+**Expected:** Same "quick action" surface as the *other* lead detail component in this codebase — `src/components/pipeline/LeadDetailPanel.tsx` (opened from Deals/Pipeline board contexts) — which has had a working "Opret opgave"/"Create Task" button (wired to `useCreateTask` with `lead_id`) since earlier in this session's work.
+**Actual:** `LeadsPage.tsx` builds its own separate, inline detail sheet (never uses `LeadDetailPanel.tsx`) — it already had "Send" (email) and "Book" (meeting → calendar, `lead_id`-linked) quick actions next to the email field, but no equivalent for tasks. The same lead entity got a materially different action surface depending on which page it was opened from.
+**Root cause:** Two independent lead-detail UIs exist in this codebase for historical reasons (one predates the Pipeline→Deals merge done earlier in this session); the task-creation quick action was only ever added to one of them.
+**Files changed:** `src/pages/app/crm/LeadsPage.tsx` — added a third quick-action button ("Task") next to Send/Book, reusing the exact same `useCreateTask` pattern (title `Follow up: {name}`, description, `due_date` = today+3, `priority: 'medium'`, `lead_id`) already proven correct in `LeadDetailPanel.tsx`.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Live: clicked "Task" on the Cimraan lead → "Task created!" toast → confirmed via direct query the new `tasks` row has `lead_id` correctly set and `due_date` three days out; the task then correctly appeared under the Tasks page's relevant filters.

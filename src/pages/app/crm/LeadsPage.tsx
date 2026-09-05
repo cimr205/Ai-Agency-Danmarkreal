@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
+import { format, addDays } from 'date-fns';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { ComposeEmailDialog } from '@/components/email/ComposeEmailDialog';
 import { BookMeetingDialog } from '@/components/calendar/BookMeetingDialog';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
+import { useCreateTask } from '@/hooks/api/useTasks';
 import { useDeals } from '@/hooks/api/useDeals';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare, Send as SendIcon, CalendarClock as CalendarClockIcon } from 'lucide-react';
+import { Plus, Search, Mail, Star, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Building2, ArrowLeft, Save, Briefcase, Sparkles, X, Tag, BookmarkPlus, Filter, FolderPlus, Folder, FolderOpen, Download, CheckSquare, Send as SendIcon, CalendarClock as CalendarClockIcon, ListTodo } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
@@ -163,6 +165,7 @@ export default function LeadsPage() {
   const deleteLead = useDeleteLead();
   const updateLead = useUpdateLead();
   const convertToDeal = useConvertLeadToDeal();
+  const createTask = useCreateTask();
   const updateScore = useUpdateLeadScore();
   const { data: allDeals } = useDeals();
   const { data: allTags } = useAllLeadTags();
@@ -953,6 +956,31 @@ export default function LeadsPage() {
                       </Button>
                       <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1" onClick={() => setBookMeetingOpen(true)}>
                         <CalendarClockIcon className="h-3 w-3" />Book
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs gap-1"
+                        disabled={createTask.isPending}
+                        onClick={async () => {
+                          const locale = isLocale(params.locale) ? params.locale : 'en';
+                          try {
+                            await createTask.mutateAsync({
+                              title: `Follow up: ${selectedLead.name}`,
+                              description: locale === 'da'
+                                ? `Opfølgning på lead ${selectedLead.name} (${selectedLead.email})`
+                                : `Follow up on lead ${selectedLead.name} (${selectedLead.email})`,
+                              due_date: format(addDays(new Date(), 3), 'yyyy-MM-dd'),
+                              priority: 'medium',
+                              lead_id: selectedLead.id,
+                            });
+                            toast.success(locale === 'da' ? 'Opgave oprettet!' : 'Task created!');
+                          } catch {
+                            toast.error(t('common.error'));
+                          }
+                        }}
+                      >
+                        <ListTodo className="h-3 w-3" />Task
                       </Button>
                     </div>
                   </div>
