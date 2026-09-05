@@ -42,7 +42,7 @@ export default function IcpPage() {
   const deleteIcp = useDeleteIcpProfile();
   const setDefault = useSetDefaultIcp();
   const scoreLeads = useScoreLeadsAgainstIcp();
-  const { data: scores = [], isLoading: scoresLoading } = useLeadIcpScores(selectedIcpId);
+  const { data: scores = [], isLoading: scoresLoading, error: scoresError } = useLeadIcpScores(selectedIcpId);
 
   const selectedIcp = profiles.find((p) => p.id === selectedIcpId);
   const detailScore = scores.find((s) => s.id === scoreDetailId);
@@ -109,6 +109,14 @@ export default function IcpPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
+        ) : scoresError ? (
+          // Live-verified bug (2026-09-05): a real query failure here used
+          // to render identically to "no scores yet", hiding a genuine FK
+          // schema mismatch for weeks. Never let a fetch error look like
+          // an empty state again.
+          <Card className="p-12 text-center border-destructive/40">
+            <p className="text-sm text-destructive">{scoresError.message}</p>
+          </Card>
         ) : scores.length === 0 ? (
           <Card className="p-12 text-center">
             <Target className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />

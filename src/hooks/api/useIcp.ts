@@ -190,13 +190,22 @@ export function useLeadIcpScores(icpProfileId: string | null) {
   return useQuery({
     queryKey: ['icp-scores', icpProfileId],
     queryFn: async () => {
+      // Live-verified bug (2026-09-05): lead_icp_scores.lead_id was
+      // repointed from leads(id) to customers(id) during the leads/
+      // customers merge, but this embed still asked PostgREST for a
+      // "leads" relationship — which no longer exists, so the query threw
+      // on every call. The error was swallowed by IcpPage.tsx defaulting
+      // `data` to [], so scoring silently "worked" (the edge function did
+      // write real rows) while the UI permanently showed "0 leads scored"
+      // with no error message. Aliasing the embed keeps the `s.leads?.*`
+      // shape every caller already depends on.
       const { data, error } = await supabase
         .from('lead_icp_scores')
-        .select('*, leads(name, email, company_name, phone, industry, status, score)')
+        .select('*, leads:customers(name, email, company_name, phone, industry, status, score)')
         .eq('icp_profile_id', icpProfileId!)
         .order('total_score', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as (LeadIcpScore & { leads: Pick<Tables<'leads'>, 'name' | 'email' | 'company_name' | 'phone' | 'industry' | 'status' | 'score'> | null })[];
+      return (data ?? []) as unknown as (LeadIcpScore & { leads: Pick<Tables<'customers'>, 'name' | 'email' | 'company_name' | 'phone' | 'industry' | 'status' | 'score'> | null })[];
     },
     enabled: !!icpProfileId,
   });

@@ -325,3 +325,18 @@ Status: FOUND / FIXING / FIXED / VERIFIED / BLOCKED
 **Files changed:** none (data cleanup only) — deleted the single test row from `customers` after confirming it was synthetic and non-exploitable everywhere it renders.
 **Test added:** none.
 **Status:** CLOSED — investigated, confirmed not exploitable in this codebase's current rendering paths, test data removed. Flagged here rather than silently deleted, since "we tested for X and it's safe" is worth recording even when no code changes.
+
+---
+
+## E2E-020
+
+**Severity:** P1
+**Area:** ICP scoring — lead matches permanently showed "0 leads scored" after a real, successful scoring run, with no error shown
+**Persona/Environment:** Any company using ICP (Ideal Customer Profile) lead scoring (CRM → ICP) — production. This is a real regression from the B2a leads/customers FK repoint done earlier this session, not something specific to this test workspace.
+**Reproduction:** Create an ICP, click "Score Leads" (or "Re-Score Leads").
+**Expected:** The toast says "Scored N leads" and the Lead Matches table shows those N leads with their scores.
+**Actual:** The toast correctly reported "Scored 2 leads" (the `icp-score` edge function genuinely ran and wrote 2 real rows to `lead_icp_scores`, confirmed via direct query), but the page — both immediately and after a full reload — showed "0 leads scored" / "No scores yet", as if scoring had never happened. No error was visible anywhere.
+**Root cause:** `lead_icp_scores.lead_id`'s foreign key was repointed from `leads(id)` to `customers(id)` during this session's leads/customers merge (B2a), but `useLeadIcpScores()` (`src/hooks/api/useIcp.ts`) still requested a PostgREST embed named `leads(...)` — a relationship that no longer exists on this table. PostgREST rejected the query with an error every single time. `IcpPage.tsx` destructured only `{ data: scores = [] }` from the hook, silently defaulting to an empty array on any error and never inspecting the `error` field — so a hard query failure was indistinguishable from "you haven't scored anything yet," for every company using this feature since the FK repoint landed.
+**Files changed:** `src/hooks/api/useIcp.ts` — aliased the embed to `leads:customers(...)` (keeps the exact `s.leads?.name` shape every caller already uses, since `lead_icp_scores` has only one FK to `customers`); updated the return type from `Tables<'leads'>` to `Tables<'customers'>`. `src/pages/app/crm/IcpPage.tsx` — now destructures and renders `error` from the hook as a distinct, visible error state instead of falling through to the identical-looking empty state.
+**Test added:** none (same test-infra gap).
+**Status:** FIXED, VERIFIED. Live: re-loaded Lead Matches for the same ICP — now correctly shows "2 leads scored" with both real leads ("QA Test Lead", "Cimraan"), their scores (16, tier "Poor"), and working per-lead detail/skip actions. Cleaned up the test ICP and its two score rows after verification.
