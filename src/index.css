@@ -2,15 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══════════════════════════════════════════════════
-   AI Agency Danmark — Deep Blue Tech
-   Hand-crafted. No templates. No vibe-coding.
-   ═══════════════════════════════════════════════════ */
+/* Product shell tokens: calm B2B surfaces, sharp controls, restrained brand accent. */
 
 @layer base {
   :root {
-    /* Crater — Light theme · ledger paper · ink blue + stamp red */
-    --background: 42 22% 97%;         /* #F8F6F1 warm paper */
+    --background: 42 22% 97%;         /* #F8F6F1 */
     --foreground: 222 47% 11%;        /* #0F172A */
 
     --card: 42 30% 99%;               /* #FDFCFA warm-white */
@@ -19,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 221 83% 53%;           /* #2563EB */
+    --primary: 222 47% 11%;           /* ink */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 40 20% 92%;          /* #ECE8DF */
@@ -28,7 +24,7 @@
     --muted: 40 18% 93%;
     --muted-foreground: 215 12% 42%;  /* ink-slate, slightly warm */
 
-    --accent: 221 83% 53%;
+    --accent: 14 88% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;         /* #EF4444 */
@@ -36,22 +32,21 @@
 
     --border: 40 15% 85%;             /* visible ink-toned rule */
     --input: 40 15% 85%;
-    --ring: 221 83% 53%;
+    --ring: 14 88% 50%;
 
-    --radius: 0.125rem;               /* near-sharp — ledger, not app-chrome */
+    --radius: 0.25rem;
 
-    /* Stamp — the one bold, unexpected accent. Used sparingly: marks, badges, the active index tab. */
     --stamp: 14 88% 50%;              /* #EA4B18 burnt vermillion */
     --stamp-foreground: 0 0% 100%;
 
     --sidebar-background: 42 25% 96%;
     --sidebar-foreground: 217 33% 17%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary: 222 47% 11%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 40 18% 91%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 40 15% 85%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-ring: 14 88% 50%;
     --sidebar-muted: 215 14% 52%;
 
     --success: 160 84% 39%;             /* #10B981 */
@@ -59,9 +54,9 @@
     --warning: 38 92% 50%;              /* #F59E0B */
     --warning-foreground: 0 0% 0%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(221 83% 45%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(214 33% 97%) 0%, hsl(214 32% 94%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(258 90% 66%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(222 36% 18%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(42 22% 97%) 0%, hsl(40 18% 93%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(14 88% 50%) 0%, hsl(0 72% 51%) 100%);
 
     --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
     --shadow-md: 0 1px 3px rgba(15,23,42,0.05), 0 4px 12px rgba(15,23,42,0.04);
@@ -81,18 +76,18 @@
     --text-secondary: #475569;
     --text-muted: #94A3B8;
     --text-disabled: #CBD5E1;
-    --accent-base: #2563EB;
-    --accent-hover: #1D4ED8;
-    --accent-subtle: #DBEAFE;
-    --accent-glow: rgba(37,99,235,0.12);
+    --accent-base: #EA4B18;
+    --accent-hover: #C73510;
+    --accent-subtle: #FDE7DE;
+    --accent-glow: rgba(234,75,24,0.12);
     --success-color: #10B981;
     --success-subtle: #D1FAE5;
     --warning-color: #F59E0B;
     --warning-subtle: #FEF3C7;
     --danger: #EF4444;
     --danger-subtle: #FEE2E2;
-    --info: #2563EB;
-    --info-subtle: #DBEAFE;
+    --info: #EA4B18;
+    --info-subtle: #FDE7DE;
   }
 
   .dark {
@@ -280,21 +275,21 @@
   h1 {
     font-family: 'Inter Tight', system-ui, sans-serif;
     font-weight: 700;
-    letter-spacing: -0.025em;
+    letter-spacing: 0;
     line-height: 1.1;
   }
 
   h2 {
     font-family: 'Inter Tight', system-ui, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     line-height: 1.15;
   }
 
   h3, h4, h5, h6 {
     font-family: 'Inter Tight', system-ui, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.015em;
+    letter-spacing: 0;
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
