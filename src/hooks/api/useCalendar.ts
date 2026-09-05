@@ -63,7 +63,20 @@ export function useCreateCalendarEvent() {
         if (pushError) throw pushError;
         externalPush = (pushResult as ExternalPushResult) ?? { pushed: false, reason: 'unknown' };
       } catch (e) {
-        externalPush = { pushed: false, reason: e instanceof Error ? e.message : 'push_failed' };
+        // supabase-js's FunctionsHttpError.message is a generic "non-2xx
+        // status code" — the real Composio/tool error is in the response
+        // body (e.context is the raw Response). Read it here so a failure
+        // is actually diagnosable instead of surfacing as "push_failed".
+        let reason = e instanceof Error ? e.message : 'push_failed';
+        const context = (e as { context?: Response })?.context;
+        if (context && typeof context.json === 'function') {
+          try {
+            const body = await context.clone().json();
+            if (body?.error) reason = body.error;
+          } catch { /* body wasn't JSON — keep the generic message */ }
+        }
+        console.error('[Calendar] external push failed:', reason);
+        externalPush = { pushed: false, reason };
       }
 
       return { ...data, externalPush };

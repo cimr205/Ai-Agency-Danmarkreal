@@ -47,6 +47,40 @@ async function composioFetch(path: string, init?: RequestInit) {
   return { ok: res.ok, status: res.status, body };
 }
 
+// Live-verified bug (2026-09-05): GOOGLECALENDAR_CREATE_EVENT's
+// start_datetime is parsed with a strict format (Composio rejected our
+// ISO-with-milliseconds string with "unconverted data remains: .000") and
+// is a NAIVE local wall-clock string interpreted using the separate
+// `timezone` argument — passing a UTC instant there silently shifted
+// every event by the zone offset even when parsing succeeded. This
+// converts a real UTC instant into the wall-clock time in `timeZone`,
+// formatted exactly as "YYYY-MM-DDTHH:MM:SS" (no milliseconds, no Z).
+function toComposioLocalDatetime(isoUtc: string, timeZone: string): string {
+  const d = new Date(isoUtc);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).formatToParts(d).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {} as Record<string, string>);
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  return `${parts.year}-${parts.month}-${parts.day}T${hour}:${parts.minute}:${parts.second}`;
+}
+
+// Live-verified bug (2026-09-05): /tools/execute/{slug} answers HTTP 200
+// even when the tool itself failed — the real outcome is body.successful.
+// Every call site below used to check res.ok alone, so a rejected write
+// (e.g. GOOGLECALENDAR_CREATE_EVENT with a param Composio couldn't parse)
+// was reported to the caller as a success with a null externalId, and the
+// event silently never reached the external calendar. Route every
+// /tools/execute/ response through this so a logical failure throws just
+// like an HTTP failure does.
+function assertToolSuccess(res: { ok: boolean; body: unknown }): { data?: Record<string, unknown> } {
+  const body = res.body as { successful?: boolean; error?: unknown; data?: Record<string, unknown> } | null;
+  if (!res.ok || body?.successful === false) {
+    throw new Error(`Værktøjskald fejlede: ${JSON.stringify(body?.error ?? res.body)}`);
+  }
+  return (body ?? {}) as { data?: Record<string, unknown> };
+}
+
 // Composio-managed auth configs are per-toolkit, shared across every
 // tenant (they just describe "how do we auth with Gmail" / "how do we auth
 // with Shopify"), not per-company secrets — so we look one up before
@@ -337,8 +371,7 @@ Deno.serve(async (req) => {
           method: "POST",
           body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
         });
-        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
-        return res.body as { data?: Record<string, unknown> };
+        return assertToolSuccess(res);
       }
 
       let docs: NormalizedDoc[] = [];
@@ -394,8 +427,7 @@ Deno.serve(async (req) => {
           method: "POST",
           body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
         });
-        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
-        return res.body as { data?: Record<string, unknown> };
+        return assertToolSuccess(res);
       }
 
       let evts: NormalizedEvent[] = [];
@@ -470,21 +502,23 @@ Deno.serve(async (req) => {
           method: "POST",
           body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
         });
-        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
-        return res.body as { data?: Record<string, unknown> };
+        return assertToolSuccess(res);
       }
 
       let externalId: string | null = null;
       let externalUrl: string | null = null;
 
       if (resolved.provider === "googlecalendar") {
+        const timezone = "Europe/Copenhagen";
+        const durationMs = Math.max(0, new Date(endTime).getTime() - new Date(startTime).getTime());
         const result = await callTool("GOOGLECALENDAR_CREATE_EVENT", {
           calendarId: "primary",
           summary: title,
           description,
-          start_datetime: startTime,
-          event_duration_hour: 0,
-          timezone: "Europe/Copenhagen",
+          start_datetime: toComposioLocalDatetime(startTime, timezone),
+          event_duration_hour: Math.floor(durationMs / 3600000),
+          event_duration_minutes: Math.round((durationMs % 3600000) / 60000),
+          timezone,
         });
         const created = result.data as { id?: string; htmlLink?: string } | undefined;
         externalId = created?.id ?? null;
@@ -555,7 +589,7 @@ Deno.serve(async (req) => {
           method: "POST",
           body: JSON.stringify({ user_id: companyId, connected_account_id: row.composio_connection_id, arguments: toolArguments }),
         });
-        if (!result.ok) throw new Error(JSON.stringify(result.body));
+        assertToolSuccess(result);
 
         await supabase
           .from("integration_execution_logs")
