@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (pendingCode) {
         try {
           await supabase.rpc('join_company_by_code', { _code: pendingCode });
-        } catch (e) {}
+        } catch { /* best-effort */ }
         localStorage.removeItem('pending_company_code');
         localStorage.removeItem('pending_company_id');
       }
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (pendingInviteToken) {
         try {
           await supabase.rpc('accept_invitation', { invite_token: pendingInviteToken });
-        } catch (e) {}
+        } catch { /* best-effort */ }
         localStorage.removeItem('pending_invite_token');
       }
     };

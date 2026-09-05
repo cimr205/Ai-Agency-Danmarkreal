@@ -73,7 +73,7 @@ serve(async (req) => {
         if (!dbField || !row[csvCol]) continue;
         const val = row[csvCol].trim();
         if (dbField === "value") {
-          lead[dbField] = parseFloat(val.replace(/[^0-9.,\-]/g, "").replace(",", ".")) || 0;
+          lead[dbField] = parseFloat(val.replace(/[^0-9.,-]/g, "").replace(",", ".")) || 0;
         } else if (dbField === "score") {
           lead[dbField] = parseInt(val, 10) || 0;
         } else if (dbField === "tags") {
