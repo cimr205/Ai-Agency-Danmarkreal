@@ -96,7 +96,11 @@ export function Briefing({
                   <span
                     className={cn(
                       "mt-0.5 shrink-0 font-mono text-[11px] tabular-nums",
-                      urgent ? "text-stamp" : "text-muted-foreground/50",
+                      // dark theme's --primary is already crimson (same family as
+                      // --stamp), so urgency and "this is a link" collapse into the
+                      // same color there — fall back to the semantic warning amber
+                      // in dark mode to keep the two signals visually distinct.
+                      urgent ? "text-stamp dark:text-warning" : "text-muted-foreground/50",
                     )}
                   >
                     {String(i + 1).padStart(2, "0")}

@@ -115,11 +115,11 @@ export function TasksPanel({
         return (
           <li key={t.id} className="flex items-center gap-3 border-b border-border/40 py-2.5 last:border-0">
             <span
-              className={cn("h-1.5 w-1.5 shrink-0 rounded-full", urgent ? "bg-stamp" : "bg-muted-foreground/40")}
+              className={cn("h-1.5 w-1.5 shrink-0 rounded-full", urgent ? "bg-stamp dark:bg-warning" : "bg-muted-foreground/40")}
               aria-hidden
             />
             <span className="min-w-0 flex-1 truncate text-[13px] text-foreground/90">{t.title}</span>
-            <span className={cn("shrink-0 text-[11px] tabular-nums", overdue ? "text-stamp" : "text-muted-foreground")}>
+            <span className={cn("shrink-0 text-[11px] tabular-nums", overdue ? "text-stamp dark:text-warning" : "text-muted-foreground")}>
               {t.due_date ? format(new Date(t.due_date), "d. MMM", { locale: da }) : "uden frist"}
             </span>
           </li>
