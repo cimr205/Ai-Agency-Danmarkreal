@@ -43,8 +43,8 @@ export default function InboxPage() {
     } catch { toast.error(t('pages.inbox.sent_error')); }
   };
 
-  const handleMarkMessageRead = async (id: string) => { try { await markMessageRead.mutateAsync(id); } catch {} };
-  const handleMarkNotificationRead = async (id: string) => { try { await markNotificationRead.mutateAsync(id); } catch {} };
+  const handleMarkMessageRead = async (id: string) => { try { await markMessageRead.mutateAsync(id); } catch { /* ignore */ } };
+  const handleMarkNotificationRead = async (id: string) => { try { await markNotificationRead.mutateAsync(id); } catch { /* ignore */ } };
 
   const unreadMessages = inbox?.messages?.filter(m => !m.read) ?? [];
   const unreadNotifications = inbox?.notifications?.filter(n => !n.read) ?? [];

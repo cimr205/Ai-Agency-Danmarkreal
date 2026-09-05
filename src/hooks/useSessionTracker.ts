@@ -75,7 +75,7 @@ export function useSessionTracker() {
             .update({ duration_seconds: seconds })
             .eq('id', sessionIdRef.current);
         }
-      } catch {}
+      } catch { /* best effort — session may already be closed */ }
     }, 60_000);
 
     const endSession = () => {

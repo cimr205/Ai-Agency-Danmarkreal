@@ -23,7 +23,7 @@ function loadHistory(): UIMessage[] {
 }
 
 function saveHistory(msgs: UIMessage[]) {
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs.slice(-50))); } catch {}
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs.slice(-50))); } catch { /* storage full/unavailable, ignore */ }
 }
 
 export default function ClowdBotPage() {
