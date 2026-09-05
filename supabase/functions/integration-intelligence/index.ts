@@ -253,7 +253,15 @@ async function recalculate(supabase: any, companyId: string) {
   const existingOpenTitles = new Set(existingOpen.map((r) => r.title));
   for (const opp of opportunities) {
     if (dismissedTitles.has(opp.title) || existingOpenTitles.has(opp.title)) continue;
-    await supabase.from("integration_opportunities").insert({
+    // Live-verified race (2026-09-05): triggerRecalculate() is fire-and-forget
+    // and can overlap with itself, so the existingOpenTitles check above is
+    // only a fast path, not a guarantee — a unique index on
+    // (company_id, title) where status='open' is the real guard. It's a
+    // PARTIAL index (predicated on status='open'), which PostgREST's
+    // upsert/on_conflict can't reliably target, so a plain insert is used
+    // and a losing concurrent run's unique-violation (23505) is swallowed
+    // as a benign no-op instead of failing the whole recalculation.
+    const { error: insertErr } = await supabase.from("integration_opportunities").insert({
       company_id: companyId,
       type: opp.type,
       title: opp.title,
@@ -266,6 +274,7 @@ async function recalculate(supabase: any, companyId: string) {
       impacted_modules: opp.impactedModules,
       estimated_manual_steps_removed: opp.estimatedManualStepsRemoved,
     });
+    if (insertErr && insertErr.code !== "23505") throw insertErr;
   }
 
   // ─── 4. DNA score ───
