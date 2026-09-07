@@ -129,11 +129,7 @@ Deno.serve(async (req) => {
 });
 
 function getAppRedirectUrl(): string {
-  // Try preview URL first, fallback to published
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const projectId = supabaseUrl.match(/https:\/\/(.+?)\.supabase\.co/)?.[1] || "";
-  // Always redirect to published app URL
-  return "https://bridge-orbit-core.lovable.app";
+  return "https://www.aiagencydanmark.dk";
 }
 
 function redirectWithError(error: string) {
