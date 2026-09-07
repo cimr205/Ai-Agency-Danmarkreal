@@ -17,11 +17,8 @@ export default defineConfig(({ mode }) => ({
     watch: {
       ignored: [
         "**/hr/**",
-        "**/crm-sdr-agent/**",
         "**/scraper/**",
-        "**/server/**",
         "**/twilio-server/**",
-        "**/voice-platform/**",
       ],
     },
   },
