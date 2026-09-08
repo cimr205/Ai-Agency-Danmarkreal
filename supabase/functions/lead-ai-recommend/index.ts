@@ -57,12 +57,14 @@ serve(async (req) => {
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
-    // Fetch the lead, scoped to the caller's own company
+    // Fetch the lead, scoped to the caller's own company. Leads live in the
+    // shared `customers` table (record_type = 'lead'), not a separate table.
     const { data: lead, error: leadErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("id", lead_id)
       .eq("company_id", profile.company_id)
+      .eq("record_type", "lead")
       .single();
     if (leadErr || !lead) {
       return new Response(JSON.stringify({ error: "Lead not found" }), {

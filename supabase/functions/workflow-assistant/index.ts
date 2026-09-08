@@ -328,7 +328,7 @@ async function executeTool(
       case "suggest_workflows": {
         // Get counts of key entities to make suggestions relevant
         const [leads, deals, tasks, employees] = await Promise.all([
-          supabase.from("leads").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+          supabase.from("customers").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("record_type", "lead"),
           supabase.from("deals").select("id", { count: "exact", head: true }).eq("company_id", companyId),
           supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", companyId),
           supabase.from("employee_profiles").select("id", { count: "exact", head: true }).eq("company_id", companyId),

@@ -39,7 +39,7 @@ serve(async (req) => {
 
     let leadContext = "";
     if (lead_id) {
-      const { data: lead } = await supabase.from("leads").select("name, company_name, status, notes").eq("id", lead_id).eq("company_id", profile.company_id).single();
+      const { data: lead } = await supabase.from("customers").select("name, company_name, status, notes").eq("id", lead_id).eq("company_id", profile.company_id).eq("record_type", "lead").single();
       if (lead) leadContext = `\nLEAD KONTEKST: ${lead.name} (${lead.company_name || "Ukendt"}) - Status: ${lead.status}\nNoter: ${lead.notes || "Ingen"}`;
     }
 

@@ -32,10 +32,11 @@ serve(async (req) => {
 
     // Fetch lead data, scoped to the caller's own company
     const { data: lead, error: leadErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("id", lead_id)
       .eq("company_id", callerProfile.company_id)
+      .eq("record_type", "lead")
       .single();
     if (leadErr || !lead) return new Response(JSON.stringify({ error: "Lead not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
