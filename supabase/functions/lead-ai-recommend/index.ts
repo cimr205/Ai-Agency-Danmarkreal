@@ -155,8 +155,10 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
       next_action: string;
     };
     try {
-      const jsonStr = rawContent.replace(/```json?\s*/g, "").replace(/```\s*/g, "").trim();
-      summary = JSON.parse(jsonStr);
+      const clean = rawContent.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      summary = JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
     } catch {
       throw new Error("Could not parse AI response as JSON");
     }
