@@ -34,7 +34,7 @@ serve(async (req) => {
     // Fetch deal with related data, scoped to the caller's own company
     const { data: deal, error: dealErr } = await supabase
       .from("deals")
-      .select("*, customers(name, email)")
+      .select("*, customers!deals_customer_id_fkey(name, email)")
       .eq("id", deal_id)
       .eq("company_id", profile.company_id)
       .single();
