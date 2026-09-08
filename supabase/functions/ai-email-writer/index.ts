@@ -125,8 +125,10 @@ Returnér JSON med "subject" og "body" felter.`;
     // Parse JSON from response, handling possible markdown code fences
     let email: { subject: string; body: string };
     try {
-      const jsonStr = rawContent.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
-      email = JSON.parse(jsonStr);
+      const clean = rawContent.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      email = JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
     } catch {
       // Try to extract from tool call as fallback
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
