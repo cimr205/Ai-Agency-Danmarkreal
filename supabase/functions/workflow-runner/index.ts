@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
           headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: ai.model,
+            reasoning: { effort: "none" },
             messages: [
               { role: "system", content: "Du er et workflow-AI-trin. Svar kort og konkret." },
               { role: "user", content: `${ai_prompt}\n\nPayload: ${JSON.stringify(payload)}` },

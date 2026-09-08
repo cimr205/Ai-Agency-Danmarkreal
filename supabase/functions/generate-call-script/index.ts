@@ -56,6 +56,7 @@ ${email ? `- Email: ${email}` : ""}`;
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

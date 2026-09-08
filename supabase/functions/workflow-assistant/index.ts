@@ -453,6 +453,7 @@ VIGTIGT:
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: aiMessages,
         tools,
         stream: false,
@@ -497,6 +498,7 @@ VIGTIGT:
         },
         body: JSON.stringify({
           model: ai.model,
+          reasoning: { effort: "none" },
           messages: aiMessages,
           tools,
           stream: false,

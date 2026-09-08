@@ -128,6 +128,7 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
       }),
     });

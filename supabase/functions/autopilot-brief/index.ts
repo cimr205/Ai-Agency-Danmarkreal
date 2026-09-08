@@ -178,6 +178,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${ai.apiKey}` },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Here is the real-time business data for today:\n\n${JSON.stringify(businessData, null, 2)}` },

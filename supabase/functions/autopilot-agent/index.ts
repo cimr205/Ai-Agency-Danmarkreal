@@ -281,6 +281,11 @@ app.post("/*", async (c) => {
       tools,
       stopWhen: stepCountIs(50),
       messages: await convertToModelMessages(messages),
+      providerOptions: {
+        openai: {
+          reasoning: { effort: "none" },
+        },
+      },
     });
 
     return result.toUIMessageStreamResponse({ headers: corsHeaders });

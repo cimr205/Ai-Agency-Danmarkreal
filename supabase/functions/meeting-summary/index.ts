@@ -71,6 +71,7 @@ Svar KUN med valid JSON.`;
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
         tools: [{
           type: "function",

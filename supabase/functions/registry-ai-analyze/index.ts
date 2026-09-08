@@ -61,6 +61,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model,
+        reasoning: { effort: "none" },
         messages: [
           {
             role: "system",

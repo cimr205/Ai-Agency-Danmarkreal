@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
           Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: ai.model, messages: conversation, tools, tool_choice: "auto" }),
+        body: JSON.stringify({ model: ai.model, messages: conversation, tools, tool_choice: "auto", reasoning: { effort: "none" } }),
       });
 
       if (!aiRes.ok) {
