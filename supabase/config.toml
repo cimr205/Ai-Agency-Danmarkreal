@@ -1,5 +1,11 @@
 project_id = "inyrwsygghdjhmqejgwk"
 
+# Cross-tenant admin endpoint — must always require a verified session JWT.
+# Explicit (not just relying on the platform default) so a future accidental
+# `false` override here can't silently reopen the admin-data endpoint.
+[functions.admin-data]
+verify_jwt = true
+
 [functions.google-auth-proxy]
 verify_jwt = false
 

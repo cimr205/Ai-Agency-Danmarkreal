@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { I18nProvider, isLocale } from "@/lib/i18n";
@@ -186,9 +187,13 @@ const AppRouteLayout = () => {
 const AdminRouteLayout = () => {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
-  // Verify admin was authenticated through the gate with secret code
-  const verified = sessionStorage.getItem('admin_verified');
-  if (!verified) {
+  // system_admin is a real, database-enforced role (public.has_role), the
+  // same one every admin RLS policy already trusts — not a shared secret.
+  const { isSystemAdmin, isLoading } = useAuth();
+  if (isLoading) {
+    return <PageLoader />;
+  }
+  if (!isSystemAdmin) {
     return <Navigate to={`/${locale}/admin`} replace />;
   }
   return (

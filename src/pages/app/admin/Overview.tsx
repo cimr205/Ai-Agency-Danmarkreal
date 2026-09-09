@@ -14,6 +14,7 @@ import { Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OwnerInfo {
   user_id: string;
@@ -37,7 +38,7 @@ interface RawCompany {
   id: string; name: string; phone: string | null; email: string | null;
   status: string | null; subscription_status: string | null; stripe_customer_id: string | null;
   stripe_subscription_id: string | null; trial_ends_at: string | null; industry: string | null;
-  created_at: string; disabled?: boolean;
+  created_at: string; disabled?: boolean; purchased_seats?: number | null;
 }
 
 interface CompanyFull {
@@ -53,30 +54,28 @@ interface CompanyFull {
   industry: string | null;
   created_at: string;
   disabled: boolean;
+  purchasedSeats: number;
   owners: OwnerInfo[];
   employees: EmployeeInfo[];
   userCount: number;
 }
 
 export default function AdminOverviewPage() {
+  const { isSystemAdmin, isLoading: authLoading } = useAuth();
   const [companies, setCompanies] = useState<CompanyFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
-  const verified = sessionStorage.getItem('admin_verified');
-  // Store the admin code so we can use it for API calls
-  const adminCode = sessionStorage.getItem('admin_code');
-
   const loadAll = useCallback(async () => {
-    if (!adminCode) return;
     setLoading(true);
     try {
-      console.log('[AdminOverview] Fetching data with admin code present:', !!adminCode);
+      // supabase.functions.invoke attaches the current session's JWT
+      // automatically — admin-data verifies it server-side and requires the
+      // system_admin role. No shared code, nothing to store client-side.
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { code: adminCode },
+        body: {},
       });
-      console.log('[AdminOverview] Response:', { data: data ? Object.keys(data) : null, error });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -94,6 +93,7 @@ export default function AdminOverviewPage() {
         return {
           ...c,
           disabled: c.disabled ?? false,
+          purchasedSeats: c.purchased_seats ?? 0,
           owners,
           employees: (employees as RawEmployee[]).filter((e) => e.company_id === c.id),
           userCount: companyProfiles.length,
@@ -106,20 +106,20 @@ export default function AdminOverviewPage() {
     } finally {
       setLoading(false);
     }
-  }, [adminCode]);
+  }, []);
 
   useEffect(() => {
-    if (verified && adminCode) loadAll();
-  }, [verified, adminCode, loadAll]);
+    if (isSystemAdmin) loadAll();
+  }, [isSystemAdmin, loadAll]);
 
-  if (!verified) return <Navigate to="/en/admin" replace />;
+  if (!authLoading && !isSystemAdmin) return <Navigate to="/app" replace />;
 
   const toggleCompany = async (companyId: string, currentDisabled: boolean) => {
-    if (!adminCode) return;
+    if (!isSystemAdmin) return;
     setTogglingIds(prev => new Set(prev).add(companyId));
     try {
       const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: { code: adminCode, action: 'toggle_company', companyId, disabled: !currentDisabled },
+        body: { action: 'toggle_company', companyId, disabled: !currentDisabled },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -132,13 +132,21 @@ export default function AdminOverviewPage() {
     setTogglingIds(prev => { const s = new Set(prev); s.delete(companyId); return s; });
   };
 
+  const PRICE_PER_SEAT_DKK = 499;
   const totalCompanies = companies.length;
   const totalUsers = companies.reduce((s, c) => s + c.userCount, 0);
   const totalEmployees = companies.reduce((s, c) => s + c.employees.length, 0);
   const payingCompanies = companies.filter(c => c.subscription_status === 'active').length;
   const trialingCompanies = companies.filter(c => c.subscription_status === 'trialing').length;
   const disabledCompanies = companies.filter(c => c.disabled).length;
-  const mrr = payingCompanies * 499;
+  // Pricing is per seat (see landing page + create-checkout), not a flat fee
+  // per company — a company with 5 seats pays 5x what one with 1 seat does.
+  const mrr = companies
+    .filter(c => c.subscription_status === 'active')
+    .reduce((s, c) => s + c.purchasedSeats * PRICE_PER_SEAT_DKK, 0);
+  const potentialMrr = companies
+    .filter(c => c.subscription_status === 'trialing')
+    .reduce((s, c) => s + c.purchasedSeats * PRICE_PER_SEAT_DKK, 0);
 
   const subBadge = (status: string | null) => {
     switch (status) {
@@ -185,14 +193,14 @@ export default function AdminOverviewPage() {
             <CardContent className="p-5">
               <p className="text-sm font-medium text-emerald-400 mb-1">💰 Betalende kunder</p>
               <p className="text-3xl font-bold">{payingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">{payingCompanies * 499} DKK/md omsætning</p>
+              <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString('da-DK')} DKK/md omsætning</p>
             </CardContent>
           </Card>
           <Card className="rounded-2xl border-amber-500/20">
             <CardContent className="p-5">
               <p className="text-sm font-medium text-amber-400 mb-1">⏳ Prøveperiode</p>
               <p className="text-3xl font-bold">{trialingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">Potentiel: {trialingCompanies * 499} DKK/md</p>
+              <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString('da-DK')} DKK/md</p>
             </CardContent>
           </Card>
           <Card className="rounded-2xl border-red-500/20">
