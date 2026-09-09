@@ -11,11 +11,12 @@ import {
 import {
   LogOut, User, Settings, Menu, type LucideIcon,
   LayoutDashboard, Building2, Calendar, CheckSquare, Inbox,
-  Target, Briefcase, Search,
-  Send, Phone, Megaphone,
+  Target, Briefcase, Search, UserSearch,
+  Send, Phone, Megaphone, Mic,
   FileText, CreditCard,
-  UserCheck, Clock, CalendarDays, CalendarClock, Wallet, UserPlus, BarChart3,
-  Workflow, Plug, Brain, Zap, Bot, BookOpen, ChevronRight,
+  UserCheck, Clock, CalendarDays, CalendarClock, Wallet, UserPlus, BarChart3, ClipboardList,
+  Workflow, Plug, Brain, Zap, Bot, BookOpen, ChevronRight, MessagesSquare, Webhook,
+  Sparkles, MessageCircle, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
@@ -50,6 +51,7 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.calendar") || "Kalender", path: "work/calendar", icon: Calendar },
         { label: t("nav.tasks") || "Opgaver", path: "work/tasks", icon: CheckSquare },
         { label: t("nav.smartInbox") || "Indbakke", path: "email/emails", icon: Inbox },
+        { label: t("nav.messages") || "Beskeder", path: "work/inbox", icon: MessagesSquare },
       ],
     },
     {
@@ -60,6 +62,7 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target, dataTour: "leads" },
         { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase, dataTour: "pipeline" },
         { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Search },
+        { label: t("nav.icp") || "ICP", path: "crm/icp", icon: UserSearch },
       ],
     },
     {
@@ -70,6 +73,8 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: Phone },
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: Send },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },
+        { label: t("nav.voiceAgent") || "Voice Agent", path: "marketing/voice-agent", icon: Mic },
+        { label: t("nav.aiMedia") || "AI Medier", path: "ai/media", icon: Sparkles },
       ],
     },
     {
@@ -95,6 +100,7 @@ function useNavGroups(): NavGroup[] {
         { label: t("nav.payroll") || "Løn", path: "hr/payroll", icon: Wallet },
         { label: t("nav.recruitment") || "Rekruttering", path: "hr/recruitment", icon: UserPlus },
         { label: t("nav.workforceDashboard") || "Workforce", path: "hr/workforce", icon: BarChart3 },
+        { label: t("nav.workforceReports") || "Rapporter", path: "hr/reports", icon: ClipboardList },
       ],
     },
     {
@@ -103,10 +109,13 @@ function useNavGroups(): NavGroup[] {
       module: "system",
       items: [
         { label: t("nav.studio"), path: "workspace/studio", icon: Workflow },
+        { label: t("nav.workflowChat") || "Workflow-chat", path: "workspace/workflow-chat", icon: MessageCircle },
+        { label: t("nav.operatingManager") || "Operating Manager", path: "workspace/operating-manager", icon: ShieldCheck },
         { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: Plug },
         { label: locale === "da" ? "Indsigter" : "Insights", path: "workspace/intelligence", icon: Brain },
         { label: locale === "da" ? "Automatisering" : "Automation", path: "autopilot", icon: Zap },
         { label: locale === "da" ? "Assistent" : "Assistant", path: "pa", icon: Bot, dataTour: "pa" },
+        { label: t("nav.webhooks") || "Webhooks", path: "settings/webhooks", icon: Webhook },
         { label: t("nav.help"), path: "help", icon: BookOpen },
         { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings, dataTour: "settings" },
       ],

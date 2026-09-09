@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
+import { useModuleAvailability, useSyncFinancePayments } from '@/hooks/api/useIntegrations';
 import { useGmailAccount, useConnectGmail, useSendEmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check } from 'lucide-react';
+import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check, Plug, RefreshCw } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useLeads } from '@/hooks/api/useLeads';
@@ -89,7 +90,21 @@ function buildPdfData(invoice: InvoiceWithCustomer, company: Company | null | un
 
 export default function InvoicesPage() {
   const { t, locale } = useI18n();
+  const navigate = useNavigate();
   const formatCurrency = useFormatCurrency();
+  const { data: moduleAvailability } = useModuleAvailability();
+  const financeSyncModule = moduleAvailability?.modules.find((m) => m.module === 'finance');
+  const financeSyncAvailable = !!financeSyncModule?.available;
+  const financeSyncProvider = financeSyncModule?.resolvedConnections[0]?.provider;
+  const syncFinancePayments = useSyncFinancePayments();
+  const financeAutoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (financeSyncAvailable && !financeAutoSyncedRef.current) {
+      financeAutoSyncedRef.current = true;
+      syncFinancePayments.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [financeSyncAvailable]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -330,6 +345,25 @@ export default function InvoicesPage() {
           <p className="text-muted-foreground">{t('pages.invoices.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {financeSyncAvailable ? (
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-muted-foreground"
+              disabled={syncFinancePayments.isPending}
+              onClick={() => syncFinancePayments.mutate()}
+              title={`Synkroniseret via ${financeSyncProvider}`}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${syncFinancePayments.isPending ? 'animate-spin' : ''}`} /> Synkronisér nu
+            </Button>
+          ) : (
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
+            >
+              <Plug className="h-3.5 w-3.5" /> Forbind betalinger
+            </Button>
+          )}
           {/* Template selector with visual color preview */}
           <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-muted-foreground shrink-0" />

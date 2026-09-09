@@ -6,6 +6,7 @@ import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
+import { useModuleAvailability, useSyncCrmContacts } from '@/hooks/api/useIntegrations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Search, Mail, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Save, Briefcase, Sparkles, X, BookmarkPlus, FolderPlus, FolderOpen, Download, MoreHorizontal, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, Mail, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Save, Briefcase, Sparkles, X, BookmarkPlus, FolderPlus, FolderOpen, Download, MoreHorizontal, SlidersHorizontal, Plug, RefreshCw } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
@@ -115,6 +116,20 @@ export default function LeadsPage() {
   const navigate = useNavigate();
   const params = useParams();
   const { user } = useAuth();
+  const locale = isLocale(params.locale) ? params.locale : 'en';
+  const { data: moduleAvailability } = useModuleAvailability();
+  const crmSyncModule = moduleAvailability?.modules.find((m) => m.module === 'crmSync');
+  const crmSyncAvailable = !!crmSyncModule?.available;
+  const crmSyncProvider = crmSyncModule?.resolvedConnections[0]?.provider;
+  const syncCrmContacts = useSyncCrmContacts();
+  const crmAutoSyncedRef = useRef(false);
+  useEffect(() => {
+    if (crmSyncAvailable && !crmAutoSyncedRef.current) {
+      crmAutoSyncedRef.current = true;
+      syncCrmContacts.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [crmSyncAvailable]);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -545,6 +560,25 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex items-center gap-1">
+          {crmSyncAvailable ? (
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-muted-foreground"
+              disabled={syncCrmContacts.isPending}
+              onClick={() => syncCrmContacts.mutate()}
+              title={`Synkroniseret via ${crmSyncProvider}`}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> Synkronisér nu
+            </Button>
+          ) : (
+            <Button
+              variant="ghost" size="sm"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
+            >
+              <Plug className="h-3.5 w-3.5" /> Forbind CRM
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="gap-1.5 text-muted-foreground">
             <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
           </Button>

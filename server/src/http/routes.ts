@@ -1854,15 +1854,49 @@ export function registerRoutes(app: Application) {
       return;
     }
 
-    // --- Twilio integration point ---
-    // Replace the stub below with:
-    //   const twilioClient = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-    //   const number = await twilioClient.incomingPhoneNumbers.create({ areaCode: '45', voiceUrl: ... });
-    //   const phoneNumber = number.phoneNumber;
-    //   const twilioSid  = number.sid;
-    const phoneNumber = `+4570${Math.floor(100000 + Math.random() * 900000)}`;
-    const twilioSid   = `PNstub_${Date.now()}`;
-    // --------------------------------
+    if (!env.twilioAccountSid || !env.twilioAuthToken) {
+      fail(res, 503, 'not_configured', 'Twilio is not configured (missing TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN)');
+      return;
+    }
+    const twilioAuth = Buffer.from(`${env.twilioAccountSid}:${env.twilioAuthToken}`).toString('base64');
+    const twilioBase = `https://api.twilio.com/2010-04-01/Accounts/${env.twilioAccountSid}`;
+
+    const available = await fetch(`${twilioBase}/AvailablePhoneNumbers/DK/Local.json?PageSize=1`, {
+      headers: { Authorization: `Basic ${twilioAuth}` },
+    });
+    const availableBody = await available.json().catch(() => ({})) as {
+      available_phone_numbers?: Array<{ phone_number: string }>;
+      message?: string;
+    };
+    if (!available.ok) {
+      fail(res, 502, 'twilio_error', availableBody.message || `Twilio rejected the number search (${available.status})`);
+      return;
+    }
+    const candidate = availableBody.available_phone_numbers?.[0]?.phone_number;
+    if (!candidate) {
+      fail(res, 502, 'no_numbers_available', 'No Danish Twilio numbers are available right now');
+      return;
+    }
+
+    const purchase = await fetch(`${twilioBase}/IncomingPhoneNumbers.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${twilioAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ PhoneNumber: candidate }),
+    });
+    const purchaseBody = await purchase.json().catch(() => ({})) as {
+      phone_number?: string;
+      sid?: string;
+      message?: string;
+    };
+    if (!purchase.ok || !purchaseBody.sid || !purchaseBody.phone_number) {
+      fail(res, 502, 'twilio_error', purchaseBody.message || `Twilio rejected the number purchase (${purchase.status})`);
+      return;
+    }
+    const phoneNumber = purchaseBody.phone_number;
+    const twilioSid = purchaseBody.sid;
 
     const rows = await query<{
       phone_number: string;
@@ -1897,10 +1931,18 @@ export function registerRoutes(app: Application) {
       return;
     }
 
-    // --- Twilio integration point ---
-    // const twilioClient = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-    // if (existing[0].twilio_sid) await twilioClient.incomingPhoneNumbers(existing[0].twilio_sid).remove();
-    // --------------------------------
+    if (existing[0].twilio_sid && env.twilioAccountSid && env.twilioAuthToken) {
+      const twilioAuth = Buffer.from(`${env.twilioAccountSid}:${env.twilioAuthToken}`).toString('base64');
+      const release = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${env.twilioAccountSid}/IncomingPhoneNumbers/${existing[0].twilio_sid}.json`,
+        { method: 'DELETE', headers: { Authorization: `Basic ${twilioAuth}` } }
+      );
+      if (!release.ok && release.status !== 404) {
+        const body = await release.json().catch(() => ({})) as { message?: string };
+        fail(res, 502, 'twilio_error', body.message || `Twilio rejected the number release (${release.status})`);
+        return;
+      }
+    }
 
     await query(
       `update phone_provisions

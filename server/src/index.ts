@@ -3,6 +3,8 @@ import express from 'express';
 import { env } from './config/env';
 import { registerRoutes } from './http/routes';
 import { pool } from './core/database';
+import { startDeadlineWorker } from './jobs/deadlineWorker';
+import { startTodoReminderWorker } from './jobs/todoReminderWorker';
 
 const app = express();
 app.use(
@@ -57,6 +59,9 @@ const server = app.listen(env.port, () => {
   console.log(`Railway backend running on port ${env.port}`);
 });
 
+const stopDeadlineWorker = startDeadlineWorker();
+const stopTodoReminderWorker = startTodoReminderWorker();
+
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled promise rejection:', reason);
 });
@@ -66,6 +71,8 @@ process.on('uncaughtException', (error) => {
 });
 
 const shutdown = async () => {
+  stopDeadlineWorker();
+  stopTodoReminderWorker();
   server.close(async () => {
     if (pool) {
       await pool.end();

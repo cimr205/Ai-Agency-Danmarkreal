@@ -286,3 +286,36 @@ export function useExternalCalendarEvents(start: string, end: string, enabled: b
     staleTime: 60_000,
   });
 }
+
+// ─── CRM sync: pulls contacts from a connected CRM (HubSpot today) into the
+// tenant's own leads. Safe to call repeatedly — the edge function dedupes by
+// external contact id, so this doubles as the "Synkronisér nu" action. ───
+export function useSyncCrmContacts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => callComposioIntegration<{ provider: string; imported: number; skipped: number }>("sync-crm-contacts"),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      if (res.imported > 0) toast.success(`${res.imported} nye leads importeret fra ${res.provider}`);
+    },
+    onError: (e: Error) => toast.error(e?.message ?? "CRM-synkronisering fejlede"),
+  });
+}
+
+// ─── Finance sync: matches Stripe charges to existing unpaid invoices for the
+// same company and settles them via register_invoice_payment. Never creates
+// invoices — unmatched charges are logged, not guessed. ───
+export function useSyncFinancePayments() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => callComposioIntegration<{ provider: string; matched: number; unmatched: number }>("sync-finance-payments"),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      if (res.matched > 0) toast.success(`${res.matched} betaling(er) matchet og markeret betalt`);
+    },
+    onError: (e: Error) => toast.error(e?.message ?? "Betalings-synkronisering fejlede"),
+  });
+}

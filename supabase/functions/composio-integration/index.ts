@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -448,6 +449,194 @@ Deno.serve(async (req) => {
       }
 
       return jsonResponse({ provider: resolved.provider, connectionId: resolved.id, events: evts });
+    }
+
+    // ─── CRM module: third real feature on the Capability Engine. Pulls
+    // contacts from the tenant's connected CRM into `customers` (as leads),
+    // deduped per-company via the provider-specific external-id column added
+    // in 20260907000001_crm_sync_external_ids.sql. Only HubSpot is wired to a
+    // verified Composio tool slug today — Pipedrive/Salesforce can already be
+    // connected (see TOOLKIT_CAPABILITIES) but report an honest "not yet
+    // supported" error here until their exact list-contacts tool slugs are
+    // confirmed against Composio's live catalog, same as list-events does for
+    // unhandled calendar providers. ───
+    if (action === "sync-crm-contacts") {
+      const { data: connections } = await supabase
+        .from("integrations")
+        .select("id, provider, status, composio_connection_id")
+        .eq("company_id", companyId);
+      const resolved = findConnectionForCapability(connections ?? [], "crm.read");
+      if (!resolved) throw new Error("Ingen forbindelse understøtter CRM-synkronisering endnu.");
+      const connection = (connections ?? []).find((c) => c.id === resolved.id);
+      if (!connection?.composio_connection_id) throw new Error("Forbindelsen mangler et Composio-connection-id.");
+
+      async function callTool(toolSlug: string, args: Record<string, unknown>) {
+        const res = await composioFetch(`/tools/execute/${toolSlug}`, {
+          method: "POST",
+          body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
+        });
+        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
+        return res.body as { data?: Record<string, unknown> };
+      }
+
+      interface ExternalContact { externalId: string; name: string; email: string | null; phone: string | null; company: string | null }
+      let contacts: ExternalContact[] = [];
+      let idColumn: "hubspot_contact_id" | "pipedrive_person_id" | "salesforce_contact_id";
+
+      if (resolved.provider === "hubspot") {
+        idColumn = "hubspot_contact_id";
+        const result = await callTool("HUBSPOT_LIST_CONTACTS", { limit: 100 });
+        interface HsContact {
+          id: string;
+          properties?: { firstname?: string; lastname?: string; email?: string; phone?: string; company?: string };
+        }
+        const items = (result.data?.response_data as { results?: HsContact[] })?.results ?? [];
+        contacts = items.map((c) => ({
+          externalId: c.id,
+          name: [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(" ") || c.properties?.email || "Uden navn",
+          email: c.properties?.email ?? null,
+          phone: c.properties?.phone ?? null,
+          company: c.properties?.company ?? null,
+        }));
+      } else {
+        throw new Error(`${resolved.provider} er forbundet, men CRM-synkronisering understøtter endnu kun HubSpot.`);
+      }
+
+      let imported = 0;
+      let skipped = 0;
+      for (const contact of contacts) {
+        if (!contact.externalId) continue;
+        const { data: existing } = await supabase
+          .from("customers")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq(idColumn, contact.externalId)
+          .maybeSingle();
+        if (existing) { skipped++; continue; }
+
+        const { error: insertError } = await supabase.from("customers").insert({
+          company_id: companyId,
+          record_type: "lead",
+          status: "new",
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+          company_name: contact.company,
+          created_by: user.id,
+          [idColumn]: contact.externalId,
+          crm_sync_synced_at: new Date().toISOString(),
+        });
+        if (insertError) throw new Error(insertError.message);
+        imported++;
+      }
+
+      await supabase.from("integrations").update({ last_sync_at: new Date().toISOString() }).eq("id", resolved.id);
+      return jsonResponse({ provider: resolved.provider, imported, skipped });
+    }
+
+    // ─── Finance module: fourth real feature on the Capability Engine.
+    // `payments.invoice_id` is NOT NULL (invoices come first in this system),
+    // so a Stripe sync can't insert free-floating payment rows — it matches
+    // each succeeded charge to an existing, unpaid invoice for the same
+    // company (by customer email + exact amount) and settles it through the
+    // same `register_invoice_payment` RPC the rest of the app uses, keyed by
+    // Stripe's own charge id as the idempotency key so re-running the sync is
+    // always safe. Charges with no matching invoice are left alone and
+    // logged to `integration_execution_logs`, never guessed into a new
+    // invoice. `register_invoice_payment` is `security definer` and reads
+    // `auth.uid()` internally, so it must be called through a client carrying
+    // the caller's own JWT — not the service-role client `requireCompanyAuth`
+    // hands back, which resolves `auth.uid()` to null. ───
+    if (action === "sync-finance-payments") {
+      const { data: connections } = await supabase
+        .from("integrations")
+        .select("id, provider, status, composio_connection_id")
+        .eq("company_id", companyId);
+      const resolved = findConnectionForCapability(connections ?? [], "payments.read");
+      if (!resolved) throw new Error("Ingen forbindelse understøtter betalings-synkronisering endnu.");
+      const connection = (connections ?? []).find((c) => c.id === resolved.id);
+      if (!connection?.composio_connection_id) throw new Error("Forbindelsen mangler et Composio-connection-id.");
+      if (resolved.provider !== "stripe") {
+        throw new Error(`${resolved.provider} er forbundet, men betalings-synkronisering understøtter endnu kun Stripe.`);
+      }
+
+      async function callTool(toolSlug: string, args: Record<string, unknown>) {
+        const res = await composioFetch(`/tools/execute/${toolSlug}`, {
+          method: "POST",
+          body: JSON.stringify({ user_id: companyId, connected_account_id: connection!.composio_connection_id, arguments: args }),
+        });
+        if (!res.ok) throw new Error(`Værktøjskald fejlede: ${JSON.stringify(res.body)}`);
+        return res.body as { data?: Record<string, unknown> };
+      }
+
+      const result = await callTool("STRIPE_LIST_CHARGES", { limit: 50 });
+      interface StripeCharge {
+        id: string; amount: number; currency: string; status: string; created: number;
+        billing_details?: { email?: string }; receipt_email?: string;
+      }
+      const charges = ((result.data?.response_data as { data?: StripeCharge[] })?.data ?? []).filter((c) => c.status === "succeeded");
+
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      let matched = 0;
+      let unmatched = 0;
+
+      for (const charge of charges) {
+        const email = charge.billing_details?.email ?? charge.receipt_email ?? null;
+        const amount = charge.amount / 100;
+
+        const customerMatch = email
+          ? (await supabase.from("customers").select("id").eq("company_id", companyId).eq("email", email).maybeSingle()).data
+          : null;
+
+        const invoiceMatch = customerMatch
+          ? (await supabase
+              .from("invoices")
+              .select("id")
+              .eq("company_id", companyId)
+              .eq("customer_id", customerMatch.id)
+              .eq("amount", amount)
+              .not("status", "in", "(paid,cancelled)")
+              .order("issued_at", { ascending: true })
+              .limit(1)
+              .maybeSingle()).data
+          : null;
+
+        if (!invoiceMatch) {
+          unmatched++;
+          await supabase.from("integration_execution_logs").insert({
+            company_id: companyId,
+            user_id: user.id,
+            integration_id: resolved.id,
+            provider: "stripe",
+            tool_slug: "STRIPE_LIST_CHARGES",
+            action_category: "financial",
+            sanitized_input: { chargeId: charge.id, amount, email },
+            status: "failed",
+            error: "Ingen matchende ubetalt faktura fundet",
+            completed_at: new Date().toISOString(),
+          });
+          continue;
+        }
+
+        const { error: rpcError } = await userClient.rpc("register_invoice_payment", {
+          p_invoice_id: invoiceMatch.id,
+          p_amount: amount,
+          p_payment_method: "stripe",
+          p_paid_at: new Date(charge.created * 1000).toISOString(),
+          p_idempotency_key: `stripe_${charge.id}`,
+          p_external_reference: charge.id,
+          p_metadata: { source: "stripe", chargeId: charge.id },
+        });
+        if (rpcError) { unmatched++; continue; }
+        matched++;
+      }
+
+      await supabase.from("integrations").update({ last_sync_at: new Date().toISOString() }).eq("id", resolved.id);
+      return jsonResponse({ provider: "stripe", matched, unmatched });
     }
 
     if (action === "execute-tool") {

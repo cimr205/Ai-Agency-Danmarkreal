@@ -3,21 +3,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, TrendingUp, TrendingDown, Minus, Megaphone } from "lucide-react";
-import { useState } from "react";
+import { Search, TrendingUp, TrendingDown, Minus, Megaphone, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-
-// Ready for real Meta API data – currently shows empty state
-// When connected, campaigns will be fetched from Meta Graph API
+import { useMetaCampaigns } from "@/hooks/api/useMetaAdsData";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
   const { t } = useI18n();
+  const { format: formatCurrency } = useCurrency();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const { data: campaigns = [], isLoading } = useMetaCampaigns();
 
-  // Empty array – will be populated from Meta API
-  const campaigns: unknown[] = [];
-  const filtered = campaigns;
+  const filtered = useMemo(() => campaigns.filter((c) => {
+    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || (c.effectiveStatus ?? c.status ?? "").toLowerCase() === statusFilter;
+    return matchesSearch && matchesStatus;
+  }), [campaigns, search, statusFilter]);
 
   return (
     <Card className="border border-border/60 shadow-none">
@@ -62,17 +65,45 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={compact ? 8 : 9} className="text-center py-12">
-                  <div className="flex flex-col items-center">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
-                      <Megaphone className="h-5 w-5 text-muted-foreground" />
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={compact ? 8 : 9} className="text-center py-12">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={compact ? 8 : 9} className="text-center py-12">
+                    <div className="flex flex-col items-center">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
+                        <Megaphone className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">{t('metaAds.noCampaignsYet')}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('metaAds.createFirstCampaign')}</p>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{t('metaAds.noCampaignsYet')}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t('metaAds.createFirstCampaign')}</p>
-                  </div>
-                </TableCell>
-              </TableRow>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="text-sm font-medium">{c.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs capitalize">{(c.effectiveStatus ?? c.status ?? '—').toLowerCase()}</Badge>
+                    </TableCell>
+                    {!compact && <TableCell className="text-sm text-muted-foreground">{c.objective ?? '—'}</TableCell>}
+                    <TableCell className="text-sm text-right">{formatCurrency(c.spend)}</TableCell>
+                    <TableCell className="text-sm text-right">{c.ctr.toFixed(2)}%</TableCell>
+                    <TableCell className="text-sm text-right">{formatCurrency(c.cpc)}</TableCell>
+                    <TableCell className="text-sm text-right">{c.conversions}</TableCell>
+                    <TableCell className="text-sm text-right text-muted-foreground">—</TableCell>
+                    <TableCell className="text-center">
+                      {c.trend === 'up' ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> :
+                       c.trend === 'down' ? <TrendingDown className="h-3.5 w-3.5 text-destructive mx-auto" /> :
+                       <Minus className="h-3.5 w-3.5 text-muted-foreground mx-auto" />}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

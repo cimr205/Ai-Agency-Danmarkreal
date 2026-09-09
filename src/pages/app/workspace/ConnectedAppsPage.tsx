@@ -195,6 +195,22 @@ const LIVE_MODULES: LiveModule[] = [
     pageLink: "workspace/documents",
     icon: FileText,
   },
+  {
+    module: "crmSync",
+    title: "CRM-synkronisering",
+    outcome: "Kontakter fra HubSpot importeres automatisk som leads på CRM-siden.",
+    providers: ["hubspot", "pipedrive", "salesforce"],
+    pageLink: "crm/leads",
+    icon: Database,
+  },
+  {
+    module: "finance",
+    title: "Betalinger",
+    outcome: "Stripe-betalinger matches automatisk til jeres fakturaer og markerer dem betalt.",
+    providers: ["stripe"],
+    pageLink: "finance/invoices",
+    icon: CreditCard,
+  },
 ];
 
 const catalog: Catalog[] = [
@@ -294,8 +310,8 @@ export default function ConnectedAppsPage() {
               Forbundne apps
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              To ting herunder gør faktisk noget lige nu — Kalender og Dokumenter — resten af kataloget kan I forbinde,
-              men det er ikke koblet til en funktion i CRM'et endnu.
+              Fire ting herunder gør faktisk noget lige nu — Kalender, Dokumenter, CRM-synkronisering og Betalinger —
+              resten af kataloget kan I forbinde, men det er ikke koblet til en funktion i CRM'et endnu.
             </p>
           </div>
           <div className="flex items-center gap-8 text-sm">

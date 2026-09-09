@@ -49,7 +49,6 @@ const TasksPage = lazy(() => import("@/pages/app/work/TasksPage"));
 const CalendarPage = lazy(() => import("@/pages/app/work/CalendarPage"));
 const InboxPage = lazy(() => import("@/pages/app/work/InboxPage"));
 const EmailsPage = lazy(() => import("@/pages/app/email/EmailsPage"));
-const TodosPage = lazy(() => import("@/pages/app/email/TodosPage"));
 const ClowdBotPage = lazy(() => import("@/pages/app/ClowdBot"));
 const AutopilotPage = lazy(() => import("@/pages/app/AutopilotPage"));
 const BulkEmailPage = lazy(() => import("@/pages/app/email/BulkEmailPage"));
@@ -67,6 +66,10 @@ const OnboardingPage = lazy(() => import("@/pages/app/Onboarding"));
 const QuotesPage = lazy(() => import("@/pages/app/finance/QuotesPage"));
 const EmailTemplatesPage = lazy(() => import("@/pages/app/email/EmailTemplatesPage"));
 const AutomationPage = lazy(() => import("@/pages/app/Workflows"));
+const AiMediaPage = lazy(() => import("@/pages/app/ai/AiMediaPage"));
+const OperatingManagerPanel = lazy(() =>
+  import("@/components/workspace/OperatingManagerPanel").then((m) => ({ default: m.OperatingManagerPanel }))
+);
 const WebhooksPage = lazy(() => import("@/pages/app/settings/WebhooksPage"));
 const AIConnectionPage = lazy(() => import("@/pages/app/settings/AIConnectionPage"));
 const MetaAdsManagePage = lazy(() => import("@/pages/app/marketing/MetaAdsManagePage"));
@@ -281,7 +284,7 @@ const App = () => (
                   <Route path="marketing/meta-ads" element={<ErrorBoundary><MetaAdsManagePage /></ErrorBoundary>} />
                   <Route path="marketing/cold-caller" element={<ErrorBoundary><ColdCallerPage /></ErrorBoundary>} />
                   <Route path="marketing/voice-agent" element={<ErrorBoundary><VoiceAgentPage /></ErrorBoundary>} />
-                  <Route path="ai/media" element={<Navigate to="../marketing/meta-ads" replace />} />
+                  <Route path="ai/media" element={<ErrorBoundary><AiMediaPage /></ErrorBoundary>} />
                   <Route path="pa" element={<ErrorBoundary><ClowdBotPage /></ErrorBoundary>} />
                   <Route path="autopilot" element={<ErrorBoundary><AutopilotPage /></ErrorBoundary>} />
                   <Route path="clowdbot" element={<Navigate to="../pa" replace />} />
@@ -295,6 +298,8 @@ const App = () => (
                   <Route path="workspace/connected-apps" element={<ErrorBoundary><ConnectedAppsPage /></ErrorBoundary>} />
                   <Route path="workspace/documents" element={<ErrorBoundary><DocumentsPage /></ErrorBoundary>} />
                   <Route path="workspace/studio" element={<ErrorBoundary><WorkflowStudioPage /></ErrorBoundary>} />
+                  <Route path="workspace/workflow-chat" element={<ErrorBoundary><AutomationPage /></ErrorBoundary>} />
+                  <Route path="workspace/operating-manager" element={<ErrorBoundary><OperatingManagerPanel /></ErrorBoundary>} />
                   <Route path="workspace/intelligence" element={<ErrorBoundary><IntelligencePage /></ErrorBoundary>} />
                   <Route path="monitoring" element={<RoleGate role="company_admin"><ErrorBoundary><MonitoringPage /></ErrorBoundary></RoleGate>} />
                   <Route path="help" element={<ErrorBoundary><HelpCenterPage /></ErrorBoundary>} />

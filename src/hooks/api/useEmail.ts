@@ -138,35 +138,3 @@ export function useUpdateEmail() {
 export function useEmailOAuthCallback() {
   return useMutation({ mutationFn: async (_data: { code: string; state: string }) => ({}) });
 }
-
-export function useTodos() {
-  return useQuery({ queryKey: ['todos'], queryFn: async () => [] });
-}
-
-export function useMarkTodoComplete() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (_id: string) => ({}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos'] }),
-  });
-}
-
-export function useCampaigns() {
-  return useQuery({ queryKey: ['campaigns'], queryFn: async () => [] });
-}
-
-export function useCreateCampaign() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (_data: { name: string; subject: string; body: string; recipients: string[] }) => ({}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['campaigns'] }),
-  });
-}
-
-export function useSendCampaign() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (_id: string) => ({}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['campaigns'] }),
-  });
-}
