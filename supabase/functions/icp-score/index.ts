@@ -42,9 +42,10 @@ Deno.serve(async (req) => {
 
     // Load leads
     const { data: leads, error: leadsErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("company_id", profile.company_id)
+      .eq("record_type", "lead")
       .limit(1000);
     if (leadsErr) throw leadsErr;
     if (!leads || leads.length === 0) {

@@ -57,12 +57,14 @@ serve(async (req) => {
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
-    // Fetch the lead, scoped to the caller's own company
+    // Fetch the lead, scoped to the caller's own company. Leads live in the
+    // shared `customers` table (record_type = 'lead'), not a separate table.
     const { data: lead, error: leadErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("id", lead_id)
       .eq("company_id", profile.company_id)
+      .eq("record_type", "lead")
       .single();
     if (leadErr || !lead) {
       return new Response(JSON.stringify({ error: "Lead not found" }), {
@@ -128,6 +130,7 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -152,8 +155,10 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
       next_action: string;
     };
     try {
-      const jsonStr = rawContent.replace(/```json?\s*/g, "").replace(/```\s*/g, "").trim();
-      summary = JSON.parse(jsonStr);
+      const clean = rawContent.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      summary = JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
     } catch {
       throw new Error("Could not parse AI response as JSON");
     }

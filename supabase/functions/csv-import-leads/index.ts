@@ -131,6 +131,7 @@ serve(async (req) => {
             headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: ai.model,
+              reasoning: { effort: "none" },
               messages: [
                 {
                   role: "system",

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // OpenAI-compatible model abstraction for the Operating Manager.
-// All text generation resolves to the shared self-hosted Ollama instance.
+// All text generation resolves to the shared platform-level LLM endpoint
+// configured in _shared/aiConnection.ts (currently OpenRouter).
 import { getCompanyAI, describeOpenAIError, type CompanyAI } from "./aiConnection.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -70,6 +71,7 @@ export async function generateStructured(
       },
       body: JSON.stringify({
         model: model.model,
+        reasoning: { effort: "none" },
         temperature: 0.1,
         max_tokens: 192,
         stream: false,
@@ -114,6 +116,7 @@ export async function generateText(
       },
       body: JSON.stringify({
         model: model.model,
+        reasoning: { effort: "none" },
         temperature: 0.1,
         max_tokens: maxTokens,
         stream: false,

@@ -331,6 +331,7 @@ async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [
           {
             role: "system",

@@ -34,7 +34,7 @@ serve(async (req) => {
     // Fetch deal with related data, scoped to the caller's own company
     const { data: deal, error: dealErr } = await supabase
       .from("deals")
-      .select("*, customers(name, email)")
+      .select("*, customers!deals_customer_id_fkey(name, email)")
       .eq("id", deal_id)
       .eq("company_id", profile.company_id)
       .single();
@@ -98,6 +98,7 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -112,8 +113,10 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
 
     let analysis: { win_probability: number; risk_level: string; summary: string; actions: string[]; insights: string[] };
     try {
-      const jsonStr = rawContent.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
-      analysis = JSON.parse(jsonStr);
+      const clean = rawContent.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      analysis = JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
     } catch {
       throw new Error("Could not parse AI response as JSON");
     }

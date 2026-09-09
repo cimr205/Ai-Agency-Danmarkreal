@@ -49,6 +49,7 @@ Generate compelling ad copy with multiple variations.`;
         },
         body: JSON.stringify({
           model: ai.model,
+          reasoning: { effort: "none" },
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -143,6 +144,7 @@ Answer concisely and actionably. Use specific numbers. Keep answers under 150 wo
         },
         body: JSON.stringify({
           model: ai.model,
+          reasoning: { effort: "none" },
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: question },

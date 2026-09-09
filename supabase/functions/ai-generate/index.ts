@@ -49,7 +49,7 @@ serve(async (req) => {
     }
 
     const startTime = Date.now();
-    const model = "google/gemini-2.5-flash-image";
+    const model = "meta/muse-image";
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: genRecord, error: insertError } = await adminClient
@@ -78,15 +78,16 @@ serve(async (req) => {
     // Explicit, user-approved exception to the STRICT STACK RULE (Ollama/
     // llama.cpp only for text): image generation (ad creative for Meta Ads)
     // has no self-hosted equivalent in the approved stack, so this one
-    // capability keeps using a hosted provider (Gemini via Lovable's AI
-    // Gateway). Every text-generation AI feature in the app stays on Ollama.
-    const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
-    if (!LOVABLE_API_KEY) {
+    // capability keeps using a hosted provider — OpenRouter's Meta Muse
+    // Image ($0.01/image, near-free) via OpenRouter's Unified Image API.
+    // Every text-generation AI feature in the app stays on Ollama.
+    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+    if (!OPENROUTER_API_KEY) {
       await adminClient.from("ai_generations").update({
         status: "failed", error_message: "AI service not configured",
         completed_at: new Date().toISOString(),
       }).eq("id", genId);
-      throw new Error("LOVABLE_API_KEY not configured");
+      throw new Error("OPENROUTER_API_KEY not configured");
     }
 
     let enhancedPrompt = prompt.trim();
@@ -94,33 +95,23 @@ serve(async (req) => {
       enhancedPrompt = `Professional marketing advertisement: ${enhancedPrompt}. High quality, commercial grade, clean design, modern style.`;
     }
 
-    // Build message content - support reference image for editing
-    let messageContent: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
-    if (reference_image && typeof reference_image === "string" && reference_image.startsWith("data:")) {
-      // Multimodal: text + image for editing
-      messageContent = [
-        { type: "text", text: enhancedPrompt },
-        { type: "image_url", image_url: { url: reference_image } },
-      ];
-    } else if (reference_image && typeof reference_image === "string" && reference_image.startsWith("http")) {
-      messageContent = [
-        { type: "text", text: enhancedPrompt },
-        { type: "image_url", image_url: { url: reference_image } },
-      ];
-    } else {
-      messageContent = enhancedPrompt;
+    // Reference image for editing, in OpenRouter's input_references shape
+    let inputReferences: Array<{ type: string; image_url: { url: string } }> | undefined;
+    if (reference_image && typeof reference_image === "string" && (reference_image.startsWith("data:") || reference_image.startsWith("http"))) {
+      inputReferences = [{ type: "image_url", image_url: { url: reference_image } }];
     }
 
-    const aiResponse = await fetch((Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions"), {
+    const aiResponse = await fetch("https://openrouter.ai/api/v1/images", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: messageContent }],
-        modalities: ["image", "text"],
+        prompt: enhancedPrompt,
+        output_format: "png",
+        ...(inputReferences ? { input_references: inputReferences } : {}),
       }),
     });
 
@@ -142,9 +133,10 @@ serve(async (req) => {
     }
 
     const aiResult = await aiResponse.json();
-    const imageData = aiResult.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const base64Data = aiResult.data?.[0]?.b64_json as string | undefined;
+    const mediaType = (aiResult.data?.[0]?.media_type as string | undefined) ?? "image/png";
 
-    if (!imageData) {
+    if (!base64Data) {
       await adminClient.from("ai_generations").update({
         status: "failed",
         error_message: "No image returned from AI model",
@@ -156,9 +148,9 @@ serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const imageData = `data:${mediaType};base64,${base64Data}`;
 
     // Upload image to storage
-    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
     const filePath = `${profile.company_id}/${genId}.png`;
 

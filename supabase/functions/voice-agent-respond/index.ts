@@ -156,6 +156,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           model: ai.model,
+          reasoning: { effort: "none" },
           messages,
           max_tokens: 120,
           temperature: 0.7,

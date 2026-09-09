@@ -32,10 +32,11 @@ serve(async (req) => {
 
     // Fetch lead data, scoped to the caller's own company
     const { data: lead, error: leadErr } = await supabase
-      .from("leads")
+      .from("customers")
       .select("*")
       .eq("id", lead_id)
       .eq("company_id", callerProfile.company_id)
+      .eq("record_type", "lead")
       .single();
     if (leadErr || !lead) return new Response(JSON.stringify({ error: "Lead not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -108,6 +109,7 @@ Returnér JSON med "subject" og "body" felter.`;
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt + "\n\nIMPORTANT: Return ONLY valid JSON with keys \"subject\" and \"body\". No markdown, no code fences, just raw JSON." }],
       }),
     });
@@ -123,8 +125,10 @@ Returnér JSON med "subject" og "body" felter.`;
     // Parse JSON from response, handling possible markdown code fences
     let email: { subject: string; body: string };
     try {
-      const jsonStr = rawContent.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
-      email = JSON.parse(jsonStr);
+      const clean = rawContent.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      const start = clean.indexOf("{");
+      const end = clean.lastIndexOf("}");
+      email = JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
     } catch {
       // Try to extract from tool call as fallback
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];

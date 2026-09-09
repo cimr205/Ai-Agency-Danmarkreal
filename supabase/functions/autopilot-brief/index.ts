@@ -75,10 +75,10 @@ serve(async (req) => {
       attendanceRes, recentActionsRes, companyRes
     ] = await Promise.all([
       // New leads 24h
-      supabase.from("leads").select("id, name, email, score, company_name, status, created_at")
-        .eq("company_id", companyId).gte("created_at", twentyFourHoursAgo).order("created_at", { ascending: false }).limit(20),
+      supabase.from("customers").select("id, name, email, score, company_name, status, created_at")
+        .eq("company_id", companyId).eq("record_type", "lead").gte("created_at", twentyFourHoursAgo).order("created_at", { ascending: false }).limit(20),
       // All open deals
-      supabase.from("deals").select("id, title, value, stage, customer_id, expected_close_date, updated_at, notes, customers(name)")
+      supabase.from("deals").select("id, title, value, stage, customer_id, expected_close_date, updated_at, notes, customers!deals_customer_id_fkey(name)")
         .eq("company_id", companyId).not("stage", "in", "(won,lost)").order("value", { ascending: false }).limit(50),
       // Invoices
       supabase.from("invoices").select("id, invoice_number, amount, status, due_date, customers(name)")
@@ -178,6 +178,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${ai.apiKey}` },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Here is the real-time business data for today:\n\n${JSON.stringify(businessData, null, 2)}` },

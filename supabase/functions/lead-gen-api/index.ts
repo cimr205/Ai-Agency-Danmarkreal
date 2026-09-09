@@ -430,6 +430,7 @@ async function aiExpandQuery(query: string, supabase: ReturnType<typeof createCl
       headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: [{
           role: "system",
           content: `You are a B2B lead generation expert. Expand the search query into 15-20 highly specific sub-niches, synonyms, and related service types that real businesses would use in their names or descriptions. Include the original query. Focus on variations customers would actually search for. Return ONLY a JSON array.

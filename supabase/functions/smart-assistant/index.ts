@@ -953,6 +953,7 @@ ${contextData}${pageSnapshotSection}`;
         },
         body: JSON.stringify({
           model: ai.model,
+          reasoning: { effort: "none" },
           messages: aiMessages,
           tools,
           tool_choice: "auto",
@@ -1033,6 +1034,7 @@ ${contextData}${pageSnapshotSection}`;
       },
       body: JSON.stringify({
         model: ai.model,
+        reasoning: { effort: "none" },
         messages: aiMessages,
         stream: true,
       }),

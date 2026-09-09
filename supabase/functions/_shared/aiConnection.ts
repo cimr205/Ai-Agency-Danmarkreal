@@ -1,18 +1,19 @@
 // deno-lint-ignore no-explicit-any
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
-// Every AI feature in the app resolves the same model — a self-hosted
-// Ollama instance (LOCAL_LLM_BASE_URL / LOCAL_LLM_MODEL), per the approved
-// stack (Ollama/llama.cpp only — no OpenAI, no Groq, no other hosted LLM
-// API). This used to be a per-company "connect your own OpenAI/Groq key"
+// Every AI feature in the app resolves the same model via one shared,
+// platform-level endpoint (LOCAL_LLM_BASE_URL / LOCAL_LLM_MODEL /
+// LOCAL_LLM_API_KEY) — currently OpenRouter, previously a self-hosted
+// Ollama instance. Either way it's an OpenAI-compatible chat/completions
+// surface, so swapping providers is just an env var change, not a code
+// change. This used to be a per-company "connect your own OpenAI/Groq key"
 // system (openai_accounts table) — removed per explicit instruction.
-// Ollama is one shared platform-level instance (Railway-hosted), not a
-// per-tenant credential, so there is no more "connect your AI provider"
-// step: every company gets AI automatically once LOCAL_LLM_BASE_URL is
-// configured. `companyId` is kept as a parameter for call-site
-// compatibility and because a genuinely per-tenant local endpoint (e.g. a
-// company's own on-prem Ollama box) is a plausible future need — it's
-// currently unused.
+// It's one shared platform-level credential, not a per-tenant one, so
+// there is no "connect your AI provider" step: every company gets AI
+// automatically once LOCAL_LLM_BASE_URL is configured. `companyId` is kept
+// as a parameter for call-site compatibility and because a genuinely
+// per-tenant endpoint (e.g. a company's own key) is a plausible future
+// need — it's currently unused.
 export interface CompanyAI {
   url: string;
   apiKey: string;
@@ -43,15 +44,15 @@ export async function getCompanyAI(
 }
 
 export const AI_NOT_CONNECTED_MESSAGE =
-  "AI-modellen er ikke tilgængelig lige nu (LOCAL_LLM_BASE_URL er ikke konfigureret eller den selv-hostede model svarer ikke).";
+  "AI-modellen er ikke tilgængelig lige nu (LOCAL_LLM_BASE_URL er ikke konfigureret, eller udbyderen svarer ikke).";
 
 /**
- * Explains a non-ok response from the local Ollama endpoint. Kept as a
+ * Explains a non-ok response from the configured LLM endpoint. Kept as a
  * function (not inlined at call sites) because every caller needs the
  * same "read the body once, degrade to a generic message if it isn't
- * JSON" handling, and because Ollama's OpenAI-compatible surface can
- * still return the same shape of { error: { message } } object OpenAI
- * does for a bad request (e.g. unknown model name).
+ * JSON" handling, and because every OpenAI-compatible surface can still
+ * return the same shape of { error: { message } } object OpenAI does for
+ * a bad request (e.g. unknown model name).
  */
 export async function describeOpenAIError(
   response: Response,
@@ -65,12 +66,12 @@ export async function describeOpenAIError(
     // ignore, body wasn't JSON
   }
   if (status === 404) {
-    return { status, message: "Den konfigurerede model er ikke hentet på den selv-hostede Ollama-instans." };
+    return { status, message: "Den konfigurerede model kunne ikke findes hos udbyderen." };
   }
   return {
     status,
     message: body?.error?.message
       ? `AI-fejl: ${body.error.message}`
-      : `Den selv-hostede model svarede ikke korrekt (HTTP ${status}).`,
+      : `AI-udbyderen svarede ikke korrekt (HTTP ${status}).`,
   };
 }

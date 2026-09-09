@@ -532,7 +532,12 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-4" onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+    <div
+      className="relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {isDragging && (
         <div className="fixed inset-0 z-50 bg-primary/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
           <div className="bg-card border-2 border-dashed border-primary rounded-2xl p-12 text-center shadow-xl">
@@ -551,19 +556,22 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Compact header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">{t('pages.leads.title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {totalCount} {t('pages.leads.contacts')} · {countNeedsContact} {t('pages.leads.needsFollowup')}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
+      {/* Lead cockpit — same visual language as the dashboard hero */}
+      <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl">
+        <div className="grid lg:grid-cols-[minmax(0,1.45fr)_360px]">
+          <div className="p-6 sm:p-8 lg:p-10">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">CRM · Lead cockpit</p>
+            <h1 className="mt-4 text-[40px] font-semibold leading-[0.96] tracking-[-0.055em] text-slate-950 sm:text-[54px]">
+              Relationer i bevægelse.
+            </h1>
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
+              Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
+            </p>
+            <div className="mt-7 flex flex-wrap items-center gap-2">
           {crmSyncAvailable ? (
             <Button
               variant="ghost" size="sm"
-              className="gap-1.5 text-muted-foreground"
+              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
               disabled={syncCrmContacts.isPending}
               onClick={() => syncCrmContacts.mutate()}
               title={`Synkroniseret via ${crmSyncProvider}`}
@@ -573,21 +581,21 @@ export default function LeadsPage() {
           ) : (
             <Button
               variant="ghost" size="sm"
-              className="gap-1.5 text-muted-foreground"
+              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
               <Plug className="h-3.5 w-3.5" /> Forbind CRM
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="gap-1.5 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
             <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="gap-1.5 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
             <Upload className="h-3.5 w-3.5" /> {t('pages.leads.import')}
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> {t('pages.leads.addLead')}</Button>
+              <Button className="h-11 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -613,39 +621,53 @@ export default function LeadsPage() {
               </div>
             </DialogContent>
           </Dialog>
+            </div>
+          </div>
+          <div className="relative border-t border-white/60 bg-slate-950/92 p-6 text-white lg:border-l lg:border-t-0 lg:p-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_5%,rgba(92,124,255,0.52),transparent_34%),radial-gradient(circle_at_100%_30%,rgba(244,114,255,0.28),transparent_38%)]" />
+            <div className="relative">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Live lead signal</p>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Kontakter</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{totalCount}</p></div>
+                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Følg op</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNeedsContact}</p></div>
+                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Nye</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNew}</p></div>
+                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Uden aktivitet</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countStale}</p></div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Saved views: smart pills + custom saved lists, merged into one row */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto rounded-[1.5rem] border border-white/70 bg-white/58 p-2 shadow-[0_16px_45px_rgba(45,77,150,0.10)] backdrop-blur-xl">
         <button
           onClick={resetToAllView}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'all' && !activeListId ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
         >
           {t('pages.leads.allLeads')} {totalCount}
         </button>
         <button
           onClick={() => { setQuickView('new'); setActiveListId(null); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'new' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
         >
           {t('pages.leads.viewNew')} {countNew}
         </button>
         <button
           onClick={() => { setQuickView('followup'); setActiveListId(null); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'followup' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
         >
           {t('pages.leads.viewNeedsContact')} {countNeedsContact}
         </button>
         <button
           onClick={() => { setQuickView('stale'); setActiveListId(null); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'stale' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
         >
           {t('pages.leads.viewStale')} {countStale}
         </button>
         {user && (
           <button
             onClick={() => { setQuickView('mine'); setActiveListId(null); }}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'mine' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
           >
             {t('pages.leads.viewMine')} {countMine}
           </button>
@@ -670,10 +692,10 @@ export default function LeadsPage() {
       </div>
 
       {/* Unified control row: search, status, owner, more filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col gap-2 rounded-[1.75rem] border border-white/70 bg-white/62 p-3 shadow-[0_20px_60px_rgba(45,77,150,0.11)] backdrop-blur-2xl sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('pages.leads.search')} className="pl-10" value={search} onChange={e => handleSearchChange(e.target.value)} />
+          <Input placeholder={t('pages.leads.search')} className="h-11 rounded-full border-white/80 bg-white/70 pl-10 shadow-none" value={search} onChange={e => handleSearchChange(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder={t('pages.leads.statusLabel')} /></SelectTrigger>
@@ -895,7 +917,7 @@ export default function LeadsPage() {
       )}
 
       {/* Table */}
-      <div className="border-t border-b border-border">
+      <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/68 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl">
         {isLoading ? (
           <div className="p-6 space-y-3">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
         ) : visibleLeads.length === 0 ? (
@@ -909,8 +931,8 @@ export default function LeadsPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
+              <TableHeader className="bg-white/55">
+                <TableRow className="border-white/80 hover:bg-transparent">
                   <TableHead className="w-[40px]">
                     <Checkbox
                       checked={visibleLeads.length > 0 && selectedIds.size === visibleLeads.length}
@@ -940,7 +962,7 @@ export default function LeadsPage() {
                 {visibleLeads.map(lead => {
                   const priority = getPriorityInfo(lead.score, t);
                   return (
-                    <TableRow key={lead.id} className="cursor-pointer group" onClick={() => openLeadDetail(lead)}>
+                    <TableRow key={lead.id} className="group cursor-pointer border-white/80 transition-all hover:bg-blue-50/70" onClick={() => openLeadDetail(lead)}>
                       <TableCell className={cellPad} onClick={e => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedIds.has(lead.id)}
@@ -955,8 +977,8 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className={cellPad}>
                         <div className="flex flex-col">
-                          <span className="font-medium text-foreground">{lead.name}</span>
-                          <span className="text-xs text-muted-foreground truncate max-w-[280px]">
+                          <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
+                          <span className="mt-0.5 max-w-[320px] truncate text-xs text-slate-500">
                             {[lead.company_name, lead.email, lead.phone].filter(Boolean).join(' · ')}
                           </span>
                         </div>
