@@ -64,7 +64,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
     onOpenChange(val);
   };
 
-  const parseCsv = (text: string) => {
+  const parseCsv = useCallback((text: string) => {
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) { toast.error(t('csvImport.needsHeaderAndRow')); return; }
 
@@ -112,9 +112,9 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
 
     setMapping(autoMap);
     setStep('mapping');
-  };
+  }, [t]);
 
-  const handleFile = (file: File) => {
+  const handleFile = useCallback((file: File) => {
     if (!file.name.endsWith('.csv') && !file.type.includes('csv') && !file.type.includes('text')) {
       toast.error(t('csvImport.onlyCsvSupported'));
       return;
@@ -123,14 +123,14 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
     const reader = new FileReader();
     reader.onload = (e) => parseCsv(e.target?.result as string);
     reader.readAsText(file, 'UTF-8');
-  };
+  }, [parseCsv, t]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
-  }, []);
+  }, [handleFile]);
 
   const mappedFields = Object.values(mapping).filter(Boolean);
   const hasRequired = mappedFields.includes('name') && mappedFields.includes('email');
