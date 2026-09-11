@@ -64,8 +64,8 @@ export function Features() {
             </h2>
             <p className="mt-6 text-[16px] text-muted-foreground/90 leading-[1.6] max-w-[520px]">
               {isDa
-                ? 'Hvert modul er bygget til at tale sammen. Data flyder fra første kontakt til sidste faktura — uden integrationer, uden duplikater, uden brudte arbejdsgange.'
-                : 'Every module is built to talk to the others. Data flows from first contact to final invoice — no integrations, no duplicates, no broken workflows.'}
+                ? 'Saml arbejdet fra den første kontakt til den sidste faktura, og behold kundens kontekst på tværs af de centrale moduler.'
+                : 'Bring the work from first contact to final invoice together, while keeping client context across the core modules.'}
             </p>
           </div>
         </div>
@@ -97,18 +97,8 @@ export function Features() {
                 </p>
               </div>
 
-              {/* Bottom hairline visual */}
-              <div className="h-[88px] border-t border-foreground/[0.06] bg-gradient-to-b from-transparent to-foreground/[0.015] flex items-end px-7 py-4">
-                <div className="flex items-end gap-1 w-full h-full">
-                  {[35, 52, 41, 68, 55, 78, 62, 88, 71, 95, 80, 90, 76, 92].map((h, j) => (
-                    <div
-                      key={j}
-                      className="flex-1 rounded-[2px] bg-foreground/[0.08] group-hover:bg-primary/40 transition-colors duration-700"
-                      style={{ height: `${h}%`, transitionDelay: `${j * 30}ms` }}
-                    />
-                  ))}
-                </div>
-              </div>
+              {/* Bottom rule */}
+              <div className="h-px bg-foreground/[0.06]" />
             </article>
           ))}
         </div>
@@ -121,8 +111,8 @@ export function Features() {
             </span>
             <p className="mt-3 text-[13px] text-muted-foreground/80 leading-[1.55] max-w-[200px]">
               {isDa
-                ? 'Seks moduler mere — hver med deres egen dybde, men aldrig isoleret fra resten.'
-                : 'Six more modules — each with their own depth, but never isolated from the rest.'}
+                ? 'Seks moduler mere, hver med sit eget arbejdsområde i den samme platform.'
+                : 'Six more modules, each with its own workspace in the same platform.'}
             </p>
           </div>
           <div className="col-span-12 lg:col-span-9">

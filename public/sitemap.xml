@@ -5,7 +5,9 @@
     <loc>https://aiagencydanmark.dk/da</loc>
     <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
-    <lastmod>2026-06-26</lastmod>
+    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,55 +15,73 @@
     <loc>https://aiagencydanmark.dk/en</loc>
     <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
-    <lastmod>2026-06-26</lastmod>
+    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/da/auth/signup</loc>
-    <lastmod>2026-06-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://aiagencydanmark.dk/en/auth/signup</loc>
-    <lastmod>2026-06-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://aiagencydanmark.dk/da/auth/login</loc>
-    <lastmod>2026-06-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://aiagencydanmark.dk/en/auth/login</loc>
-    <lastmod>2026-06-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://aiagencydanmark.dk/de</loc>
+    <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
   </url>
   <url>
     <loc>https://aiagencydanmark.dk/da/privacy</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://aiagencydanmark.dk/en/privacy</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://aiagencydanmark.dk/da/terms</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://aiagencydanmark.dk/en/terms</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aiagencydanmark.dk/da/dpa</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aiagencydanmark.dk/en/dpa</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aiagencydanmark.dk/de/privacy</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aiagencydanmark.dk/de/terms</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://aiagencydanmark.dk/de/dpa</loc>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

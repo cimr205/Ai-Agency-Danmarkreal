@@ -19,6 +19,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 const CookieConsentLazy = lazy(() => import("@/components/shared/CookieConsent").then(m => ({ default: m.CookieConsent })));
 import { SessionTimeoutWarning } from '@/components/session/SessionTimeoutWarning';
 import { useMyBlockedModules, pathToModule } from '@/hooks/api/useModuleAccess';
+import { SeoManager } from '@/components/SeoManager';
 
 // Lazy-load ALL pages for fast initial load
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -218,6 +219,7 @@ const App = () => (
           <Analytics />
           <SpeedInsights />
           <BrowserRouter>
+            <SeoManager />
             <Routes>
               <Route path="/" element={<Navigate to="/en" replace />} />
               <Route path="/auth/meta/callback" element={<Suspense fallback={<PageLoader />}><MetaOAuthCallbackPage /></Suspense>} />

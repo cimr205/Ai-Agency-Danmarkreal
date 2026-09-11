@@ -23,7 +23,7 @@ export function Navbar() {
     { href: '#features', label: t('landing.features') },
     { href: '#pricing', label: t('landing.pricing') },
     { href: '#faq', label: 'FAQ' },
-    { href: '#testimonials', label: locale === 'da' ? 'Kunder' : 'Customers' },
+    { href: '#testimonials', label: locale === 'da' ? 'Om platformen' : 'About' },
   ];
 
   return (

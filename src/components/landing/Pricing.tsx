@@ -54,7 +54,7 @@ export function Pricing() {
           <div className="col-span-12 lg:col-span-5 lg:py-2 flex flex-col justify-between">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-                {isDa ? 'Enterprise · 14 dages prøve' : 'Enterprise · 14-day trial'}
+                {isDa ? 'Platform · 14 dages prøve' : 'Platform · 14-day trial'}
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em]">
@@ -62,7 +62,7 @@ export function Pricing() {
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
                   <span className="text-[14px] font-display font-semibold text-foreground/80">kr</span>
-                  <span className="text-[12px] text-muted-foreground font-mono mt-1">/{locale === 'da' ? 'md' : 'mo'}</span>
+                  <span className="text-[12px] text-muted-foreground font-mono mt-1">{t('landing.pricingPer')}</span>
                 </div>
               </div>
               <p className="mt-7 text-[15px] text-muted-foreground leading-[1.6] max-w-[360px]">

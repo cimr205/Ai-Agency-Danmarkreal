@@ -6,8 +6,4 @@ Disallow: /*/app/
 Disallow: /*/auth/
 Disallow: /*/admin/
 
-# Allow landing pages and legal
-Allow: /*/auth/login
-Allow: /*/auth/signup
-
 Sitemap: https://aiagencydanmark.dk/sitemap.xml

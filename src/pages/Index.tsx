@@ -11,7 +11,6 @@ const Testimonials = lazy(() => import('@/components/landing/Testimonials').then
 const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })));
 const FAQ = lazy(() => import('@/components/landing/FAQ').then(m => ({ default: m.FAQ })));
 const Footer = lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
-const CookieConsent = lazy(() => import('@/components/shared/CookieConsent').then(m => ({ default: m.CookieConsent })));
 const ContactFormPopup = lazy(() => import('@/components/landing/ContactFormPopup').then(m => ({ default: m.ContactFormPopup })));
 const PhonePopup = lazy(() => import('@/components/landing/PhonePopup').then(m => ({ default: m.PhonePopup })));
 
@@ -42,7 +41,6 @@ const Index = () => {
       </main>
       <Suspense fallback={null}>
         <Footer />
-        <CookieConsent />
         <ContactFormPopup />
         <PhonePopup />
       </Suspense>

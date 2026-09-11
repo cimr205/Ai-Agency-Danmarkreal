@@ -102,19 +102,15 @@ export function Footer() {
           </div>
 
           <div className="col-span-12 lg:col-span-2 flex lg:justify-end items-start">
-            <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground/60">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-50 animate-ping" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
-              </span>
-              99.98% uptime
-            </div>
+            <Link to={`/${locale}/dpa`} className="text-[11px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors">
+              {isDa ? 'Databehandleraftale' : 'Data processing agreement'}
+            </Link>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-foreground/[0.04] flex items-center justify-between">
           <span className="text-[11px] text-muted-foreground/40 font-mono">
-            © {new Date().getFullYear()} AI Agency Danmark ApS — {isDa ? 'Bygget i København' : 'Built in Copenhagen'}
+            © {new Date().getFullYear()} AI Agency Danmark ApS · {isDa ? 'Bygget i København' : 'Built in Copenhagen'}
           </span>
           <span className="text-[10px] font-mono text-muted-foreground/30 tracking-[0.18em] uppercase hidden md:inline">
             v 2.0

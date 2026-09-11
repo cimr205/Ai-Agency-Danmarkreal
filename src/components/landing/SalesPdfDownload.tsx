@@ -51,8 +51,8 @@ export function SalesPdfDownload() {
     doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
     const subtitle = locale === 'da'
-      ? 'CRM, HR, fakturering, marketing, AI, opgaver,\nkalender og email — alt i én platform.'
-      : 'CRM, HR, invoicing, marketing, AI, tasks,\ncalendar and email — all in one platform.';
+      ? 'CRM, HR, fakturering, marketing, AI, opgaver,\nkalender og email samlet i én platform.'
+      : 'CRM, HR, invoicing, marketing, AI, tasks,\ncalendar and email in one platform.';
     doc.text(subtitle, margin, y);
 
     y = h - 60;
@@ -82,13 +82,13 @@ export function SalesPdfDownload() {
     doc.setTextColor(...gray);
     const problems = locale === 'da' ? [
       '• Virksomheder bruger i gennemsnit 4-7 separate systemer til drift',
-      '• Data sidder i siloer — ingen fælles overblik',
+      '• Data sidder i siloer uden fælles overblik',
       '• Manuelle processer spiser 10-15 timer om ugen per medarbejder',
       '• Ingen sammenhæng mellem salg, marketing og drift',
       '• Dyre licenser der hurtigt løber op',
     ] : [
       '• Businesses use 4-7 separate systems on average',
-      '• Data stuck in silos — no unified overview',
+      '• Data stuck in silos with no unified overview',
       '• Manual processes eat 10-15 hours per week per employee',
       '• No connection between sales, marketing and operations',
       '• Expensive licenses that add up quickly',
@@ -197,19 +197,19 @@ export function SalesPdfDownload() {
 
     y += 15;
     const whyUs = locale === 'da' ? [
-      { icon: '⚡', text: 'Lynhurtig platform — moderne teknologi, ingen ventetid' },
-      { icon: '🔒', text: 'Enterprise-grade sikkerhed og GDPR-compliance' },
-      { icon: '🤖', text: 'AI integreret i hvert modul — ikke bare en chatbot' },
-      { icon: '📈', text: 'Skalerbar — vokser med din virksomhed' },
+      { icon: '⚡', text: 'Moderne webplatform samlet i én arbejdsflade' },
+      { icon: '🔒', text: 'Privatlivspolitik og databehandleraftale er tilgængelige online' },
+      { icon: '🤖', text: 'AI-værktøjer til udvalgte arbejdsopgaver' },
+      { icon: '📈', text: 'Moduler til salg, drift, økonomi og medarbejdere' },
       { icon: '🇩🇰', text: 'Dansk support og dansk udviklet' },
-      { icon: '💰', text: 'Én pris, alt inkluderet — ingen overraskelser' },
+      { icon: '💰', text: 'Pris og prøveperiode vises før oprettelse' },
     ] : [
-      { icon: '⚡', text: 'Lightning fast platform — modern tech, no waiting' },
-      { icon: '🔒', text: 'Enterprise-grade security and GDPR compliance' },
-      { icon: '🤖', text: 'AI integrated in every module — not just a chatbot' },
-      { icon: '📈', text: 'Scalable — grows with your business' },
+      { icon: '⚡', text: 'A modern web platform in one workspace' },
+      { icon: '🔒', text: 'Privacy policy and data processing terms are available online' },
+      { icon: '🤖', text: 'AI tools for selected workflows' },
+      { icon: '📈', text: 'Modules for sales, operations, finance and employees' },
       { icon: '🇩🇰', text: 'Danish support and Danish-built' },
-      { icon: '💰', text: 'One price, everything included — no surprises' },
+      { icon: '💰', text: 'Pricing and trial terms are shown before signup' },
     ];
 
     doc.setFontSize(11);
@@ -285,7 +285,7 @@ export function SalesPdfDownload() {
   };
 
   return (
-    <Button onClick={generatePdf} disabled={loading} variant="outline" size="lg" className="h-11 px-6 text-sm font-medium rounded-full gap-2">
+    <Button onClick={generatePdf} disabled={loading} variant="outline" size="lg" className="h-[46px] px-5 text-[13.5px] font-medium rounded-[7px] gap-2">
       <Download className="h-4 w-4" />
       {loading ? '...' : locale === 'da' ? 'Download præsentation' : locale === 'de' ? 'Präsentation herunterladen' : 'Download presentation'}
     </Button>

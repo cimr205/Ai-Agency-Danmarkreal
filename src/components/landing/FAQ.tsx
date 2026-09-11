@@ -47,8 +47,8 @@ export function FAQ() {
             </h2>
             <p className="text-[14px] text-muted-foreground leading-[1.6] max-w-[300px]">
               {isDa
-                ? 'Stadig i tvivl? Skriv til os — vi svarer typisk indenfor en time i hverdage.'
-                : 'Still unsure? Write us — we usually answer within an hour on weekdays.'}
+                ? 'Stadig i tvivl? Skriv til os, så vender vi tilbage på hverdage.'
+                : 'Still unsure? Write to us and we will get back to you on a business day.'}
             </p>
           </div>
 
