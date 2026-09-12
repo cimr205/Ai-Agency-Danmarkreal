@@ -1,0 +1,52 @@
+name: Database kernel
+
+on:
+  push:
+    branches: [main, master, 'feature/**', 'claude/**']
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  clean-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Start local Supabase
+        run: supabase start
+      - name: Apply complete migration history
+        run: supabase db reset
+      - name: Database lint
+        run: supabase db lint --local --level warning --fail-on error
+      - name: pgTAP, tenant and kernel contracts
+        run: supabase test db
+      - name: Concurrency and idempotency
+        run: bash supabase/tests/runtime_concurrency.sh
+      - name: Generated types are current
+        run: |
+          supabase gen types typescript --local > /tmp/database.types.ts
+          diff -u src/integrations/supabase/types.ts /tmp/database.types.ts
+
+  update-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: supabase start
+      - name: Install realistic pre-kernel schema
+        run: supabase db reset --version 20260907000001
+      - name: Apply kernel migrations as upgrade
+        run: supabase migration up --local
+      - name: Verify upgraded schema
+        run: supabase test db
+
+  edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
+      - name: Typecheck operating paths
+        run: deno check supabase/functions/ai-operating-manager/index.ts supabase/functions/autopilot-execute/index.ts supabase/functions/composio-integration/index.ts supabase/functions/gmail-sync/index.ts supabase/functions/meta-sync/index.ts supabase/functions/workflow-runner/index.ts supabase/functions/meta-lead-webhook/index.ts supabase/functions/stripe-payment-webhook/index.ts

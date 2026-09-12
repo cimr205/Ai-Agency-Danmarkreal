@@ -30,6 +30,15 @@ verify_jwt = true
 [functions.meta-sync]
 verify_jwt = true
 
+[functions.meta-lead-webhook]
+verify_jwt = false
+
+[functions.stripe-payment-webhook]
+verify_jwt = false
+
+[functions.workflow-runner]
+verify_jwt = true
+
 [functions.meta-disconnect]
 verify_jwt = false
 

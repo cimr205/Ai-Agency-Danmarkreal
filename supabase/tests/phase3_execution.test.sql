@@ -1,0 +1,14 @@
+begin;
+select plan(10);
+select has_table('public','workflow_side_effects','side-effect receipts exist');
+select has_table('public','provider_webhook_receipts','provider receipts exist');
+select has_table('public','meta_webhook_sources','trusted Meta page mapping exists');
+select has_column('public','workflow_step_runs','lease_expires_at','step leases expire');
+select has_column('public','workflow_step_runs','max_attempts','step retry limit exists');
+select has_column('public','invoices','payment_reference','invoice has opaque payment reference');
+select function_returns('public','claim_workflow_steps',array['text','integer','integer'],'setof public.workflow_step_runs','atomic step claim exists');
+select ok(not has_function_privilege('authenticated','public.claim_workflow_steps(text,integer,integer)','EXECUTE'),'browser cannot claim steps');
+select ok(not has_function_privilege('authenticated','public.register_invoice_payment_service(uuid,uuid,numeric,text,timestamp with time zone,text,text,jsonb)','EXECUTE'),'browser cannot call payment service RPC');
+select ok(has_function_privilege('service_role','public.register_invoice_payment_service(uuid,uuid,numeric,text,timestamp with time zone,text,text,jsonb)','EXECUTE'),'service payment adapter can use canonical RPC');
+select * from finish();
+rollback;

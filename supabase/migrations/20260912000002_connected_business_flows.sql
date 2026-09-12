@@ -131,9 +131,6 @@ begin
     where s.workflow_run_id=r.id and r.event_id=e.id and r.company_id=p_company_id
       and e.entity_id=v_contact.id::text and s.status in ('pending','waiting') and s.step_type in ('delay','send_email','follow_up');
   end if;
-  insert into public.activity_logs(user_id,company_id,action_type,entity_type,entity_id,description,metadata)
-    values(v_email.user_id,p_company_id,v_type,coalesce(v_contact.record_type,'email'),coalesce(v_contact.id,p_email_id)::text,
-      coalesce(v_email.subject,'Incoming email'),jsonb_build_object('email_id',p_email_id,'deal_id',v_deal,'routing_status',case when v_count=1 then 'matched' when v_count>1 then 'ambiguous' else 'unmatched' end));
   return jsonb_build_object('email_id',p_email_id,'event_id',v_event,'event_type',v_type,'contact_id',v_contact.id,'deal_id',v_deal,'routing_status',case when v_count=1 then 'matched' when v_count>1 then 'ambiguous' else 'unmatched' end);
 end; $$;
 revoke all on function public.route_incoming_email(uuid,uuid) from public,anon,authenticated;
@@ -153,8 +150,6 @@ begin
   if v_target='won' and v_deal.customer_id is not null then
     select id into v_event from public.workspace_events where company_id=v_company and type='deal.won' and entity_id=p_deal_id::text order by created_at desc limit 1;
     perform public.link_business_entities(v_company,'deal',p_deal_id,'belongs_to','customer',v_deal.customer_id,v_event,'{}');
-    insert into public.activity_logs(user_id,company_id,action_type,entity_type,entity_id,description,metadata)
-      values(auth.uid(),v_company,'onboarding_started','customer',v_deal.customer_id::text,'Onboarding started from won deal',jsonb_build_object('deal_id',p_deal_id,'event_id',v_event));
   end if;
   return jsonb_build_object('deal_id',p_deal_id,'stage',v_target,'idempotent_replay',false);
 end; $$;
@@ -272,6 +267,7 @@ create unique index if not exists workflows_company_template_unique
 create or replace function public.seed_operating_workflows()
 returns trigger language plpgsql security definer set search_path=public as $$
 begin
+  if new.company_id is null then return new; end if;
   insert into public.workflows(company_id,created_by,template_key,trigger_event,action_type,description,is_active,steps,requires_approval)
   values
     (new.company_id,new.user_id,'meta-lead-follow-up','marketing.lead_received','workflow_steps','Meta lead follow-up',true,'[{"type":"create_task","title":"Follow up new Meta lead","priority":"high"}]',false),
@@ -282,7 +278,8 @@ begin
   return new;
 end; $$;
 drop trigger if exists trg_seed_operating_workflows on public.profiles;
-create trigger trg_seed_operating_workflows after insert on public.profiles for each row execute function public.seed_operating_workflows();
+create trigger trg_seed_operating_workflows after insert or update of company_id on public.profiles
+for each row when (new.company_id is not null) execute function public.seed_operating_workflows();
 
 insert into public.workflows(company_id,created_by,template_key,trigger_event,action_type,description,is_active,steps,requires_approval)
 select p.company_id,p.user_id,v.template_key,v.trigger_event,'workflow_steps',v.description,true,v.steps,false
@@ -345,11 +342,17 @@ begin
         update public.workflow_step_runs set status='completed',output='{"cancelled":true}',completed_at=now(),updated_at=now()
           where workflow_run_id=v_run.id and step_index=v_step.step_index;
       else
-        update public.workflow_step_runs set status='pending',updated_at=now() where workflow_run_id=v_run.id and step_index=v_step.step_index;
+        update public.workflow_step_runs set status=case
+          when (select requires_approval from public.workflows where id=v_run.workflow_id)
+            or coalesce(v_step.definition->>'risk','') in ('high','critical')
+          then 'approval_required' else 'pending' end,updated_at=now()
+          where workflow_run_id=v_run.id and step_index=v_step.step_index;
       end if;
     end loop;
-    update public.workflow_runs set status=case when exists(select 1 from public.workflow_step_runs where workflow_run_id=v_run.id and status='pending') then 'queued' else 'completed' end,
-      completed_at=case when not exists(select 1 from public.workflow_step_runs where workflow_run_id=v_run.id and status='pending') then now() else null end,updated_at=now()
+    update public.workflow_runs set status=case
+        when exists(select 1 from public.workflow_step_runs where workflow_run_id=v_run.id and status='approval_required') then 'approval_required'
+        when exists(select 1 from public.workflow_step_runs where workflow_run_id=v_run.id and status='pending') then 'queued' else 'completed' end,
+      completed_at=case when not exists(select 1 from public.workflow_step_runs where workflow_run_id=v_run.id and status in ('pending','approval_required')) then now() else null end,updated_at=now()
       where id=v_run.id;
   end loop;
   return new;

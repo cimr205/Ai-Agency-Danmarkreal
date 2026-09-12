@@ -9,9 +9,12 @@ declare
   email_account uuid; outbound_id uuid; inbound_id uuid; routed jsonb; v_deal_id uuid; won jsonb; won_replay jsonb;
   invoice_id uuid; payment jsonb; payment_replay jsonb;
 begin
-  select user_id,company_id into a from public.profiles order by created_at limit 1;
-  select user_id,company_id into b from public.profiles where company_id<>a.company_id order by created_at limit 1;
-  if a.user_id is null or b.user_id is null then raise exception 'Two workspace profiles required'; end if;
+  select gen_random_uuid() as user_id,gen_random_uuid() as company_id into a;
+  select gen_random_uuid() as user_id,gen_random_uuid() as company_id into b;
+  insert into public.companies(id,name) values(a.company_id,'Kernel flow A'),(b.company_id,'Kernel flow B');
+  insert into auth.users(id,email) values(a.user_id,'kernel-a-'||suffix||'@test.local'),(b.user_id,'kernel-b-'||suffix||'@test.local');
+  update public.profiles set company_id=a.company_id where user_id=a.user_id;
+  update public.profiles set company_id=b.company_id where user_id=b.user_id;
 
   perform set_config('request.jwt.claim.role','service_role',true);
   insert into public.meta_connections(company_id,status,access_token) values(a.company_id,'connected',null) returning id into connection_id;
