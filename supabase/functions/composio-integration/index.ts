@@ -592,7 +592,7 @@ Deno.serve(async (req) => {
           ? (await supabase.from("customers").select("id").eq("company_id", companyId).eq("email", email).maybeSingle()).data
           : null;
 
-        const invoiceMatch = customerMatch
+        const invoiceCandidates = customerMatch
           ? (await supabase
               .from("invoices")
               .select("id")
@@ -601,9 +601,11 @@ Deno.serve(async (req) => {
               .eq("amount", amount)
               .not("status", "in", "(paid,cancelled)")
               .order("issued_at", { ascending: true })
-              .limit(1)
-              .maybeSingle()).data
-          : null;
+              .limit(2)).data ?? []
+          : [];
+        // Exact amount/email is still unsafe when two open invoices match.
+        // Leave the charge unresolved instead of guessing an invoice.
+        const invoiceMatch = invoiceCandidates.length === 1 ? invoiceCandidates[0] : null;
 
         if (!invoiceMatch) {
           unmatched++;
@@ -616,7 +618,9 @@ Deno.serve(async (req) => {
             action_category: "financial",
             sanitized_input: { chargeId: charge.id, amount, email },
             status: "failed",
-            error: "Ingen matchende ubetalt faktura fundet",
+            error: invoiceCandidates.length > 1
+              ? "Flere ubetalte fakturaer matcher; manuel afklaring kræves"
+              : "Ingen matchende ubetalt faktura fundet",
             completed_at: new Date().toISOString(),
           });
           continue;

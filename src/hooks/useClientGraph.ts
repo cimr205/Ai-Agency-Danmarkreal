@@ -49,7 +49,7 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, emailsRes, calRes, activitiesRes] = await Promise.all([
+      const [dealsRes, invoicesRes, emailsRes, calRes, activitiesRes, businessEventsRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
         customerEmailLower
@@ -70,6 +70,7 @@ export function useClientGraph(customerId: string | undefined) {
           .eq("entity_id", customerId)
           .order("created_at", { ascending: false })
           .limit(50),
+        supabase.rpc("get_business_timeline", { p_entity_type: "customer", p_entity_id: customerId, p_limit: 100 }),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
@@ -80,6 +81,14 @@ export function useClientGraph(customerId: string | undefined) {
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
       const activities = activitiesRes.data ?? [];
+      const businessEvents = businessEventsRes.data ?? [];
+      const eventEntityKeys = new Set(businessEvents.map((event) => `${event.event_type}:${event.entity_id ?? ""}`));
+      const eventEmailIds = new Set(businessEvents.flatMap((event) => {
+        const payload = event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
+          ? event.payload as Record<string, unknown>
+          : null;
+        return typeof payload?.email_id === "string" ? [payload.email_id] : [];
+      }));
 
       // Payments tied to this customer's invoices
       const invoiceIds = invoices.map(i => i.id);
@@ -91,6 +100,7 @@ export function useClientGraph(customerId: string | undefined) {
       // Build timeline
       const tl: TimelineEvent[] = [];
       for (const e of emails) {
+        if (eventEmailIds.has(e.id)) continue;
         tl.push({
           id: `e:${e.id}`, kind: "email",
           at: e.received_at,
@@ -99,6 +109,7 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const inv of invoices) {
+        if (eventEntityKeys.has(`invoice.created:${inv.id}`)) continue;
         tl.push({
           id: `i:${inv.id}`, kind: "invoice",
           at: inv.issued_at || inv.created_at,
@@ -109,6 +120,7 @@ export function useClientGraph(customerId: string | undefined) {
       }
       for (const p of payments) {
         if (!p.paid_at) continue;
+        if (eventEntityKeys.has(`payment.received:${p.id}`)) continue;
         tl.push({
           id: `p:${p.id}`, kind: "payment",
           at: p.paid_at,
@@ -117,6 +129,7 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const m of meetings) {
+        if (eventEntityKeys.has(`meeting.booked:${m.id}`)) continue;
         tl.push({
           id: `m:${m.id}`, kind: "meeting",
           at: m.start_time,
@@ -125,6 +138,7 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const d of deals) {
+        if (eventEntityKeys.has(`deal.created:${d.id}`)) continue;
         tl.push({
           id: `d:${d.id}`, kind: "deal",
           at: d.created_at,
@@ -139,6 +153,19 @@ export function useClientGraph(customerId: string | undefined) {
           at: a.created_at,
           title: ACTIVITY_TYPE_LABELS[a.type] || a.type,
           meta: a.body || undefined,
+        });
+      }
+      for (const event of businessEvents) {
+        tl.push({
+          id: `event:${event.id}`,
+          kind: event.event_type.startsWith("email.") ? "email"
+            : event.event_type.startsWith("invoice.") ? "invoice"
+            : event.event_type.startsWith("payment.") ? "payment"
+            : event.event_type.startsWith("meeting.") ? "meeting"
+            : event.event_type.startsWith("deal.") ? "deal" : "activity",
+          at: event.occurred_at,
+          title: event.event_type.split(".").join(" "),
+          meta: event.source,
         });
       }
 

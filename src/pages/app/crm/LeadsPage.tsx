@@ -978,6 +978,12 @@ export default function LeadsPage() {
                       <TableCell className={cellPad}>
                         <div className="flex flex-col">
                           <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
+                          {lead.acquisition_source && (
+                            <span className="mt-1 w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                              {lead.acquisition_source}
+                              {lead.acquisition_detail ? ` · ${lead.acquisition_detail.split('_').join(' ')}` : ''}
+                            </span>
+                          )}
                           <span className="mt-0.5 max-w-[320px] truncate text-xs text-slate-500">
                             {[lead.company_name, lead.email, lead.phone].filter(Boolean).join(' · ')}
                           </span>

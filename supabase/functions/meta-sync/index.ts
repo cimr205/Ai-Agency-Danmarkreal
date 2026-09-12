@@ -11,13 +11,6 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 }
 
-function jwtRole(token: string): string | null {
-  try {
-    const raw = token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/')
-    return JSON.parse(atob(raw.padEnd(Math.ceil(raw.length / 4) * 4, '='))).role ?? null
-  } catch { return null }
-}
-
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function graphAll(path: string, accessToken: string): Promise<Record<string, unknown>[]> {
@@ -55,15 +48,17 @@ Deno.serve(async (req) => {
   const auth = req.headers.get('authorization')
   if (!auth) return json({ error: 'Unauthorized' }, 401)
   const token = auth.replace(/^Bearer\s+/i, '')
-  const role = jwtRole(token)
   const request = await req.json().catch(() => ({})) as { company_id?: string; account_id?: string; since?: string; until?: string }
-  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
   let companyId: string | null = null
   let requestedBy: string | null = null
-  if (role === 'service_role') {
+  // Never trust an unverified JWT payload to identify service callers. A
+  // scheduler may select a workspace only when it presents the actual secret.
+  if (token === serviceKey) {
     companyId = request.company_id ?? null
   } else {
     const { data: { user }, error } = await supabase.auth.getUser(token)
@@ -102,12 +97,13 @@ Deno.serve(async (req) => {
 
     for (const account of accounts) {
       const accountPath = `act_${account.account_id}`
-      const [campaigns, adSets, creatives, ads, insights] = await Promise.all([
+      const [campaigns, adSets, creatives, ads, insights, leadForms] = await Promise.all([
         graphAll(`${accountPath}/campaigns?fields=id,name,objective,status,effective_status,daily_budget,lifetime_budget,start_time,stop_time&limit=100`, accessToken),
         graphAll(`${accountPath}/adsets?fields=id,campaign_id,name,status,effective_status,optimization_goal,daily_budget,lifetime_budget,targeting&limit=100`, accessToken),
         graphAll(`${accountPath}/adcreatives?fields=id,name,title,body,image_url,thumbnail_url,object_story_spec&limit=100`, accessToken),
         graphAll(`${accountPath}/ads?fields=id,campaign_id,adset_id,name,status,effective_status,creative{id}&limit=100`, accessToken),
         graphAll(`${accountPath}/insights?level=ad&time_increment=1&time_range=${encodeURIComponent(JSON.stringify({ since, until }))}&fields=date_start,campaign_id,adset_id,ad_id,spend,impressions,reach,clicks,ctr,cpc,cpm,actions,conversions&limit=100`, accessToken),
+        graphAll(`${accountPath}/leadgen_forms?fields=id,name,status&limit=100`, accessToken),
       ])
 
       if (campaigns.length) {
@@ -185,7 +181,40 @@ Deno.serve(async (req) => {
         })), { onConflict: 'company_id,level,external_object_id,insight_date' })
         if (error) throw error
       }
-      recordsSynced += campaigns.length + adSets.length + creatives.length + ads.length + insights.length
+
+      // Lead-form submissions become canonical CRM entities immediately.
+      // Provider lead IDs make replay safe; the RPC performs deterministic
+      // identity resolution, attribution, event emission and configured task routing.
+      let leadsSynced = 0
+      for (const form of leadForms) {
+        const submissions = await graphAll(`${String(form.id)}/leads?fields=id,created_time,field_data,campaign_id,adset_id,ad_id,form_id&limit=100`, accessToken)
+        for (const submission of submissions) {
+          const fields = Array.isArray(submission.field_data) ? submission.field_data as Array<{ name?: string; values?: unknown[] }> : []
+          const value = (...names: string[]) => {
+            const row = fields.find((field) => names.includes(String(field.name ?? '').toLowerCase()))
+            return row?.values?.[0] == null ? null : String(row.values[0])
+          }
+          const email = value('email', 'email_address')
+          const name = value('full_name', 'name') ?? ([value('first_name'), value('last_name')].filter(Boolean).join(' ') || email || 'Meta lead')
+          const { error: leadError } = await supabase.rpc('ingest_meta_lead', {
+            p_company_id: companyId,
+            p_account_id: account.id,
+            p_external_lead_id: String(submission.id),
+            p_name: name,
+            p_email: email,
+            p_phone: value('phone_number', 'phone'),
+            p_campaign_id: submission.campaign_id == null ? null : String(submission.campaign_id),
+            p_adset_id: submission.adset_id == null ? null : String(submission.adset_id),
+            p_ad_id: submission.ad_id == null ? null : String(submission.ad_id),
+            p_form_id: submission.form_id == null ? String(form.id) : String(submission.form_id),
+            p_created_at: submission.created_time ?? new Date().toISOString(),
+            p_raw: submission,
+          })
+          if (leadError) throw new Error(`Meta lead ${String(submission.id)} failed: ${leadError.message}`)
+          leadsSynced++
+        }
+      }
+      recordsSynced += campaigns.length + adSets.length + creatives.length + ads.length + insights.length + leadsSynced
     }
 
     await supabase.from('meta_connections').update({

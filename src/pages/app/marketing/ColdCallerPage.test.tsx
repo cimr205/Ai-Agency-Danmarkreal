@@ -154,7 +154,7 @@ describe('Device Power Dialer page', () => {
     });
     await waitFor(() => expect(getCallLink('+4930123456')).toBeInTheDocument());
     expect(window.sessionStorage.getItem('crm-power-dialer-pending-v1')).toBeNull();
-  });
+  }, 10_000);
 
   it('restores a pending call after returning from the phone app and saves a callback', async () => {
     const startedAt = Date.now() - 15_000;

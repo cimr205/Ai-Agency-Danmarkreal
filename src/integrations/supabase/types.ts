@@ -1262,6 +1262,8 @@ export type Database = {
       customers: {
         Row: {
           accounting_synced_at: string | null
+          acquisition_detail: string | null
+          acquisition_source: string | null
           address: string | null
           ai_recommendation: string | null
           ai_recommendation_at: string | null
@@ -1286,6 +1288,7 @@ export type Database = {
           id: string
           import_batch_id: string | null
           industry: string | null
+          integration_id: string | null
           last_touched_at: string | null
           name: string
           next_followup_at: string | null
@@ -1297,6 +1300,8 @@ export type Database = {
           record_type: string
           score: number | null
           source_id: string | null
+          source_event_id: string | null
+          attribution: Json
           status: Database["public"]["Enums"]["lead_status"] | null
           tags: string[] | null
           updated_at: string
@@ -1305,6 +1310,8 @@ export type Database = {
         }
         Insert: {
           accounting_synced_at?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
@@ -1329,6 +1336,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           industry?: string | null
+          integration_id?: string | null
           last_touched_at?: string | null
           name: string
           next_followup_at?: string | null
@@ -1340,6 +1348,8 @@ export type Database = {
           record_type?: string
           score?: number | null
           source_id?: string | null
+          source_event_id?: string | null
+          attribution?: Json
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -1348,6 +1358,8 @@ export type Database = {
         }
         Update: {
           accounting_synced_at?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
@@ -1372,6 +1384,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           industry?: string | null
+          integration_id?: string | null
           last_touched_at?: string | null
           name?: string
           next_followup_at?: string | null
@@ -1383,6 +1396,8 @@ export type Database = {
           record_type?: string
           score?: number | null
           source_id?: string | null
+          source_event_id?: string | null
+          attribution?: Json
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -6421,6 +6436,26 @@ export type Database = {
           phone: string
           record_type: string
         }[]
+      }
+      get_business_timeline: {
+        Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          occurred_at: string
+          payload: Json
+          source: string
+        }[]
+      }
+      transition_deal_stage: {
+        Args: {
+          p_deal_id: string
+          p_expected_version?: number
+          p_target_stage: string
+        }
+        Returns: Json
       }
       generate_activation_code: { Args: never; Returns: string }
       generate_employee_id: {

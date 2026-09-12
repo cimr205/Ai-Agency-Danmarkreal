@@ -62,7 +62,18 @@ serve(async (req) => {
           const emailData = await emailResp.json();
           result = { success: emailResp.ok, message: emailResp.ok ? "Email sendt" : emailData.error || "Email fejl" };
         } else if (fn === "update_deal_stage") {
-          await supabase.from("deals").update({ stage: payload.stage, notes: payload.notes }).eq("id", payload.deal_id);
+          const { error: stageError } = await supabase.rpc("transition_deal_stage_service", {
+            p_company_id: profile.company_id,
+            p_deal_id: payload.deal_id,
+            p_target_stage: payload.stage,
+            p_actor: user.id,
+          });
+          if (stageError) throw stageError;
+          if (payload.notes) {
+            const { error: notesError } = await supabase.from("deals").update({ notes: payload.notes })
+              .eq("id", payload.deal_id).eq("company_id", profile.company_id);
+            if (notesError) throw notesError;
+          }
           result = { success: true, message: "Deal opdateret" };
         } else if (fn === "create_task" || fn === "create_followup_task") {
           await supabase.from("tasks").insert({
