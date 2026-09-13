@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
       - uses: supabase/setup-cli@v1
         with: { version: latest }
       - name: Start local Supabase
@@ -23,6 +27,14 @@ jobs:
         run: supabase test db
       - name: Concurrency and idempotency
         run: bash supabase/tests/runtime_concurrency.sh
+      - name: Tenant REST attack regression
+        run: |
+          npm ci
+          eval "$(supabase status -o env)"
+          export VITE_SUPABASE_URL="$API_URL"
+          export VITE_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          npx vitest run src/test/tenant-isolation.integration.test.ts
       - name: Generated types are current
         run: |
           supabase gen types typescript --local > /tmp/database.types.ts
