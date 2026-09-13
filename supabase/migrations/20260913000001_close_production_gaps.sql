@@ -125,7 +125,7 @@ grant execute on function public.consume_invoice_payment_reference(uuid,uuid) to
 create or replace function public.route_incoming_email(p_company_id uuid,p_email_id uuid)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare v_email public.emails%rowtype; v_parent public.emails%rowtype; v_contact public.customers%rowtype;
-  v_contact_count integer:=0; v_deal_count integer:=0; v_deal uuid; v_event uuid; v_type text:='email.received'; v_status text:='unmatched';
+  v_contact_count integer:=0; v_deal_count integer:=0; v_deal uuid; v_event uuid; v_type text:='email.received'; v_status text:='unmatched'; v_parent_found boolean:=false;
 begin
   if auth.role()<>'service_role' then raise exception 'Service role required' using errcode='42501'; end if;
   select * into v_email from public.emails where id=p_email_id and company_id=p_company_id for update;
@@ -136,12 +136,14 @@ begin
   if nullif(v_email.in_reply_to,'') is not null then
     select * into v_parent from public.emails where company_id=p_company_id and email_account_id=v_email.email_account_id
       and direction='outbound' and internet_message_id=v_email.in_reply_to order by received_at desc limit 1;
+    v_parent_found:=found;
   end if;
-  if not found and nullif(v_email.thread_id,'') is not null then
+  if not v_parent_found and nullif(v_email.thread_id,'') is not null then
     select * into v_parent from public.emails where company_id=p_company_id and email_account_id=v_email.email_account_id
       and direction='outbound' and thread_id=v_email.thread_id and id<>v_email.id order by received_at desc limit 1;
+    v_parent_found:=found;
   end if;
-  if found then
+  if v_parent_found then
     v_contact.id:=v_parent.contact_id; v_deal:=v_parent.deal_id; v_status:=case when v_parent.contact_id is not null then 'matched' else 'unmatched' end; v_type:='email.replied';
   else
     select count(*) into v_contact_count from public.customers where company_id=p_company_id and normalized_email=lower(trim(v_email.from_address));

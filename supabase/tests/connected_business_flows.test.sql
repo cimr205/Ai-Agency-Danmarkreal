@@ -26,7 +26,8 @@ begin
   replay_meta:=public.ingest_meta_lead(a.company_id,account_id,'lead-'||suffix,'Ignored','meta-'||suffix||'@example.com',null,null,null,null,null,now(),'{}');
   if first_meta->>'entity_id' is distinct from replay_meta->>'entity_id' or not (replay_meta->>'idempotent_replay')::boolean then raise exception 'Meta replay duplicated lead'; end if;
   contact_id:=(first_meta->>'entity_id')::uuid;
-  if not exists(select 1 from public.workflow_runs where event_id=(first_meta->>'event_id')::uuid) then raise exception 'Meta workflow was not enqueued'; end if;
+  if not exists(select 1 from public.workflow_runs r join public.workspace_events e on e.id=r.event_id
+    where e.company_id=a.company_id and e.type='lead.created' and e.entity_id=contact_id::text) then raise exception 'New-lead workflow was not enqueued'; end if;
   begin
     perform public.ingest_meta_lead(b.company_id,account_id,'cross-'||suffix,'Cross','cross-'||suffix||'@example.com',null,null,null,null,null,now(),'{}');
     raise exception 'Cross-workspace Meta account accepted';

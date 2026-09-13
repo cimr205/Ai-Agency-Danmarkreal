@@ -29,7 +29,7 @@ create or replace function public.ingest_meta_lead(
 language plpgsql security definer set search_path = public as $$
 declare
   v_event_id uuid; v_contact public.customers%rowtype; v_identity public.external_identities;
-  v_matches integer; v_actor uuid; v_rules jsonb; v_owner uuid;
+  v_matches integer; v_rules jsonb; v_owner uuid;
   v_campaign uuid; v_adset uuid; v_ad uuid; v_creative uuid;
   v_email text := nullif(lower(trim(coalesce(p_email,''))), '');
   v_phone text := public.normalize_phone_number(p_phone);
