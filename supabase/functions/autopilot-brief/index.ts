@@ -84,7 +84,7 @@ serve(async (req) => {
       supabase.from("invoices").select("id, invoice_number, amount, status, due_date, customers(name)")
         .eq("company_id", companyId).in("status", ["sent", "overdue"]).order("due_date", { ascending: true }).limit(30),
       // Recent payments (24h)
-      supabase.from("payments").select("id, amount, paid_at, customers(name)")
+      supabase.from("payments").select("id, amount, paid_at, invoices(customers(name))")
         .eq("company_id", companyId).gte("paid_at", twentyFourHoursAgo).limit(10),
       // Employees
       supabase.from("employee_profiles").select("id, full_name, position, department, start_date, is_active")
@@ -127,7 +127,7 @@ serve(async (req) => {
     // Process payments
     const recentPayments = (paymentsRes.data || []).map(p => ({
       amount: p.amount,
-      customer_name: (p as { customers?: { name?: string } }).customers?.name || "Unknown",
+      customer_name: (p as { invoices?: { customers?: { name?: string } } }).invoices?.customers?.name || "Unknown",
     }));
 
     // High ICP uncontacted leads

@@ -12,7 +12,8 @@
     "check": "npm run type-check && npm run lint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "smoke:release": "node scripts/release-smoke-test.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.47",

@@ -174,23 +174,28 @@ export function useCreateInvoice() {
   return useMutation({
     mutationFn: async (input: CreateInvoiceInput) => {
       const { session, companyId } = await getProfileWithCompany();
-      // Generate invoice number
-      const { data: invoiceNumber, error: numErr } = await supabase.rpc('generate_invoice_number', { _company_id: companyId });
-      if (numErr) throw numErr;
+      // The unique database constraint is the authoritative collision
+      // backstop. Retry allocation when two concurrent requests generated
+      // the same candidate number before either insert completed.
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const { data: invoiceNumber, error: numErr } = await supabase.rpc('generate_invoice_number', { _company_id: companyId });
+        if (numErr) throw numErr;
 
-      const { data, error } = await supabase
-        .from('invoices')
-        .insert({
-          ...input,
-          invoice_number: invoiceNumber as string,
-          lines: input.lines as unknown as Json,
-          company_id: companyId,
-          created_by: session.user.id,
-        })
-        .select('*, customers(name)')
-        .single();
-      if (error) throw error;
-      return data;
+        const { data, error } = await supabase
+          .from('invoices')
+          .insert({
+            ...input,
+            invoice_number: invoiceNumber as string,
+            lines: input.lines as unknown as Json,
+            company_id: companyId,
+            created_by: session.user.id,
+          })
+          .select('*, customers(name)')
+          .single();
+        if (!error) return data;
+        if (error.code !== '23505' || attempt === 3) throw error;
+      }
+      throw new Error('Could not allocate a unique invoice number');
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
   });

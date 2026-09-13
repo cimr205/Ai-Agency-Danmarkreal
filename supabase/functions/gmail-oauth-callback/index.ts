@@ -24,17 +24,31 @@ Deno.serve(async (req) => {
       return redirectWithError("Missing code or state");
     }
 
-    let state: { user_id: string };
-    try {
-      state = JSON.parse(atob(stateParam));
-    } catch {
-      return redirectWithError("Invalid state");
-    }
-
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const redirectUri = `${SUPABASE_URL}/functions/v1/gmail-oauth-callback`;
+
+    const supabaseAdmin = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    // Atomically validate and consume the opaque state. A replay, expired
+    // token, wrong provider or unknown token returns no row and fails closed.
+    const { data: oauthState, error: stateError } = await supabaseAdmin
+      .from("oauth_states")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", stateParam)
+      .eq("provider", "gmail")
+      .is("consumed_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .select("created_by,company_id")
+      .maybeSingle();
+    if (stateError || !oauthState?.created_by || !oauthState.company_id) {
+      return redirectWithError("Invalid or expired OAuth state");
+    }
 
     // Exchange code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -61,24 +75,6 @@ Deno.serve(async (req) => {
     });
     const userInfo = await userInfoRes.json();
 
-    // Store tokens using service role
-    const supabaseAdmin = createClient(
-      SUPABASE_URL,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    // Get user's company_id
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("company_id")
-      .eq("user_id", state.user_id)
-      .single();
-
-    if (!profile?.company_id) {
-      return redirectWithError("No company found");
-    }
-
     const expiresAt = tokenData.expires_in
       ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
       : null;
@@ -87,8 +83,8 @@ Deno.serve(async (req) => {
     const { error: upsertErr } = await supabaseAdmin
       .from("email_accounts")
       .upsert({
-        user_id: state.user_id,
-        company_id: profile.company_id,
+        user_id: oauthState.created_by,
+        company_id: oauthState.company_id,
         provider: "gmail",
         email_address: userInfo.email,
         access_token: tokenData.access_token,
@@ -108,8 +104,8 @@ Deno.serve(async (req) => {
 
     // Log activity
     await supabaseAdmin.rpc("log_activity", {
-      _user_id: state.user_id,
-      _company_id: profile.company_id,
+      _user_id: oauthState.created_by,
+      _company_id: oauthState.company_id,
       _action_type: "gmail_connected",
       _entity_type: "email_account",
       _description: `Gmail forbundet: ${userInfo.email}`,
@@ -124,12 +120,12 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("gmail-oauth-callback error:", err);
-    return redirectWithError(err.message);
+    return redirectWithError(err instanceof Error ? err.message : String(err));
   }
 });
 
 function getAppRedirectUrl(): string {
-  return "https://www.aiagencydanmark.dk";
+  return (Deno.env.get("APP_URL") || "https://www.aiagencydanmark.dk").replace(/\/$/, "");
 }
 
 function redirectWithError(error: string) {

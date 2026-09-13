@@ -28,6 +28,15 @@ Deno.serve(async (req) => {
 
     const userId = user.id;
 
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("user_id", userId)
+      .single();
+    if (profileError || !profile?.company_id) {
+      return new Response(JSON.stringify({ error: "No company found" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     if (!GOOGLE_CLIENT_ID) {
       throw new Error("GOOGLE_CLIENT_ID not configured");
@@ -43,7 +52,18 @@ Deno.serve(async (req) => {
       "https://www.googleapis.com/auth/userinfo.email",
     ].join(" ");
 
-    const state = btoa(JSON.stringify({ user_id: userId }));
+    // Server-stored, short-lived and one-time OAuth state. The browser only
+    // receives an opaque random identifier; no user or tenant identifier is
+    // trusted from the callback query string.
+    const state = crypto.randomUUID();
+    const { error: stateError } = await supabase.from("oauth_states").insert({
+      id: state,
+      company_id: profile.company_id,
+      provider: "gmail",
+      created_by: userId,
+      expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+    });
+    if (stateError) throw new Error(`Unable to create OAuth state: ${stateError.message}`);
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID);
