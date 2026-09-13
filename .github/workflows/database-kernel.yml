@@ -2,7 +2,7 @@ name: Database kernel
 
 on:
   push:
-    branches: [main, master, 'feature/**', 'claude/**']
+    branches: [main, master, 'feature/**', 'release/**', 'claude/**']
   pull_request:
     branches: [main, master]
 
