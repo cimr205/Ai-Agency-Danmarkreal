@@ -1,0 +1,42 @@
+name: Deploy operating kernel to staging
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: operating-kernel-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      STAGING_SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+      STAGING_SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: 2.116.0 }
+      - name: Require isolated staging target
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$STAGING_SUPABASE_PROJECT_ID"
+          test -n "$STAGING_SUPABASE_DB_PASSWORD"
+          test "$STAGING_SUPABASE_PROJECT_ID" != "inyrwsygghdjhmqejgwk"
+      - name: Link and inspect migration state
+        run: |
+          supabase link --project-ref "$STAGING_SUPABASE_PROJECT_ID" --password "$STAGING_SUPABASE_DB_PASSWORD"
+          supabase migration list --linked
+      - name: Apply migrations
+        run: supabase db push --linked --password "$STAGING_SUPABASE_DB_PASSWORD"
+      - name: Deploy canonical release functions
+        run: |
+          for function_name in \
+            meta-oauth-start meta-oauth-callback meta-sync meta-lead-webhook \
+            gmail-auth gmail-oauth-callback gmail-send gmail-sync \
+            create-invoice-checkout stripe-payment-webhook workflow-runner; do
+            supabase functions deploy "$function_name" --project-ref "$STAGING_SUPABASE_PROJECT_ID"
+          done
