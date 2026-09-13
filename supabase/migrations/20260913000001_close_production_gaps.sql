@@ -145,7 +145,8 @@ begin
   end if;
   if v_parent_found then
     v_contact.id:=v_parent.contact_id; v_deal:=v_parent.deal_id; v_status:=case when v_parent.contact_id is not null then 'matched' else 'unmatched' end; v_type:='email.replied';
-  else
+  end if;
+  if v_contact.id is null then
     select count(*) into v_contact_count from public.customers where company_id=p_company_id and normalized_email=lower(trim(v_email.from_address));
     if v_contact_count=1 then
       select * into v_contact from public.customers where company_id=p_company_id and normalized_email=lower(trim(v_email.from_address)) limit 1;
