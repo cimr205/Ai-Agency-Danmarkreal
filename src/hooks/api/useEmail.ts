@@ -11,7 +11,7 @@ export function useGmailAccount() {
 
       const { data, error } = await supabase
         .from('email_accounts')
-        .select('*, contact:customers!emails_contact_id_fkey(id,name,email), deal:deals!emails_deal_id_fkey(id,title)')
+        .select('*')
         .eq('user_id', user.id)
         .eq('provider', 'gmail')
         .eq('status', 'connected')
@@ -86,7 +86,7 @@ export function useEmails(filter?: { unread?: boolean; priority?: boolean; starr
 
       let query = supabase
         .from('emails')
-        .select('*')
+        .select('*, contact:customers!emails_contact_id_fkey(id,name,email), deal:deals!emails_deal_id_fkey(id,title)')
         .eq('user_id', user.id)
         .order('received_at', { ascending: false })
         .limit(500);

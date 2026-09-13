@@ -37,7 +37,11 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.workflow-runner]
-verify_jwt = true
+# The scheduled drain authenticates with WORKFLOW_DRAIN_SECRET, which is not a
+# Supabase JWT. The function performs its own strict split auth: the drain path
+# requires that secret, while interactive paths validate the caller JWT with
+# auth.getUser before resolving the tenant.
+verify_jwt = false
 
 [functions.meta-disconnect]
 verify_jwt = false
