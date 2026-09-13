@@ -111,11 +111,17 @@ Deno.serve(async (req) => {
 
     let parent: { thread_id: string | null; internet_message_id: string | null; reference_ids: string[] | null; contact_id: string | null; deal_id: string | null } | null = null;
     if (reply_to_message_id) {
-      const { data } = await supabaseAdmin.from("emails")
+      const parentQuery = supabaseAdmin.from("emails")
         .select("thread_id,internet_message_id,reference_ids,contact_id,deal_id")
-        .eq("company_id", account.company_id).eq("email_account_id", account.id)
-        .or(`id.eq.${reply_to_message_id},gmail_id.eq.${reply_to_message_id}`).maybeSingle();
-      parent = data;
+        .eq("company_id", account.company_id).eq("email_account_id", account.id);
+      const { data: byProviderId } = await parentQuery.eq("gmail_id", reply_to_message_id).maybeSingle();
+      parent = byProviderId;
+      if (!parent && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reply_to_message_id)) {
+        const { data: byInternalId } = await supabaseAdmin.from("emails")
+          .select("thread_id,internet_message_id,reference_ids,contact_id,deal_id")
+          .eq("company_id", account.company_id).eq("email_account_id", account.id).eq("id", reply_to_message_id).maybeSingle();
+        parent = byInternalId;
+      }
       if (!parent) return new Response(JSON.stringify({ error: "Reply target was not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     let linkedContactId: string | null = parent?.contact_id ?? null;
