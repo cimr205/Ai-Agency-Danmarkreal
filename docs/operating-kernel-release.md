@@ -43,6 +43,26 @@ verification is disabled for this mixed-auth function because the scheduler
 secret is not a Supabase JWT. The handler still rejects missing/wrong drain
 secrets and validates Supabase user JWTs for every interactive path.
 
+### Secure drain-secret setup
+
+The owner must create one high-entropy value locally and install that exact
+value on both sides. Do not paste it into chat, workflow files or command logs.
+
+```bash
+read -r -s RELEASE_WORKFLOW_DRAIN_SECRET
+printf %s "$RELEASE_WORKFLOW_DRAIN_SECRET" | gh secret set WORKFLOW_DRAIN_SECRET
+npx supabase secrets set \
+  --project-ref STAGING_PROJECT_REF \
+  WORKFLOW_DRAIN_SECRET="$RELEASE_WORKFLOW_DRAIN_SECRET"
+unset RELEASE_WORKFLOW_DRAIN_SECRET
+```
+
+Generate the value in a password manager or with a cryptographically secure
+generator (at least 32 random bytes). After staging verification, repeat the
+Supabase command with the explicitly approved production project ref and keep
+GitHub pointed at the matching environment. Never reuse a provider API key or
+Supabase service-role key as the drain secret.
+
 ## Provider configuration
 
 Meta webhook URL:
