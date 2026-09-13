@@ -10,10 +10,13 @@ export type Company = Database['public']['Functions']['get_company_for_user']['R
 
 export interface InvoiceWithCustomer extends Tables<'invoices'> {
   customers: Pick<Customer, 'name' | 'email' | 'country' | 'customer_type' | 'vat_number'> | null;
+  quotes: Pick<Tables<'quotes'>, 'id' | 'title' | 'deal_id'> | null;
 }
 
 export interface PaymentWithInvoice extends Tables<'payments'> {
-  invoices: Pick<Tables<'invoices'>, 'invoice_number' | 'amount' | 'status'> | null;
+  invoices: (Pick<Tables<'invoices'>, 'invoice_number' | 'amount' | 'status'> & {
+    customers: Pick<Customer, 'name'> | null;
+  }) | null;
 }
 
 // Helper to get profile
@@ -137,7 +140,7 @@ export function useInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, customers(name, email, country, customer_type, vat_number)')
+        .select('*, customers(name, email, country, customer_type, vat_number), quotes(id, title, deal_id)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       // Supabase's TS inference doesn't resolve nested-select shapes from the
@@ -257,7 +260,7 @@ export function usePayments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*, invoices(invoice_number, amount, status)')
+        .select('*, invoices(invoice_number, amount, status, customers(name))')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as PaymentWithInvoice[];

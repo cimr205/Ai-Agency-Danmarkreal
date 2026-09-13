@@ -6,7 +6,11 @@ import { stageWebhookEvent } from '@/lib/deals/wonValidation';
 
 type DealStage = string;
 
-export type DealWithCustomer = Tables<'deals'> & { customers: Pick<Tables<'customers'>, 'name'> | null };
+export type DealWithCustomer = Tables<'deals'> & {
+  customers: Pick<Tables<'customers'>, 'name' | 'lead_source' | 'email'> | null;
+};
+
+const DEAL_CUSTOMER_SELECT = "*, customers!deals_customer_id_fkey(name, lead_source, email)";
 
 export function useDeals() {
   return useQuery({
@@ -14,7 +18,7 @@ export function useDeals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deals')
-        .select('*, customers!deals_customer_id_fkey(name)')
+        .select(DEAL_CUSTOMER_SELECT)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as DealWithCustomer[];
@@ -58,7 +62,7 @@ export function useUpdateDeal() {
         .from('deals')
         .update(updates)
         .eq('id', id)
-        .select('*, customers!deals_customer_id_fkey(name)')
+        .select(DEAL_CUSTOMER_SELECT)
         .single();
       if (error) throw error;
       return data as unknown as DealWithCustomer;

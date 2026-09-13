@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { ArrowLeft, MapPin, Hash, Mail, Phone, Calendar, Briefcase, FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Hash, Mail, Phone, Calendar, Briefcase, FileText, MoreHorizontal, Pencil, Trash2, Radio } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { isLocale, useI18n } from "@/lib/i18n";
 import { ClientQuickWorkflow } from "@/components/clients/ClientQuickWorkflow";
+import { RelationshipChip } from "@/components/shared/RelationshipChip";
 import { useUpdateCustomer, useDeleteCustomer } from "@/hooks/api/useFinance";
+import { useCampaignNames } from "@/hooks/api/useLeads";
 import { isValidEmail, isValidPhone, MAX_NAME_LENGTH } from "@/lib/validation";
 import { toast } from "sonner";
 import {
@@ -18,6 +20,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/integrations/supabase/types";
+
+const LEAD_SOURCE_LABEL: Record<string, string> = {
+  meta_ads: "Meta Ads",
+  manual: "Manual",
+  csv_import: "CSV import",
+  scraper: "Prospecting",
+};
 
 interface Props {
   customer: Tables<"customers">;
@@ -46,6 +55,11 @@ export function ClientHeader({ customer, stats }: Props) {
   const base = `/${locale}/app`;
   const initials = customer.name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase();
   const memberSince = new Date(customer.created_at).toLocaleDateString("da-DK", { month: "short", year: "numeric" });
+
+  const { data: campaignNames } = useCampaignNames();
+  const sourceLabel = customer.lead_source
+    ? [LEAD_SOURCE_LABEL[customer.lead_source] ?? customer.lead_source, customer.campaign_id ? campaignNames?.[customer.campaign_id] : null].filter(Boolean).join(" · ")
+    : null;
 
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
@@ -136,6 +150,14 @@ export function ClientHeader({ customer, stats }: Props) {
               )}
               <span className="text-muted-foreground/70 shrink-0">Klient siden {memberSince}</span>
             </div>
+            {(sourceLabel || customer.converted_from_lead_id) && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {sourceLabel && <RelationshipChip icon={Radio} label={t('pages.leads.sourceLabel')} value={sourceLabel} />}
+                {customer.converted_from_lead_id && (
+                  <RelationshipChip label="Lead" value="Se oprindelig lead" href={`${base}/crm/leads?leadId=${customer.converted_from_lead_id}`} />
+                )}
+              </div>
+            )}
           </div>
         </div>
 

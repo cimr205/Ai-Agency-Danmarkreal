@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, UserCheck, Building2 } from 'lucide-react';
+import { Plus, Search, UserCheck, Building2, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
@@ -23,7 +23,7 @@ export default function EmployeesPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ full_name: '', email: '', position: '', department: '' });
 
-  const { data, isLoading, error } = useEmployees();
+  const { data, isLoading, error, refetch } = useEmployees();
   const createEmployee = useCreateEmployee();
 
   const employees = data ?? [];
@@ -83,7 +83,7 @@ export default function EmployeesPage() {
                   bare
                   icon={UserCheck}
                   title={error ? t('hr.fetchError') : t('hr.noEmployees')}
-                  action={!error ? { label: t('hr.newEmployee'), onClick: () => setIsCreateOpen(true), icon: Plus } : undefined}
+                  action={error ? { label: t('common.retry'), onClick: () => refetch(), icon: RefreshCw } : { label: t('hr.newEmployee'), onClick: () => setIsCreateOpen(true), icon: Plus }}
                 />
               </TableCell></TableRow>)
             : filteredEmployees.map((employee) => (

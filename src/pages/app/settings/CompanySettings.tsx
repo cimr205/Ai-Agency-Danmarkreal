@@ -13,6 +13,8 @@ import { toast as sonnerToast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 import { AccountingConnections } from '@/components/settings/AccountingConnections';
 import { getErrorMessage } from '@/lib/errors';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CompanySettingsPage() {
   const { t, locale } = useI18n();
@@ -25,8 +27,9 @@ export default function CompanySettingsPage() {
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
 
-  useEffect(() => {
+  const fetchCompany = () => {
     if (!user?.company_id) { setLoading(false); return; }
+    setLoading(true);
     if (isAdmin) {
       // Admins get full company data including activation_code, stripe fields
       supabase.from('companies').select('*').eq('id', user.company_id).single()
@@ -36,6 +39,11 @@ export default function CompanySettingsPage() {
       supabase.rpc('get_company_for_user', { _company_id: user.company_id })
         .then(({ data }) => { setCompany(data?.[0] || null); setLoading(false); });
     }
+  };
+
+  useEffect(() => {
+    fetchCompany();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.company_id, isAdmin]);
 
   const handleSave = async () => {
@@ -72,8 +80,8 @@ export default function CompanySettingsPage() {
     }
   };
 
-  if (loading) return <div className="text-sm text-muted-foreground">{t('common.loading')}</div>;
-  if (!company) return <div className="text-sm text-destructive">{t('companySettings.loadError')}</div>;
+  if (loading) return <div className="space-y-4 max-w-2xl"><Skeleton className="h-8 w-48" /><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>;
+  if (!company) return <ErrorState title={t('companySettings.loadError')} onRetry={fetchCompany} />;
 
   // Setup completeness calculation
   const requiredFields = ['name', 'cvr', 'address', 'phone', 'email', 'website'];

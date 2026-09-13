@@ -9,7 +9,6 @@ import { DealBoardView } from '@/components/deals/DealBoardView';
 import { DealListView } from '@/components/deals/DealListView';
 import { DealCalendarView } from '@/components/deals/DealCalendarView';
 import { DealDetailSheet } from '@/components/deals/DealDetailSheet';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +21,9 @@ import { useI18n } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { buildStages, getStageLabelFor, normalizeStageKey, type StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
 
 type DealStage = string;
 
@@ -148,15 +150,19 @@ export default function DealsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('pages.deals.title')}</h1>
-          <p className="text-muted-foreground">{t('pages.deals.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <PipelineStageEditor />
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <PageHeader
+        eyebrow={locale === 'da' ? 'Sales · Pipeline' : 'Sales · Pipeline'}
+        title={t('pages.deals.title')}
+        description={t('pages.deals.subtitle')}
+        stats={!isEmpty ? [
+          { value: totalDeals, label: t('pages.deals.totalDeals') },
+          { value: formatCurrency(totalValue), label: t('pages.deals.pipelineValue') },
+          { value: formatCurrency(wonValue), label: t('pages.deals.wonValue'), tone: 'default' },
+        ] : undefined}
+        actions={
+          <>
+            <PipelineStageEditor />
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('pages.deals.newDeal')}</Button></DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>{t('pages.deals.createTitle')}</DialogTitle><DialogDescription>{t('pages.deals.createSubtitle')}</DialogDescription></DialogHeader>
@@ -204,32 +210,27 @@ export default function DealsPage() {
                 <Button onClick={handleCreate} disabled={createDeal.isPending} className="w-full">{createDeal.isPending ? t('pages.deals.creating') : t('pages.deals.createCta')}</Button>
               </div>
             </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+            </Dialog>
+          </>
+        }
+      />
 
       {/* Empty state onboarding */}
       {isEmpty && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Briefcase className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('pages.deals.emptyTitle')}</h3>
-            <p className="text-muted-foreground mb-4 max-w-md">{t('pages.deals.emptyDesc')}</p>
-            <Button onClick={() => setIsCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('pages.deals.createFirst')}</Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Briefcase}
+          title={t('pages.deals.emptyTitle')}
+          hint={t('pages.deals.emptyDesc')}
+          action={{ label: t('pages.deals.createFirst'), onClick: () => setIsCreateOpen(true), icon: Plus }}
+        />
       )}
 
-      {!isEmpty && (
-        <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.totalDeals')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalDeals}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.pipelineValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.wonValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(wonValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.avgDealValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalDeals ? totalValue / totalDeals : 0)}</div></CardContent></Card>
-          </div>
+      {!isEmpty && error && (
+        <ErrorState title={t('common.error')} onRetry={() => window.location.reload()} />
+      )}
 
+      {!isEmpty && !error && (
+        <>
           {/* Toolbar */}
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">

@@ -4,7 +4,7 @@ import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useAuth } from '@/hooks/useAuth';
-import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useUpdateLeadStatus, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
+import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useUpdateLeadStatus, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, useCampaignNames, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { useModuleAvailability, useSyncCrmContacts } from '@/hooks/api/useIntegrations';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,7 +23,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Plus, Search, Mail, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Save, Briefcase, Sparkles, X, BookmarkPlus, FolderPlus, FolderOpen, Download, MoreHorizontal, SlidersHorizontal, Plug, RefreshCw } from 'lucide-react';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
+import { Plus, Search, Mail, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Save, Briefcase, Sparkles, X, BookmarkPlus, FolderPlus, FolderOpen, Download, MoreHorizontal, SlidersHorizontal, Plug, RefreshCw, Radio } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
@@ -43,6 +44,13 @@ const statusColors: Record<string, string> = {
   qualified: 'bg-success/20 text-success border border-success/30',
   unqualified: 'bg-muted text-muted-foreground border border-border',
   customer: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30',
+};
+
+const LEAD_SOURCE_LABEL: Record<string, string> = {
+  meta_ads: 'Meta Ads',
+  manual: 'Manual',
+  csv_import: 'CSV import',
+  scraper: 'Prospecting',
 };
 
 const INDUSTRY_OPTIONS = [
@@ -95,6 +103,13 @@ function getNextAction(lead: Lead, t: (k: string) => string): string {
     if (days >= 14) return `${t('pages.leads.actionNoActivityIn')} ${days} ${t('pages.leads.days')}`;
   }
   return t('pages.leads.actionAddNextStep');
+}
+
+function getSourceLabel(lead: Lead, campaignNames: Record<string, string> | undefined): string | null {
+  if (!lead.lead_source) return null;
+  const base = LEAD_SOURCE_LABEL[lead.lead_source] ?? lead.lead_source;
+  const campaign = lead.campaign_id ? campaignNames?.[lead.campaign_id] : null;
+  return campaign ? `${base} · ${campaign}` : base;
 }
 
 function isNeedsContact(lead: Lead): boolean {
@@ -208,6 +223,7 @@ export default function LeadsPage() {
     setSearchTimeout(timeout);
   }, [searchTimeout]);
 
+  const { data: campaignNames } = useCampaignNames();
   const { data: result, isLoading, error } = useLeads({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     industry: industryFilter !== 'all' ? industryFilter : undefined,
@@ -977,11 +993,14 @@ export default function LeadsPage() {
                         />
                       </TableCell>
                       <TableCell className={cellPad}>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
-                          <span className="mt-0.5 max-w-[320px] truncate text-xs text-slate-500">
+                          <span className="max-w-[320px] truncate text-xs text-slate-500">
                             {[lead.company_name, lead.email, lead.phone].filter(Boolean).join(' · ')}
                           </span>
+                          {getSourceLabel(lead, campaignNames) && (
+                            <RelationshipChip icon={Radio} value={getSourceLabel(lead, campaignNames)!} muted className="w-fit" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className={cellPad} onClick={e => e.stopPropagation()}>
@@ -1142,6 +1161,11 @@ export default function LeadsPage() {
             <>
               <SheetHeader>
                 <SheetTitle className="text-xl">{selectedLead.name}</SheetTitle>
+                {getSourceLabel(selectedLead, campaignNames) && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <RelationshipChip icon={Radio} label={t('pages.leads.sourceLabel')} value={getSourceLabel(selectedLead, campaignNames)!} />
+                  </div>
+                )}
               </SheetHeader>
               <div className="flex items-center gap-2 mt-4">
                 <a href={`tel:${selectedLead.phone || ''}`} className={!selectedLead.phone ? 'pointer-events-none opacity-40' : ''}>

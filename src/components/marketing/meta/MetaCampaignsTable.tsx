@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, TrendingUp, TrendingDown, Minus, Megaphone, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { useMetaCampaigns } from "@/hooks/api/useMetaAdsData";
+import { useMetaCampaigns, useCampaignAttribution } from "@/hooks/api/useMetaAdsData";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
@@ -15,6 +15,7 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { data: campaigns = [], isLoading } = useMetaCampaigns();
+  const { data: attribution } = useCampaignAttribution();
 
   const filtered = useMemo(() => campaigns.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
@@ -60,6 +61,9 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
                 <TableHead className="text-xs text-right">{t('metaAds.ctr')}</TableHead>
                 <TableHead className="text-xs text-right">{t('metaAds.cpc')}</TableHead>
                 <TableHead className="text-xs text-right">{t('metaAds.conv')}</TableHead>
+                {!compact && <TableHead className="text-xs text-right">{t('metaAds.leads')}</TableHead>}
+                {!compact && <TableHead className="text-xs text-right">{t('metaAds.won')}</TableHead>}
+                <TableHead className="text-xs text-right">{t('metaAds.revenue')}</TableHead>
                 <TableHead className="text-xs text-right">{t('metaAds.roas')}</TableHead>
                 <TableHead className="text-xs text-center">{t('metaAds.trend')}</TableHead>
               </TableRow>
@@ -67,13 +71,13 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={compact ? 8 : 9} className="text-center py-12">
+                  <TableCell colSpan={compact ? 9 : 12} className="text-center py-12">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={compact ? 8 : 9} className="text-center py-12">
+                  <TableCell colSpan={compact ? 9 : 12} className="text-center py-12">
                     <div className="flex flex-col items-center">
                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-2">
                         <Megaphone className="h-5 w-5 text-muted-foreground" />
@@ -84,7 +88,10 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((c) => (
+                filtered.map((c) => {
+                  const attr = attribution?.[c.id];
+                  const roas = attr && c.spend > 0 ? attr.revenue / c.spend : null;
+                  return (
                   <TableRow key={c.id}>
                     <TableCell className="text-sm font-medium">{c.name}</TableCell>
                     <TableCell>
@@ -95,14 +102,18 @@ export function MetaCampaignsTable({ compact }: { compact?: boolean }) {
                     <TableCell className="text-sm text-right">{c.ctr.toFixed(2)}%</TableCell>
                     <TableCell className="text-sm text-right">{formatCurrency(c.cpc)}</TableCell>
                     <TableCell className="text-sm text-right">{c.conversions}</TableCell>
-                    <TableCell className="text-sm text-right text-muted-foreground">—</TableCell>
+                    {!compact && <TableCell className="text-sm text-right text-muted-foreground">{attr?.leads ?? 0}</TableCell>}
+                    {!compact && <TableCell className="text-sm text-right text-muted-foreground">{attr?.won ?? 0}</TableCell>}
+                    <TableCell className="text-sm text-right">{attr && attr.revenue > 0 ? formatCurrency(attr.revenue) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm text-right">{roas !== null ? `${roas.toFixed(1)}x` : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-center">
                       {c.trend === 'up' ? <TrendingUp className="h-3.5 w-3.5 text-emerald-500 mx-auto" /> :
                        c.trend === 'down' ? <TrendingDown className="h-3.5 w-3.5 text-destructive mx-auto" /> :
                        <Minus className="h-3.5 w-3.5 text-muted-foreground mx-auto" />}
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -49,9 +49,10 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, emailsRes, calRes, activitiesRes] = await Promise.all([
+      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
+        supabase.from("quotes").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         customerEmailLower
           ? supabase.from("emails")
               .select("id,subject,from_address,from_name,received_at,snippet")
@@ -74,9 +75,11 @@ export function useClientGraph(customerId: string | undefined) {
 
       if (dealsRes.error) throw dealsRes.error;
       if (invoicesRes.error) throw invoicesRes.error;
+      if (quotesRes.error) throw quotesRes.error;
 
       const deals = dealsRes.data ?? [];
       const invoices = invoicesRes.data ?? [];
+      const quotes = quotesRes.data ?? [];
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
       const activities = activitiesRes.data ?? [];
@@ -96,6 +99,15 @@ export function useClientGraph(customerId: string | undefined) {
           at: e.received_at,
           title: e.subject || "(uden emne)",
           meta: `fra ${e.from_name || e.from_address}`,
+        });
+      }
+      for (const q of quotes) {
+        tl.push({
+          id: `q:${q.id}`, kind: "invoice",
+          at: q.accepted_at || q.sent_at || q.created_at,
+          title: `Tilbud: ${q.title}`,
+          meta: q.accepted_at ? ACTIVITY_TYPE_LABELS.quote_accepted : q.sent_at ? ACTIVITY_TYPE_LABELS.quote_sent : q.status,
+          amount: Number(q.total),
         });
       }
       for (const inv of invoices) {
@@ -157,7 +169,7 @@ export function useClientGraph(customerId: string | undefined) {
 
       return {
         customer,
-        deals, invoices, payments, emails, meetings, activities,
+        deals, invoices, quotes, payments, emails, meetings, activities,
         timeline: tl,
         stats: {
           openDeals: deals.filter(d => !["won", "lost"].includes(d.stage)).length,

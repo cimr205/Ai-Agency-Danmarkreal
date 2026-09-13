@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,12 +16,6 @@ import { Plus, CreditCard, CheckCircle, Clock, Building2, Smartphone, Download }
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
-
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-700',
-  completed: 'bg-accent/10 text-accent',
-  failed: 'bg-destructive/10 text-destructive',
-};
 
 const paymentMethods = [
   { value: 'bank_transfer', label: 'bankTransfer', icon: Building2 },
@@ -202,6 +197,7 @@ export default function PaymentsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('payments.invoiceCol')}</TableHead>
+              <TableHead>{t('pages.deals.customer')}</TableHead>
               <TableHead>{t('payments.methodCol')}</TableHead>
               <TableHead className="text-right">{t('payments.amountCol')}</TableHead>
               <TableHead>{t('payments.statusCol')}</TableHead>
@@ -210,9 +206,9 @@ export default function PaymentsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>{Array.from({ length: 5 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
+              <TableRow key={i}>{Array.from({ length: 6 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
             )) : filteredPayments.length === 0 ? (
-              <TableRow><TableCell colSpan={5}>
+              <TableRow><TableCell colSpan={6}>
                 <EmptyState
                   bare
                   icon={CreditCard}
@@ -223,11 +219,12 @@ export default function PaymentsPage() {
             ) : filteredPayments.map(payment => (
               <TableRow key={payment.id}>
                 <TableCell className="font-mono font-medium">{payment.invoices?.invoice_number || '–'}</TableCell>
+                <TableCell className="text-muted-foreground">{payment.invoices?.customers?.name || '–'}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{methodLabels[payment.payment_method || ''] || payment.payment_method || '–'}</Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(payment.amount))}</TableCell>
-                <TableCell><Badge className={statusColors[payment.status]}>{statusLabels[payment.status]}</Badge></TableCell>
+                <TableCell><StatusBadge status={payment.status} label={statusLabels[payment.status]} /></TableCell>
                 <TableCell className="text-muted-foreground">{payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : '–'}</TableCell>
               </TableRow>
             ))}

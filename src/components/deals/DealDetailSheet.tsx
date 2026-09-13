@@ -5,14 +5,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Trophy, XCircle, Mic } from 'lucide-react';
+import { Briefcase, Trophy, XCircle, Mic, Mail, CheckSquare, Rocket, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { DealCoachPanel } from '@/components/deals/DealCoachPanel';
 import { MeetingSummaryDialog } from '@/components/deals/MeetingSummaryDialog';
 import type { DealWithCustomer } from '@/hooks/api/useDeals';
+import { useDealActivity } from '@/hooks/api/useDealActivity';
+import { StatusBadge } from '@/components/shared/StatusBadge';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
 import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon } from '@/lib/deals/wonValidation';
+
+const LEAD_SOURCE_LABEL: Record<string, string> = {
+  meta_ads: 'Meta Ads',
+  manual: 'Manual',
+  csv_import: 'CSV import',
+  scraper: 'Prospecting',
+};
 
 type Customer = Tables<'customers'>;
 
@@ -36,6 +46,7 @@ export function DealDetailSheet({
   onMarkLost: (dealId: string) => void;
 }) {
   const [meetingSummaryOpen, setMeetingSummaryOpen] = useState(false);
+  const { data: activity } = useDealActivity(deal?.id);
   const notesPlaceholder = locale === 'da'
     ? 'Tilføj næste skridt, indvendinger og kontekst...'
     : locale === 'de'
@@ -50,6 +61,11 @@ export function DealDetailSheet({
             <>
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" />{deal.title}</SheetTitle>
+                {deal.customers?.lead_source && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <RelationshipChip icon={Radio} label={locale === 'da' ? 'Kilde' : 'Source'} value={LEAD_SOURCE_LABEL[deal.customers.lead_source] ?? deal.customers.lead_source} />
+                  </div>
+                )}
               </SheetHeader>
               <div className="space-y-6 mt-6">
                 <div className="grid grid-cols-2 gap-4">
@@ -117,6 +133,33 @@ export function DealDetailSheet({
                     }}
                   />
                 </div>
+
+                {activity && (activity.emails.length > 0 || activity.tasks.length > 0 || activity.onboarding) && (
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <Label className="text-xs text-muted-foreground">{locale === 'da' ? 'Historik' : 'Story'}</Label>
+                    {activity.onboarding && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Rocket className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="flex-1">{locale === 'da' ? 'Onboarding' : 'Onboarding'}</span>
+                        <StatusBadge status={activity.onboarding.status} />
+                      </div>
+                    )}
+                    {activity.tasks.map((task) => (
+                      <div key={task.id} className="flex items-center gap-2 text-sm">
+                        <CheckSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="flex-1 truncate">{task.title}</span>
+                        <StatusBadge status={task.status} />
+                      </div>
+                    ))}
+                    {activity.emails.map((email) => (
+                      <div key={email.id} className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="flex-1 truncate">{email.subject || email.from_address}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">{new Date(email.received_at).toLocaleDateString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <DealCoachPanel dealId={deal.id} dealTitle={deal.title} />
 

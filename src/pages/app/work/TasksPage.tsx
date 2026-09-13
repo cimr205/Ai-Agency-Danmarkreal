@@ -16,6 +16,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Clock, CheckCircle, AlertCircle, User, MoreHorizontal, Archive, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
+import { Target, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 
@@ -23,6 +26,7 @@ type Task = {
   id: string; title: string; description?: string | null; status: string;
   due_date?: string | null; priority?: string | null; assigned_to?: string | null;
   completed_at?: string | null; created_at: string; archived: boolean;
+  lead_id?: string | null; deal_id?: string | null;
   assigned_profile?: { full_name: string | null; email: string } | null;
 };
 
@@ -71,7 +75,7 @@ export default function TasksPage() {
   const { data: leadsData } = useLeads({ page: 0 });
   const { data: dealsData } = useDeals();
   const { data: teamProfiles } = useTeamProfiles();
-  const { data, isLoading, error } = useTasks({ archived: view === 'archived' });
+  const { data, isLoading, error, refetch } = useTasks({ archived: view === 'archived' });
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const updateTaskStatus = useUpdateTaskStatus();
@@ -213,6 +217,8 @@ export default function TasksPage() {
   const TaskCard = ({ task }: { task: Task }) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
     const assigneeName = task.assigned_profile?.full_name;
+    const linkedLead = task.lead_id ? (leadsData?.data || []).find((l) => l.id === task.lead_id) : null;
+    const linkedDeal = task.deal_id ? (dealsData || []).find((d) => d.id === task.deal_id) : null;
     return (
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
         <CardContent className="p-4">
@@ -229,6 +235,12 @@ export default function TasksPage() {
                 {task.archived && <Badge variant="outline">Arkiveret</Badge>}
               </div>
               {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>}
+              {(linkedLead || linkedDeal) && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {linkedLead && <RelationshipChip icon={Target} label={t('nav.leads')} value={linkedLead.name} />}
+                  {linkedDeal && <RelationshipChip icon={Briefcase} label={t('nav.deals')} value={linkedDeal.title} />}
+                </div>
+              )}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {assigneeName && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -413,7 +425,7 @@ export default function TasksPage() {
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (<Card key={i}><CardContent className="p-4"><div className="flex items-start gap-3"><Skeleton className="h-4 w-4 mt-1" /><div className="flex-1"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-4 w-32" /></div></div></CardContent></Card>))}</div>
       ) : error ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.fetchError')}</CardContent></Card>
+        <ErrorState title={t('pages.tasks.fetchError')} onRetry={() => refetch()} />
       ) : viewFiltered.length === 0 ? (
         <EmptyState icon={CheckCircle} title={t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
       ) : (

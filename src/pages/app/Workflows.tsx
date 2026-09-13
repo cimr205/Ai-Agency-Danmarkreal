@@ -66,7 +66,11 @@ export default function WorkflowsPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showWorkflows, setShowWorkflows] = useState(false);
+  // Defaults open: this sidebar is the only place that shows workflow status,
+  // run counts and errors in structured (non-chat) form — hiding it by
+  // default left users with no visible way to see whether an automation
+  // they asked the assistant to build is actually active or failing.
+  const [showWorkflows, setShowWorkflows] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -254,22 +258,29 @@ export default function WorkflowsPage() {
               <div className="p-3 border-b border-border/50 space-y-2">
                 <h4 className="text-xs font-semibold text-muted-foreground">Skabeloner</h4>
                 {templates.map((tpl) => (
-                  <div key={tpl.id} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="truncate" title={tpl.description ?? undefined}>{tpl.name}</span>
-                    <Button
-                      size="sm" variant="outline" className="h-6 px-2 text-xs shrink-0"
-                      disabled={instantiateTemplate.isPending}
-                      onClick={async () => {
-                        try {
-                          await instantiateTemplate.mutateAsync(tpl.key);
-                          toast.success("Workflow oprettet fra skabelon — husk at sætte en webhook-url");
-                        } catch (err) {
-                          toast.error(getErrorMessage(err) || "Kunne ikke oprette workflow");
-                        }
-                      }}
-                    >
-                      Brug
-                    </Button>
+                  <div key={tpl.id} className="rounded-lg border border-border/50 p-2 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium truncate" title={tpl.description ?? undefined}>{tpl.name}</span>
+                      <Button
+                        size="sm" variant="outline" className="h-6 px-2 text-xs shrink-0"
+                        disabled={instantiateTemplate.isPending}
+                        onClick={async () => {
+                          try {
+                            await instantiateTemplate.mutateAsync(tpl.key);
+                            toast.success("Workflow oprettet fra skabelon — husk at sætte en webhook-url");
+                          } catch (err) {
+                            toast.error(getErrorMessage(err) || "Kunne ikke oprette workflow");
+                          }
+                        }}
+                      >
+                        Brug
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      {EVENT_LABELS[tpl.trigger_event] || tpl.trigger_event}
+                      <ArrowRight className="h-2.5 w-2.5 shrink-0" />
+                      {actionLabel({ action_type: tpl.action_type })}
+                    </p>
                   </div>
                 ))}
               </div>

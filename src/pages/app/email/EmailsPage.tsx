@@ -16,6 +16,7 @@ import { useGmailAccount, useConnectGmail, useDisconnectGmail, useSyncEmails, us
 import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
 
 type Email = Tables<'emails'> & {
   customers: Pick<Tables<'customers'>, 'id' | 'name'> | null;
@@ -465,6 +466,10 @@ export default function EmailsPage() {
                         {cfg && <Badge variant="outline" className={`text-xs shrink-0 ${cfg.color}`}>{cfg.label}</Badge>}
                         {!email.is_read && <Badge className="bg-primary text-primary-foreground text-xs shrink-0">{t('pages.email.new')}</Badge>}
                         {email.customers && <Badge variant="secondary" className="text-xs shrink-0">{email.customers.name}</Badge>}
+                        {email.deals && <Badge variant="outline" className="text-xs shrink-0">{email.deals.title}</Badge>}
+                        {!email.customers && !email.deals && (
+                          <RelationshipChip muted value={locale === 'da' ? 'Ukendt afsender' : 'Unmatched sender'} className="shrink-0" />
+                        )}
                       </div>
                       <p className={`text-sm truncate ${!email.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{email.snippet}</p>
@@ -509,16 +514,17 @@ export default function EmailsPage() {
                     <p className="text-xs font-medium text-accent">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
                   </div>
                 )}
-                {(selectedEmail.customers || selectedEmail.deals) && (
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {selectedEmail.customers && (
-                      <Badge variant="secondary">{locale === 'da' ? 'Kontakt' : 'Contact'}: {selectedEmail.customers.name}</Badge>
-                    )}
-                    {selectedEmail.deals && (
-                      <Badge variant="secondary">{locale === 'da' ? 'Deal' : 'Deal'}: {selectedEmail.deals.title}</Badge>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {selectedEmail.customers && (
+                    <Badge variant="secondary">{locale === 'da' ? 'Kontakt' : 'Contact'}: {selectedEmail.customers.name}</Badge>
+                  )}
+                  {selectedEmail.deals && (
+                    <Badge variant="secondary">{locale === 'da' ? 'Deal' : 'Deal'}: {selectedEmail.deals.title}</Badge>
+                  )}
+                  {!selectedEmail.customers && !selectedEmail.deals && (
+                    <RelationshipChip muted value={locale === 'da' ? 'Ingen match i CRM' : 'No CRM match'} />
+                  )}
+                </div>
               </DialogHeader>
               <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
                 {selectedEmail.body_html ? (

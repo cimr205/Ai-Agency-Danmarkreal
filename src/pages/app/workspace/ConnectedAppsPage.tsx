@@ -18,6 +18,7 @@ import {
   type Integration,
 } from "@/hooks/api/useIntegrations";
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { isLocale } from "@/lib/i18n";
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
@@ -235,7 +236,7 @@ export default function ConnectedAppsPage() {
   const [q, setQ] = useState("");
   const [active, setActive] = useState<Catalog | null>(null);
   const [showFullCatalog, setShowFullCatalog] = useState(false);
-  const { data: integrations = [], isLoading } = useIntegrations();
+  const { data: integrations = [], isLoading, error, refetch } = useIntegrations();
   const { data: availability } = useModuleAvailability();
   const disconnect = useDisconnectIntegration();
   const disconnectComposio = useDisconnectComposioConnection();
@@ -330,6 +331,13 @@ export default function ConnectedAppsPage() {
           />
         </div>
       </header>
+
+      {error && (
+        <ErrorState
+          title="Kunne ikke hente jeres forbindelser — modulerne nedenfor kan vise forkert status indtil dette virker igen."
+          onRetry={() => refetch()}
+        />
+      )}
 
       <section className="space-y-3">
         <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Aktive moduler</div>

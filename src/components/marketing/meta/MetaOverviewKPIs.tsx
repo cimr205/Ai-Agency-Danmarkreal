@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
+import { useCampaignAttribution } from "@/hooks/api/useMetaAdsData";
 
 type BalanceView = "funds" | "outstanding";
 
@@ -44,6 +45,8 @@ export function MetaOverviewKPIs() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [data, setData] = useState<KpiData>(emptyKpi);
   const [loading, setLoading] = useState(false);
+  const [accountRevenue, setAccountRevenue] = useState<number | null>(null);
+  const { data: attribution } = useCampaignAttribution();
 
   // Fetch all ad accounts on mount
   useEffect(() => {
@@ -99,6 +102,24 @@ export function MetaOverviewKPIs() {
     fetchKpis(selectedAccountId, account?.currency || "DKK");
   }, [selectedAccountId, accounts, fetchKpis]);
 
+  // Revenue for the selected ad account = sum of won-deal revenue across
+  // that account's campaigns (useCampaignAttribution, keyed by
+  // meta_campaigns.id). Resolved separately from fetchKpis since it doesn't
+  // depend on the Graph API insights fetch.
+  useEffect(() => {
+    if (!selectedAccountId || !attribution) { setAccountRevenue(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: account } = await supabase.from("meta_ad_accounts").select("id").eq("account_id", selectedAccountId).single();
+      if (!account) return;
+      const { data: campaigns } = await supabase.from("meta_campaigns").select("id").eq("ad_account_id", account.id);
+      if (cancelled) return;
+      const revenue = (campaigns ?? []).reduce((sum, c) => sum + (attribution[c.id]?.revenue ?? 0), 0);
+      setAccountRevenue(revenue);
+    })();
+    return () => { cancelled = true; };
+  }, [selectedAccountId, attribution]);
+
   const selectedAccount = accounts.find(a => a.account_id === selectedAccountId);
   const selectedLabel = selectedAccount?.account_name || selectedAccount?.account_id || t('metaAds.selectAccount');
 
@@ -121,7 +142,13 @@ export function MetaOverviewKPIs() {
     { label: t('metaAds.impressions'), icon: Eye, value: data.impressions || "–" },
     { label: t('metaAds.clicks'), icon: MousePointerClick, value: data.clicks || "–" },
     { label: t('metaAds.avgCtr'), icon: BarChart3, value: data.ctr || "–" },
-    { label: t('metaAds.roas'), icon: TrendingUp, value: "–" },
+    {
+      label: t('metaAds.roas'),
+      icon: TrendingUp,
+      value: accountRevenue !== null && data.totalSpend && Number(data.totalSpend) > 0
+        ? `${(accountRevenue / Number(data.totalSpend)).toFixed(1)}x`
+        : "–",
+    },
   ];
 
   return (

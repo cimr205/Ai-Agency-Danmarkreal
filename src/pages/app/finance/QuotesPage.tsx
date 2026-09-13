@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,14 +19,6 @@ import { useLeads } from '@/hooks/api/useLeads';
 import type { Json } from '@/integrations/supabase/types';
 
 type QuoteLine = { description: string; quantity: number; unit_price: number };
-
-const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  sent: 'bg-primary/10 text-primary',
-  accepted: 'bg-emerald-500/10 text-emerald-600',
-  rejected: 'bg-destructive/10 text-destructive',
-  expired: 'bg-muted text-muted-foreground',
-};
 
 function useQuotes() {
   return useQuery({
@@ -235,7 +227,7 @@ export default function QuotesPage() {
                 {filteredQuotes.map((quote) => (
                   <TableRow key={quote.id}>
                     <TableCell className="font-medium">{quote.title}</TableCell>
-                    <TableCell><Badge className={statusColors[quote.status] || ''}>{quote.status}</Badge></TableCell>
+                    <TableCell><StatusBadge status={quote.status} /></TableCell>
                     <TableCell className="font-medium">{formatCurrency(quote.total)}</TableCell>
                     <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString()}</TableCell>

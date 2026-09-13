@@ -84,6 +84,24 @@ export function useDeleteSavedFilter() {
   });
 }
 
+// Cheap id->name lookup for showing campaign attribution next to a lead's
+// source (e.g. "Meta Ads · Spring Sale") without pulling in the heavier
+// spend/impressions aggregation useMetaCampaigns() does for the Marketing
+// pages.
+export function useCampaignNames() {
+  return useQuery({
+    queryKey: ['campaign_names'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('meta_campaigns').select('id, name');
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((c) => { map[c.id] = c.name; });
+      return map;
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
 export function useAllLeadTags() {
   return useQuery({
     queryKey: ['lead_tags_all'],

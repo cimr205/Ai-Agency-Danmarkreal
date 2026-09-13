@@ -6,16 +6,28 @@ const STATUS_TONE: Record<string, string> = {
   draft: "text-muted-foreground/60",
   sent: "text-foreground/70",
   overdue: "text-destructive",
+  accepted: "text-emerald-500/90",
+  rejected: "text-destructive",
+  expired: "text-muted-foreground/60",
 };
 
-export function ClientLedger({ invoices, payments }: { invoices: Tables<"invoices">[]; payments: Tables<"payments">[] }) {
+export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<"invoices">[]; payments: Tables<"payments">[]; quotes: Tables<"quotes">[] }) {
   const { format } = useCurrency();
-  if (invoices.length === 0 && payments.length === 0) {
+  if (invoices.length === 0 && payments.length === 0 && quotes.length === 0) {
     return <div className="text-[12.5px] text-muted-foreground/70">Ingen økonomiske bevægelser.</div>;
   }
 
   type Row = { id: string; date: string; label: string; tone?: string; amount: number; sign: 1 | -1 };
   const rows: Row[] = [];
+  for (const q of quotes) {
+    rows.push({
+      id: `q-${q.id}`,
+      date: q.accepted_at || q.sent_at || q.created_at,
+      label: `Tilbud: ${q.title}`,
+      tone: STATUS_TONE[q.status] || STATUS_TONE.draft,
+      amount: Number(q.total), sign: 1,
+    });
+  }
   for (const i of invoices) {
     const overdue = i.status !== "paid" && i.due_date && new Date(i.due_date) < new Date();
     rows.push({
