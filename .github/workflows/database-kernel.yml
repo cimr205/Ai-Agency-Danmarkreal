@@ -38,6 +38,7 @@ jobs:
       - name: Generated types are current
         run: |
           supabase gen types typescript --local > /tmp/database.types.ts
+          sed -i '${/^$/d;}' /tmp/database.types.ts
           diff -u src/integrations/supabase/types.ts /tmp/database.types.ts
       - name: Upload generated database types
         if: always()
