@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
+import { useInvoices, useCreateInvoice, useCreateInvoiceCheckout, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
 import { useModuleAvailability, useSyncFinancePayments } from '@/hooks/api/useIntegrations';
 import { useGmailAccount, useConnectGmail, useSendEmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
@@ -167,6 +167,7 @@ export default function InvoicesPage() {
   const createInvoice = useCreateInvoice();
   const createCustomer = useCreateCustomer();
   const updateStatus = useUpdateInvoiceStatus();
+  const createCheckout = useCreateInvoiceCheckout();
   const deleteInvoice = useDeleteInvoice();
 
   const templateOptions = useMemo(() => getTemplateOptions(locale), [locale]);
@@ -765,6 +766,16 @@ export default function InvoicesPage() {
                 <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
+                    {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Åbn Stripe-betaling' : 'Open Stripe payment'} onClick={async () => {
+                        try {
+                          const checkout = await createCheckout.mutateAsync(invoice.id);
+                          window.open(checkout.checkout_url, '_blank', 'noopener,noreferrer');
+                        } catch (error) { toast.error(getErrorMessage(error)); }
+                      }}>
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
                     {invoice.status !== 'paid' && (
                       <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
                         try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }

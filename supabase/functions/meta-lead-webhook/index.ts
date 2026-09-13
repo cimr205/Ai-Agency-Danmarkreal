@@ -1,13 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { decryptMetaToken } from "../_shared/metaToken.ts";
+import { verifyMetaSignature } from "../_shared/providerSignatures.ts";
 
 const json = (body:unknown,status=200) => new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json"}});
-const hex = (bytes:ArrayBuffer) => [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,"0")).join("");
-const safeEqual = (a:string,b:string) => {
-  if(a.length!==b.length) return false;
-  let mismatch=0; for(let i=0;i<a.length;i++) mismatch|=a.charCodeAt(i)^b.charCodeAt(i);
-  return mismatch===0;
-};
 
 Deno.serve(async (req) => {
   const url=new URL(req.url);
@@ -20,9 +15,7 @@ Deno.serve(async (req) => {
   const raw=await req.text();
   const secret=Deno.env.get("META_APP_SECRET")??"";
   const supplied=req.headers.get("x-hub-signature-256")??"";
-  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
-  const expected=`sha256=${hex(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(raw)))}`;
-  if(!secret || !safeEqual(supplied,expected)) return new Response("Invalid signature",{status:401});
+  if(!await verifyMetaSignature(raw,supplied,secret)) return new Response("Invalid signature",{status:401});
   const payload=JSON.parse(raw) as {entry?:Array<{id?:string;changes?:Array<{field?:string;value?:{leadgen_id?:string;form_id?:string;ad_id?:string;page_id?:string}}>} >};
   const db=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false,autoRefreshToken:false}});
   const outcomes=[];

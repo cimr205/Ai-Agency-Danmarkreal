@@ -63,9 +63,8 @@ begin
     return jsonb_build_object('event_id',v_event_id,'idempotent_replay',false,'ambiguous_identity',true);
   else
     if v_email is null then raise exception 'Meta lead without deterministic email cannot be created safely' using errcode = '22023'; end if;
-    select user_id into v_actor from public.profiles where company_id=p_company_id order by created_at limit 1;
     insert into public.customers(company_id,name,email,phone,record_type,status,created_by,acquisition_source,acquisition_detail,source_event_id,attribution)
-    values(p_company_id,coalesce(nullif(trim(p_name),''),v_email),v_email,p_phone,'lead','new',v_actor,'meta','lead_form',null,
+    values(p_company_id,coalesce(nullif(trim(p_name),''),v_email),v_email,p_phone,'lead','new',null,'meta','lead_form',null,
       jsonb_build_object('account_id',p_account_id,'campaign_id',p_campaign_id,'adset_id',p_adset_id,'ad_id',p_ad_id,'form_id',p_form_id,'raw',p_raw))
     returning * into v_contact;
   end if;
@@ -308,7 +307,7 @@ begin
     on conflict(workflow_id,event_id) do nothing
     returning *
   loop
-    select user_id into v_actor from public.profiles where company_id=new.company_id order by created_at limit 1;
+    v_actor := null;
     for v_step in select value as definition,ordinality::integer-1 as step_index
       from jsonb_array_elements((select steps from public.workflows where id=v_run.workflow_id)) with ordinality
     loop

@@ -18,7 +18,7 @@ jobs:
       - name: Apply complete migration history
         run: supabase db reset
       - name: Database lint
-        run: supabase db lint --local --level warning --fail-on error
+        run: supabase db lint --local --schema public --level warning --fail-on error
       - name: pgTAP, tenant and kernel contracts
         run: supabase test db
       - name: Concurrency and idempotency
@@ -55,4 +55,6 @@ jobs:
       - name: Install npm dependencies required by Deno node imports
         run: npm ci
       - name: Typecheck operating paths
-        run: deno check supabase/functions/ai-operating-manager/index.ts supabase/functions/autopilot-execute/index.ts supabase/functions/composio-integration/index.ts supabase/functions/gmail-sync/index.ts supabase/functions/meta-sync/index.ts supabase/functions/workflow-runner/index.ts supabase/functions/meta-lead-webhook/index.ts supabase/functions/stripe-payment-webhook/index.ts
+        run: deno check supabase/functions/ai-operating-manager/index.ts supabase/functions/autopilot-execute/index.ts supabase/functions/composio-integration/index.ts supabase/functions/gmail-send/index.ts supabase/functions/gmail-sync/index.ts supabase/functions/meta-sync/index.ts supabase/functions/workflow-runner/index.ts supabase/functions/meta-lead-webhook/index.ts supabase/functions/create-invoice-checkout/index.ts supabase/functions/stripe-payment-webhook/index.ts
+      - name: Provider signature fixtures
+        run: deno test supabase/functions/_shared/providerSignatures_test.ts

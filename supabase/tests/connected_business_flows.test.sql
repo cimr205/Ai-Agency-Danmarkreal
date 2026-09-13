@@ -1,6 +1,7 @@
 -- Runtime contract for the four connected operating-kernel flows.
 -- Requires a migrated Supabase database with at least two profiles.
 begin;
+select plan(1);
 
 do $$
 declare
@@ -75,4 +76,6 @@ begin
   if not exists(select 1 from public.workspace_events where company_id=a.company_id and type='payment.received' and entity_id=payment->>'payment_id') then raise exception 'Payment event missing'; end if;
 end $$;
 
+select pass('connected business flows completed');
+select * from finish();
 rollback;

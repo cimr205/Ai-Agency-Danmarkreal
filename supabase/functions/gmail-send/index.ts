@@ -31,7 +31,13 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     const body = await req.json();
-    const { to, subject, message, cc, reply_to_message_id, attachments, html } = body;
+    const { to, subject, message, cc, reply_to_message_id, attachments, html, customer_id, deal_id } = body;
+
+    if (!to || !subject || !message) {
+      return new Response(JSON.stringify({ error: "Missing required fields: to, subject, message" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // If html is provided use it directly; otherwise convert plain text to HTML
     const htmlBody = html ? html : `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${message
@@ -39,12 +45,6 @@ Deno.serve(async (req) => {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br>')}</body></html>`;
-
-    if (!to || !subject || !message) {
-      return new Response(JSON.stringify({ error: "Missing required fields: to, subject, message" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -109,6 +109,36 @@ Deno.serve(async (req) => {
       return `=?UTF-8?B?${btoa(binary)}?=`;
     }
 
+    let parent: { thread_id: string | null; internet_message_id: string | null; reference_ids: string[] | null; contact_id: string | null; deal_id: string | null } | null = null;
+    if (reply_to_message_id) {
+      const { data } = await supabaseAdmin.from("emails")
+        .select("thread_id,internet_message_id,reference_ids,contact_id,deal_id")
+        .eq("company_id", account.company_id).eq("email_account_id", account.id)
+        .or(`id.eq.${reply_to_message_id},gmail_id.eq.${reply_to_message_id}`).maybeSingle();
+      parent = data;
+      if (!parent) return new Response(JSON.stringify({ error: "Reply target was not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    let linkedContactId: string | null = parent?.contact_id ?? null;
+    let linkedDealId: string | null = parent?.deal_id ?? null;
+    if (customer_id) {
+      const { data } = await supabaseAdmin.from("customers").select("id").eq("id", customer_id).eq("company_id", account.company_id).maybeSingle();
+      if (!data) return new Response(JSON.stringify({ error: "Customer does not belong to workspace" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      linkedContactId = data.id;
+    }
+    if (deal_id) {
+      const { data } = await supabaseAdmin.from("deals").select("id,customer_id").eq("id", deal_id).eq("company_id", account.company_id).maybeSingle();
+      if (!data || (linkedContactId && data.customer_id !== linkedContactId)) return new Response(JSON.stringify({ error: "Deal does not match workspace/customer" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      linkedDealId = data.id;
+      linkedContactId = linkedContactId ?? data.customer_id;
+    }
+    const internetMessageId = `<${crypto.randomUUID()}@aiagencydanmark.local>`;
+    const references = [...(parent?.reference_ids ?? []), ...(parent?.internet_message_id ? [parent.internet_message_id] : [])];
+    const continuityHeaders = [
+      `Message-ID: ${internetMessageId}`,
+      ...(parent?.internet_message_id ? [`In-Reply-To: ${parent.internet_message_id}`] : []),
+      ...(references.length ? [`References: ${references.join(" ")}`] : []),
+    ];
+
     // Build RFC 2822 email
     let rawEmail: string;
     const hasAttachments = attachments && Array.isArray(attachments) && attachments.length > 0;
@@ -120,6 +150,7 @@ Deno.serve(async (req) => {
         `To: ${to}`,
         ...(cc ? [`Cc: ${cc}`] : []),
         `Subject: ${encodeSubject(subject)}`,
+        ...continuityHeaders,
         "MIME-Version: 1.0",
         `Content-Type: multipart/mixed; boundary="${boundary}"`,
         "",
@@ -148,6 +179,7 @@ Deno.serve(async (req) => {
         `To: ${to}`,
         ...(cc ? [`Cc: ${cc}`] : []),
         `Subject: ${encodeSubject(subject)}`,
+        ...continuityHeaders,
         "MIME-Version: 1.0",
         'Content-Type: text/html; charset="UTF-8"',
         "Content-Transfer-Encoding: 8bit",
@@ -164,7 +196,7 @@ Deno.serve(async (req) => {
 
     const sendBody: { raw: string; threadId?: string } = { raw: encodedEmail };
     if (reply_to_message_id) {
-      sendBody.threadId = reply_to_message_id;
+      if (parent?.thread_id) sendBody.threadId = parent.thread_id;
     }
 
     const sendRes = await fetch(sendUrl, {
@@ -186,12 +218,26 @@ Deno.serve(async (req) => {
 
     const sendData = await sendRes.json();
 
-    return new Response(JSON.stringify({ success: true, message_id: sendData.id }), {
+    const { error: persistError } = await supabaseAdmin.from("emails").upsert({
+      email_account_id: account.id, company_id: account.company_id, user_id: userId,
+      gmail_id: sendData.id, provider_message_id: sendData.id, thread_id: sendData.threadId ?? parent?.thread_id ?? null,
+      internet_message_id: internetMessageId, in_reply_to: parent?.internet_message_id ?? null, reference_ids: references,
+      from_address: account.email_address, from_name: account.email_address, to_addresses: [to], cc_addresses: cc ? [cc] : [],
+      subject, snippet: message.slice(0, 240), body_text: message.slice(0, 10000), body_html: htmlBody.slice(0, 50000),
+      labels: ["SENT"], is_read: true, direction: "outbound", routing_status: linkedContactId ? "matched" : "unmatched",
+      contact_id: linkedContactId, deal_id: linkedDealId, received_at: new Date().toISOString(),
+    }, { onConflict: "email_account_id,gmail_id" });
+    if (persistError) {
+      console.error("Outbound email persistence failed", persistError);
+      return new Response(JSON.stringify({ error: "Email sent but continuity persistence failed", message_id: sendData.id }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ success: true, message_id: sendData.id, thread_id: sendData.threadId ?? parent?.thread_id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("gmail-send error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
     const body = await req.json() as Record<string, unknown>;
     if (body.action === "drain") {
-      if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) return json({ error: "Service role required" }, 403);
+      if (!Deno.env.get("WORKFLOW_DRAIN_SECRET") || token !== Deno.env.get("WORKFLOW_DRAIN_SECRET")) return json({ error: "Internal scheduler secret required" }, 403);
       const workerId = typeof body.worker_id === "string" && body.worker_id.trim() ? body.worker_id : crypto.randomUUID();
       return json(await drainDurableQueue(workerId, typeof body.limit === "number" ? body.limit : 10));
     }
@@ -132,14 +132,10 @@ Deno.serve(async (req) => {
       trace.push({ step: `action:${wf.action_type}`, status: "skip", detail: "Handlingstype ikke understøttet endnu" });
     }
 
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      company_id: companyId,
-      action_type: mode === "test" ? "workflow_test" : "workflow_run",
-      entity_type: "workflow",
-      entity_id: wf.id,
-      description: `Workflow "${wf.description ?? wf.trigger_event}" ${mode === "test" ? "testet" : "kørt"}`,
-      metadata: { trace, payload },
+    await supabase.rpc("emit_workspace_event", {
+      _company_id: companyId, _type: mode === "test" ? "workflow.tested" : "workflow.executed",
+      _source: "workflow-runner", _entity_type: "workflow", _entity_id: wf.id,
+      _payload: { trace, payload, description: wf.description ?? wf.trigger_event }, _actor: user.id,
     });
 
     return json({ ok: true, trace, ai_output: aiOutput });

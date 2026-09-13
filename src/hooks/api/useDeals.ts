@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database, Tables } from '@/integrations/supabase/types';
-import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
 type DealStage = string;
 
@@ -39,7 +38,6 @@ export function useCreateDeal() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'deal.created', { deal_id: data.id, title: data.title, value: data.value, stage: data.stage });
       return data;
     },
     onSuccess: () => {
