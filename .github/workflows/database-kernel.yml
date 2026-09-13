@@ -16,7 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with: { version: 2.116.0 }
       - name: Start local Supabase
         run: supabase start
       - name: Apply complete migration history
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with: { version: 2.116.0 }
       - run: supabase start
       - name: Install realistic pre-kernel schema
         run: supabase db reset --version 20260907000001
