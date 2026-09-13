@@ -6,9 +6,6 @@ project_id = "inyrwsygghdjhmqejgwk"
 [functions.admin-data]
 verify_jwt = true
 
-[functions.google-auth-proxy]
-verify_jwt = false
-
 [functions.lead-ai-recommend]
 verify_jwt = false
 
@@ -87,9 +84,6 @@ verify_jwt = false
 [functions.email-track]
 verify_jwt = false
 
-[functions.cold-caller]
-verify_jwt = false
-
 [functions.cvr-search]
 verify_jwt = false
 
@@ -100,9 +94,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.meeting-summary]
-verify_jwt = false
-
-[functions.voice-agent-connect-openai]
 verify_jwt = false
 
 [functions.voice-agent-call]
