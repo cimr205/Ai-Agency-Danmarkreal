@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -49,7 +44,8 @@ export type Database = {
           entity_type: string | null
           id: string
           metadata: Json | null
-          user_id: string
+          source_event_id: string | null
+          user_id: string | null
         }
         Insert: {
           action_type: string
@@ -60,7 +56,8 @@ export type Database = {
           entity_type?: string | null
           id?: string
           metadata?: Json | null
-          user_id: string
+          source_event_id?: string | null
+          user_id?: string | null
         }
         Update: {
           action_type?: string
@@ -71,7 +68,8 @@ export type Database = {
           entity_type?: string | null
           id?: string
           metadata?: Json | null
-          user_id?: string
+          source_event_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -79,6 +77,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
             referencedColumns: ["id"]
           },
         ]
@@ -786,115 +791,6 @@ export type Database = {
           },
         ]
       }
-      call_sessions: {
-        Row: {
-          answered_at: string | null
-          billable_seconds: number | null
-          company_id: string
-          created_at: string
-          customer_id: string | null
-          destination_country: string | null
-          direction: string
-          disposition: string | null
-          duration_seconds: number | null
-          ended_at: string | null
-          from_number: string | null
-          id: string
-          lead_id: string | null
-          metadata: Json
-          notes: string | null
-          provider_call_id: string | null
-          provider_cost: number | null
-          provider_currency: string | null
-          provider_type: string
-          ringing_at: string | null
-          started_at: string
-          status: string
-          telephony_connection_id: string | null
-          to_number: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          answered_at?: string | null
-          billable_seconds?: number | null
-          company_id: string
-          created_at?: string
-          customer_id?: string | null
-          destination_country?: string | null
-          direction?: string
-          disposition?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
-          from_number?: string | null
-          id?: string
-          lead_id?: string | null
-          metadata?: Json
-          notes?: string | null
-          provider_call_id?: string | null
-          provider_cost?: number | null
-          provider_currency?: string | null
-          provider_type: string
-          ringing_at?: string | null
-          started_at?: string
-          status?: string
-          telephony_connection_id?: string | null
-          to_number?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          answered_at?: string | null
-          billable_seconds?: number | null
-          company_id?: string
-          created_at?: string
-          customer_id?: string | null
-          destination_country?: string | null
-          direction?: string
-          disposition?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
-          from_number?: string | null
-          id?: string
-          lead_id?: string | null
-          metadata?: Json
-          notes?: string | null
-          provider_call_id?: string | null
-          provider_cost?: number | null
-          provider_currency?: string | null
-          provider_type?: string
-          ringing_at?: string | null
-          started_at?: string
-          status?: string
-          telephony_connection_id?: string | null
-          to_number?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "call_sessions_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "call_sessions_telephony_connection_id_fkey"
-            columns: ["telephony_connection_id"]
-            isOneToOne: false
-            referencedRelation: "telephony_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "call_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       campaign_assets: {
         Row: {
           byte_size: number
@@ -1267,6 +1163,7 @@ export type Database = {
           address: string | null
           ai_recommendation: string | null
           ai_recommendation_at: string | null
+          attribution: Json
           campaign_id: string | null
           city: string | null
           company_id: string
@@ -1278,13 +1175,15 @@ export type Database = {
           converted_from_lead_id: string | null
           country: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
+          crm_sync_synced_at: string | null
           currency: string | null
           customer_type: string | null
           dinero_contact_guid: string | null
           economic_customer_number: number | null
           email: string
           folder_id: string | null
+          hubspot_contact_id: string | null
           id: string
           import_batch_id: string | null
           industry: string | null
@@ -1297,11 +1196,12 @@ export type Database = {
           notes: string | null
           owner_id: string | null
           phone: string | null
+          pipedrive_person_id: string | null
           record_type: string
+          salesforce_contact_id: string | null
           score: number | null
-          source_id: string | null
           source_event_id: string | null
-          attribution: Json
+          source_id: string | null
           status: Database["public"]["Enums"]["lead_status"] | null
           tags: string[] | null
           updated_at: string
@@ -1315,6 +1215,7 @@ export type Database = {
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
+          attribution?: Json
           campaign_id?: string | null
           city?: string | null
           company_id: string
@@ -1326,13 +1227,15 @@ export type Database = {
           converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
+          crm_sync_synced_at?: string | null
           currency?: string | null
           customer_type?: string | null
           dinero_contact_guid?: string | null
           economic_customer_number?: number | null
           email: string
           folder_id?: string | null
+          hubspot_contact_id?: string | null
           id?: string
           import_batch_id?: string | null
           industry?: string | null
@@ -1345,11 +1248,12 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          pipedrive_person_id?: string | null
           record_type?: string
+          salesforce_contact_id?: string | null
           score?: number | null
-          source_id?: string | null
           source_event_id?: string | null
-          attribution?: Json
+          source_id?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -1363,6 +1267,7 @@ export type Database = {
           address?: string | null
           ai_recommendation?: string | null
           ai_recommendation_at?: string | null
+          attribution?: Json
           campaign_id?: string | null
           city?: string | null
           company_id?: string
@@ -1374,13 +1279,15 @@ export type Database = {
           converted_from_lead_id?: string | null
           country?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
+          crm_sync_synced_at?: string | null
           currency?: string | null
           customer_type?: string | null
           dinero_contact_guid?: string | null
           economic_customer_number?: number | null
           email?: string
           folder_id?: string | null
+          hubspot_contact_id?: string | null
           id?: string
           import_batch_id?: string | null
           industry?: string | null
@@ -1393,11 +1300,12 @@ export type Database = {
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          pipedrive_person_id?: string | null
           record_type?: string
+          salesforce_contact_id?: string | null
           score?: number | null
-          source_id?: string | null
           source_event_id?: string | null
-          attribution?: Json
+          source_id?: string | null
           status?: Database["public"]["Enums"]["lead_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -1441,11 +1349,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customers_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customers_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "customers_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1585,6 +1507,7 @@ export type Database = {
           title: string
           updated_at: string
           value: number
+          version: number
         }
         Insert: {
           company_id: string
@@ -1600,6 +1523,7 @@ export type Database = {
           title: string
           updated_at?: string
           value?: number
+          version?: number
         }
         Update: {
           company_id?: string
@@ -1615,6 +1539,7 @@ export type Database = {
           title?: string
           updated_at?: string
           value?: number
+          version?: number
         }
         Relationships: [
           {
@@ -2265,19 +2190,28 @@ export type Database = {
           body_text: string | null
           cc_addresses: Json | null
           company_id: string
+          contact_id: string | null
           created_at: string
+          deal_id: string | null
+          direction: string
           email_account_id: string
           from_address: string
           from_name: string | null
           gmail_id: string
           has_attachments: boolean | null
           id: string
+          in_reply_to: string | null
+          internet_message_id: string | null
           is_important: boolean | null
           is_read: boolean | null
           is_starred: boolean | null
           labels: Json | null
+          provider_message_id: string | null
           received_at: string
+          reference_ids: string[]
+          routing_status: string
           snippet: string | null
+          source_event_id: string | null
           subject: string | null
           thread_id: string | null
           to_addresses: Json | null
@@ -2290,19 +2224,28 @@ export type Database = {
           body_text?: string | null
           cc_addresses?: Json | null
           company_id: string
+          contact_id?: string | null
           created_at?: string
+          deal_id?: string | null
+          direction?: string
           email_account_id: string
           from_address: string
           from_name?: string | null
           gmail_id: string
           has_attachments?: boolean | null
           id?: string
+          in_reply_to?: string | null
+          internet_message_id?: string | null
           is_important?: boolean | null
           is_read?: boolean | null
           is_starred?: boolean | null
           labels?: Json | null
+          provider_message_id?: string | null
           received_at: string
+          reference_ids?: string[]
+          routing_status?: string
           snippet?: string | null
+          source_event_id?: string | null
           subject?: string | null
           thread_id?: string | null
           to_addresses?: Json | null
@@ -2315,19 +2258,28 @@ export type Database = {
           body_text?: string | null
           cc_addresses?: Json | null
           company_id?: string
+          contact_id?: string | null
           created_at?: string
+          deal_id?: string | null
+          direction?: string
           email_account_id?: string
           from_address?: string
           from_name?: string | null
           gmail_id?: string
           has_attachments?: boolean | null
           id?: string
+          in_reply_to?: string | null
+          internet_message_id?: string | null
           is_important?: boolean | null
           is_read?: boolean | null
           is_starred?: boolean | null
           labels?: Json | null
+          provider_message_id?: string | null
           received_at?: string
+          reference_ids?: string[]
+          routing_status?: string
           snippet?: string | null
+          source_event_id?: string | null
           subject?: string | null
           thread_id?: string | null
           to_addresses?: Json | null
@@ -2342,10 +2294,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "emails_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "emails_email_account_id_fkey"
             columns: ["email_account_id"]
             isOneToOne: false
             referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emails_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
             referencedColumns: ["id"]
           },
         ]
@@ -2421,6 +2394,60 @@ export type Database = {
           },
         ]
       }
+      entity_relationships: {
+        Row: {
+          company_id: string
+          created_at: string
+          from_entity_id: string
+          from_entity_type: string
+          id: string
+          metadata: Json
+          relationship_type: string
+          source_event_id: string | null
+          to_entity_id: string
+          to_entity_type: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          from_entity_id: string
+          from_entity_type: string
+          id?: string
+          metadata?: Json
+          relationship_type: string
+          source_event_id?: string | null
+          to_entity_id: string
+          to_entity_type: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          from_entity_id?: string
+          from_entity_type?: string
+          id?: string
+          metadata?: Json
+          relationship_type?: string
+          source_event_id?: string | null
+          to_entity_id?: string
+          to_entity_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_relationships_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_relationships_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_subscriptions: {
         Row: {
           action_ref: string | null
@@ -2461,6 +2488,69 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_identities: {
+        Row: {
+          company_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          external_account_id: string
+          external_entity_id: string
+          external_entity_type: string
+          first_seen_at: string
+          id: string
+          identity_data: Json
+          integration_id: string | null
+          last_seen_at: string
+          provider: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          external_account_id?: string
+          external_entity_id: string
+          external_entity_type: string
+          first_seen_at?: string
+          id?: string
+          identity_data?: Json
+          integration_id?: string | null
+          last_seen_at?: string
+          provider: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          external_account_id?: string
+          external_entity_id?: string
+          external_entity_type?: string
+          first_seen_at?: string
+          id?: string
+          identity_data?: Json
+          integration_id?: string | null
+          last_seen_at?: string
+          provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_identities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_identities_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
             referencedColumns: ["id"]
           },
         ]
@@ -2830,6 +2920,57 @@ export type Database = {
           },
         ]
       }
+      invoice_payment_references: {
+        Row: {
+          company_id: string
+          consumed_at: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          invoice_id: string
+          stripe_checkout_session_id: string | null
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          invoice_id: string
+          stripe_checkout_session_id?: string | null
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          invoice_id?: string
+          stripe_checkout_session_id?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payment_references_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payment_references_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           accounting_synced_at: string | null
@@ -2849,6 +2990,7 @@ export type Database = {
           lines: Json | null
           notes: string | null
           paid_at: string | null
+          payment_reference: string
           quote_id: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number | null
@@ -2879,6 +3021,7 @@ export type Database = {
           lines?: Json | null
           notes?: string | null
           paid_at?: string | null
+          payment_reference?: string
           quote_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number | null
@@ -2909,6 +3052,7 @@ export type Database = {
           lines?: Json | null
           notes?: string | null
           paid_at?: string | null
+          payment_reference?: string
           quote_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number | null
@@ -4102,6 +4246,55 @@ export type Database = {
           },
         ]
       }
+      meta_webhook_sources: {
+        Row: {
+          ad_account_id: string
+          company_id: string
+          created_at: string
+          id: string
+          meta_connection_id: string
+          page_id: string
+        }
+        Insert: {
+          ad_account_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          meta_connection_id: string
+          page_id: string
+        }
+        Update: {
+          ad_account_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          meta_connection_id?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_webhook_sources_ad_account_id_fkey"
+            columns: ["ad_account_id"]
+            isOneToOne: false
+            referencedRelation: "meta_ad_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_webhook_sources_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_webhook_sources_meta_connection_id_fkey"
+            columns: ["meta_connection_id"]
+            isOneToOne: false
+            referencedRelation: "meta_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_restrictions: {
         Row: {
           company_id: string
@@ -4189,7 +4382,6 @@ export type Database = {
           created_by: string | null
           expires_at: string
           id: string
-          metadata: Json | null
           provider: string
         }
         Insert: {
@@ -4199,7 +4391,6 @@ export type Database = {
           created_by?: string | null
           expires_at: string
           id?: string
-          metadata?: Json | null
           provider: string
         }
         Update: {
@@ -4209,7 +4400,6 @@ export type Database = {
           created_by?: string | null
           expires_at?: string
           id?: string
-          metadata?: Json | null
           provider?: string
         }
         Relationships: [
@@ -4227,7 +4417,7 @@ export type Database = {
           amount: number
           company_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           external_reference: string | null
           id: string
           idempotency_key: string | null
@@ -4243,7 +4433,7 @@ export type Database = {
           amount: number
           company_id: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           external_reference?: string | null
           id?: string
           idempotency_key?: string | null
@@ -4259,7 +4449,7 @@ export type Database = {
           amount?: number
           company_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           external_reference?: string | null
           id?: string
           idempotency_key?: string | null
@@ -4568,72 +4758,6 @@ export type Database = {
           },
         ]
       }
-      phone_identities: {
-        Row: {
-          company_id: string
-          created_at: string
-          id: string
-          last_otp_sent_at: string | null
-          normalized_number: string
-          otp_attempts: number
-          otp_code_hash: string | null
-          otp_expires_at: string | null
-          otp_send_count: number
-          phone_number: string
-          updated_at: string
-          user_id: string
-          verification_status: string
-          verified_at: string | null
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          id?: string
-          last_otp_sent_at?: string | null
-          normalized_number: string
-          otp_attempts?: number
-          otp_code_hash?: string | null
-          otp_expires_at?: string | null
-          otp_send_count?: number
-          phone_number: string
-          updated_at?: string
-          user_id: string
-          verification_status?: string
-          verified_at?: string | null
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          id?: string
-          last_otp_sent_at?: string | null
-          normalized_number?: string
-          otp_attempts?: number
-          otp_code_hash?: string | null
-          otp_expires_at?: string | null
-          otp_send_count?: number
-          phone_number?: string
-          updated_at?: string
-          user_id?: string
-          verification_status?: string
-          verified_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "phone_identities_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "phone_identities_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
       phone_pairing_rate_limits: {
         Row: {
           attempts: number
@@ -4848,7 +4972,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          active_phone_connection_id: string | null
           avatar_url: string | null
           company_id: string | null
           created_at: string
@@ -4861,7 +4984,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          active_phone_connection_id?: string | null
           avatar_url?: string | null
           company_id?: string | null
           created_at?: string
@@ -4874,7 +4996,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          active_phone_connection_id?: string | null
           avatar_url?: string | null
           company_id?: string | null
           created_at?: string
@@ -4888,13 +5009,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_active_phone_connection_id_fkey"
-            columns: ["active_phone_connection_id"]
-            isOneToOne: false
-            referencedRelation: "telephony_connections"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "profiles_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -4906,6 +5020,50 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_webhook_receipts: {
+        Row: {
+          company_id: string | null
+          error: string | null
+          external_event_id: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+          received_at: string
+          status: string
+        }
+        Insert: {
+          company_id?: string | null
+          error?: string | null
+          external_event_id: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          company_id?: string | null
+          error?: string | null
+          external_event_id?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_webhook_receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -5305,13 +5463,15 @@ export type Database = {
           company_id: string
           completed_at: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           deal_id: string | null
           description: string | null
           due_date: string | null
           id: string
+          idempotency_key: string | null
           lead_id: string | null
           priority: string | null
+          source_event_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
@@ -5322,13 +5482,15 @@ export type Database = {
           company_id: string
           completed_at?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string | null
           deal_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           lead_id?: string | null
           priority?: string | null
+          source_event_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
@@ -5339,13 +5501,15 @@ export type Database = {
           company_id?: string
           completed_at?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           deal_id?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           lead_id?: string | null
           priority?: string | null
+          source_event_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
@@ -5377,6 +5541,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_source_event_id_fkey"
+            columns: ["source_event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
             referencedColumns: ["id"]
           },
         ]
@@ -5412,162 +5583,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      telephony_connections: {
-        Row: {
-          capabilities: Json
-          company_id: string
-          created_at: string
-          display_number: string | null
-          id: string
-          label: string | null
-          normalized_number: string | null
-          phone_identity_id: string | null
-          provider_type: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          capabilities?: Json
-          company_id: string
-          created_at?: string
-          display_number?: string | null
-          id?: string
-          label?: string | null
-          normalized_number?: string | null
-          phone_identity_id?: string | null
-          provider_type: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          capabilities?: Json
-          company_id?: string
-          created_at?: string
-          display_number?: string | null
-          id?: string
-          label?: string | null
-          normalized_number?: string | null
-          phone_identity_id?: string | null
-          provider_type?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "telephony_connections_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telephony_connections_phone_identity_id_fkey"
-            columns: ["phone_identity_id"]
-            isOneToOne: false
-            referencedRelation: "phone_identities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telephony_connections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      telnyx_config: {
-        Row: {
-          company_id: string
-          connection_id: string
-          created_at: string
-          default_from_number: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          company_id: string
-          connection_id: string
-          created_at?: string
-          default_from_number?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string
-          connection_id?: string
-          created_at?: string
-          default_from_number?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "telnyx_config_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: true
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      telnyx_credentials: {
-        Row: {
-          company_id: string
-          created_at: string
-          id: string
-          telnyx_credential_id: string
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          id?: string
-          telnyx_credential_id: string
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          id?: string
-          telnyx_credential_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "telnyx_credentials_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telnyx_credentials_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      telnyx_webhook_events: {
-        Row: {
-          event_id: string
-          received_at: string
-        }
-        Insert: {
-          event_id: string
-          received_at?: string
-        }
-        Update: {
-          event_id?: string
-          received_at?: string
-        }
-        Relationships: []
       }
       twilio_accounts: {
         Row: {
@@ -5731,6 +5746,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      verified_caller_ids: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          phone_number: string
+          status: string
+          twilio_caller_id_sid: string | null
+          twilio_validation_sid: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          phone_number: string
+          status?: string
+          twilio_caller_id_sid?: string | null
+          twilio_validation_sid?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          phone_number?: string
+          status?: string
+          twilio_caller_id_sid?: string | null
+          twilio_validation_sid?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_caller_ids_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verified_caller_ids_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -6095,6 +6161,268 @@ export type Database = {
           },
         ]
       }
+      workflow_runs: {
+        Row: {
+          attempt_count: number
+          available_at: string
+          cancelled_at: string | null
+          company_id: string
+          completed_at: string | null
+          context: Json
+          correlation_id: string
+          created_at: string
+          current_step: number
+          event_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          workflow_id: string
+          workflow_version: number
+        }
+        Insert: {
+          attempt_count?: number
+          available_at?: string
+          cancelled_at?: string | null
+          company_id: string
+          completed_at?: string | null
+          context?: Json
+          correlation_id: string
+          created_at?: string
+          current_step?: number
+          event_id: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id: string
+          workflow_version: number
+        }
+        Update: {
+          attempt_count?: number
+          available_at?: string
+          cancelled_at?: string | null
+          company_id?: string
+          completed_at?: string | null
+          context?: Json
+          correlation_id?: string
+          created_at?: string
+          current_step?: number
+          event_id?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id?: string
+          workflow_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_side_effects: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          id: string
+          idempotency_key: string
+          provider: string
+          provider_reference: string | null
+          reserved_at: string
+          response: Json | null
+          status: string
+          step_run_id: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          id?: string
+          idempotency_key: string
+          provider: string
+          provider_reference?: string | null
+          reserved_at?: string
+          response?: Json | null
+          status?: string
+          step_run_id: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          id?: string
+          idempotency_key?: string
+          provider?: string
+          provider_reference?: string | null
+          reserved_at?: string
+          response?: Json | null
+          status?: string
+          step_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_side_effects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_side_effects_step_run_id_fkey"
+            columns: ["step_run_id"]
+            isOneToOne: true
+            referencedRelation: "workflow_step_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_step_runs: {
+        Row: {
+          attempt_count: number
+          available_at: string
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          input: Json
+          last_error: string | null
+          lease_expires_at: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          output: Json | null
+          started_at: string | null
+          status: string
+          step_index: number
+          step_type: string
+          updated_at: string
+          workflow_run_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          available_at?: string
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          input?: Json
+          last_error?: string | null
+          lease_expires_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          output?: Json | null
+          started_at?: string | null
+          status?: string
+          step_index: number
+          step_type: string
+          updated_at?: string
+          workflow_run_id: string
+        }
+        Update: {
+          attempt_count?: number
+          available_at?: string
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          input?: Json
+          last_error?: string | null
+          lease_expires_at?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          output?: Json | null
+          started_at?: string | null
+          status?: string
+          step_index?: number
+          step_type?: string
+          updated_at?: string
+          workflow_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_runs_workflow_run_id_fkey"
+            columns: ["workflow_run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          is_active: boolean
+          name: string
+          requires_approval: boolean
+          steps: Json
+          template_key: string
+          trigger_event: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          is_active?: boolean
+          name: string
+          requires_approval?: boolean
+          steps?: Json
+          template_key: string
+          trigger_event: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          is_active?: boolean
+          name?: string
+          requires_approval?: boolean
+          steps?: Json
+          template_key?: string
+          trigger_event?: string
+          version?: number
+        }
+        Relationships: []
+      }
       workflows: {
         Row: {
           action_arguments: Json
@@ -6102,17 +6430,24 @@ export type Database = {
           action_tool_slug: string | null
           action_type: string
           company_id: string
+          conditions: Json
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           id: string
           is_active: boolean
           last_error: string | null
           last_run_at: string | null
+          max_attempts: number
           payload_fields: string[] | null
+          requires_approval: boolean
           run_count: number
+          steps: Json
+          template_key: string | null
           trigger_event: string
+          trigger_source: string | null
           updated_at: string
+          version: number
           webhook_url: string | null
         }
         Insert: {
@@ -6121,17 +6456,24 @@ export type Database = {
           action_tool_slug?: string | null
           action_type?: string
           company_id: string
+          conditions?: Json
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
           last_run_at?: string | null
+          max_attempts?: number
           payload_fields?: string[] | null
+          requires_approval?: boolean
           run_count?: number
+          steps?: Json
+          template_key?: string | null
           trigger_event: string
+          trigger_source?: string | null
           updated_at?: string
+          version?: number
           webhook_url?: string | null
         }
         Update: {
@@ -6140,17 +6482,24 @@ export type Database = {
           action_tool_slug?: string | null
           action_type?: string
           company_id?: string
+          conditions?: Json
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
           last_run_at?: string | null
+          max_attempts?: number
           payload_fields?: string[] | null
+          requires_approval?: boolean
           run_count?: number
+          steps?: Json
+          template_key?: string | null
           trigger_event?: string
+          trigger_source?: string | null
           updated_at?: string
+          version?: number
           webhook_url?: string | null
         }
         Relationships: [
@@ -6212,39 +6561,91 @@ export type Database = {
       }
       workspace_events: {
         Row: {
+          actor_type: string
           actor_user_id: string | null
+          attempt_count: number
+          available_at: string
+          causation_id: string | null
           company_id: string
+          correlation_id: string
           created_at: string
           entity_id: string | null
           entity_type: string | null
+          event_version: number
+          external_event_id: string | null
           id: string
+          idempotency_key: string | null
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          occurred_at: string
           payload: Json
+          processed_at: string | null
+          source: string
           source_module: string
+          status: string
           type: string
         }
         Insert: {
+          actor_type?: string
           actor_user_id?: string | null
+          attempt_count?: number
+          available_at?: string
+          causation_id?: string | null
           company_id: string
+          correlation_id: string
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
+          event_version?: number
+          external_event_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          occurred_at?: string
           payload?: Json
+          processed_at?: string | null
+          source: string
           source_module: string
+          status?: string
           type: string
         }
         Update: {
+          actor_type?: string
           actor_user_id?: string | null
+          attempt_count?: number
+          available_at?: string
+          causation_id?: string | null
           company_id?: string
+          correlation_id?: string
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
+          event_version?: number
+          external_event_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          occurred_at?: string
           payload?: Json
+          processed_at?: string | null
+          source?: string
           source_module?: string
+          status?: string
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workspace_events_causation_id_fkey"
+            columns: ["causation_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workspace_events_company_id_fkey"
             columns: ["company_id"]
@@ -6261,6 +6662,14 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
       activate_company: { Args: { _company_id: string }; Returns: boolean }
+      attach_invoice_checkout_session: {
+        Args: {
+          p_company_id: string
+          p_reference_id: string
+          p_session_id: string
+        }
+        Returns: undefined
+      }
       bootstrap_company_admin: {
         Args: { _company_id: string }
         Returns: undefined
@@ -6345,6 +6754,67 @@ export type Database = {
           sender_user_id: string
         }[]
       }
+      claim_workflow_runs: {
+        Args: { p_limit?: number; p_worker: string }
+        Returns: {
+          attempt_count: number
+          available_at: string
+          cancelled_at: string | null
+          company_id: string
+          completed_at: string | null
+          context: Json
+          correlation_id: string
+          created_at: string
+          current_step: number
+          event_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          workflow_id: string
+          workflow_version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "workflow_runs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_workflow_steps: {
+        Args: { p_lease_seconds?: number; p_limit?: number; p_worker: string }
+        Returns: {
+          attempt_count: number
+          available_at: string
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          input: Json
+          last_error: string | null
+          lease_expires_at: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          output: Json | null
+          started_at: string | null
+          status: string
+          step_index: number
+          step_type: string
+          updated_at: string
+          workflow_run_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "workflow_step_runs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_old_sessions: { Args: never; Returns: number }
       complete_email_delivery: {
         Args: {
@@ -6355,6 +6825,10 @@ export type Database = {
           p_status: string
         }
         Returns: Json
+      }
+      consume_invoice_payment_reference: {
+        Args: { p_company_id: string; p_reference_id: string }
+        Returns: undefined
       }
       consume_phone_pairing_attempt: {
         Args: { p_key_hash: string }
@@ -6386,6 +6860,14 @@ export type Database = {
         }
         Returns: string
       }
+      create_invoice_payment_reference: {
+        Args: {
+          p_expires_at: string
+          p_invoice_id: string
+          p_token_hash: string
+        }
+        Returns: Json
+      }
       create_phone_call_command: {
         Args: {
           p_device_id: string
@@ -6399,18 +6881,37 @@ export type Database = {
       }
       create_phone_pairing_session: { Args: never; Returns: Json }
       delete_draft_invoice: { Args: { p_invoice_id: string }; Returns: boolean }
-      emit_workspace_event: {
-        Args: {
-          _actor: string
-          _company_id: string
-          _entity_id: string
-          _entity_type: string
-          _payload: Json
-          _source: string
-          _type: string
-        }
-        Returns: string
-      }
+      emit_workspace_event:
+        | {
+            Args: {
+              _actor?: string
+              _causation_id?: string
+              _company_id: string
+              _correlation_id?: string
+              _entity_id?: string
+              _entity_type?: string
+              _event_version?: number
+              _external_event_id?: string
+              _idempotency_key?: string
+              _occurred_at?: string
+              _payload?: Json
+              _source: string
+              _type: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _actor: string
+              _company_id: string
+              _entity_id: string
+              _entity_type: string
+              _payload: Json
+              _source: string
+              _type: string
+            }
+            Returns: string
+          }
       enqueue_email_campaign: {
         Args: {
           p_campaign_id: string
@@ -6437,25 +6938,17 @@ export type Database = {
           record_type: string
         }[]
       }
-      get_business_timeline: {
-        Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
-        Returns: {
-          entity_id: string
-          entity_type: string
-          event_type: string
-          id: string
-          occurred_at: string
-          payload: Json
-          source: string
-        }[]
-      }
-      transition_deal_stage: {
+      finish_workflow_step: {
         Args: {
-          p_deal_id: string
-          p_expected_version?: number
-          p_target_stage: string
+          p_error?: string
+          p_output?: Json
+          p_provider_reference?: string
+          p_retryable?: boolean
+          p_step_id: string
+          p_success: boolean
+          p_worker: string
         }
-        Returns: Json
+        Returns: undefined
       }
       generate_activation_code: { Args: never; Returns: string }
       generate_employee_id: {
@@ -6475,6 +6968,18 @@ export type Database = {
         }[]
       }
       get_ambient_insights: { Args: never; Returns: Json }
+      get_business_timeline: {
+        Args: { p_entity_id: string; p_entity_type: string; p_limit?: number }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          occurred_at: string
+          payload: Json
+          source: string
+        }[]
+      }
       get_company_by_activation_code: {
         Args: { _code: string }
         Returns: {
@@ -6564,6 +7069,23 @@ export type Database = {
         Args: { _amount?: number; _company_id: string; _quota_type: string }
         Returns: boolean
       }
+      ingest_meta_lead: {
+        Args: {
+          p_account_id: string
+          p_ad_id?: string
+          p_adset_id?: string
+          p_campaign_id?: string
+          p_company_id: string
+          p_created_at?: string
+          p_email: string
+          p_external_lead_id: string
+          p_form_id?: string
+          p_name: string
+          p_phone?: string
+          p_raw?: Json
+        }
+        Returns: Json
+      }
       is_company_admin: { Args: { _user_id: string }; Returns: boolean }
       issue_mcp_token: {
         Args: { _name: string }
@@ -6574,6 +7096,19 @@ export type Database = {
         }[]
       }
       join_company_by_code: { Args: { _code: string }; Returns: string }
+      link_business_entities: {
+        Args: {
+          p_company_id: string
+          p_from_id: string
+          p_from_type: string
+          p_metadata?: Json
+          p_relationship: string
+          p_source_event_id?: string
+          p_to_id: string
+          p_to_type: string
+        }
+        Returns: string
+      }
       list_leads: {
         Args: {
           p_campaign_id?: string
@@ -6617,6 +7152,10 @@ export type Database = {
         }
         Returns: string
       }
+      mark_workflow_step_attention: {
+        Args: { p_error: string; p_step_id: string; p_worker: string }
+        Returns: undefined
+      }
       normalize_phone_number: { Args: { p_phone: string }; Returns: string }
       quote_to_invoice: {
         Args: {
@@ -6653,6 +7192,66 @@ export type Database = {
         }
         Returns: Json
       }
+      register_invoice_payment_service: {
+        Args: {
+          p_amount: number
+          p_company_id: string
+          p_external_reference: string
+          p_idempotency_key: string
+          p_invoice_id: string
+          p_metadata?: Json
+          p_paid_at: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
+      reserve_workflow_side_effect: {
+        Args: { p_provider: string; p_step_id: string; p_worker: string }
+        Returns: Json
+      }
+      resolve_external_identity: {
+        Args: {
+          p_company_id: string
+          p_entity_id: string
+          p_entity_type: string
+          p_external_account_id: string
+          p_external_entity_id: string
+          p_external_entity_type: string
+          p_identity_data?: Json
+          p_integration_id: string
+          p_provider: string
+        }
+        Returns: {
+          company_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          external_account_id: string
+          external_entity_id: string
+          external_entity_type: string
+          first_seen_at: string
+          id: string
+          identity_data: Json
+          integration_id: string | null
+          last_seen_at: string
+          provider: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "external_identities"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      resolve_invoice_payment_reference: {
+        Args: { p_session_id: string; p_token_hash: string }
+        Returns: {
+          amount: number
+          company_id: string
+          invoice_id: string
+          reference_id: string
+        }[]
+      }
       resolve_mcp_token: {
         Args: { _token: string }
         Returns: {
@@ -6663,9 +7262,30 @@ export type Database = {
       }
       revoke_invitation: { Args: { invitation_id: string }; Returns: boolean }
       revoke_phone_device: { Args: { p_device_id: string }; Returns: boolean }
+      route_incoming_email: {
+        Args: { p_company_id: string; p_email_id: string }
+        Returns: Json
+      }
       set_company_mode: {
         Args: { _company_id: string; _mode: string }
         Returns: boolean
+      }
+      transition_deal_stage: {
+        Args: {
+          p_deal_id: string
+          p_expected_version?: number
+          p_target_stage: string
+        }
+        Returns: Json
+      }
+      transition_deal_stage_service: {
+        Args: {
+          p_actor: string
+          p_company_id: string
+          p_deal_id: string
+          p_target_stage: string
+        }
+        Returns: Json
       }
       transition_quote: {
         Args: {
@@ -6729,12 +7349,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -6758,11 +7378,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -6783,11 +7403,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -6808,11 +7428,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -6825,11 +7445,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
