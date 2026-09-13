@@ -57,4 +57,4 @@ jobs:
       - name: Typecheck operating paths
         run: deno check supabase/functions/ai-operating-manager/index.ts supabase/functions/autopilot-execute/index.ts supabase/functions/composio-integration/index.ts supabase/functions/gmail-send/index.ts supabase/functions/gmail-sync/index.ts supabase/functions/meta-sync/index.ts supabase/functions/workflow-runner/index.ts supabase/functions/meta-lead-webhook/index.ts supabase/functions/create-invoice-checkout/index.ts supabase/functions/stripe-payment-webhook/index.ts
       - name: Provider signature fixtures
-        run: deno test supabase/functions/_shared/providerSignatures_test.ts
+        run: deno test supabase/functions/_shared/providerSignatures_test.ts supabase/functions/_shared/stripeSignature_test.ts
