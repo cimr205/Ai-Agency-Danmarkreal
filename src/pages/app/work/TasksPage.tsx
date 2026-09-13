@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useTasks, useCreateTask, useUpdateTask, useTeamProfiles, useBulkUpdateTasks, useBulkDeleteTasks, useDeleteTask } from '@/hooks/api/useTasks';
+import { useTasks, useCreateTask, useUpdateTask, useUpdateTaskStatus, useTeamProfiles, useBulkUpdateTasks, useBulkDeleteTasks, useDeleteTask } from '@/hooks/api/useTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
@@ -74,6 +74,7 @@ export default function TasksPage() {
   const { data, isLoading, error } = useTasks({ archived: view === 'archived' });
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+  const updateTaskStatus = useUpdateTaskStatus();
   const deleteTask = useDeleteTask();
   const bulkUpdate = useBulkUpdateTasks();
   const bulkDelete = useBulkDeleteTasks();
@@ -142,14 +143,14 @@ export default function TasksPage() {
   const handleToggleComplete = async (task: Task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
     try {
-      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } });
+      await updateTaskStatus.mutateAsync({ id: task.id, status: newStatus });
       toast.success(newStatus === 'completed' ? t('pages.tasks.taskCompleted') : t('pages.tasks.taskReopened'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleStatusChange = async (task: Task, newStatus: string) => {
     try {
-      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } });
+      await updateTaskStatus.mutateAsync({ id: task.id, status: newStatus as 'pending' | 'in_progress' | 'completed' });
       toast.success(t('pages.tasks.created_success'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };

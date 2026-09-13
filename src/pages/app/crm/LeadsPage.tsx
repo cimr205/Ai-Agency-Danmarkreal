@@ -4,7 +4,7 @@ import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
 import { useAuth } from '@/hooks/useAuth';
-import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
+import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useUpdateLeadStatus, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { useModuleAvailability, useSyncCrmContacts } from '@/hooks/api/useIntegrations';
 import { Card, CardContent } from '@/components/ui/card';
@@ -220,6 +220,7 @@ export default function LeadsPage() {
   const createLead = useCreateLead();
   const deleteLead = useDeleteLead();
   const updateLead = useUpdateLead();
+  const updateLeadStatus = useUpdateLeadStatus();
   const convertToDeal = useConvertLeadToDeal();
   const updateScore = useUpdateLeadScore();
   const { data: allDeals } = useDeals();
@@ -322,7 +323,7 @@ export default function LeadsPage() {
 
   const handleStatusChange = async (id: string, status: Enums<'lead_status'>) => {
     try {
-      await updateLead.mutateAsync({ id, data: { status } });
+      await updateLeadStatus.mutateAsync({ id, status });
       if (selectedLead?.id === id) setSelectedLead({ ...selectedLead, status });
       toast.success(t('common.saved'));
     } catch { toast.error(t('common.error')); }

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database, Tables } from '@/integrations/supabase/types';
 import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
+import { stageWebhookEvent } from '@/lib/deals/wonValidation';
 
 type DealStage = string;
 
@@ -52,7 +53,7 @@ export function useCreateDeal() {
 export function useUpdateDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; stage?: DealStage; notes?: string; expected_close_date?: string | null; title?: string; value?: number; customer_id?: string | null }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; notes?: string; expected_close_date?: string | null; title?: string; value?: number; customer_id?: string | null }) => {
       const { data, error } = await supabase
         .from('deals')
         .update(updates)
@@ -60,10 +61,33 @@ export function useUpdateDeal() {
         .select('*, customers!deals_customer_id_fkey(name)')
         .single();
       if (error) throw error;
-      // Fire deal.won or deal.lost events
-      if (data && updates.stage === 'won') fireWebhookEvent(data.company_id, 'deal.won', { deal_id: data.id, title: data.title, value: data.value });
-      if (data && updates.stage === 'lost') fireWebhookEvent(data.company_id, 'deal.lost', { deal_id: data.id, title: data.title, value: data.value });
       return data as unknown as DealWithCustomer;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['pipeline-summary'] });
+    },
+  });
+}
+
+// Stage transitions (in particular deal.won / deal.lost) go through the
+// update_deal_stage RPC rather than a raw `.update()`. The RPC is the single
+// trusted place a transition happens: it locks the deal row, compares the
+// old/new stage server-side, and reports whether a real transition occurred.
+// The outbound webhook is only fired when `changed` is true, so re-saving an
+// already-won deal (double submit, retry) can never re-fire it. The DB-side
+// deal.won -> onboarding pipeline (trg_emit_deal_event -> workspace_events ->
+// handle_deal_won_event) is independently idempotent via a unique constraint
+// and reacts to the same UPDATE regardless of this webhook.
+export function useUpdateDealStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, stage }: { id: string; stage: DealStage }) => {
+      const { data, error } = await supabase.rpc('update_deal_stage', { p_deal_id: id, p_stage: stage }).single();
+      if (error) throw error;
+      const event = stageWebhookEvent(data);
+      if (event) fireWebhookEvent(data.company_id, event, { deal_id: data.id, title: data.title, value: data.value });
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deals'] });

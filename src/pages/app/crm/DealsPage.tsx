@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useDeals, useCreateDeal, useUpdateDeal, type DealWithCustomer } from '@/hooks/api/useDeals';
+import { useDeals, useCreateDeal, useUpdateDeal, useUpdateDealStage, type DealWithCustomer } from '@/hooks/api/useDeals';
 import { usePipelineStages } from '@/hooks/api/usePipelineStages';
 import { useCustomers } from '@/hooks/api/useFinance';
 import PipelineStageEditor from '@/components/pipeline/PipelineStageEditor';
@@ -46,6 +46,7 @@ export default function DealsPage() {
   const { data: customers } = useCustomers();
   const createDeal = useCreateDeal();
   const updateDeal = useUpdateDeal();
+  const updateDealStage = useUpdateDealStage();
   const { format: formatCurrency } = useCurrency();
 
   const stages: StageDef[] = useMemo(() => buildStages(pipelineStages, locale), [pipelineStages, locale]);
@@ -117,7 +118,7 @@ export default function DealsPage() {
       return;
     }
     try {
-      await updateDeal.mutateAsync({ id: dealId, stage });
+      await updateDealStage.mutateAsync({ id: dealId, stage });
       toast.success(t('pages.deals.stageUpdated'));
       if (selectedDeal?.id === dealId) setSelectedDeal((d) => d ? { ...d, stage } : d);
     } catch { toast.error(t('common.error')); }

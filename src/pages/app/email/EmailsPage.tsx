@@ -17,7 +17,10 @@ import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 
-type Email = Tables<'emails'>;
+type Email = Tables<'emails'> & {
+  customers: Pick<Tables<'customers'>, 'id' | 'name'> | null;
+  deals: Pick<Tables<'deals'>, 'id' | 'title'> | null;
+};
 
 const PAGE_SIZE = 50;
 
@@ -461,6 +464,7 @@ export default function EmailsPage() {
                         </span>
                         {cfg && <Badge variant="outline" className={`text-xs shrink-0 ${cfg.color}`}>{cfg.label}</Badge>}
                         {!email.is_read && <Badge className="bg-primary text-primary-foreground text-xs shrink-0">{t('pages.email.new')}</Badge>}
+                        {email.customers && <Badge variant="secondary" className="text-xs shrink-0">{email.customers.name}</Badge>}
                       </div>
                       <p className={`text-sm truncate ${!email.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{email.snippet}</p>
@@ -505,6 +509,16 @@ export default function EmailsPage() {
                     <p className="text-xs font-medium text-accent">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
                   </div>
                 )}
+                {(selectedEmail.customers || selectedEmail.deals) && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {selectedEmail.customers && (
+                      <Badge variant="secondary">{locale === 'da' ? 'Kontakt' : 'Contact'}: {selectedEmail.customers.name}</Badge>
+                    )}
+                    {selectedEmail.deals && (
+                      <Badge variant="secondary">{locale === 'da' ? 'Deal' : 'Deal'}: {selectedEmail.deals.title}</Badge>
+                    )}
+                  </div>
+                )}
               </DialogHeader>
               <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
                 {selectedEmail.body_html ? (
@@ -532,6 +546,7 @@ export default function EmailsPage() {
                           subject: selectedEmail.subject?.startsWith('Re:') ? selectedEmail.subject : `Re: ${selectedEmail.subject}`,
                           message: replyBody,
                           reply_to_message_id: selectedEmail.thread_id || selectedEmail.gmail_id,
+                          in_reply_to_message_id_header: selectedEmail.message_id_header || undefined,
                         });
                         toast.success(t('pages.email.replySent'));
                         setReplyOpen(false);

@@ -43,6 +43,38 @@ export function useDeleteWorkflow() {
   });
 }
 
+// Global, tenant-agnostic templates (workflow_templates has no company_id
+// at all) — instantiateWorkflowTemplate is what copies one into the
+// caller's own company as a real, editable workflows row.
+export function useWorkflowTemplates() {
+  return useQuery({
+    queryKey: ["workflow-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("workflow_templates")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useInstantiateWorkflowTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (templateKey: string) => {
+      const { data, error } = await supabase
+        .rpc("instantiate_workflow_template", { p_template_key: templateKey })
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["workflows"] }),
+  });
+}
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export async function sendWorkflowChat(messages: ChatMessage[]): Promise<string> {

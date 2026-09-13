@@ -39,7 +39,10 @@ Deno.serve(async (req) => {
   const authorize = new URL('https://www.facebook.com/v26.0/dialog/oauth')
   authorize.searchParams.set('client_id', appId)
   authorize.searchParams.set('redirect_uri', redirectUri)
-  authorize.searchParams.set('scope', 'ads_read,ads_management,business_management')
+  authorize.searchParams.set(
+    'scope',
+    'ads_read,ads_management,business_management,pages_show_list,pages_manage_ads,pages_read_engagement,leads_retrieval',
+  )
   authorize.searchParams.set('response_type', 'code')
   authorize.searchParams.set('state', stateId)
   return json({ authorization_url: authorize.toString(), expires_in: 600 })

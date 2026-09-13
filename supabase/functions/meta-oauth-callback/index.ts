@@ -78,7 +78,10 @@ Deno.serve(async (req) => {
       token_iv: encrypted.iv,
       token_key_version: 1,
       token_expires_at: expiresIn ? new Date(Date.now() + Number(expiresIn) * 1000).toISOString() : null,
-      granted_scopes: ['ads_read', 'ads_management', 'business_management'],
+      granted_scopes: [
+        'ads_read', 'ads_management', 'business_management',
+        'pages_show_list', 'pages_manage_ads', 'pages_read_engagement', 'leads_retrieval',
+      ],
       status: 'connected',
       connected_at: new Date().toISOString(),
       disconnected_at: null,
@@ -103,7 +106,55 @@ Deno.serve(async (req) => {
       const { error } = await supabase.from('meta_ad_accounts').upsert(accountRows, { onConflict: 'company_id,account_id' })
       if (error) throw error
     }
-    return json({ success: true, status: 'connected', ad_accounts_count: accountRows.length })
+
+    // Lead Ads webhooks are delivered per-Page, not per-ad-account, and
+    // require the Page to be subscribed to the `leadgen` field using its own
+    // Page access token (distinct from the user access token above).
+    let pagesSubscribed = 0
+    try {
+      const pages = await graph('me/accounts?fields=id,name,access_token&limit=100', accessToken)
+      for (const page of pages.data ?? []) {
+        const pageId = String(page.id)
+        const pageToken = String(page.access_token ?? '')
+        if (!pageToken) continue
+        const encryptedPageToken = await encryptMetaToken(pageToken)
+
+        const { error: pageUpsertError } = await supabase.from('meta_pages').upsert({
+          company_id: profile.company_id,
+          meta_connection_id: connection.id,
+          page_id: pageId,
+          page_name: page.name ?? null,
+          page_access_token_ciphertext: encryptedPageToken.ciphertext,
+          page_token_iv: encryptedPageToken.iv,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'page_id' })
+        if (pageUpsertError) {
+          console.error('meta-oauth-callback: failed to upsert meta_pages', pageId, pageUpsertError.message)
+          continue
+        }
+
+        const subscribeUrl = new URL(`https://graph.facebook.com/${version}/${pageId}/subscribed_apps`)
+        subscribeUrl.searchParams.set('subscribed_fields', 'leadgen')
+        subscribeUrl.searchParams.set('access_token', pageToken)
+        const subscribeResponse = await fetch(subscribeUrl, { method: 'POST' })
+        const subscribeBody = await subscribeResponse.json().catch(() => ({}))
+        if (subscribeResponse.ok && subscribeBody.success) {
+          pagesSubscribed++
+          await supabase.from('meta_pages')
+            .update({ leadgen_subscribed: true, leadgen_subscribed_at: new Date().toISOString() })
+            .eq('page_id', pageId)
+        } else {
+          console.error('meta-oauth-callback: leadgen subscription failed', pageId, subscribeBody)
+        }
+      }
+    } catch (pageError) {
+      // Ad-account connection already succeeded above; a Page/leadgen setup
+      // failure should not fail the whole OAuth flow. It's visible via
+      // meta_pages.leadgen_subscribed = false for the settings UI to surface.
+      console.error('meta-oauth-callback: page/leadgen setup failed', pageError)
+    }
+
+    return json({ success: true, status: 'connected', ad_accounts_count: accountRows.length, pages_subscribed: pagesSubscribed })
   } catch (cause) {
     console.error('meta-oauth-callback failed', cause instanceof Error ? cause.message : String(cause))
     return json({ error: 'Meta connection failed', detail: cause instanceof Error ? cause.message : String(cause) }, 500)

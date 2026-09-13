@@ -4,6 +4,7 @@ import { getCompanyAI } from "../_shared/aiConnection.ts";
 interface EmailAccount {
   id: string;
   company_id: string;
+  email_address: string;
   access_token: string;
   refresh_token: string;
   token_expires_at: string | null;
@@ -261,6 +262,16 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
           receivedAt = new Date(parseInt(detail.internalDate)).toISOString();
         }
 
+        // Gmail's default messages.list (no `q` filter) returns everything
+        // in the mailbox, including mail the account owner sent — this was
+        // previously stored as direction='inbound' regardless. Thread
+        // continuity (trg_resolve_inbound_email) depends on outbound
+        // messages being correctly identified, so this classifies by
+        // comparing the normalized From address to the connected account's
+        // own address — deterministic, not a guess.
+        const direction = fromAddress.trim().toLowerCase() === account.email_address.trim().toLowerCase()
+          ? "outbound" : "inbound";
+
         emails.push({
           email_account_id: account.id,
           company_id: account.company_id,
@@ -281,6 +292,10 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
           is_important: isImportant,
           has_attachments: hasAttachments,
           received_at: receivedAt,
+          direction,
+          message_id_header: getHeader("Message-ID") || null,
+          in_reply_to_header: getHeader("In-Reply-To") || null,
+          references_header: getHeader("References") || null,
         });
       } catch (e) {
         console.error(`Error parsing message:`, e);

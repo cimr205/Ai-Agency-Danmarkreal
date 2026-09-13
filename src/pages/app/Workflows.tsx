@@ -15,6 +15,8 @@ import {
   useWorkflows,
   useToggleWorkflow,
   useDeleteWorkflow,
+  useWorkflowTemplates,
+  useInstantiateWorkflowTemplate,
   sendWorkflowChat,
   type ChatMessage,
 } from "@/hooks/api/useWorkflows";
@@ -56,6 +58,8 @@ const QUICK_PROMPTS = [
 export default function WorkflowsPage() {
   const { profile } = useAuth();
   const { data: workflows, refetch } = useWorkflows();
+  const { data: templates } = useWorkflowTemplates();
+  const instantiateTemplate = useInstantiateWorkflowTemplate();
   const toggleMutation = useToggleWorkflow();
   const deleteMutation = useDeleteWorkflow();
 
@@ -246,6 +250,30 @@ export default function WorkflowsPage() {
             <div className="p-3 border-b border-border/50">
               <h3 className="font-semibold text-sm">Dine workflows</h3>
             </div>
+            {!!templates?.length && (
+              <div className="p-3 border-b border-border/50 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground">Skabeloner</h4>
+                {templates.map((tpl) => (
+                  <div key={tpl.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate" title={tpl.description ?? undefined}>{tpl.name}</span>
+                    <Button
+                      size="sm" variant="outline" className="h-6 px-2 text-xs shrink-0"
+                      disabled={instantiateTemplate.isPending}
+                      onClick={async () => {
+                        try {
+                          await instantiateTemplate.mutateAsync(tpl.key);
+                          toast.success("Workflow oprettet fra skabelon — husk at sætte en webhook-url");
+                        } catch (err) {
+                          toast.error(getErrorMessage(err) || "Kunne ikke oprette workflow");
+                        }
+                      }}
+                    >
+                      Brug
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
             <ScrollArea className="flex-1 p-3">
               {!workflows?.length ? (
                 <p className="text-xs text-muted-foreground text-center py-6">

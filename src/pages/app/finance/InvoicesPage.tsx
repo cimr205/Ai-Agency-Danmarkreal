@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
+import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, useCreateInvoiceCheckout, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
 import { useModuleAvailability, useSyncFinancePayments } from '@/hooks/api/useIntegrations';
 import { useGmailAccount, useConnectGmail, useSendEmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
@@ -167,6 +167,7 @@ export default function InvoicesPage() {
   const createInvoice = useCreateInvoice();
   const createCustomer = useCreateCustomer();
   const updateStatus = useUpdateInvoiceStatus();
+  const createCheckout = useCreateInvoiceCheckout();
   const deleteInvoice = useDeleteInvoice();
 
   const templateOptions = useMemo(() => getTemplateOptions(locale), [locale]);
@@ -770,6 +771,17 @@ export default function InvoicesPage() {
                         try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
                       }}>
                         <DollarSign className="h-4 w-4 text-accent" />
+                      </Button>
+                    )}
+                    {invoice.status !== 'paid' && (
+                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Opret Stripe-betalingslink' : 'Create Stripe payment link'} onClick={async () => {
+                        try {
+                          const { checkout_url } = await createCheckout.mutateAsync({ invoice_id: invoice.id, invoice_number: invoice.invoice_number, locale });
+                          await navigator.clipboard.writeText(checkout_url);
+                          toast.success(locale === 'da' ? 'Betalingslink kopieret' : 'Payment link copied');
+                        } catch { toast.error(t('common.error')); }
+                      }}>
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" title={t('pages.invoices.sendEmail')} onClick={() => openEmailDialog(invoice)}>

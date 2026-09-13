@@ -164,6 +164,14 @@ export function useConvertLeadToDeal() {
   });
 }
 
+// General field edits (notes, phone, tags, ...) — deliberately does not
+// fire any outbound webhook here. It previously fired 'lead.updated'
+// unconditionally on every field edit, including edits that don't touch
+// status, with no changed-state check at all (the same class of bug as
+// deal.won). 'lead.updated' is kept as the event name (companies may
+// already have a webhook configured against it in WebhooksPage) but is now
+// only fired from useUpdateLeadStatus below, and only on a real status
+// transition.
 export function useUpdateLead() {
   const qc = useQueryClient();
   return useMutation({
@@ -176,7 +184,25 @@ export function useUpdateLead() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'lead.updated', { lead_id: data.id, name: data.name, email: data.email, status: data.status });
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}
+
+// Status transitions go through update_lead_status (company-scoped,
+// row-locked, reports whether the status actually changed server-side) —
+// the outbound webhook only fires on a real transition, so a double
+// submit/retry can't re-fire it.
+export function useUpdateLeadStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Enums<'lead_status'> }) => {
+      const { data, error } = await supabase.rpc('update_lead_status', { p_lead_id: id, p_status: status }).single();
+      if (error) throw error;
+      if (data.changed) {
+        fireWebhookEvent(data.company_id, 'lead.updated', { lead_id: data.id, name: data.name, email: data.email, status: data.status });
+      }
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),

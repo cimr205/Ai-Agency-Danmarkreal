@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     const body = await req.json();
-    const { to, subject, message, cc, reply_to_message_id, attachments, html } = body;
+    const { to, subject, message, cc, reply_to_message_id, in_reply_to_message_id_header, attachments, html } = body;
 
     // If html is provided use it directly; otherwise convert plain text to HTML
     const htmlBody = html ? html : `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${message
@@ -109,6 +109,17 @@ Deno.serve(async (req) => {
       return `=?UTF-8?B?${btoa(binary)}?=`;
     }
 
+    // In-Reply-To/References are what actually let a recipient's mail
+    // client (and our own trg_resolve_inbound_email, via the reply's own
+    // In-Reply-To header once synced back) prove thread continuity
+    // deterministically — Gmail's `threadId` alone only groups messages in
+    // Gmail's own UI, it doesn't set these RFC 5322 headers.
+    const threadingHeaders: string[] = [];
+    if (in_reply_to_message_id_header) {
+      threadingHeaders.push(`In-Reply-To: ${in_reply_to_message_id_header}`);
+      threadingHeaders.push(`References: ${in_reply_to_message_id_header}`);
+    }
+
     // Build RFC 2822 email
     let rawEmail: string;
     const hasAttachments = attachments && Array.isArray(attachments) && attachments.length > 0;
@@ -120,6 +131,7 @@ Deno.serve(async (req) => {
         `To: ${to}`,
         ...(cc ? [`Cc: ${cc}`] : []),
         `Subject: ${encodeSubject(subject)}`,
+        ...threadingHeaders,
         "MIME-Version: 1.0",
         `Content-Type: multipart/mixed; boundary="${boundary}"`,
         "",
@@ -148,6 +160,7 @@ Deno.serve(async (req) => {
         `To: ${to}`,
         ...(cc ? [`Cc: ${cc}`] : []),
         `Subject: ${encodeSubject(subject)}`,
+        ...threadingHeaders,
         "MIME-Version: 1.0",
         'Content-Type: text/html; charset="UTF-8"',
         "Content-Transfer-Encoding: 8bit",
@@ -158,16 +171,12 @@ Deno.serve(async (req) => {
     }
     const encodedEmail = utf8ToBase64url(rawEmail);
 
-    const sendUrl = reply_to_message_id
-      ? `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`
-      : `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`;
-
     const sendBody: { raw: string; threadId?: string } = { raw: encodedEmail };
     if (reply_to_message_id) {
       sendBody.threadId = reply_to_message_id;
     }
 
-    const sendRes = await fetch(sendUrl, {
+    const sendRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -185,6 +194,45 @@ Deno.serve(async (req) => {
     }
 
     const sendData = await sendRes.json();
+
+    // Record the outbound message ourselves rather than waiting for the
+    // next gmail-sync pass — trg_resolve_inbound_email needs an outbound
+    // row to exist in the thread before a reply arrives to correctly
+    // classify it as email.replied. Best-effort: a failure here doesn't
+    // fail the send, which already succeeded from the user's perspective.
+    try {
+      const metaRes = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${sendData.id}?format=metadata&metadataHeaders=Message-ID`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      const metaData = metaRes.ok ? await metaRes.json() : null;
+      const messageIdHeader = metaData?.payload?.headers?.find(
+        (h: { name: string; value: string }) => h.name.toLowerCase() === "message-id"
+      )?.value || null;
+
+      await supabaseAdmin.from("emails").upsert({
+        email_account_id: account.id,
+        company_id: account.company_id,
+        user_id: userId,
+        gmail_id: sendData.id,
+        thread_id: sendData.threadId,
+        direction: "outbound",
+        from_address: account.email_address,
+        from_name: account.email_address,
+        to_addresses: [to],
+        cc_addresses: cc ? [cc] : [],
+        subject,
+        snippet: (message || "").substring(0, 200),
+        body_html: htmlBody,
+        message_id_header: messageIdHeader,
+        in_reply_to_header: in_reply_to_message_id_header || null,
+        references_header: in_reply_to_message_id_header || null,
+        is_read: true,
+        received_at: new Date().toISOString(),
+      }, { onConflict: "email_account_id,gmail_id" });
+    } catch (recordErr) {
+      console.error("gmail-send: failed to record outbound message (non-blocking)", recordErr);
+    }
 
     return new Response(JSON.stringify({ success: true, message_id: sendData.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

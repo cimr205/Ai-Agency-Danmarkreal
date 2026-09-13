@@ -59,6 +59,12 @@ export function useCreateTask() {
   });
 }
 
+// General field edits (title, description, due_date, assigned_to,
+// archived, ...) — deliberately does not fire any outbound webhook. It
+// previously fired 'task.completed' whenever the update payload contained
+// status: 'completed', even if the task was already completed (double
+// click, retry) — the same class of bug as deal.won. Status transitions go
+// through useUpdateTaskStatus below instead.
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -70,7 +76,25 @@ export function useUpdateTask() {
         .select()
         .single();
       if (error) throw error;
-      if (data && updateData.status === 'completed') fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+
+// Status transitions go through update_task_status (company-scoped,
+// row-locked, reports whether the status actually changed server-side) —
+// 'task.completed' only fires on a real transition into 'completed', so a
+// double submit/retry can't re-fire it.
+export function useUpdateTaskStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'pending' | 'in_progress' | 'completed' }) => {
+      const { data, error } = await supabase.rpc('update_task_status', { p_task_id: id, p_status: status }).single();
+      if (error) throw error;
+      if (data.changed && data.status === 'completed') {
+        fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
+      }
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

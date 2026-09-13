@@ -76,7 +76,10 @@ export function useSyncEmails() {
   });
 }
 
-// Get synced emails from database
+// Get synced emails from database. Joins the linked customer/deal
+// (resolved server-side by trg_resolve_inbound_email via deterministic
+// thread continuity — see 20260913000004_gmail_thread_continuity.sql) so
+// Smart Inbox can surface them without a second round-trip per row.
 export function useEmails(filter?: { unread?: boolean; priority?: boolean; starred?: boolean }) {
   return useQuery({
     queryKey: ['synced-emails', filter],
@@ -86,8 +89,9 @@ export function useEmails(filter?: { unread?: boolean; priority?: boolean; starr
 
       let query = supabase
         .from('emails')
-        .select('*')
+        .select('*, customers(id, name), deals(id, title)')
         .eq('user_id', user.id)
+        .eq('direction', 'inbound')
         .order('received_at', { ascending: false })
         .limit(500);
 
@@ -103,10 +107,14 @@ export function useEmails(filter?: { unread?: boolean; priority?: boolean; starr
   });
 }
 
-// Send email via Gmail
+// Send email via Gmail. in_reply_to_message_id_header is the RFC 5322
+// Message-ID header of the email being replied to (selectedEmail.message_id_header
+// in EmailsPage) — it's what lets gmail-send set real In-Reply-To/References
+// headers, which is what makes thread continuity deterministic rather than
+// inferred from the sender's address alone.
 export function useSendEmail() {
   return useMutation({
-    mutationFn: async (params: { to: string; subject: string; message: string; cc?: string; reply_to_message_id?: string }) => {
+    mutationFn: async (params: { to: string; subject: string; message: string; cc?: string; reply_to_message_id?: string; in_reply_to_message_id_header?: string }) => {
       const { data, error } = await supabase.functions.invoke('gmail-send', {
         body: params,
       });

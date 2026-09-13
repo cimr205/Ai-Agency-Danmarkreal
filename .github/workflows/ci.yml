@@ -28,6 +28,12 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      - name: Unit tests
+        run: npm test
+
+      - name: Service-only RPC grants invariant
+        run: node scripts/check-service-only-grants.mjs
+
       - name: Build
         run: npm run build
         env:
