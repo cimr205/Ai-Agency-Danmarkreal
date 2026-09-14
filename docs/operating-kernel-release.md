@@ -3,7 +3,7 @@
 ## Staging prerequisites
 
 Create a separate Supabase staging project. The deployment workflow refuses the
-production project ref `inyrwsygghdjhmqejgwk`.
+production project ref `vbxlpxhvojlaisxcipyh`.
 
 Configure the GitHub `staging` environment with:
 

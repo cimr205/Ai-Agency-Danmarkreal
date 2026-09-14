@@ -25,7 +25,7 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$STAGING_SUPABASE_PROJECT_ID"
           test -n "$STAGING_SUPABASE_DB_PASSWORD"
-          test "$STAGING_SUPABASE_PROJECT_ID" != "inyrwsygghdjhmqejgwk"
+          test "$STAGING_SUPABASE_PROJECT_ID" != "vbxlpxhvojlaisxcipyh"
       - name: Link and inspect migration state
         run: |
           supabase link --project-ref "$STAGING_SUPABASE_PROJECT_ID" --password "$STAGING_SUPABASE_DB_PASSWORD"
