@@ -14,8 +14,7 @@ jobs:
     timeout-minutes: 20
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      STAGING_SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-      STAGING_SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_SUPABASE_DB_PASSWORD }}
+      STAGING_SUPABASE_PROJECT_ID: ${{ vars.STAGING_SUPABASE_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -24,14 +23,13 @@ jobs:
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$STAGING_SUPABASE_PROJECT_ID"
-          test -n "$STAGING_SUPABASE_DB_PASSWORD"
           test "$STAGING_SUPABASE_PROJECT_ID" != "vbxlpxhvojlaisxcipyh"
       - name: Link and inspect migration state
         run: |
-          supabase link --project-ref "$STAGING_SUPABASE_PROJECT_ID" --password "$STAGING_SUPABASE_DB_PASSWORD"
+          supabase link --project-ref "$STAGING_SUPABASE_PROJECT_ID"
           supabase migration list --linked
       - name: Apply migrations
-        run: supabase db push --linked --password "$STAGING_SUPABASE_DB_PASSWORD"
+        run: supabase db push --linked
       - name: Deploy canonical release functions
         run: |
           for function_name in \

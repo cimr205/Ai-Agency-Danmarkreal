@@ -8,8 +8,7 @@ production project ref `vbxlpxhvojlaisxcipyh`.
 Configure the GitHub `staging` environment with:
 
 - `SUPABASE_ACCESS_TOKEN`
-- `STAGING_SUPABASE_PROJECT_ID`
-- `STAGING_SUPABASE_DB_PASSWORD`
+- `STAGING_SUPABASE_PROJECT_ID=abqfhcahdcjnkzuvbunl` as an environment variable
 
 Configure these Edge Function secrets in the staging Supabase project:
 
