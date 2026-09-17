@@ -672,7 +672,7 @@ export default function InvoicesPage() {
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<Input type="number" min={1} value={line.quantity} onChange={e => updateLine(i, 'quantity', Number(e.target.value))} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<Input type="number" min={0} value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.lineTotal')}</Label>}<Input value={formatCurrency(line.total)} readOnly className="bg-muted/50" /></div>
-                        <Button variant="ghost" size="icon" onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     ))}
                     <Button variant="outline" size="sm" onClick={addLine}><Plus className="h-3 w-3 mr-1" />{t('pages.invoices.addLine')}</Button>
@@ -1076,7 +1076,7 @@ export default function InvoicesPage() {
                         updated[i] = { ...updated[i], unit_price: price, total: updated[i].quantity * price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => {
                         setEditingInvoice({ ...editingInvoice, editLines: editingInvoice.editLines.filter((_, idx) => idx !== i) });
                       }} disabled={editingInvoice.editLines.length <= 1}><Trash2 className="h-4 w-4" /></Button>
                     </div>

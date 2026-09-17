@@ -7,6 +7,7 @@ import { Users, Clock, AlertTriangle, Activity, UserCheck, UserX, Timer, Trendin
 import { useI18n } from '@/lib/i18n';
 import { format, differenceInMinutes } from 'date-fns';
 import { useState, useEffect } from 'react';
+import { ErrorState } from '@/components/shared/ErrorState';
 
 function LiveTimer({ checkIn }: { checkIn: string }) {
   const [elapsed, setElapsed] = useState('');
@@ -26,7 +27,7 @@ function LiveTimer({ checkIn }: { checkIn: string }) {
 
 export default function WorkforceDashboardPage() {
   const { t } = useI18n();
-  const { data: live, isLoading } = useWorkforceLive();
+  const { data: live, isLoading, error, refetch } = useWorkforceLive();
   const { data: employees } = useEmployees();
 
   const totalEmployees = employees?.filter(e => e.is_active !== false).length ?? 0;
@@ -46,6 +47,8 @@ export default function WorkforceDashboardPage() {
         <h1 className="text-2xl font-bold text-foreground">{t('workforce.dashboardTitle')}</h1>
         <p className="text-muted-foreground">{t('workforce.dashboardSubtitle')}</p>
       </div>
+
+      {error && <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />}
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

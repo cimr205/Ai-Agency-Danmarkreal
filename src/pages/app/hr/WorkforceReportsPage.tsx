@@ -8,6 +8,7 @@ import { BarChart3, Download, Clock, TrendingUp, TrendingDown, Target, Users, Fi
 import { useI18n } from '@/lib/i18n';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { toast } from 'sonner';
+import { ErrorState } from '@/components/shared/ErrorState';
 
 export default function WorkforceReportsPage() {
   const { t } = useI18n();
@@ -19,7 +20,7 @@ export default function WorkforceReportsPage() {
   const startStr = format(start, 'yyyy-MM-dd');
   const endStr = format(end, 'yyyy-MM-dd');
 
-  const { data: report, isLoading } = useWorkforceReport({ startDate: startStr, endDate: endStr });
+  const { data: report, isLoading, error, refetch } = useWorkforceReport({ startDate: startStr, endDate: endStr });
   const { data: allEntries } = useTimeEntries({ startDate: startStr, endDate: endStr });
 
   const handleExportCSV = () => {
@@ -160,6 +161,8 @@ export default function WorkforceReportsPage() {
           </Button>
         </div>
       </div>
+
+      {error && <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />}
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

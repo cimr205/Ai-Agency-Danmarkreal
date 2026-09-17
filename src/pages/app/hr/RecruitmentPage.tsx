@@ -4,22 +4,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, UserPlus, Briefcase, Users, CheckCircle } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-
-const statusColors: Record<string, string> = {
-  open: 'bg-success/15 text-success',
-  interviewing: 'bg-primary/15 text-primary',
-  closed: 'bg-muted text-muted-foreground',
-  filled: 'bg-accent/15 text-accent-foreground',
-};
 
 export default function RecruitmentPage() {
   const { t } = useI18n();
@@ -103,7 +96,7 @@ export default function RecruitmentPage() {
             : filteredRecruitment.map((rec) => (
               <TableRow key={rec.id}>
                 <TableCell className="font-medium">{rec.position}</TableCell>
-                <TableCell><Badge className={statusColors[rec.status]}>{statusLabels[rec.status]}</Badge></TableCell>
+                <TableCell><StatusBadge status={rec.status} label={statusLabels[rec.status]} /></TableCell>
                 <TableCell>
                   <Select value={rec.status} onValueChange={(value) => handleStatusChange(rec.id, value)}>
                     <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>

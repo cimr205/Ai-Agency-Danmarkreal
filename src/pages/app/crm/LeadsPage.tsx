@@ -764,7 +764,7 @@ export default function LeadsPage() {
                   </SelectContent>
                 </Select>
                 {activeFolder && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive flex-shrink-0" onClick={() => { deleteFolder.mutate(activeFolder.id); setActiveFolderId(null); toast.success(t('pages.leads.folderDeleted')); }}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive flex-shrink-0" aria-label={t('common.delete')} onClick={() => { deleteFolder.mutate(activeFolder.id); setActiveFolderId(null); toast.success(t('pages.leads.folderDeleted')); }}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
@@ -789,7 +789,7 @@ export default function LeadsPage() {
                       if (e.key === 'Escape') { setShowNewFolderInput(false); setNewFolderName(''); }
                     }}
                   />
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setShowNewFolderInput(false); setNewFolderName(''); }}><X className="h-3.5 w-3.5" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.cancel')} onClick={() => { setShowNewFolderInput(false); setNewFolderName(''); }}><X className="h-3.5 w-3.5" /></Button>
                 </div>
               ) : (
                 <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground px-0" onClick={() => setShowNewFolderInput(true)}>
@@ -837,6 +837,7 @@ export default function LeadsPage() {
                 />
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8" disabled={!newFilterTagInput.trim()}
+                  aria-label={t('pages.leads.createTag') || 'New tag'}
                   onClick={() => {
                     const tag = newFilterTagInput.trim();
                     if (tag && !(allTags ?? []).includes(tag)) toggleTagFilter(tag);
@@ -1052,20 +1053,20 @@ export default function LeadsPage() {
                           {lead.phone && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <a href={`tel:${lead.phone}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Phone className="h-3.5 w-3.5" /></Button></a>
+                                <a href={`tel:${lead.phone}`}><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('pages.leads.callAction')}><Phone className="h-3.5 w-3.5" /></Button></a>
                               </TooltipTrigger>
                               <TooltipContent>{t('pages.leads.callAction')}</TooltipContent>
                             </Tooltip>
                           )}
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <a href={`mailto:${lead.email}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Mail className="h-3.5 w-3.5" /></Button></a>
+                              <a href={`mailto:${lead.email}`}><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('pages.leads.emailAction')}><Mail className="h-3.5 w-3.5" /></Button></a>
                             </TooltipTrigger>
                             <TooltipContent>{t('pages.leads.emailAction')}</TooltipContent>
                           </Tooltip>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={t('common.actions')}><MoreHorizontal className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => openLeadDetail(lead)}>{t('pages.leads.openLead')}</DropdownMenuItem>

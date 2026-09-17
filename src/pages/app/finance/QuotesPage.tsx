@@ -158,7 +158,7 @@ export default function QuotesPage() {
                       <Input type="number" value={line.quantity} onChange={e => updateLine(idx, 'quantity', parseFloat(e.target.value) || 0)} className="w-20" />
                       <Input type="number" value={line.unit_price} onChange={e => updateLine(idx, 'unit_price', parseFloat(e.target.value) || 0)} className="w-28" />
                       <span className="text-sm font-medium w-24 text-right">{formatCurrency(line.quantity * line.unit_price)}</span>
-                      {lines.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
+                      {lines.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.delete')} onClick={() => removeLine(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
                     </div>
                   ))}
                   <Button variant="outline" size="sm" onClick={addLine}><Plus className="h-3.5 w-3.5 mr-1" />{t('quotes.addLine')}</Button>

@@ -9,12 +9,15 @@ const STATUS_TONE: Record<string, BadgeProps["variant"]> = {
   // positive / closed-won / paid
   paid: "success",
   accepted: "success",
+  approved: "success",
   completed: "success",
   won: "success",
   active: "success",
   connected: "success",
   matched: "success",
   executed: "success",
+  open: "success",
+  filled: "success",
   // needs attention / in motion
   sent: "default",
   pending: "warning",
@@ -22,6 +25,7 @@ const STATUS_TONE: Record<string, BadgeProps["variant"]> = {
   in_progress: "warning",
   ambiguous: "warning",
   proposed: "warning",
+  interviewing: "warning",
   // risk / negative
   overdue: "destructive",
   failed: "destructive",
@@ -37,6 +41,7 @@ const STATUS_TONE: Record<string, BadgeProps["variant"]> = {
   disconnected: "secondary",
   unmatched: "secondary",
   dismissed: "secondary",
+  closed: "secondary",
 };
 
 export function statusTone(status: string): BadgeProps["variant"] {

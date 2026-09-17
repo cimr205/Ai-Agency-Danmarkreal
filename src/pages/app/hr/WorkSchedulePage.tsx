@@ -17,6 +17,7 @@ import {
 } from '@/hooks/api/useShifts';
 import { CalendarDays, Plus, Trash2, List, Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, addDays, startOfWeek, endOfWeek, addWeeks, isSameDay, parseISO } from 'date-fns';
@@ -32,7 +33,7 @@ export default function WorkSchedulePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
-  const { data: schedules, isLoading } = useWorkSchedules({
+  const { data: schedules, isLoading, error, refetch } = useWorkSchedules({
     startDate: format(currentWeekStart, 'yyyy-MM-dd'),
     endDate: format(weekEnd, 'yyyy-MM-dd'),
   });
@@ -231,7 +232,9 @@ export default function WorkSchedulePage() {
         </Button>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />
+      ) : isLoading ? (
         <Skeleton className="h-80 w-full" />
       ) : view === 'week' ? (
         /* ─── Week Grid View ─── */
@@ -319,7 +322,7 @@ export default function WorkSchedulePage() {
                       <td className="p-3">{s.break_minutes || 0}m</td>
                       <td className="p-3 text-muted-foreground">{s.title || '-'}</td>
                       <td className="p-3">
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}>
+                        <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => handleDelete(s.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </td>
@@ -388,7 +391,7 @@ export default function WorkSchedulePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {canManageShifts ? (
-                      <Button variant="ghost" size="icon" onClick={() => deleteShift.mutate(shift)}>
+                      <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => deleteShift.mutate(shift)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     ) : myApp ? (
