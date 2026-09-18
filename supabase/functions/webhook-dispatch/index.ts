@@ -1,9 +1,6 @@
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { corsHeaders } from "../_shared/cors.ts";
+import { requireCompanyAuth } from "../_shared/auth.ts";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 15000]; // ms
@@ -15,28 +12,34 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { event, company_id, data, test_webhook_id } = await req.json();
+    // Caller identity and company_id are resolved from the verified JWT —
+    // never trust a client-supplied company_id here. Without this, any
+    // holder of the public anon key could dispatch webhooks (with a real
+    // signed secret) for an arbitrary tenant. See audit finding, 2026-09.
+    const auth = await requireCompanyAuth(req);
+    if (auth instanceof Response) return auth;
+    const { supabase, companyId: company_id } = auth;
 
-    if (!event || !company_id) {
-      return new Response(JSON.stringify({ error: "Missing event or company_id" }), {
+    const { event, data, test_webhook_id } = await req.json();
+
+    if (!event) {
+      return new Response(JSON.stringify({ error: "Missing event" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     // Get active webhooks for this event + company
     let webhooks: { id: string; url: string; secret_key: string | null }[];
 
     if (test_webhook_id) {
-      // Test mode: fetch specific webhook
+      // Test mode: fetch specific webhook — scoped to the caller's own
+      // company so a guessed/enumerated webhook UUID from another tenant
+      // can't be used to trigger a delivery signed with their secret.
       const { data: wh } = await supabase
         .from("webhooks")
         .select("id, url, secret_key")
         .eq("id", test_webhook_id)
+        .eq("company_id", company_id)
         .single();
       webhooks = wh ? [wh] : [];
     } else {
