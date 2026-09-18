@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyTwilioRequest } from "../_shared/twilioSignature.ts";
 
 // Public endpoint (no JWT) — Twilio fetches this for the initial TwiML.
 // Returns greeting + opens a <Gather speech> loop that posts user transcripts
@@ -23,6 +24,14 @@ function languageFor(code?: string | null) {
 
 Deno.serve(async (req) => {
   try {
+    const { valid } = await verifyTwilioRequest(req);
+    if (!valid) {
+      return new Response(
+        `<?xml version="1.0" encoding="UTF-8"?><Response><Reject/></Response>`,
+        { status: 403, headers: { "Content-Type": "text/xml" } },
+      );
+    }
+
     const url = new URL(req.url);
     const callId = url.searchParams.get("call_id");
     if (!callId) {

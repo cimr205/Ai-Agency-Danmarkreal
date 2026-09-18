@@ -28,6 +28,11 @@ Deno.serve(async (req) => {
 
     const userId = user.id;
 
+    const { data: profile } = await supabase.from("profiles").select("company_id").eq("user_id", userId).single();
+    if (!profile?.company_id) {
+      return new Response(JSON.stringify({ error: "No company found" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     if (!GOOGLE_CLIENT_ID) {
       throw new Error("GOOGLE_CLIENT_ID not configured");
@@ -43,7 +48,26 @@ Deno.serve(async (req) => {
       "https://www.googleapis.com/auth/userinfo.email",
     ].join(" ");
 
-    const state = btoa(JSON.stringify({ user_id: userId }));
+    // Server-issued, single-use, expiring state row — same pattern as the
+    // Dinero/e-conomic OAuth flows — rather than an unsigned client-decodable
+    // blob the callback would otherwise have to trust as-is.
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const { data: stateRow, error: stateErr } = await supabase
+      .from("oauth_states")
+      .insert({
+        company_id: profile.company_id,
+        provider: "gmail",
+        created_by: userId,
+        expires_at: expiresAt,
+        metadata: { user_id: userId },
+      })
+      .select("id")
+      .single();
+    if (stateErr || !stateRow) {
+      console.error("Failed to create oauth state:", stateErr);
+      throw new Error("Failed to start authorization");
+    }
+    const state = stateRow.id;
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", GOOGLE_CLIENT_ID);

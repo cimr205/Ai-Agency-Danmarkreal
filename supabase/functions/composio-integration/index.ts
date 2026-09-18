@@ -97,6 +97,10 @@ function toolkitIsConnectable(t: { composio_managed_auth_schemes?: string[]; aut
 // action categorization drives approval requirements later — kept generic,
 // no per-provider hardcoding. Callers must declare the category up front.
 const VALID_CATEGORIES = ["read", "write", "destructive", "financial", "communication"];
+// Mirrors ai-operating-manager's MANAGER_ROLES — kept local rather than
+// imported since the two functions don't currently share a roles module.
+const MANAGER_ROLES = ["system_admin", "owner", "company_admin", "manager"];
+const RESTRICTED_CATEGORIES = ["financial", "destructive"];
 
 // ─── Capability Engine ───────────────────────────────────────────────────
 // The generic layer the whole "connect once, use everywhere" architecture
@@ -648,6 +652,14 @@ Deno.serve(async (req) => {
 
       if (!integrationId || !toolSlug || !actionCategory) throw new Error("Missing integrationId, toolSlug, or actionCategory");
       if (!VALID_CATEGORIES.includes(actionCategory)) throw new Error(`Invalid actionCategory: ${actionCategory}`);
+
+      if (RESTRICTED_CATEGORIES.includes(actionCategory)) {
+        const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+        const roles = (roleRows ?? []).map((r: { role: string }) => r.role);
+        if (!roles.some((role: string) => MANAGER_ROLES.includes(role))) {
+          return jsonError(`Du har ikke rettighed til at udføre en ${actionCategory}-handling`, 403);
+        }
+      }
 
       const { data: row } = await supabase
         .from("integrations")

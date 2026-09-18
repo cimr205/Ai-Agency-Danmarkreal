@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
+import { verifyTwilioRequest } from "../_shared/twilioSignature.ts";
 
 // Public endpoint (no JWT). Twilio posts the user's speech transcript here
 // after each <Gather>. We call OpenAI Chat with full conversation history,
@@ -46,9 +47,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const formData = await req.formData();
-    const userTranscript = String(formData.get("SpeechResult") || "").trim();
-    const confidence = parseFloat(String(formData.get("Confidence") || "0"));
+    const { valid, params } = await verifyTwilioRequest(req);
+    if (!valid) {
+      return new Response(hangupTwiml("Unable to verify request.", voice, lang), {
+        status: 403,
+        headers: { "Content-Type": "text/xml" },
+      });
+    }
+    const userTranscript = String(params["SpeechResult"] || "").trim();
+    const confidence = parseFloat(String(params["Confidence"] || "0"));
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
