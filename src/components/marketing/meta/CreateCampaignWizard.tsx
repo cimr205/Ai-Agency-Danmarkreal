@@ -143,6 +143,10 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiImageGenerating, setAiImageGenerating] = useState(false);
+  // Stable for the whole wizard session so a retry after a dropped
+  // response reuses the same key instead of publishing a second live
+  // campaign; reset() issues a fresh one for the next campaign.
+  const publishIdempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   const update = (partial: Partial<CampaignData>) => setData(prev => ({ ...prev, ...partial }));
 
@@ -185,6 +189,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
     setData({ ...defaultData });
     setVariants([createVariant(0)]);
     setActiveVariantIdx(0);
+    publishIdempotencyKeyRef.current = crypto.randomUUID();
   };
 
   const handleClose = () => {
@@ -329,6 +334,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
           publish_date: data.scheduledPublishDate,
           publish_time: data.scheduledPublishTime,
         } : undefined,
+        idempotency_key: publishIdempotencyKeyRef.current,
       };
 
       const { data: result, error } = await supabase.functions.invoke("meta-publish-campaign", {

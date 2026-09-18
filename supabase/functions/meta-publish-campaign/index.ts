@@ -79,8 +79,56 @@ serve(async (req) => {
       targeting,
       ad_creative,
       schedule,
+      idempotency_key,
     } = body;
 
+    if (!idempotency_key) throw new Error("Missing idempotency_key.");
+
+    // Has this exact publish attempt already run? Return the cached result
+    // instead of creating a second live campaign. A concurrent attempt
+    // still in flight is rejected outright (409) rather than raced.
+    const { data: existingJob } = await supabase
+      .from("meta_campaign_publish_jobs")
+      .select("status, result, error")
+      .eq("company_id", companyId)
+      .eq("idempotency_key", idempotency_key)
+      .maybeSingle();
+
+    if (existingJob?.status === "completed") {
+      return new Response(JSON.stringify({ ...(existingJob.result as Record<string, unknown>), idempotent_replay: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (existingJob?.status === "pending") {
+      return new Response(JSON.stringify({ error: "Denne udgivelse er allerede i gang." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (existingJob?.status === "failed") {
+      // A prior attempt failed before creating anything on Meta's side (or
+      // partially — see the failure-path comment near the bottom) — allow
+      // a fresh attempt by reusing the same job row rather than blocking forever.
+      await supabase.from("meta_campaign_publish_jobs")
+        .update({ status: "pending", error: null })
+        .eq("company_id", companyId).eq("idempotency_key", idempotency_key);
+    } else {
+      const { error: jobInsertError } = await supabase.from("meta_campaign_publish_jobs").insert({
+        company_id: companyId,
+        idempotency_key,
+        request_payload: body,
+        created_by: user.id,
+      });
+      if (jobInsertError) {
+        // Unique violation = a concurrent request won the race to create this job first.
+        return new Response(JSON.stringify({ error: "Denne udgivelse er allerede i gang." }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    try {
     const isCampaignBudget = budget_level === "campaign";
 
     // 1. Create Campaign
@@ -257,18 +305,36 @@ serve(async (req) => {
       },
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        campaign_id: campaignId,
-        ad_set_id: adSetId,
-        creative_id: creativeId,
-        ad_id: adData.id,
-        status: status || "ACTIVE",
-        scheduled: !!schedule,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const resultBody = {
+      success: true,
+      campaign_id: campaignId,
+      ad_set_id: adSetId,
+      creative_id: creativeId,
+      ad_id: adData.id,
+      status: status || "ACTIVE",
+      scheduled: !!schedule,
+    };
+
+    await supabase.from("meta_campaign_publish_jobs")
+      .update({ status: "completed", result: resultBody, completed_at: new Date().toISOString() })
+      .eq("company_id", companyId).eq("idempotency_key", idempotency_key);
+
+    return new Response(JSON.stringify(resultBody), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    } catch (publishErr) {
+      // Mark the job failed so a retry with the same idempotency_key is
+      // allowed to run again instead of being replayed or blocked forever.
+      // Note: Meta objects already created before the failing step (e.g. a
+      // campaign that exists but whose ad set creation failed) are not
+      // rolled back here — this closes the duplicate-on-retry gap, not
+      // partial-failure cleanup, which would need per-step compensation.
+      const msg = publishErr instanceof Error ? publishErr.message : "Unknown error";
+      await supabase.from("meta_campaign_publish_jobs")
+        .update({ status: "failed", error: msg })
+        .eq("company_id", companyId).eq("idempotency_key", idempotency_key);
+      throw publishErr;
+    }
   } catch (e) {
     console.error("meta-publish-campaign error:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
