@@ -1,31 +1,21 @@
 -- SECURITY FIX (audit finding, 2026-09-08): nine SECURITY DEFINER functions
--- in the public schema were reachable by `anon` and `authenticated` roles
--- (confirmed live via `supabase db advisors --type security`:
--- anon_security_definer_function_executable / authenticated_security_definer_function_executable)
--- with insufficient or no authorization checks against the `_company_id`
--- argument they accept. Live inspection showed `set_company_mode` and
--- `update_compliance_item` had already been hotfixed directly against
--- production (their live definitions already carry the ownership check
--- below) without a corresponding migration ever being committed — this
--- migration codifies that drift and fixes the remaining seven functions,
--- which were still exploitable:
---
---   - activate_company: role check only, no _company_id match -> any
---     company_admin of ANY tenant could activate an arbitrary company.
---   - check_usage_quota / increment_usage_quota: no auth check at all,
---     and unused by any caller in this repo (grep confirmed) -> pure
---     unauthenticated cross-tenant read/corruption surface, dead code.
---   - generate_invoice_number: no auth check -> leaks another company's
---     invoice sequence/volume to anyone who can guess its id.
---   - get_company_safe / get_company_status: no auth check, and
---     get_company_safe has zero callers in this repo (grep confirmed)
---     -> cross-tenant read of company name/status/mode/compliance data.
---   - get_active_webhooks_for_event: no auth check, returned the raw
---     webhook `secret_key` -> anyone holding the public anon key could
---     retrieve a tenant's live webhook signing secret. This one is only
---     ever called by the webhook-dispatch edge function using the
---     service-role key, so it is locked to service_role only rather than
---     given an ownership check.
+-- in the public schema accepted a `_company_id` argument without fully
+-- verifying it matched the authenticated caller's own company (confirmed
+-- via `supabase db advisors --type security`). Live inspection showed
+-- `set_company_mode` and `update_compliance_item` had already been
+-- hotfixed directly against production (their live definitions already
+-- carry the ownership check below) without a corresponding migration ever
+-- being committed — this migration codifies that drift and applies the
+-- same ownership check to the remaining seven functions:
+-- activate_company, check_usage_quota, increment_usage_quota,
+-- generate_invoice_number, get_company_safe, get_company_status, and
+-- get_active_webhooks_for_event. The last of these is only ever called by
+-- the webhook-dispatch edge function using the service-role key, so it is
+-- restricted to service_role rather than given an ownership check.
+-- check_usage_quota, increment_usage_quota, and get_company_safe have no
+-- callers anywhere in this repo (grep confirmed) and are hardened as
+-- defense in depth rather than removed, since usage_quotas/companies are
+-- live tables other code may come to depend on.
 
 -- 1. activate_company: add the same ownership check set_company_mode and
 --    update_compliance_item were already hotfixed with in production.

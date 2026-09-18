@@ -13,9 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     // Caller identity and company_id are resolved from the verified JWT —
-    // never trust a client-supplied company_id here. Without this, any
-    // holder of the public anon key could dispatch webhooks (with a real
-    // signed secret) for an arbitrary tenant. See audit finding, 2026-09.
+    // never trust a client-supplied company_id here.
     const auth = await requireCompanyAuth(req);
     if (auth instanceof Response) return auth;
     const { supabase, companyId: company_id } = auth;
@@ -32,9 +30,7 @@ Deno.serve(async (req) => {
     let webhooks: { id: string; url: string; secret_key: string | null }[];
 
     if (test_webhook_id) {
-      // Test mode: fetch specific webhook — scoped to the caller's own
-      // company so a guessed/enumerated webhook UUID from another tenant
-      // can't be used to trigger a delivery signed with their secret.
+      // Test mode: fetch specific webhook, scoped to the caller's own company.
       const { data: wh } = await supabase
         .from("webhooks")
         .select("id, url, secret_key")
