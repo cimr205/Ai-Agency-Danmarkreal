@@ -17,7 +17,10 @@ import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 
-type Email = Tables<'emails'>;
+type Email = Tables<'emails'> & {
+  contact?: { id: string; name: string; email: string } | null;
+  deal?: { id: string; title: string } | null;
+};
 
 const PAGE_SIZE = 50;
 
@@ -464,6 +467,13 @@ export default function EmailsPage() {
                       </div>
                       <p className={`text-sm truncate ${!email.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{email.snippet}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Badge variant="outline" className="text-[10px]">
+                          {email.routing_status === 'matched' ? 'Matched' : email.routing_status === 'ambiguous' ? 'Ambiguous' : 'Unresolved'}
+                        </Badge>
+                        {email.contact && <span className="text-[10px] text-muted-foreground">{email.contact.name}</span>}
+                        {email.deal && <span className="text-[10px] text-muted-foreground">· {email.deal.title}</span>}
+                      </div>
                     </div>
                     <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
                       {new Date(email.received_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
@@ -505,6 +515,11 @@ export default function EmailsPage() {
                     <p className="text-xs font-medium text-accent">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
                   </div>
                 )}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Badge variant="outline">{selectedEmail.routing_status === 'matched' ? 'Matched' : selectedEmail.routing_status === 'ambiguous' ? 'Ambiguous' : 'Unresolved'}</Badge>
+                  {selectedEmail.contact && <Badge variant="secondary">Contact: {selectedEmail.contact.name}</Badge>}
+                  {selectedEmail.deal && <Badge variant="secondary">Deal: {selectedEmail.deal.title}</Badge>}
+                </div>
               </DialogHeader>
               <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
                 {selectedEmail.body_html ? (
@@ -531,7 +546,7 @@ export default function EmailsPage() {
                           to: selectedEmail.from_address,
                           subject: selectedEmail.subject?.startsWith('Re:') ? selectedEmail.subject : `Re: ${selectedEmail.subject}`,
                           message: replyBody,
-                          reply_to_message_id: selectedEmail.thread_id || selectedEmail.gmail_id,
+                          reply_to_message_id: selectedEmail.id,
                         });
                         toast.success(t('pages.email.replySent'));
                         setReplyOpen(false);

@@ -7,6 +7,7 @@ interface EmailAccount {
   access_token: string;
   refresh_token: string;
   token_expires_at: string | null;
+  email_address: string;
 }
 
 interface GmailMessageId {
@@ -140,7 +141,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("gmail-sync error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -266,7 +267,11 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
           company_id: account.company_id,
           user_id: userId,
           gmail_id: detail.id,
+          provider_message_id: detail.id,
           thread_id: detail.threadId,
+          internet_message_id: getHeader("Message-ID") || null,
+          in_reply_to: getHeader("In-Reply-To") || null,
+          reference_ids: (getHeader("References").match(/<[^>]+>/g) || []),
           from_address: fromAddress,
           from_name: fromName,
           to_addresses: toAddresses,
@@ -280,6 +285,12 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
           is_starred: isStarred,
           is_important: isImportant,
           has_attachments: hasAttachments,
+          // Persist Gmail's authoritative direction before routing the batch.
+          // This lets an inbound reply see an outbound message from the same
+          // batch regardless of the order in which the routing RPCs run.
+          direction: labels.includes("SENT") || fromAddress.trim().toLowerCase() === account.email_address.trim().toLowerCase()
+            ? "outbound"
+            : "inbound",
           received_at: receivedAt,
         });
       } catch (e) {
@@ -292,10 +303,22 @@ async function fetchGmailMessages(accessToken: string, account: EmailAccount, us
   if (emails.length > 0) {
     for (let i = 0; i < emails.length; i += 50) {
       const chunk = emails.slice(i, i + 50);
-      const { error } = await supabaseAdmin
+      const { data: persisted, error } = await supabaseAdmin
         .from("emails")
-        .upsert(chunk, { onConflict: "email_account_id,gmail_id" });
-      if (error) console.error("Email upsert error:", error);
+        .upsert(chunk, { onConflict: "email_account_id,gmail_id" })
+        .select("id,gmail_id");
+      if (error) throw new Error(`Email upsert failed: ${error.message}`);
+
+      // Route every persisted message through the operating kernel. The RPC
+      // is idempotent by Gmail message id and safely leaves ambiguous senders
+      // unmatched instead of guessing a CRM contact.
+      for (const email of persisted ?? []) {
+        const { error: routeError } = await supabaseAdmin.rpc("route_incoming_email", {
+          p_company_id: account.company_id,
+          p_email_id: email.id,
+        });
+        if (routeError) throw new Error(`Email routing failed for ${email.gmail_id}: ${routeError.message}`);
+      }
     }
     console.log(`Upserted ${emails.length} emails`);
   }

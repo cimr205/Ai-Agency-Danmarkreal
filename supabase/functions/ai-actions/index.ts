@@ -191,14 +191,10 @@ Deno.serve(async (req) => {
           content: JSON.stringify(result.ok ? result.data : { error: result.error }),
         });
 
-        // log
-        await supabase.from("activity_logs").insert({
-          user_id: user.id,
-          company_id: companyId,
-          action_type: "ai_action",
-          entity_type: "ai_action",
-          description: `AI udførte ${name}`,
-          metadata: { tool: name, input: args, status: result.ok ? "ok" : "error" },
+        await supabase.rpc("emit_workspace_event", {
+          _company_id: companyId, _type: "ai.action_executed", _source: "ai-actions",
+          _entity_type: "ai_action", _entity_id: call.id,
+          _payload: { tool: name, input: args, status: result.ok ? "ok" : "error" }, _actor: user.id,
         });
       }
     }

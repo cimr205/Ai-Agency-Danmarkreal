@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 import type { Enums, Json, Tables } from '@/integrations/supabase/types';
 
 export const LEADS_PAGE_SIZE = 100;
@@ -117,8 +116,6 @@ export function useCreateLead() {
         .select()
         .single();
       if (error) throw error;
-      // Fire webhook
-      if (data) fireWebhookEvent(data.company_id, 'lead.created', { lead_id: data.id, name: data.name, email: data.email, company: data.company_name, phone: data.phone, status: data.status });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
@@ -176,7 +173,6 @@ export function useUpdateLead() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'lead.updated', { lead_id: data.id, name: data.name, email: data.email, status: data.status });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),

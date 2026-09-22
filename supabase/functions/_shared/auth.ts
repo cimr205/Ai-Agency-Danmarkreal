@@ -11,7 +11,7 @@ export function jsonError(message: string, status: number): Response {
 export interface AuthedCompanyContext {
   // deno-lint-ignore no-explicit-any
   supabase: SupabaseClient<any, any, any>;
-  user: { id: string; [key: string]: unknown };
+  user: { id: string };
   companyId: string;
 }
 

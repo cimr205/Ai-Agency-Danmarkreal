@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database, Tables } from '@/integrations/supabase/types';
-import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
 type DealStage = string;
 
@@ -39,7 +38,6 @@ export function useCreateDeal() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'deal.created', { deal_id: data.id, title: data.title, value: data.value, stage: data.stage });
       return data;
     },
     onSuccess: () => {
@@ -53,16 +51,24 @@ export function useUpdateDeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; stage?: DealStage; notes?: string; expected_close_date?: string | null; title?: string; value?: number; customer_id?: string | null }) => {
+      const { stage, ...fieldUpdates } = updates;
+      if (stage) {
+        const { error: transitionError } = await supabase.rpc('transition_deal_stage', {
+          p_deal_id: id,
+          p_target_stage: stage,
+        });
+        if (transitionError) throw transitionError;
+      }
+      if (Object.keys(fieldUpdates).length) {
+        const { error: updateError } = await supabase.from('deals').update(fieldUpdates).eq('id', id);
+        if (updateError) throw updateError;
+      }
       const { data, error } = await supabase
         .from('deals')
-        .update(updates)
-        .eq('id', id)
         .select('*, customers!deals_customer_id_fkey(name)')
+        .eq('id', id)
         .single();
       if (error) throw error;
-      // Fire deal.won or deal.lost events
-      if (data && updates.stage === 'won') fireWebhookEvent(data.company_id, 'deal.won', { deal_id: data.id, title: data.title, value: data.value });
-      if (data && updates.stage === 'lost') fireWebhookEvent(data.company_id, 'deal.lost', { deal_id: data.id, title: data.title, value: data.value });
       return data as unknown as DealWithCustomer;
     },
     onSuccess: () => {

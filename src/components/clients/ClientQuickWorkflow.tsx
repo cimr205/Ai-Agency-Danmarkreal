@@ -3,8 +3,6 @@ import { Zap, ArrowRight, CheckCircle2, Calendar as CalIcon, Flag, Webhook, Load
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { useCreateTask } from "@/hooks/api/useTasks";
-import { fireWebhookEvent } from "@/hooks/api/useWebhooks";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
 
@@ -27,14 +25,13 @@ function dueDate(key: DueKey): string {
   return d.toISOString().slice(0, 10);
 }
 
-const AUTOMATIONS: { id: string; label: string; event: "lead.updated" | "deal.created" | "email.sent"; hint: string }[] = [
-  { id: "followup",  label: "Send opfølgning",        event: "email.sent",   hint: "Trigger mail-sekvens" },
-  { id: "nurture",   label: "Start nurture-flow",     event: "lead.updated", hint: "Tildel til kampagne" },
-  { id: "handoff",   label: "Overdrag til sælger",    event: "deal.created", hint: "Notificér team" },
+const AUTOMATIONS: { id: string; label: string; taskTitle: string; hint: string }[] = [
+  { id: "followup",  label: "Planlæg opfølgning", taskTitle: "Følg op med kunde", hint: "Opretter en konkret opgave" },
+  { id: "nurture",   label: "Start nurture-flow", taskTitle: "Start nurture-flow", hint: "Opretter en konkret opgave" },
+  { id: "handoff",   label: "Overdrag til sælger", taskTitle: "Overdrag kunde til sælger", hint: "Opretter en konkret opgave" },
 ];
 
 export function ClientQuickWorkflow({ customer }: Props) {
-  const { profile } = useAuth();
   const createTask = useCreateTask();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"action" | "task" | "automation">("action");
@@ -65,16 +62,15 @@ export function ClientQuickWorkflow({ customer }: Props) {
   };
 
   const triggerAutomation = async (a: typeof AUTOMATIONS[number]) => {
-    if (!profile?.company_id) return;
     setBusy(a.id);
     try {
-      await fireWebhookEvent(profile.company_id, a.event, {
-        customer_id: customer.id,
-        customer_name: customer.name,
-        automation: a.id,
-        triggered_at: new Date().toISOString(),
+      await createTask.mutateAsync({
+        title: `${a.taskTitle}: ${customer.name}`,
+        description: `Klient: ${customer.name}`,
+        due_date: dueDate("tomorrow"),
+        priority: "high",
       });
-      toast({ title: "Automation kørt", description: a.label });
+      toast({ title: "Handling oprettet", description: a.label });
       setOpen(false);
     } catch (e) {
       toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });

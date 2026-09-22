@@ -6,9 +6,6 @@ project_id = "inyrwsygghdjhmqejgwk"
 [functions.admin-data]
 verify_jwt = true
 
-[functions.google-auth-proxy]
-verify_jwt = false
-
 [functions.lead-ai-recommend]
 verify_jwt = false
 
@@ -28,6 +25,18 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.meta-sync]
+verify_jwt = true
+
+[functions.meta-lead-webhook]
+verify_jwt = false
+
+[functions.stripe-payment-webhook]
+verify_jwt = false
+
+[functions.create-invoice-checkout]
+verify_jwt = true
+
+[functions.workflow-runner]
 verify_jwt = true
 
 [functions.meta-disconnect]
@@ -78,9 +87,6 @@ verify_jwt = false
 [functions.email-track]
 verify_jwt = false
 
-[functions.cold-caller]
-verify_jwt = false
-
 [functions.cvr-search]
 verify_jwt = false
 
@@ -91,9 +97,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.meeting-summary]
-verify_jwt = false
-
-[functions.voice-agent-connect-openai]
 verify_jwt = false
 
 [functions.voice-agent-call]

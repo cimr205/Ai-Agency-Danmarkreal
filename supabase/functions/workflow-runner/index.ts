@@ -4,6 +4,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { drainDurableQueue } from "./worker.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,11 +17,19 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const body = await req.json() as Record<string, unknown>;
+    if (body.action === "drain") {
+      if (!Deno.env.get("WORKFLOW_DRAIN_SECRET") || token !== Deno.env.get("WORKFLOW_DRAIN_SECRET")) return json({ error: "Internal scheduler secret required" }, 403);
+      const workerId = typeof body.worker_id === "string" && body.worker_id.trim() ? body.worker_id : crypto.randomUUID();
+      return json(await drainDurableQueue(workerId, typeof body.limit === "number" ? body.limit : 10));
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: userData } = await supabase.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
+    const { data: userData } = await supabase.auth.getUser(token);
     const user = userData?.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
 
@@ -30,7 +39,7 @@ Deno.serve(async (req) => {
     if (!companyId) return json({ error: "No company" }, 400);
 
     const { workflow_id, payload = {}, mode = "test", ai_prompt } =
-      await req.json() as { workflow_id: string; payload?: Record<string, unknown>; mode?: "test" | "live"; ai_prompt?: string };
+      body as { workflow_id: string; payload?: Record<string, unknown>; mode?: "test" | "live"; ai_prompt?: string };
 
     const { data: wf, error: wfErr } = await supabase
       .from("workflows").select("*").eq("id", workflow_id).eq("company_id", companyId).maybeSingle();
@@ -123,14 +132,10 @@ Deno.serve(async (req) => {
       trace.push({ step: `action:${wf.action_type}`, status: "skip", detail: "Handlingstype ikke understøttet endnu" });
     }
 
-    await supabase.from("activity_logs").insert({
-      user_id: user.id,
-      company_id: companyId,
-      action_type: mode === "test" ? "workflow_test" : "workflow_run",
-      entity_type: "workflow",
-      entity_id: wf.id,
-      description: `Workflow "${wf.description ?? wf.trigger_event}" ${mode === "test" ? "testet" : "kørt"}`,
-      metadata: { trace, payload },
+    await supabase.rpc("emit_workspace_event", {
+      _company_id: companyId, _type: mode === "test" ? "workflow.tested" : "workflow.executed",
+      _source: "workflow-runner", _entity_type: "workflow", _entity_id: wf.id,
+      _payload: { trace, payload, description: wf.description ?? wf.trigger_event }, _actor: user.id,
     });
 
     return json({ ok: true, trace, ai_output: aiOutput });

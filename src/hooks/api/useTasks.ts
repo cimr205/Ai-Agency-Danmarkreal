@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
 export function useTasks(opts: { archived?: boolean } = {}) {
   const archived = opts.archived ?? false;
@@ -52,7 +51,6 @@ export function useCreateTask() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'task.created', { task_id: data.id, title: data.title, priority: data.priority, due_date: data.due_date });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
@@ -70,7 +68,6 @@ export function useUpdateTask() {
         .select()
         .single();
       if (error) throw error;
-      if (data && updateData.status === 'completed') fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
