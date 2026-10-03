@@ -37,7 +37,13 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.workflow-runner]
-verify_jwt = true
+# false because this function handles two distinct callers internally:
+# a real user JWT for on-demand "run this workflow" calls, and a shared
+# WORKFLOW_DRAIN_SECRET bearer token (not a JWT) for the cron-triggered
+# queue drain — verify_jwt=true would reject the drain call at the
+# platform gateway before the function's own check ever runs, silently
+# stopping every durable workflow from ever executing.
+verify_jwt = false
 
 [functions.meta-disconnect]
 verify_jwt = false

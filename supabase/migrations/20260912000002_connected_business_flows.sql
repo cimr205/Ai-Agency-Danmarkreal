@@ -282,7 +282,7 @@ for each row when (new.company_id is not null) execute function public.seed_oper
 
 insert into public.workflows(company_id,created_by,template_key,trigger_event,action_type,description,is_active,steps,requires_approval)
 select p.company_id,p.user_id,v.template_key,v.trigger_event,'workflow_steps',v.description,true,v.steps,false
-from (select distinct on(company_id) company_id,user_id from public.profiles order by company_id,created_at) p
+from (select distinct on(company_id) company_id,user_id from public.profiles where company_id is not null order by company_id,created_at) p
 cross join (values
   ('meta-lead-follow-up','marketing.lead_received','Meta lead follow-up','[{"type":"create_task","title":"Follow up new Meta lead","priority":"high"}]'::jsonb),
   ('reply-stops-follow-up','email.replied','Stop pending outreach when a contact replies','[{"type":"cancel_followup"}]'::jsonb),
