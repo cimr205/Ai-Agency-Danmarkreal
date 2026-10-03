@@ -86,7 +86,7 @@ export function useEmails(filter?: { unread?: boolean; priority?: boolean; starr
 
       let query = supabase
         .from('emails')
-        .select('*')
+        .select('*, contact:customers!emails_contact_id_fkey(id, name, email), deal:deals(id, title)')
         .eq('user_id', user.id)
         .order('received_at', { ascending: false })
         .limit(500);
