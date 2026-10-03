@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -526,7 +527,7 @@ export default function EmailsPage() {
                   <div
                     className="[&_*]:!max-width-full [&_img]:max-w-full [&_a]:text-primary [&_a]:underline"
                     style={{ colorScheme: 'auto' }}
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.body_html }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.body_html, { ADD_ATTR: ['target'] }) }}
                   />
                 ) : (
                   <pre className="whitespace-pre-wrap font-sans text-sm">{selectedEmail.body_text || selectedEmail.snippet}</pre>
