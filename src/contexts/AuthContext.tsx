@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
@@ -28,6 +29,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [roles, setRoles] = useState<{ role: string; can_grant_permissions: boolean }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -193,6 +195,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setRoles([]);
+    // Without this, a different user signing in on the same tab within the
+    // cache's staleTime window would see the previous user's company data
+    // served straight from memory, with no network request and no RLS check.
+    queryClient.clear();
   };
 
   return (
