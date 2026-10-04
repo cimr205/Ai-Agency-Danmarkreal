@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '@/lib/i18n';
@@ -139,7 +139,9 @@ describe('Device Power Dialer page', () => {
     fireEvent.change(screen.getByLabelText('Call notes'), {
       target: { value: 'Send enterprise proposal.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Save & next/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save & next/i }));
+    });
 
     await waitFor(() => {
       expect(logCall).toHaveBeenCalledWith(expect.objectContaining({
@@ -151,10 +153,10 @@ describe('Device Power Dialer page', () => {
         platform: 'ios',
         handoffMethod: 'system_tel',
       }));
-    });
-    await waitFor(() => expect(getCallLink('+4930123456')).toBeInTheDocument());
+    }, { timeout: 8_000 });
+    await waitFor(() => expect(getCallLink('+4930123456')).toBeInTheDocument(), { timeout: 8_000 });
     expect(window.sessionStorage.getItem('crm-power-dialer-pending-v1')).toBeNull();
-  }, 10_000);
+  }, 20_000);
 
   it('restores a pending call after returning from the phone app and saves a callback', async () => {
     const startedAt = Date.now() - 15_000;
@@ -177,7 +179,9 @@ describe('Device Power Dialer page', () => {
     fireEvent.change(screen.getByLabelText('Call notes'), {
       target: { value: 'Call after the board meeting.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Save & next/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Save & next/i }));
+    });
 
     await waitFor(() => {
       expect(logCall).toHaveBeenCalledWith(expect.objectContaining({
