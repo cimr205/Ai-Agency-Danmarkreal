@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { reloadOnceForChunkError, clearChunkReloadGuard } from "./lib/chunkErrorRecovery";
+import { reportClientError } from "./lib/errorReporting";
 
 // A new deploy invalidates old JS chunk URLs. Any user with the app still
 // open (or a stale cached index.html) will fail to fetch a lazy-loaded
@@ -9,6 +10,15 @@ import { reloadOnceForChunkError, clearChunkReloadGuard } from "./lib/chunkError
 // of leaving them stuck on a dead page.
 window.addEventListener("vite:preloadError", () => {
   reloadOnceForChunkError();
+});
+
+// Catches what React's ErrorBoundary can't: errors thrown outside render
+// (event handlers, timers) and unhandled promise rejections.
+window.addEventListener("error", (event) => {
+  reportClientError(event.error ?? event.message);
+});
+window.addEventListener("unhandledrejection", (event) => {
+  reportClientError(event.reason);
 });
 
 createRoot(document.getElementById("root")!).render(<App />);

@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { I18nContext } from '@/lib/i18n';
 import { isChunkLoadError, reloadOnceForChunkError } from '@/lib/chunkErrorRecovery';
+import { reportClientError } from '@/lib/errorReporting';
 
 interface Props {
   children: ReactNode;
@@ -29,6 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    reportClientError(error, { componentStack: errorInfo.componentStack });
     if (isChunkLoadError(error)) {
       // Resetting local state can't fix this — the browser already failed to
       // fetch the JS chunk (stale reference from before a new deploy). Only
