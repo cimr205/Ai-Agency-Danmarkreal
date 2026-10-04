@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const DINERO_TOKEN_URL = "https://connect.visma.com/connect/token";
 const DINERO_API_BASE = "https://api.dinero.dk/v1";

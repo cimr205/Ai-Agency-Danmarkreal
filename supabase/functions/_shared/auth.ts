@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { corsHeaders } from "./cors.ts";
 
 export function jsonError(message: string, status: number): Response {

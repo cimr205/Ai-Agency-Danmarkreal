@@ -1,4 +1,4 @@
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
 

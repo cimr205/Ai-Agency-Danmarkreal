@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { verifyTwilioRequest } from "../_shared/twilioSignature.ts";
 
 // Public endpoint (no JWT) — Twilio fetches this for the initial TwiML.

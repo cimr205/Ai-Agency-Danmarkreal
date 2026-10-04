@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const ECONOMIC_API_BASE = "https://restapi.e-conomic.com";
 const FALLBACK_RETURN_URL = "https://aiagencydanmark.dk/en/app/settings/company";
