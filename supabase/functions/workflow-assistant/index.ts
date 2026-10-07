@@ -399,6 +399,14 @@ serve(async (req) => {
       });
     }
 
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_workflow_assistant" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Månedlig AI-grænse nået for jeres virksomhed." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) {
       return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), {

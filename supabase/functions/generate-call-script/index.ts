@@ -26,6 +26,9 @@ serve(async (req) => {
     const { data: profile } = await client.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!profile?.company_id) throw new Error("No company associated");
 
+    const { data: withinQuota } = await client.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_call_script" });
+    if (withinQuota === false) throw new Error("Monthly AI limit reached for your company.");
+
     const { leadName, companyName, industry, phone, email, notes, scriptType } = await req.json();
 
     const ai = await getCompanyAI(client, profile.company_id);

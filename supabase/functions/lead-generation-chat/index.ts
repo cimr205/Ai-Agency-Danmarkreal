@@ -1015,6 +1015,19 @@ serve(async (req) => {
       });
     }
 
+    const { data: callerProfile } = await supabaseAuthClient.from("profiles").select("company_id").eq("user_id", authedUser.id).single();
+    if (!callerProfile?.company_id) {
+      return new Response(JSON.stringify({ error: "No company associated" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: withinQuota } = await supabaseAuthClient.rpc("increment_usage_quota", { _company_id: callerProfile.company_id, _quota_type: "ai_lead_generation_chat" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = (Deno.env.get("AI_GATEWAY_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY"));
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 

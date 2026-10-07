@@ -28,6 +28,9 @@ Deno.serve(async (req) => {
       .single();
     if (!profile?.company_id) return new Response(JSON.stringify({ error: "No company" }), { status: 400, headers: corsHeaders });
 
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_icp_score" });
+    if (withinQuota === false) return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), { status: 429, headers: corsHeaders });
+
     const { icp_profile_id } = await req.json();
     if (!icp_profile_id) return new Response(JSON.stringify({ error: "icp_profile_id required" }), { status: 400, headers: corsHeaders });
 

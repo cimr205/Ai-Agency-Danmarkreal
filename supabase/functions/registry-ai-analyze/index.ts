@@ -41,6 +41,13 @@ serve(async (req) => {
       });
     }
 
+    const { data: withinQuota } = await userClient.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_registry_analyze" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const baseUrl = Deno.env.get("LOCAL_LLM_BASE_URL");
     const model = Deno.env.get("LOCAL_LLM_MODEL");
     if (!baseUrl || !model) throw new Error("LOCAL_LLM_BASE_URL/LOCAL_LLM_MODEL not configured");

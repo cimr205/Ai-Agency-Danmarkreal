@@ -259,6 +259,13 @@ app.post("/*", async (c) => {
     const companyId = profile.company_id as string;
     const userId = user.id;
 
+    const { data: withinQuota } = await serviceClient.rpc("increment_usage_quota", { _company_id: companyId, _quota_type: "ai_autopilot_agent" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ai = await getCompanyAI(serviceClient, companyId);
     if (!ai) {
       return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), {

@@ -54,6 +54,14 @@ serve(async (req) => {
       });
     }
 
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_lead_recommend" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 

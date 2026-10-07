@@ -24,6 +24,9 @@ serve(async (req) => {
     const { data: callerProfile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!callerProfile?.company_id) return new Response(JSON.stringify({ error: "No company associated" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: callerProfile.company_id, _quota_type: "ai_email_writer" });
+    if (withinQuota === false) return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
     const ai = await getCompanyAI(supabase, callerProfile.company_id);
     if (!ai) return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

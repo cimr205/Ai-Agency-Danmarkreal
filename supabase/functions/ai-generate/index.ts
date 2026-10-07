@@ -41,6 +41,16 @@ serve(async (req) => {
       });
     }
 
+    const { data: withinQuota } = await userClient.rpc("increment_usage_quota", {
+      _company_id: profile.company_id,
+      _quota_type: "ai_image_generations",
+    });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI generation limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { prompt, generation_type = "image", negative_prompt, reference_image } = await req.json();
     if (!prompt || typeof prompt !== "string" || prompt.trim().length < 3) {
       return new Response(JSON.stringify({ error: "Prompt is required (min 3 chars)" }), {

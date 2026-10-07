@@ -868,6 +868,8 @@ serve(async (req) => {
     }
 
     if (!companyId) throw new Error("Ingen virksomhed tilknyttet");
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: companyId, _quota_type: "ai_smart_assistant" });
+    if (withinQuota === false) throw new Error("Månedlig AI-grænse nået for jeres virksomhed.");
     const ai = await getCompanyAI(supabase, companyId);
     if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
