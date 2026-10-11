@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
@@ -5,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -126,7 +127,7 @@ Deno.serve(async (req) => {
     console.error("gmail-oauth-callback error:", err);
     return redirectWithError(err.message);
   }
-});
+}));
 
 function getAppRedirectUrl(): string {
   return "https://www.aiagencydanmark.dk";

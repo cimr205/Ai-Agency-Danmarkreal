@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { I18nContext } from '@/lib/i18n';
 import { isChunkLoadError, reloadOnceForChunkError } from '@/lib/chunkErrorRecovery';
+import { reportBoundaryError } from '@/lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -34,7 +35,9 @@ export class ErrorBoundary extends Component<Props, State> {
       // fetch the JS chunk (stale reference from before a new deploy). Only
       // a hard reload re-resolves the current asset URLs.
       reloadOnceForChunkError();
+      return;
     }
+    reportBoundaryError(error, errorInfo.componentStack);
   }
 
   handleReset = () => {

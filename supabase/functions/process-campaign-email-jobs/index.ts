@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 type Delivery = {
@@ -135,7 +136,7 @@ function buildMime(input: {
   return lines.join('\r\n')
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("process-campaign-email-jobs", async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const auth = req.headers.get('authorization')
   const token = auth?.replace(/^Bearer\s+/i, '') ?? ''
@@ -284,4 +285,4 @@ Deno.serve(async (req) => {
   }
 
   return json({ claimed: deliveries.length, processed: results.length, results })
-})
+}))

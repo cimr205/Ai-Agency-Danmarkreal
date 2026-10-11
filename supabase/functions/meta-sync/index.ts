@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { decryptMetaToken } from '../_shared/metaToken.ts'
 
@@ -42,7 +43,7 @@ async function graphAll(path: string, accessToken: string): Promise<Record<strin
 
 const numeric = (value: unknown) => value == null || value === '' ? 0 : Number(value)
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("meta-sync", async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const auth = req.headers.get('authorization')
@@ -236,4 +237,4 @@ Deno.serve(async (req) => {
     }).eq('id', job.id)
     return json({ error: 'Meta sync failed', detail: message, job_id: job.id }, rateLimited ? 429 : 500)
   }
-})
+}))

@@ -1,7 +1,8 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("accounting-disconnect", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -37,4 +38,4 @@ Deno.serve(async (req) => {
   } catch {
     return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-});
+}));

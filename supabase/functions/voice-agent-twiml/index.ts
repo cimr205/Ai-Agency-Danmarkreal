@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Public endpoint (no JWT) — Twilio fetches this for the initial TwiML.
@@ -21,7 +22,7 @@ function languageFor(code?: string | null) {
   return { lang, voice };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-twiml", async (req) => {
   try {
     const url = new URL(req.url);
     const callId = url.searchParams.get("call_id");
@@ -92,4 +93,4 @@ Deno.serve(async (req) => {
       { headers: { "Content-Type": "text/xml" } },
     );
   }
-});
+}));

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { reportError, setSentryUser } from '@/lib/sentry';
 
 export interface UserProfile {
   id: string;
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       // Ensure we still clear loading on error
+      reportError(e, { module: 'auth', action: 'load_user_profile' });
     } finally {
       if (mountedRef.current) setIsLoading(false);
     }
@@ -82,6 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profile = await fetchProfile(session.user.id);
     if (mountedRef.current && profile) setUser(profile);
   };
+
+  // Monitoring only: tag error reports with opaque user/company ids.
+  useEffect(() => {
+    setSentryUser(user);
+  }, [user]);
 
   useEffect(() => {
     mountedRef.current = true;

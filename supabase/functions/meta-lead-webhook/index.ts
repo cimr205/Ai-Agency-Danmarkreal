@@ -1,10 +1,11 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { decryptMetaToken } from "../_shared/metaToken.ts";
 import { verifyMetaSignature } from "../_shared/providerSignatures.ts";
 
 const json = (body:unknown,status=200) => new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json"}});
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("meta-lead-webhook", async (req) => {
   const url=new URL(req.url);
   if(req.method==="GET"){
     if(url.searchParams.get("hub.mode")==="subscribe" && url.searchParams.get("hub.verify_token")===Deno.env.get("META_WEBHOOK_VERIFY_TOKEN"))
@@ -45,4 +46,4 @@ Deno.serve(async (req) => {
     }catch(cause){const message=cause instanceof Error?cause.message:String(cause);await db.from("provider_webhook_receipts").update({status:"failed",error:message,processed_at:new Date().toISOString()}).eq("id",receipt.id);outcomes.push({lead_id:leadId,status:"failed"});}
   }
   return json({received:true,outcomes});
-});
+}));

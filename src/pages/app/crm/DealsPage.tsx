@@ -22,6 +22,7 @@ import { useI18n } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { buildStages, getStageLabelFor, normalizeStageKey, type StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
+import { reportError } from '@/lib/sentry';
 
 type DealStage = string;
 
@@ -106,6 +107,7 @@ export default function DealsPage() {
       setIsCreateOpen(false);
     } catch (err) {
       console.error('Deal creation error:', err);
+      reportError(err, { module: 'deals', action: 'create_deal' });
       toast.error(t('pages.deals.created_error'));
     }
   };

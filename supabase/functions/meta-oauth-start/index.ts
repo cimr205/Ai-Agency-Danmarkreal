@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const cors = {
@@ -9,7 +10,7 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("meta-oauth-start", async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const auth = req.headers.get('authorization')
@@ -43,4 +44,4 @@ Deno.serve(async (req) => {
   authorize.searchParams.set('response_type', 'code')
   authorize.searchParams.set('state', stateId)
   return json({ authorization_url: authorize.toString(), expires_in: 600 })
-})
+}))

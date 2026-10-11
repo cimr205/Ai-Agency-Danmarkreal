@@ -1,6 +1,7 @@
 // MCP server exposing the company's business OS to AI clients (Claude Code,
 // Claude Desktop, Cursor, Zed, etc.) via the Model Context Protocol.
 // Auth: Authorization: Bearer <mcp_token>
+import { withSentry } from "../_shared/sentry.ts";
 import { Hono } from "npm:hono@4";
 import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@^0.10.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -228,4 +229,4 @@ app.all("/*", async (c) => {
   return new Response(res.body, { status: res.status, headers });
 });
 
-Deno.serve(app.fetch);
+Deno.serve(withSentry("mcp-server", (req) => app.fetch(req)));

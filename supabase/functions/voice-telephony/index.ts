@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCompanyAuth } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -241,7 +242,7 @@ async function getAccountInfo(serviceClient: SupabaseClient, companyId: string) 
   }
 }
 
-Deno.serve(async (request) => {
+Deno.serve(withSentry("voice-telephony", async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -262,4 +263,4 @@ Deno.serve(async (request) => {
   } catch (error) {
     return jsonResponse({ error: errorMessage(error) }, 400);
   }
-});
+}));
