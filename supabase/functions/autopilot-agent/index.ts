@@ -1,5 +1,6 @@
 // Autopilot Agent — Lovable AI Gateway via Vercel AI SDK with operational tools
 // across the entire workspace (CRM, Finance, Productivity, Webhook bridge).
+import { withSentry } from "../_shared/sentry.ts";
 import { Hono } from "npm:hono@4";
 import {
   convertToModelMessages, streamText, tool, stepCountIs, type UIMessage,
@@ -297,4 +298,4 @@ app.post("/*", async (c) => {
   }
 });
 
-Deno.serve(app.fetch);
+Deno.serve(withSentry("autopilot-agent", (req) => app.fetch(req)));

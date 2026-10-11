@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { encryptMetaToken } from '../_shared/metaToken.ts'
 
@@ -20,7 +21,7 @@ async function graph(path: string, token: string) {
   return body
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("meta-oauth-callback", async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   try {
@@ -108,4 +109,4 @@ Deno.serve(async (req) => {
     console.error('meta-oauth-callback failed', cause instanceof Error ? cause.message : String(cause))
     return json({ error: 'Meta connection failed', detail: cause instanceof Error ? cause.message : String(cause) }, 500)
   }
-})
+}))

@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -163,7 +164,7 @@ function findConnectionForCapability(
   return match ? { id: match.id, provider: match.provider } : null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("composio-integration", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const ctx = await requireCompanyAuth(req);
@@ -711,7 +712,7 @@ Deno.serve(async (req) => {
     const message = err instanceof Error ? err.message : String(err);
     return jsonError(message, 400);
   }
-});
+}));
 
 function jsonResponse(data: unknown) {
   return new Response(JSON.stringify(data), {

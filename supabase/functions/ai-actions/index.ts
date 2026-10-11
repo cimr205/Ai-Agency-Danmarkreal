@@ -2,6 +2,7 @@
 // Connects ambient AI to real workspace data via tool calls scoped to the
 // authenticated user's company. Destructive tools require `confirm: true`.
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
@@ -104,7 +105,7 @@ const tools = [
 
 const DESTRUCTIVE = new Set(["create_deal", "update_lead_status", "trigger_workflow"]);
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("ai-actions", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -204,7 +205,7 @@ Deno.serve(async (req) => {
     console.error("ai-actions error", e);
     return json({ error: e instanceof Error ? e.message : "Unknown" }, 500);
   }
-});
+}));
 
 async function execTool(
   name: string,

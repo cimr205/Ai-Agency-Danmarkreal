@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ECONOMIC_API_BASE = "https://restapi.e-conomic.com";
@@ -10,7 +11,7 @@ function errorRedirect(returnUrl: string, message: string): Response {
   return new Response(null, { status: 302, headers: { Location: url.toString() } });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("economic-oauth-callback", async (req) => {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
   const state = url.searchParams.get("state");
@@ -84,4 +85,4 @@ Deno.serve(async (req) => {
     console.error("economic-oauth-callback error:", e);
     return errorRedirect(returnUrl, "internal_error");
   }
-});
+}));

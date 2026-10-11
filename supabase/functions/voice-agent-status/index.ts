@@ -1,9 +1,10 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Public endpoint - Twilio status callbacks (no JWT verification).
 // Receives both call status updates and recording status callbacks.
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-status", async (req) => {
   try {
     const url = new URL(req.url);
     const callId = url.searchParams.get("call_id");
@@ -74,7 +75,7 @@ Deno.serve(async (req) => {
     console.error("voice-agent-status error:", e);
     return new Response("error", { status: 500 });
   }
-});
+}));
 
 async function transcribeRecording(serviceClient: SupabaseClient, callId: string, companyId: string, recordingUrl: string) {
   try {

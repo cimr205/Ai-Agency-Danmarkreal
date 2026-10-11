@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
 
@@ -31,7 +32,7 @@ function hangupTwiml(message: string, voice: string, lang: string) {
 </Response>`;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-respond", async (req) => {
   const url = new URL(req.url);
   const callId = url.searchParams.get("call_id");
 
@@ -212,4 +213,4 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "text/xml" },
     });
   }
-});
+}));

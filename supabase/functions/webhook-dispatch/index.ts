@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
@@ -9,7 +10,7 @@ const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 15000]; // ms
 const TIMEOUT_MS = 8000;
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("webhook-dispatch", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));
 
 async function deliverWithRetry(
   supabase: SupabaseClient,

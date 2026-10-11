@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
 
@@ -14,7 +15,7 @@ async function sha256(input: string): Promise<Uint8Array> {
   return new Uint8Array(digest);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("dinero-oauth-start", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -69,4 +70,4 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

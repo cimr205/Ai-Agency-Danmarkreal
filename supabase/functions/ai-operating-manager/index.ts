@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { withSentry } from "../_shared/sentry.ts";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { checkModelHealth, generateStructured, generateText, resolveModel } from "../_shared/operatingModelRouter.ts";
@@ -699,7 +700,7 @@ Regler:
   return { reply: planned.reply, proposals, route: model.tier, model: { provider: model.provider, name: model.model }, latencyMs: Date.now() - started };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("ai-operating-manager", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonError("Method not allowed", 405);
   const ctx = await requireCompanyAuth(req);
@@ -782,4 +783,4 @@ Deno.serve(async (req) => {
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Operating Manager failed", 400);
   }
-});
+}));

@@ -29,6 +29,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTemplate, type InvoicePdfData } from '@/lib/invoicePdf';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
+import { reportError } from '@/lib/sentry';
 
 type Lead = Tables<'leads'>;
 
@@ -216,6 +217,7 @@ export default function InvoicesPage() {
       downloadPdf(blob, `${invoice.invoice_number}.pdf`);
     } catch (err) {
       console.error('PDF generation error:', err);
+      reportError(err, { module: 'invoices', action: 'generate_invoice_pdf' });
       toast.error(t('common.error'));
     }
   };
