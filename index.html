@@ -11,8 +11,9 @@
     <meta name="apple-mobile-web-app-title" content="AI Agency Danmark" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap"></noscript>
+    <!-- Plain stylesheet link on purpose: the CSP (script-src 'self') blocks inline
+         onload handlers, so the preload-then-swap trick never applied the fonts. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
     <title>AI Agency Danmark | CRM, drift og automatisering samlet ét sted</title>
     <meta name="description" content="Saml leads, kunder, opgaver, økonomi og automatisering i én arbejdsflade bygget til danske virksomheder.">
