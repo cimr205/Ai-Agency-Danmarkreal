@@ -181,7 +181,9 @@ export default function AdminOverviewPage() {
       </div>
 
       {health && (() => {
-        const failureEntries = Object.entries(health).filter(([k]) => k !== 'since' && k !== 'scope');
+        // Gauges, not failure counts — shown elsewhere, excluded from the sum.
+        const nonFailureKeys = new Set(['since', 'scope', 'workflow_queue_depth', 'workflow_queue_oldest_pending_at']);
+        const failureEntries = Object.entries(health).filter(([k]) => !nonFailureKeys.has(k));
         const totalFailures = failureEntries.reduce((sum, [, v]) => sum + (typeof v === 'number' ? v : 0), 0);
         if (totalFailures === 0) return null;
         return (
