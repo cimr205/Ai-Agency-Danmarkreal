@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { workflowActions } from "../_shared/workflowActionRegistry.ts";
+import { sendCriticalAlert } from "../_shared/criticalAlert.ts";
 
 interface ClaimedStep { id:string; company_id:string; workflow_run_id:string; step_type:string; idempotency_key:string; input:Record<string,unknown>; }
 
@@ -13,12 +14,16 @@ export async function drainDurableQueue(workerId: string, limit = 10) {
     const definition = workflowActions.get(step.step_type);
     if (!definition) {
       await db.rpc("finish_workflow_step", { p_step_id:step.id,p_worker:workerId,p_success:false,p_error:`Unsupported action: ${step.step_type}`,p_retryable:false });
-      results.push({ step_id:step.id,status:"dead_letter",error:"unsupported_action" }); continue;
+      results.push({ step_id:step.id,status:"dead_letter",error:"unsupported_action" });
+      await sendCriticalAlert({ severity:"error",source:"workflow-runner",message:`Workflow step dead-lettered: unsupported action ${step.step_type}`,companyId:step.company_id,jobId:step.id });
+      continue;
     }
     const validationError = definition.validate(step.input);
     if (validationError) {
       await db.rpc("finish_workflow_step", { p_step_id:step.id,p_worker:workerId,p_success:false,p_error:validationError,p_retryable:false });
-      results.push({ step_id:step.id,status:"dead_letter",error:validationError }); continue;
+      results.push({ step_id:step.id,status:"dead_letter",error:validationError });
+      await sendCriticalAlert({ severity:"error",source:"workflow-runner",message:`Workflow step dead-lettered: ${validationError}`,companyId:step.company_id,jobId:step.id });
+      continue;
     }
     const { data: run } = await db.from("workflow_runs").select("correlation_id").eq("id",step.workflow_run_id).eq("company_id",step.company_id).single();
     const { data: reservation, error: reserveError } = await db.rpc("reserve_workflow_side_effect", { p_step_id:step.id,p_worker:workerId,p_provider:step.step_type });
@@ -37,9 +42,13 @@ export async function drainDurableQueue(workerId: string, limit = 10) {
       if (typed.uncertain === true || typed.retryable === undefined) {
         await db.rpc("mark_workflow_step_attention", { p_step_id:step.id,p_worker:workerId,p_error:typed.message });
         results.push({ step_id:step.id,status:"needs_attention",error:typed.message });
+        await sendCriticalAlert({ severity:"critical",source:"workflow-runner",message:`Workflow step outcome uncertain, needs manual review: ${typed.message}`,companyId:step.company_id,jobId:step.id });
       } else {
         await db.rpc("finish_workflow_step", { p_step_id:step.id,p_worker:workerId,p_success:false,p_error:typed.message,p_retryable:typed.retryable === true });
         results.push({ step_id:step.id,status:typed.retryable ? "retry_scheduled" : "dead_letter",error:typed.message });
+        if (!typed.retryable) {
+          await sendCriticalAlert({ severity:"error",source:"workflow-runner",message:`Workflow step dead-lettered: ${typed.message}`,companyId:step.company_id,jobId:step.id });
+        }
       }
     }
   }

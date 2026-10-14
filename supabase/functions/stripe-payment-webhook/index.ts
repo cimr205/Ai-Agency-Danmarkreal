@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { sendCriticalAlert } from "../_shared/criticalAlert.ts";
 
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json"}});
 const hex=(bytes:ArrayBuffer)=>[...new Uint8Array(bytes)].map((value)=>value.toString(16).padStart(2,"0")).join("");
@@ -43,6 +44,7 @@ Deno.serve(async(req)=>{
   });
   if(error){
     await db.from("provider_webhook_receipts").update({status:"failed",error:error.message,processed_at:new Date().toISOString()}).eq("id",receipt.id);
+    await sendCriticalAlert({ severity:"critical",source:"stripe-payment-webhook",message:`Payment registration failed for a paid Stripe checkout: ${error.message}`,companyId:invoice.company_id,context:{invoice_id:invoice.invoice_id,stripe_event_id:event.id} });
     return json({error:"Payment registration failed"},500);
   }
   const {error:consumeError}=await db.rpc("consume_invoice_payment_reference",{p_reference_id:invoice.reference_id,p_company_id:invoice.company_id});
