@@ -62,6 +62,9 @@ serve(async (req) => {
       .single();
     if (!profile?.company_id) throw new Error("No company");
 
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_autopilot_brief" });
+    if (withinQuota === false) throw new Error("Monthly AI limit reached for your company.");
+
     const companyId = profile.company_id;
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
