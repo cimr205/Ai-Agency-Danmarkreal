@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const PIXEL = Uint8Array.from(atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'), (char) => char.charCodeAt(0))
@@ -29,7 +30,7 @@ function resultPage(success: boolean) {
   return `<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${success ? 'Afmeldt' : 'Link udløbet'}</title></head><body style="font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#f7f7f5;color:#172033"><main style="text-align:center;padding:32px"><h1>${success ? 'Du er nu afmeldt' : 'Linket kunne ikke bruges'}</h1><p style="color:#5d6575">${success ? 'Du vil ikke modtage flere marketing-emails fra denne afsender.' : 'Kontakt afsenderen, hvis du fortsat ønsker at blive afmeldt.'}</p></main></body></html>`
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("email-track", async (req) => {
   const url = new URL(req.url)
   const unsubscribeId = url.searchParams.get('unsub')
   const recipientId = url.searchParams.get('rid')
@@ -90,4 +91,4 @@ Deno.serve(async (req) => {
   }
 
   return new Response('Not found', { status: 404 })
-})
+}))

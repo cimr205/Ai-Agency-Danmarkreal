@@ -9,6 +9,7 @@ import { streamChat, type ChatMsg, type ChatContentPart } from '@/lib/streamChat
 import ReactMarkdown from 'react-markdown';
 import { useI18n } from '@/lib/i18n';
 import { useAutopilotActions, useExecuteAction, useUpdateActionStatus } from '@/hooks/api/useAutopilot';
+import { reportError } from '@/lib/sentry';
 
 type ImageAttachment = { base64: string; mimeType: string; preview: string };
 type UIMessage = { id: string; role: 'user' | 'assistant'; content: string; images?: ImageAttachment[] };
@@ -112,6 +113,7 @@ export default function ClowdBotPage() {
     } catch (error) {
       const errMsg = (error as Error).message || 'Unknown error';
       console.error('PA chat error:', error);
+      reportError(error, { module: 'ai', action: 'pa_chat' });
       setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'assistant', content: `❌ ${t('pa.error')}: ${errMsg}` }]);
       setIsLoading(false);
     }

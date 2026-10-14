@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
@@ -58,7 +59,7 @@ async function dineroFetch(token: string, orgId: string, path: string, init?: Re
   return data;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("dinero-sync", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -175,4 +176,4 @@ Deno.serve(async (req) => {
     console.error("dinero-sync error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-});
+}));

@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
@@ -6,7 +7,7 @@ const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,
 const hex=(bytes:ArrayBuffer)=>[...new Uint8Array(bytes)].map((value)=>value.toString(16).padStart(2,"0")).join("");
 const hash=async(value:string)=>hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)));
 
-Deno.serve(async(req)=>{
+Deno.serve(withSentry("create-invoice-checkout", async(req)=>{
   if(req.method==="OPTIONS") return new Response(null,{headers});
   if(req.method!=="POST") return json({error:"Method not allowed"},405);
   const authorization=req.headers.get("authorization");
@@ -48,4 +49,4 @@ Deno.serve(async(req)=>{
     console.error("create-invoice-checkout",cause);
     return json({error:"Checkout session could not be created"},502);
   }
-});
+}));

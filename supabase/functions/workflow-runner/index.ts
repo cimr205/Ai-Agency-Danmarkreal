@@ -2,6 +2,7 @@
 // Supports a simple sequence: trigger payload -> optional AI step -> action.
 // Mode: "test" returns a per-step trace without firing webhooks; "live" performs the action.
 
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 import { drainDurableQueue } from "./worker.ts";
@@ -11,7 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("workflow-runner", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const authHeader = req.headers.get("Authorization");
@@ -143,7 +144,7 @@ Deno.serve(async (req) => {
     console.error("workflow-runner error", e);
     return json({ error: e instanceof Error ? e.message : "Unknown" }, 500);
   }
-});
+}));
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

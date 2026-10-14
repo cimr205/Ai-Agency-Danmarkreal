@@ -78,7 +78,11 @@ export default function EmailsPage() {
     return undefined;
   }, [activeTab]);
 
-  const { data: emails = [], isLoading: emailsLoading } = useEmails(emailFilter);
+  const { data: emailRows = [], isLoading: emailsLoading } = useEmails(emailFilter);
+  // Rows are plain `emails` records; `contact`/`deal` are optional joins the
+  // list below renders when present. Typing the list as Email[] keeps that
+  // optional access type-safe without changing what is fetched.
+  const emails: Email[] = emailRows;
 
   useEffect(() => {
     if (searchParams.get('gmail_connected') === 'true') {

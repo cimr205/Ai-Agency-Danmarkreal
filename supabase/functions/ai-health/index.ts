@@ -1,11 +1,12 @@
 // Cheap health check for the shared self-hosted Ollama instance. Every
 // real AI feature resolves the same model via _shared/aiConnection.ts —
 // this just confirms it's reachable, without running a full completion.
+import { withSentry } from "../_shared/sentry.ts";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("ai-health", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const ctx = await requireCompanyAuth(req);
   if (ctx instanceof Response) return ctx;
@@ -25,4 +26,4 @@ Deno.serve(async (req) => {
   } catch (err) {
     return jsonError(err instanceof Error ? err.message : "AI health check failed", 503);
   }
-});
+}));

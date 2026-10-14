@@ -8,6 +8,7 @@ import { BarChart3, Download, Clock, TrendingUp, TrendingDown, Target, Users, Fi
 import { useI18n } from '@/lib/i18n';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { toast } from 'sonner';
+import { reportError } from '@/lib/sentry';
 
 export default function WorkforceReportsPage() {
   const { t } = useI18n();
@@ -117,6 +118,7 @@ export default function WorkforceReportsPage() {
       toast.success('PDF rapport downloadet');
     } catch (err) {
       console.error('PDF generation failed', err);
+      reportError(err, { module: 'hr', action: 'generate_report_pdf' });
       toast.error('Kunne ikke generere PDF');
     }
   };

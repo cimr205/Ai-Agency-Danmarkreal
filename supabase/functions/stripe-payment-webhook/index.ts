@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { sendCriticalAlert } from "../_shared/criticalAlert.ts";
@@ -6,7 +7,7 @@ const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,
 const hex=(bytes:ArrayBuffer)=>[...new Uint8Array(bytes)].map((value)=>value.toString(16).padStart(2,"0")).join("");
 export const hashPaymentReference=async(value:string)=>hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)));
 
-Deno.serve(async(req)=>{
+Deno.serve(withSentry("stripe-payment-webhook", async(req)=>{
   if(req.method!=="POST") return json({error:"Method not allowed"},405);
   const signature=req.headers.get("stripe-signature");
   const webhookSecret=Deno.env.get("STRIPE_PAYMENT_WEBHOOK_SECRET");
@@ -53,4 +54,4 @@ Deno.serve(async(req)=>{
   if(consumeError) console.error("Payment reference consumption failed",consumeError);
   await db.from("provider_webhook_receipts").update({status:"processed",processed_at:new Date().toISOString()}).eq("id",receipt.id);
   return json({received:true,status:"processed",result:data});
-});
+}));

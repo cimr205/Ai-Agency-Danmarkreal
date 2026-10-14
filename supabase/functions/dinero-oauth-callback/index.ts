@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const DINERO_TOKEN_URL = "https://connect.visma.com/connect/token";
@@ -11,7 +12,7 @@ function errorRedirect(returnUrl: string, message: string): Response {
   return new Response(null, { status: 302, headers: { Location: url.toString() } });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("dinero-oauth-callback", async (req) => {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
@@ -121,4 +122,4 @@ Deno.serve(async (req) => {
     console.error("dinero-oauth-callback error:", e);
     return errorRedirect(returnUrl, "internal_error");
   }
-});
+}));

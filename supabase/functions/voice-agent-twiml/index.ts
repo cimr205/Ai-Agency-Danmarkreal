@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { verifyTwilioRequest } from "../_shared/twilioSignature.ts";
 
@@ -22,7 +23,7 @@ function languageFor(code?: string | null) {
   return { lang, voice };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-twiml", async (req) => {
   try {
     const { valid } = await verifyTwilioRequest(req);
     if (!valid) {
@@ -101,4 +102,4 @@ Deno.serve(async (req) => {
       { headers: { "Content-Type": "text/xml" } },
     );
   }
-});
+}));

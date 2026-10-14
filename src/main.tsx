@@ -3,6 +3,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { reloadOnceForChunkError, clearChunkReloadGuard } from "./lib/chunkErrorRecovery";
 import { reportClientError } from "./lib/errorReporting";
+import { initSentry } from "./lib/sentry";
+
+// Must run before the first render so unhandled errors and rejections during
+// startup are captured. No-op unless VITE_SENTRY_DSN is set.
+initSentry();
 
 // A new deploy invalidates old JS chunk URLs. Any user with the app still
 // open (or a stale cached index.html) will fail to fetch a lazy-loaded

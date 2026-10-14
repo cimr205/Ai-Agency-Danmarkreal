@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -5,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("icp-score", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
       { status: 500, headers: corsHeaders }
     );
   }
-});
+}));
 
 // ─── Scoring Engine ─────────────────────────────────────────
 interface Lead {

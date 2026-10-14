@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Shield, Users, Loader2, Crown, UserCog, User, Eye, Mail, Copy, Clock, XCircle, CheckCircle2, Send } from "lucide-react";
 import { ROLE_LABELS, ROLE_HIERARCHY, canManageRole } from "@/lib/auth";
 import { getErrorMessage } from '@/lib/errors';
+import { reportError } from '@/lib/sentry';
 
 interface UserWithRole {
   user_id: string;
@@ -83,6 +84,7 @@ export default function AdminUsers() {
       setUsers(mapped);
     } catch (error) {
       console.error("Error fetching users:", error);
+      reportError(error, { module: "admin", action: "fetch_users" });
       toast.error("Kunne ikke hente brugere");
     }
   };
@@ -100,6 +102,7 @@ export default function AdminUsers() {
       setInvitations((data as Invitation[]) || []);
     } catch (error) {
       console.error("Error fetching invitations:", error);
+      reportError(error, { module: "invitations", action: "fetch_invitations" });
     }
   };
 

@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 type RelayRequest = {
@@ -49,7 +50,7 @@ function randomToken(): string {
   return hex(crypto.getRandomValues(new Uint8Array(32)).buffer)
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("phone-device-relay", async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const body = await req.json().catch(() => ({})) as RelayRequest
   const supabase = createClient(
@@ -206,4 +207,4 @@ Deno.serve(async (req) => {
   }
 
   return json({ error: 'Unsupported action' }, 400)
-})
+}))
