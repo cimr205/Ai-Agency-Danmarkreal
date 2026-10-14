@@ -12,7 +12,9 @@ Deno.serve(async(req)=>{
   const webhookSecret=Deno.env.get("STRIPE_PAYMENT_WEBHOOK_SECRET");
   if(!signature||!webhookSecret) return json({error:"Webhook signature unavailable"},401);
   const raw=await req.text();
-  const stripe=new Stripe(Deno.env.get("STRIPE_SECRET_KEY")??"",{apiVersion:"2025-08-27.basil"});
+  const stripeSecretKey=Deno.env.get("STRIPE_SECRET_KEY");
+  if(!stripeSecretKey) return json({error:"STRIPE_SECRET_KEY not configured"},500);
+  const stripe=new Stripe(stripeSecretKey,{apiVersion:"2025-08-27.basil"});
   let event:Stripe.Event;
   try{event=await stripe.webhooks.constructEventAsync(raw,signature,webhookSecret);}catch{return json({error:"Invalid signature"},401);}
   if(event.type!=="checkout.session.completed") return json({received:true,ignored:true});

@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
   }
   if(req.method!=="POST") return new Response("Method not allowed",{status:405});
   const raw=await req.text();
-  const secret=Deno.env.get("META_APP_SECRET")??"";
+  const secret=Deno.env.get("META_APP_SECRET");
+  if(!secret) return new Response("META_APP_SECRET not configured",{status:500});
   const supplied=req.headers.get("x-hub-signature-256")??"";
   if(!await verifyMetaSignature(raw,supplied,secret)) return new Response("Invalid signature",{status:401});
   const payload=JSON.parse(raw) as {entry?:Array<{id?:string;changes?:Array<{field?:string;value?:{leadgen_id?:string;form_id?:string;ad_id?:string;page_id?:string}}>} >};

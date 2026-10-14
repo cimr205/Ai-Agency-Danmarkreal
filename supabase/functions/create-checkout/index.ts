@@ -90,7 +90,9 @@ serve(async (req) => {
       totalSeats = seatLimit;
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
     // Find or create customer
     let customerId = company.stripe_customer_id;

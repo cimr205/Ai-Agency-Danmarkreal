@@ -25,7 +25,9 @@ Deno.serve(async(req)=>{
   if(error) return json({error:error.message},error.code==="P0002"?404:400);
 
   const record=reference as {reference_id:string;invoice_number:string;amount:number;company_id:string};
-  const stripe=new Stripe(Deno.env.get("STRIPE_SECRET_KEY")??"",{apiVersion:"2025-08-27.basil"});
+  const stripeSecretKey=Deno.env.get("STRIPE_SECRET_KEY");
+  if(!stripeSecretKey) return json({error:"STRIPE_SECRET_KEY not configured"},500);
+  const stripe=new Stripe(stripeSecretKey,{apiVersion:"2025-08-27.basil"});
   const appUrl=(Deno.env.get("APP_URL")??"https://www.aiagencydanmark.dk").replace(/\/$/,"");
   try{
     const session=await stripe.checkout.sessions.create({

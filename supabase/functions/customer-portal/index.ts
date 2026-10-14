@@ -42,7 +42,9 @@ serve(async (req) => {
 
     if (!company?.stripe_customer_id) throw new Error("No Stripe customer found");
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") || "https://bridge-orbit-core.lovable.app";
 
     const portalSession = await stripe.billingPortal.sessions.create({
