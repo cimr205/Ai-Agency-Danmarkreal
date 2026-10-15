@@ -92,11 +92,11 @@ const HELP_ARTICLES: HelpArticle[] = [
 const CATEGORIES = [
   { name: 'Kom i gang', icon: BookOpen, color: 'text-primary' },
   { name: 'CRM & Pipeline', icon: BarChart3, color: 'text-success' },
-  { name: 'Email', icon: Mail, color: 'text-accent' },
+  { name: 'Email', icon: Mail, color: 'text-chart-cyan' },
   { name: 'Billing & Abonnement', icon: CreditCard, color: 'text-warning' },
   { name: 'HR & Workforce', icon: Users, color: 'text-primary' },
   { name: 'Sikkerhed', icon: Shield, color: 'text-destructive' },
-  { name: 'AI & Automatisering', icon: Settings, color: 'text-accent' },
+  { name: 'AI & Automatisering', icon: Settings, color: 'text-chart-violet' },
   { name: 'Integrationer', icon: Settings, color: 'text-muted-foreground' },
 ];
 

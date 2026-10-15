@@ -174,7 +174,7 @@ export default function WebhooksPage() {
                   </ol>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
-                  <p className="font-medium text-sm flex items-center gap-1.5"><ExternalLink className="h-4 w-4 text-accent" /> Make (Integromat)</p>
+                  <p className="font-medium text-sm flex items-center gap-1.5"><ExternalLink className="h-4 w-4 text-chart-violet" /> Make (Integromat)</p>
                   <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal ml-4">
                     <li>{t('webhooks.loginAt')} <a href="https://www.make.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">make.com</a></li>
                     <li>{t('webhooks.createNewScenario')} <strong>"Webhook"</strong> {t('webhooks.module')}</li>

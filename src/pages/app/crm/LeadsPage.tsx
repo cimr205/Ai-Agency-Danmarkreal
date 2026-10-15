@@ -45,7 +45,7 @@ const statusColors: Record<string, string> = {
   contacted: 'bg-warning/20 text-warning border border-warning/30',
   qualified: 'bg-success/20 text-success border border-success/30',
   unqualified: 'bg-muted text-muted-foreground border border-border',
-  customer: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30',
+  customer: 'bg-success/20 text-success border border-success/30',
 };
 
 const LEAD_SOURCE_LABEL: Record<string, string> = {

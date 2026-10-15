@@ -56,7 +56,7 @@ export function MeetingSummaryDialog({ open, onOpenChange, dealId, leadId }: Mee
   };
 
   const sentimentColors = {
-    positive: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
+    positive: 'bg-success/15 text-success border-success/30',
     neutral: 'bg-muted text-muted-foreground',
     negative: 'bg-destructive/15 text-destructive border-destructive/30',
   };
@@ -151,7 +151,7 @@ export function MeetingSummaryDialog({ open, onOpenChange, dealId, leadId }: Mee
               <div className="space-y-1.5">
                 {result.action_items.map((item, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
                     <span>{item.title} <span className="text-muted-foreground">— {item.assignee}, {item.due_days} dage</span></span>
                   </div>
                 ))}

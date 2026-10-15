@@ -26,10 +26,10 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 
 function scoreTierBadge(score: number) {
-  if (score >= 80) return <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-xs">Hot</Badge>;
-  if (score >= 60) return <Badge variant="outline" className="bg-blue-500/15 text-blue-400 border-blue-500/20 text-xs">Good</Badge>;
-  if (score >= 40) return <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs">Maybe</Badge>;
-  return <Badge variant="outline" className="bg-red-500/15 text-red-400 border-red-500/20 text-xs">Poor</Badge>;
+  if (score >= 80) return <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs">Hot</Badge>;
+  if (score >= 60) return <Badge variant="outline" className="bg-primary/15 text-primary border-primary/20 text-xs">Good</Badge>;
+  if (score >= 40) return <Badge variant="outline" className="bg-warning/15 text-warning border-warning/20 text-xs">Maybe</Badge>;
+  return <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/20 text-xs">Poor</Badge>;
 }
 
 export default function IcpPage() {

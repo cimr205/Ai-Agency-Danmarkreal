@@ -745,7 +745,7 @@ export default function InvoicesPage() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><FileText className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalInvoices')}</p><p className="text-2xl font-bold">{invoiceStats.total}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-accent" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-accent">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-success">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalAmount')}</p><p className="text-2xl font-bold">{formatCurrency(invoiceStats.totalAmount)}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center"><FileText className="h-6 w-6 text-destructive" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.overdue')}</p><p className="text-2xl font-bold text-destructive">{invoiceStats.overdue}</p></div></div></CardContent></Card>
       </div>
@@ -841,7 +841,7 @@ export default function InvoicesPage() {
                       <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
                         try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
                       }}>
-                        <DollarSign className="h-4 w-4 text-accent" />
+                        <DollarSign className="h-4 w-4 text-success" />
                       </Button>
                     )}
                     {invoice.status !== 'paid' && (

@@ -124,20 +124,20 @@ export default function WorkforceReportsPage() {
 
   const kpis = [
     { label: t('workforce.totalActualHours'), value: `${report?.totalActual ?? 0}h`, icon: Clock, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: t('workforce.totalPlannedHours'), value: `${report?.totalPlanned ?? 0}h`, icon: Target, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: t('workforce.totalPlannedHours'), value: `${report?.totalPlanned ?? 0}h`, icon: Target, color: 'text-chart-blue', bg: 'bg-chart-blue/10' },
     {
       label: t('workforce.totalDeviation'),
       value: `${(report?.totalDeviation ?? 0) >= 0 ? '+' : ''}${report?.totalDeviation ?? 0}h`,
       icon: (report?.totalDeviation ?? 0) >= 0 ? TrendingUp : TrendingDown,
-      color: (report?.totalDeviation ?? 0) >= 0 ? 'text-emerald-500' : 'text-destructive',
-      bg: (report?.totalDeviation ?? 0) >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10',
+      color: (report?.totalDeviation ?? 0) >= 0 ? 'text-success' : 'text-destructive',
+      bg: (report?.totalDeviation ?? 0) >= 0 ? 'bg-success/10' : 'bg-destructive/10',
     },
     {
       label: t('workforce.adherence'),
       value: report?.averageAdherence != null ? `${report.averageAdherence}%` : 'N/A',
       icon: Users,
-      color: 'text-violet-500',
-      bg: 'bg-violet-500/10',
+      color: 'text-chart-violet',
+      bg: 'bg-chart-violet/10',
     },
   ];
 
@@ -221,7 +221,7 @@ export default function WorkforceReportsPage() {
                       <td className="p-3 text-right font-mono">{emp.actualHours}h</td>
                       <td className="p-3 text-right font-mono">{emp.plannedHours}h</td>
                       <td className="p-3 text-right font-mono">
-                        <span className={emp.deviation >= 0 ? 'text-emerald-500' : 'text-destructive'}>
+                        <span className={emp.deviation >= 0 ? 'text-success' : 'text-destructive'}>
                           {emp.deviation >= 0 ? '+' : ''}{emp.deviation}h
                         </span>
                       </td>

@@ -74,7 +74,7 @@ export function DealListView({
                   <TableCell className="text-muted-foreground">{deal.created_at ? new Date(deal.created_at).toLocaleDateString() : '—'}</TableCell>
                   <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      {deal.stage !== 'won' && <Button variant="ghost" size="sm" className="text-emerald-600" onClick={() => onMarkWon(deal.id)}><Trophy className="h-3.5 w-3.5" /></Button>}
+                      {deal.stage !== 'won' && <Button variant="ghost" size="sm" className="text-success" onClick={() => onMarkWon(deal.id)}><Trophy className="h-3.5 w-3.5" /></Button>}
                       {deal.stage !== 'lost' && <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onMarkLost(deal.id)}><XCircle className="h-3.5 w-3.5" /></Button>}
                     </div>
                   </TableCell>

@@ -190,7 +190,7 @@ export default function QuotesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.length}</div><p className="text-xs text-muted-foreground">{t('quotes.totalQuotes')}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-primary">{formatCurrency(filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0))}</div><p className="text-xs text-muted-foreground">{t('quotes.totalValue')}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-emerald-600">{filteredQuotes.filter(q => q.status === 'accepted').length}</div><p className="text-xs text-muted-foreground">{t('quotes.accepted')}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-success">{filteredQuotes.filter(q => q.status === 'accepted').length}</div><p className="text-xs text-muted-foreground">{t('quotes.accepted')}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.filter(q => q.status === 'sent').length}</div><p className="text-xs text-muted-foreground">{t('quotes.pending')}</p></CardContent></Card>
       </div>
 

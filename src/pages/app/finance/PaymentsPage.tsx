@@ -177,8 +177,8 @@ export default function PaymentsPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-accent" /></div><div><p className="text-sm text-muted-foreground">{t('payments.completed')}</p><p className="text-2xl font-bold text-accent">{formatCurrency(totalCompleted)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center"><Clock className="h-6 w-6 text-yellow-600" /></div><div><p className="text-sm text-muted-foreground">{t('payments.pending')}</p><p className="text-2xl font-bold">{pendingPayments.length}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('payments.completed')}</p><p className="text-2xl font-bold text-success">{formatCurrency(totalCompleted)}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center"><Clock className="h-6 w-6 text-warning" /></div><div><p className="text-sm text-muted-foreground">{t('payments.pending')}</p><p className="text-2xl font-bold">{pendingPayments.length}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><CreditCard className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('payments.totalPayments')}</p><p className="text-2xl font-bold">{allPayments.length}</p></div></div></CardContent></Card>
       </div>
 

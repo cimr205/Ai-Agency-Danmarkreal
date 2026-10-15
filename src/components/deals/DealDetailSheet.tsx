@@ -169,7 +169,7 @@ export function DealDetailSheet({
 
                 <div className="flex gap-2">
                   {deal.stage !== 'won' && (
-                    <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onMarkWon(deal.id)} disabled={!canMarkDealWon(deal)}>
+                    <Button className="flex-1 bg-success hover:bg-success/90 text-success-foreground" onClick={() => onMarkWon(deal.id)} disabled={!canMarkDealWon(deal)}>
                       <Trophy className="h-4 w-4 mr-2" />{t('pages.deals.markWon')}
                     </Button>
                   )}

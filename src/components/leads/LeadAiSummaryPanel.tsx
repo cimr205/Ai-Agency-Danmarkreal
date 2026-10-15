@@ -28,8 +28,8 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
   };
 
   const riskColors = {
-    low: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    medium: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
+    low: 'bg-success/15 text-success border-success/30',
+    medium: 'bg-warning/15 text-warning border-warning/30',
     high: 'bg-destructive/15 text-destructive border-destructive/30',
   };
   const riskLabels = {
@@ -117,7 +117,7 @@ export function LeadAiSummaryPanel({ leadId }: LeadAiSummaryPanelProps) {
             <div className="space-y-2">
               {summary.open_promises.map((p, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
                   <span>{p}</span>
                 </div>
               ))}
