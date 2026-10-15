@@ -2577,5 +2577,20 @@
     "confirmationRequired": "Confirmation required",
     "readyForSafeActions": "Ready for safe actions",
     "confirmAndExecute": "Confirm & execute"
+  },
+  "tour": {
+    "dashboardTitle": "Your Dashboard",
+    "dashboardDesc": "Here you get a complete overview of your company's KPIs, leads and pipeline.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Manage all your leads, score them with AI and follow up automatically.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualize your sales pipeline with drag-and-drop and see expected revenue.",
+    "aiTitle": "AI Assistant",
+    "aiDesc": "Your personal AI assistant that can help with emails, analysis and tasks.",
+    "settingsTitle": "Settings",
+    "settingsDesc": "Customize your company profile, invite team members and configure integrations.",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
   }
 }

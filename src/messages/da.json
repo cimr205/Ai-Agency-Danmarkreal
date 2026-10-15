@@ -2540,5 +2540,20 @@
     "confirmationRequired": "Bekræftelse påkrævet",
     "readyForSafeActions": "Klar til sikre handlinger",
     "confirmAndExecute": "Bekræft & udfør"
+  },
+  "tour": {
+    "dashboardTitle": "Dit Dashboard",
+    "dashboardDesc": "Her får du et komplet overblik over din virksomheds KPI'er, leads og pipeline.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Administrer alle dine kundeemner, score dem med AI og følg op automatisk.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualiser din salgspipeline med drag-and-drop og se forventet omsætning.",
+    "aiTitle": "AI Assistent",
+    "aiDesc": "Din personlige AI-assistent der kan hjælpe med emails, analyser og opgaver.",
+    "settingsTitle": "Indstillinger",
+    "settingsDesc": "Tilpas din virksomhedsprofil, inviter teammedlemmer og konfigurer integrationer.",
+    "back": "Tilbage",
+    "next": "Næste",
+    "done": "Færdig"
   }
 }

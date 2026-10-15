@@ -2517,5 +2517,20 @@
     "confirmationRequired": "Bestätigung erforderlich",
     "readyForSafeActions": "Bereit für sichere Aktionen",
     "confirmAndExecute": "Bestätigen & ausführen"
+  },
+  "tour": {
+    "dashboardTitle": "Dein Dashboard",
+    "dashboardDesc": "Hier erhältst du einen vollständigen Überblick über die KPIs, Leads und Pipeline deines Unternehmens.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Verwalte alle deine Leads, bewerte sie mit KI und verfolge sie automatisch.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualisiere deine Vertriebspipeline per Drag-and-Drop und sieh den erwarteten Umsatz.",
+    "aiTitle": "KI-Assistent",
+    "aiDesc": "Dein persönlicher KI-Assistent, der bei E-Mails, Analysen und Aufgaben hilft.",
+    "settingsTitle": "Einstellungen",
+    "settingsDesc": "Passe dein Firmenprofil an, lade Teammitglieder ein und konfiguriere Integrationen.",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig"
   }
 }
