@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -10,6 +11,7 @@ import { stageColors } from '@/lib/deals/stages';
 
 export function DealListView({
   deals, isLoading, error, t, formatCurrency, getStageLabel, onSelectDeal, onMarkWon, onMarkLost, onCreate,
+  selectedIds, onToggleSelect,
 }: {
   deals: DealWithCustomer[];
   isLoading: boolean;
@@ -21,6 +23,8 @@ export function DealListView({
   onMarkWon: (dealId: string) => void;
   onMarkLost: (dealId: string) => void;
   onCreate: () => void;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (dealId: string) => void;
 }) {
   return (
     <Card>
@@ -29,6 +33,7 @@ export function DealListView({
           <Table>
             <TableHeader>
               <TableRow>
+                {onToggleSelect && <TableHead className="w-10" />}
                 <TableHead>{t('pages.deals.titleLabel')}</TableHead>
                 <TableHead>{t('pages.deals.customer')}</TableHead>
                 <TableHead>{t('pages.deals.value')}</TableHead>
@@ -40,9 +45,9 @@ export function DealListView({
             </TableHeader>
             <TableBody>
               {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-4 w-full" /></TableCell></TableRow>
+                <TableRow key={i}><TableCell colSpan={onToggleSelect ? 8 : 7}><Skeleton className="h-4 w-full" /></TableCell></TableRow>
               )) : deals.length === 0 ? (
-                <TableRow><TableCell colSpan={7}>
+                <TableRow><TableCell colSpan={onToggleSelect ? 8 : 7}>
                   <EmptyState
                     bare
                     icon={Briefcase}
@@ -52,6 +57,15 @@ export function DealListView({
                 </TableCell></TableRow>
               ) : deals.map(deal => (
                 <TableRow key={deal.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onSelectDeal(deal)}>
+                  {onToggleSelect && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds?.has(deal.id) ?? false}
+                        onCheckedChange={() => onToggleSelect(deal.id)}
+                        aria-label={deal.title}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium"><div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" />{deal.title}</div></TableCell>
                   <TableCell className="text-muted-foreground">{deal.customers?.name || '—'}</TableCell>
                   <TableCell><span className="font-medium">{formatCurrency(deal.value)}</span></TableCell>

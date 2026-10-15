@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, useCreateInvoiceCheckout, usePayments, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
+import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useBulkMarkInvoicesSent, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, useCreateInvoiceCheckout, usePayments, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
 import { useModuleAvailability, useSyncFinancePayments } from '@/hooks/api/useIntegrations';
 import { useGmailAccount, useConnectGmail, useSendEmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -104,6 +105,7 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithCustomer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingInvoice, setEditingInvoice] = useState<EditingInvoice | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -164,8 +166,21 @@ export default function InvoicesPage() {
   const createInvoice = useCreateInvoice();
   const createCustomer = useCreateCustomer();
   const updateStatus = useUpdateInvoiceStatus();
+  const bulkMarkSent = useBulkMarkInvoicesSent();
   const createCheckout = useCreateInvoiceCheckout();
   const deleteInvoice = useDeleteInvoice();
+
+  // Open a specific invoice's detail sheet if navigated with ?invoiceId=... (e.g. from the command palette)
+  useEffect(() => {
+    const invoiceId = searchParams.get('invoiceId');
+    if (!invoiceId || !data || data.length === 0) return;
+    const target = data.find((invoice) => invoice.id === invoiceId);
+    if (target) setSelectedInvoice(target);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('invoiceId');
+    setSearchParams(nextParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, data]);
 
   const templateOptions = useMemo(() => getTemplateOptions(locale), [locale]);
 
@@ -269,6 +284,33 @@ export default function InvoicesPage() {
     inv.customers?.name?.toLowerCase().includes(search.toLowerCase())
   );
   const filteredInvoices = statusFilter === 'all' ? searchFiltered : searchFiltered.filter(inv => inv.status === statusFilter);
+  const draftIdsVisible = filteredInvoices.filter((inv) => inv.status === 'draft').map((inv) => inv.id);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, statusFilter]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisibleDrafts = () => {
+    setSelectedIds((prev) => prev.size === draftIdsVisible.length ? new Set() : new Set(draftIdsVisible));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkMarkSent = async () => {
+    try {
+      await bulkMarkSent.mutateAsync(Array.from(selectedIds));
+      toast.success(t('pages.invoices.markedSent'));
+      clearSelection();
+    } catch { toast.error(t('common.error')); }
+  };
 
   const selectedCustomer = useMemo(() => customers?.find(c => c.id === selectedCustomerId), [customers, selectedCustomerId]);
   const vatInfo = useMemo(() => {
@@ -725,11 +767,34 @@ export default function InvoicesPage() {
         </Tabs>
       </div>
 
+      {draftIdsVisible.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Checkbox
+            checked={selectedIds.size > 0 && selectedIds.size === draftIdsVisible.length}
+            onCheckedChange={selectAllVisibleDrafts}
+            aria-label={t('common.selectAllVisible').replace('{count}', String(draftIdsVisible.length))}
+          />
+          <span className="text-xs text-muted-foreground">
+            {t('common.selectAllVisible').replace('{count}', String(draftIdsVisible.length))}
+          </span>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-muted-foreground">
+                {t('common.selected').replace('{count}', String(selectedIds.size))}
+              </span>
+              <Button size="sm" variant="outline" onClick={handleBulkMarkSent}>{t('pages.invoices.markSelectedSent')}</Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>{t('common.cancel')}</Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10" />
               <TableHead>{t('pages.invoices.invoiceNo')}</TableHead>
               <TableHead>{t('pages.invoices.customer')}</TableHead>
               <TableHead className="text-right">{t('pages.invoices.subtotal')}</TableHead>
@@ -742,9 +807,9 @@ export default function InvoicesPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
+              <TableRow key={i}>{Array.from({ length: 9 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
             )) : filteredInvoices.length === 0 ? (
-              <TableRow><TableCell colSpan={8}>
+              <TableRow><TableCell colSpan={9}>
                 <EmptyState
                   bare
                   icon={FileText}
@@ -754,6 +819,15 @@ export default function InvoicesPage() {
               </TableCell></TableRow>
             ) : filteredInvoices.map(invoice => (
               <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedInvoice(invoice)}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {invoice.status === 'draft' && (
+                    <Checkbox
+                      checked={selectedIds.has(invoice.id)}
+                      onCheckedChange={() => toggleSelect(invoice.id)}
+                      aria-label={invoice.invoice_number}
+                    />
+                  )}
+                </TableCell>
                 <TableCell className="font-mono font-medium">{invoice.invoice_number}</TableCell>
                 <TableCell>{invoice.customers?.name || '–'}</TableCell>
                 <TableCell className="text-right">{formatCurrency(Number(invoice.subtotal || 0))}</TableCell>

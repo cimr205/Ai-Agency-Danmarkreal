@@ -100,6 +100,34 @@ export function useUpdateDealStage() {
   });
 }
 
+// Bulk stage moves go through the same update_deal_stage RPC as a single
+// change (one call per deal) rather than a raw bulk `.update()` — a plain
+// `.update({ stage }).in('id', ids)` would skip the webhook firing and the
+// idempotency lock that `useUpdateDealStage` relies on above, which matters
+// here since a bulk move can include deals going won/lost.
+export function useBulkUpdateDealStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, stage }: { ids: string[]; stage: DealStage }) => {
+      const results = await Promise.all(
+        ids.map((id) => supabase.rpc('update_deal_stage', { p_deal_id: id, p_stage: stage }).single()),
+      );
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+      results.forEach(({ data }) => {
+        if (!data) return;
+        const event = stageWebhookEvent(data);
+        if (event) fireWebhookEvent(data.company_id, event, { deal_id: data.id, title: data.title, value: data.value });
+      });
+      return results.map((r) => r.data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['pipeline-summary'] });
+    },
+  });
+}
+
 export function usePipelineSummary() {
   return useQuery({
     queryKey: ['pipeline-summary'],

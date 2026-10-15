@@ -253,6 +253,24 @@ export function useUpdateInvoiceStatus() {
   });
 }
 
+// Bulk-send is intentionally scoped to drafts only (.eq('status', 'draft'))
+// so a multi-select can never silently touch a paid/overdue/cancelled
+// invoice; no bulk delete is exposed for invoices for the same reason.
+export function useBulkMarkInvoicesSent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'sent' as Enums<'invoice_status'> })
+        .in('id', ids)
+        .eq('status', 'draft');
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+  });
+}
+
 // Payments
 export function usePayments() {
   return useQuery({
