@@ -376,13 +376,13 @@ export default function TasksPage() {
 
       <Tabs value={view} onValueChange={(v) => { setView(v as ViewKey); clearSelection(); }}>
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="today">I dag {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
-          <TabsTrigger value="overdue">Forfaldne {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
-          <TabsTrigger value="upcoming">Kommende {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
-          <TabsTrigger value="mine">Mine {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
-          <TabsTrigger value="all">Alle aktive ({counts.all})</TabsTrigger>
-          <TabsTrigger value="completed">Fuldførte ({counts.completed})</TabsTrigger>
-          <TabsTrigger value="archived">Arkiverede</TabsTrigger>
+          <TabsTrigger value="today">{t('pages.tasks.today')} {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
+          <TabsTrigger value="overdue">{t('pages.tasks.overdue')} {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
+          <TabsTrigger value="upcoming">{t('pages.tasks.upcoming')} {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
+          <TabsTrigger value="mine">{t('pages.tasks.mine')} {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
+          <TabsTrigger value="all">{t('pages.tasks.allActive')} ({counts.all})</TabsTrigger>
+          <TabsTrigger value="completed">{t('pages.tasks.completed')} ({counts.completed})</TabsTrigger>
+          <TabsTrigger value="archived">{t('pages.tasks.archived')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -392,18 +392,18 @@ export default function TasksPage() {
           <Input placeholder={t('pages.tasks.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Ansvarlig" /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue placeholder={t('pages.tasks.assignee')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle ansvarlige</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allAssignees')}</SelectItem>
             {(teamProfiles ?? []).map(p => (
               <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || p.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Prioritet" /></SelectTrigger>
+          <SelectTrigger className="w-40"><SelectValue placeholder={t('pages.tasks.priority')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle prioriteter</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allPriorities')}</SelectItem>
             {PRIORITY_OPTIONS.map(p => (
               <SelectItem key={p} value={p}>{priorityLabels[p]}</SelectItem>
             ))}
@@ -418,9 +418,9 @@ export default function TasksPage() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-xs text-muted-foreground">{t('common.selected').replace('{count}', String(selectedIds.size))}</span>
-              <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkComplete}>{t('pages.tasks.bulkComplete')}</Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">{t('pages.tasks.bulkAssignTo')}</Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {(teamProfiles ?? []).map(p => (
                     <DropdownMenuItem key={p.user_id} onClick={() => handleBulkReassign(p.user_id)}>{p.full_name || p.email}</DropdownMenuItem>
@@ -428,7 +428,7 @@ export default function TasksPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t('pages.tasks.unarchive') : t('pages.tasks.archive')}</Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>{t('common.delete')}</Button>
             </div>
           )}
         </div>

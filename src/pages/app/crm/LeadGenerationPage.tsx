@@ -49,26 +49,26 @@ type LeadFolder = Tables<'lead_folders'>;
 // ─── Helpers ────────────────────────────────────────────────
 function emailBadge(status: LeadGenResult["email_status"]) {
   const map = {
-    verified: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    likely_valid: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-    unverified: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+    verified: "bg-success/15 text-success border-success/20",
+    likely_valid: "bg-primary/15 text-primary border-primary/20",
+    unverified: "bg-warning/15 text-warning border-warning/20",
     missing: "bg-muted text-muted-foreground border-border",
   };
   return map[status] || map.missing;
 }
 
-const EMAIL_STATUS_LABEL: Record<string, string> = {
-  verified: "Verificeret",
-  likely_valid: "Sandsynligvis gyldig",
-  unverified: "Ikke verificeret",
-  missing: "Mangler",
+const EMAIL_STATUS_LABEL_KEY: Record<string, string> = {
+  verified: "leadGen.statusVerified",
+  likely_valid: "leadGen.statusLikelyValid",
+  unverified: "leadGen.statusUnverified",
+  missing: "leadGen.statusMissing",
 };
 
 function validationBadge(status: LeadGenResult["validation_status"]) {
   const map = {
-    valid: { cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20", Icon: ShieldCheck },
-    risky: { cls: "bg-amber-500/15 text-amber-400 border-amber-500/20", Icon: ShieldAlert },
-    invalid: { cls: "bg-red-500/15 text-red-400 border-red-500/20", Icon: ShieldX },
+    valid: { cls: "bg-success/15 text-success border-success/20", Icon: ShieldCheck },
+    risky: { cls: "bg-warning/15 text-warning border-warning/20", Icon: ShieldAlert },
+    invalid: { cls: "bg-destructive/15 text-destructive border-destructive/20", Icon: ShieldX },
     unknown: { cls: "bg-muted text-muted-foreground border-border", Icon: ShieldQuestion },
   };
   return map[status] || map.unknown;
@@ -76,25 +76,25 @@ function validationBadge(status: LeadGenResult["validation_status"]) {
 
 function activeBadge(status: LeadGenResult["active_status"]) {
   const map = {
-    active_likely: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    uncertain: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-    inactive_likely: "bg-red-500/15 text-red-400 border-red-500/20",
+    active_likely: "bg-success/15 text-success border-success/20",
+    uncertain: "bg-warning/15 text-warning border-warning/20",
+    inactive_likely: "bg-destructive/15 text-destructive border-destructive/20",
   };
   return map[status] || map.uncertain;
 }
 
 function scoreBadge(score: number) {
-  if (score >= 70) return "bg-emerald-500/15 text-emerald-400 border-emerald-500/20";
-  if (score >= 40) return "bg-amber-500/15 text-amber-400 border-amber-500/20";
-  return "bg-red-500/15 text-red-400 border-red-500/20";
+  if (score >= 70) return "bg-success/15 text-success border-success/20";
+  if (score >= 40) return "bg-warning/15 text-warning border-warning/20";
+  return "bg-destructive/15 text-destructive border-destructive/20";
 }
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
-    done: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-    running: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-    pending: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-    failed: "bg-red-500/15 text-red-400 border-red-500/20",
+    done: "bg-success/15 text-success border-success/20",
+    running: "bg-primary/15 text-primary border-primary/20",
+    pending: "bg-warning/15 text-warning border-warning/20",
+    failed: "bg-destructive/15 text-destructive border-destructive/20",
     cancelled: "bg-muted text-muted-foreground border-border",
   };
   return map[status] || map.pending;
@@ -397,8 +397,8 @@ export default function LeadGenerationPage() {
       {/* ── EMPTY STATE ───── */}
       {activeSession?.status === "done" && results.length === 0 && (
         <Card className="p-8 text-center animate-fade-in">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 mb-3">
-            <Ban className="h-6 w-6 text-amber-400" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-warning/10 mb-3">
+            <Ban className="h-6 w-6 text-warning" />
           </div>
           <h3 className="text-base font-semibold text-foreground mb-1">
             {t("leadGen.noNewResults") || "No new leads found"}
@@ -454,7 +454,7 @@ export default function LeadGenerationPage() {
                     <TableRow key={r.id} className={r.imported ? "opacity-50" : ""}>
                       <TableCell>
                         {r.imported ? (
-                          <Check className="h-4 w-4 text-emerald-400" />
+                          <Check className="h-4 w-4 text-success" />
                         ) : (
                           <Checkbox checked={selectedIds.has(r.id)} onCheckedChange={() => toggleSelect(r.id)} />
                         )}
@@ -490,7 +490,7 @@ export default function LeadGenerationPage() {
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm truncate max-w-[160px]">{email}</span>
                               <Badge variant="outline" className={`text-[10px] px-1.5 py-0 border ${emailBadge(r.email_status)}`}>
-                                {EMAIL_STATUS_LABEL[r.email_status] ?? r.email_status}
+                                {r.email_status && EMAIL_STATUS_LABEL_KEY[r.email_status] ? t(EMAIL_STATUS_LABEL_KEY[r.email_status]) : r.email_status}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-0.5">
@@ -557,7 +557,7 @@ export default function LeadGenerationPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {r.imported && <Check className="h-4 w-4 text-emerald-400" />}
+                        {r.imported && <Check className="h-4 w-4 text-success" />}
                       </TableCell>
                     </TableRow>
                   );

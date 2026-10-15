@@ -401,7 +401,7 @@ export default function InvoicesPage() {
               className="gap-1.5 text-muted-foreground"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
-              <Plug className="h-3.5 w-3.5" /> Forbind betalinger
+              <Plug className="h-3.5 w-3.5" /> {t('pages.invoices.connectPayments')}
             </Button>
           )}
           {/* Template selector with visual color preview */}
