@@ -84,12 +84,19 @@ export default function Dashboard() {
   const meetings = d?.today?.meetings ?? [];
   const tasks = d?.today?.tasks ?? [];
 
-  const pulse: { label: string; icon: ComponentType<{ className?: string }>; href: string; value: string | null; detail: string; tone: Tone }[] = [
+  // revenueByDay (already fetched for the Cashflow chart below) comes back
+  // oldest → newest, same order Sparkline expects — reuse it directly.
+  const revenueSparkline = d?.revenueByDay && d.revenueByDay.length >= 2
+    ? d.revenueByDay.map((r) => r.value)
+    : undefined;
+
+  const pulse: { label: string; icon: ComponentType<{ className?: string }>; href: string; value: string | null; detail: string; tone: Tone; sparkline?: number[] }[] = [
     {
       label: t("dashboard.cashCollected"), icon: Wallet, href: `${base}/finance/invoices`,
       value: isLoading ? null : format(monthValue),
       detail: momDelta !== null ? `${momDelta >= 0 ? "+" : "-"}${Math.abs(momDelta)}% ${t("dashboard.vsLastMonth")}` : t("dashboard.firstActiveMonth"),
       tone: momDelta !== null && momDelta < 0 ? "destructive" : "primary",
+      sparkline: revenueSparkline,
     },
     {
       label: t("dashboard.statPipeline"), icon: Briefcase, href: `${base}/crm/deals?view=board`,
