@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { isLocale } from "@/lib/i18n";
 import { useAmbientInsights } from "@/hooks/useAmbientInsights";
 import { AlertTriangle, ArrowUpRight, Lightbulb, PanelRightClose, PanelRightOpen, Bell, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AmbientAIBar } from "./AmbientAIBar";
+import { AmbientAIBar, AMBIENT_AI_OPEN_EVENT } from "./AmbientAIBar";
 import { useI18n } from "@/lib/i18n";
 
 const ICON = { risk: AlertTriangle, opportunity: ArrowUpRight, suggestion: Lightbulb, info: ShieldCheck };
 const TONE = {
   risk: "text-destructive",
-  opportunity: "text-emerald-400",
-  suggestion: "text-amber-300",
+  opportunity: "text-success",
+  suggestion: "text-warning",
   info: "text-muted-foreground/70",
 };
 
@@ -31,6 +31,22 @@ export function ContextPanel() {
   const navigate = useNavigate();
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : "en";
+  const [pendingPrompt, setPendingPrompt] = useState<{ nonce: number; prompt?: string } | null>(null);
+
+  // AmbientAIBar only exists in the tree while the panel is open, so an
+  // external "open with this prompt" request can't rely on AmbientAIBar's
+  // own listener — it may not be mounted yet. Own the pending prompt here
+  // and hand it down once AmbientAIBar mounts.
+  useEffect(() => {
+    const onExternalOpen = (e: Event) => {
+      const prompt = (e as CustomEvent<{ prompt?: string }>).detail?.prompt;
+      setOpen(true);
+      window.localStorage.setItem("workspace-context-panel", "open");
+      setPendingPrompt({ nonce: Date.now(), prompt });
+    };
+    window.addEventListener(AMBIENT_AI_OPEN_EVENT, onExternalOpen);
+    return () => window.removeEventListener(AMBIENT_AI_OPEN_EVENT, onExternalOpen);
+  }, []);
 
   const meaningful = (insights || []).filter(i => i.kind !== "info").slice(0, 8);
 
@@ -64,7 +80,7 @@ export function ContextPanel() {
             <ShieldCheck className="h-3.5 w-3.5" />
           </span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Kontrolcenter
+            {t("contextPanel.title")}
           </span>
         </div>
         <button
@@ -81,7 +97,7 @@ export function ContextPanel() {
           <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
             {t("contextPanel.actions")}
           </h3>
-          <AmbientAIBar />
+          <AmbientAIBar openSignal={pendingPrompt} />
         </section>
 
         <section className="space-y-2">
