@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter } from 'lucide-react';
+import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter, Sparkles } from 'lucide-react';
+import { openAiAgent } from '@/components/AiAgentWidget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,8 @@ import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { RelationshipChip } from '@/components/shared/RelationshipChip';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Email = Tables<'emails'> & {
   customers: Pick<Tables<'customers'>, 'id' | 'name'> | null;
@@ -433,18 +436,24 @@ export default function EmailsPage() {
       <Card>
         <CardContent className="p-0">
           {emailsLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-2" />
-              <p className="text-muted-foreground">{t('pages.email.fetchingEmails')}</p>
+            <div className="divide-y divide-border">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-4">
+                  <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-1/3" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : pagedEmails.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Mail className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>{emails.length === 0 ? t('pages.email.noEmailsSynced') : t('pages.email.noEmailsMatch')}</p>
-              {activeTab === 'starred' && starredCount === 0 && (
-                <p className="text-xs mt-2">{t('pages.email.starredHint')}</p>
-              )}
-            </div>
+            <EmptyState
+              icon={Mail}
+              title={emails.length === 0 ? t('pages.email.noEmailsSynced') : t('pages.email.noEmailsMatch')}
+              hint={activeTab === 'starred' && starredCount === 0 ? t('pages.email.starredHint') : undefined}
+              bare
+            />
           ) : (
             <div className="divide-y divide-border">
               {pagedEmails.map((email) => {
@@ -570,6 +579,22 @@ export default function EmailsPage() {
                 </div>
               ) : (
                 <div className="mt-4 flex gap-2 justify-end border-t border-border pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const body = (selectedEmail.body_text || selectedEmail.snippet || '').slice(0, 3000);
+                      const ask = locale === 'da'
+                        ? `Opsummer denne email og forslå et svar:\n\nEmne: ${selectedEmail.subject}\nFra: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                        : locale === 'de'
+                          ? `Fasse diese E-Mail zusammen und schlage eine Antwort vor:\n\nBetreff: ${selectedEmail.subject}\nVon: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                          : `Summarize this email and suggest a reply:\n\nSubject: ${selectedEmail.subject}\nFrom: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`;
+                      openAiAgent(ask);
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {t('pages.email.askAi')}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => toggleRead(selectedEmail)}>
                     {selectedEmail.is_read ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
                     {selectedEmail.is_read ? t('pages.email.markUnread') : t('pages.email.markRead')}

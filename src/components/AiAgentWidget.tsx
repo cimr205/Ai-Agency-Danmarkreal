@@ -7,29 +7,33 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { streamChat, type ChatMsg, type ChatContentPart } from '@/lib/streamChat';
 import { UserRound, X, Send, Sparkles, GripVertical, Paperclip, FileText, Image as ImageIcon, Eye, EyeOff, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { useI18n } from '@/lib/i18n';
 
 type UIMessage = { id: string; role: 'user' | 'assistant'; content: string; files?: { name: string; type: string; preview?: string }[] };
 
-const CONTEXT_LABELS: Record<string, string> = {
-  'meta-ads': 'Meta Ads',
-  leads: 'Leads',
-  deals: 'Deals',
-  pipeline: 'Pipeline',
-  customers: 'Kunder',
-  invoices: 'Fakturaer',
-  payments: 'Betalinger',
-  employees: 'Medarbejdere',
-  attendance: 'Fremmøde',
-  leave: 'Fravær',
-  payroll: 'Løn',
-  recruitment: 'Rekruttering',
-  tasks: 'Opgaver',
-  calendar: 'Kalender',
-  inbox: 'Indbakke',
-  emails: 'Emails',
-  todos: 'To-dos',
-  settings: 'Indstillinger',
-  dashboard: 'Dashboard',
+// Keys into the translation tree — `nav.*` reused where a page already has
+// a sidebar label, `aiAgent.contextCustomers` added for the one context
+// that doesn't (the leads/customers split doesn't have its own nav entry).
+const CONTEXT_LABEL_KEYS: Record<string, string> = {
+  'meta-ads': 'nav.metaAds',
+  leads: 'nav.leads',
+  deals: 'nav.deals',
+  pipeline: 'nav.pipeline',
+  customers: 'aiAgent.contextCustomers',
+  invoices: 'nav.invoices',
+  payments: 'nav.payments',
+  employees: 'nav.employees',
+  attendance: 'nav.attendance',
+  leave: 'nav.leave',
+  payroll: 'nav.payroll',
+  recruitment: 'nav.recruitment',
+  tasks: 'nav.tasks',
+  calendar: 'nav.calendar',
+  inbox: 'nav.smartInbox',
+  emails: 'nav.smartInbox',
+  todos: 'nav.tasks',
+  settings: 'nav.settings',
+  dashboard: 'nav.dashboard',
 };
 
 function detectPageContext(pathname: string): string {
@@ -116,7 +120,15 @@ function scanPageContent(): string {
   }
 }
 
+export const AI_AGENT_OPEN_EVENT = 'open-ai-agent';
+
+/** Opens the AI widget from anywhere (e.g. a "Summarize with AI" button on an entity detail view) and prefills the input — the user still has to press send, so there's no hidden autonomy. */
+export function openAiAgent(prompt?: string) {
+  window.dispatchEvent(new CustomEvent(AI_AGENT_OPEN_EVENT, { detail: { prompt } }));
+}
+
 export default function AiAgentWidget() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState('');
@@ -134,7 +146,7 @@ export default function AiAgentWidget() {
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
 
   const pageContext = detectPageContext(location.pathname);
-  const contextLabel = CONTEXT_LABELS[pageContext] || 'Dashboard';
+  const contextLabel = t(CONTEXT_LABEL_KEYS[pageContext] || 'nav.dashboard');
 
   // Reset messages when context changes
   useEffect(() => {
@@ -194,7 +206,7 @@ export default function AiAgentWidget() {
     // Build chat messages with page context included
     const chatMessages: ChatMsg[] = newMessages.map(m => {
       if (m.role === 'user' && m.files?.length) {
-        const fileDescriptions = m.files.map(f => `[Vedhæftet fil: ${f.name} (${f.type})]`).join('\n');
+        const fileDescriptions = m.files.map(f => `[${t('aiAgent.attachedFile')}: ${f.name} (${f.type})]`).join('\n');
         return { role: m.role, content: m.content ? `${m.content}\n\n${fileDescriptions}` : fileDescriptions };
       }
       return { role: m.role, content: m.content };
@@ -205,7 +217,7 @@ export default function AiAgentWidget() {
       const lastIdx = chatMessages.length - 1;
       const imageFiles = attachedFiles.filter(f => f.type.startsWith('image/'));
       const contentParts: ChatContentPart[] = [
-        { type: "text", text: prompt || "Analysér dette billede" },
+        { type: "text", text: prompt || t('aiAgent.analyzeImage') },
         ...imageFiles.map(f => ({ type: "image_url" as const, image_url: { url: f.dataUrl } })),
       ];
       chatMessages[lastIdx] = { role: 'user', content: contentParts };
@@ -236,7 +248,7 @@ export default function AiAgentWidget() {
         onDone: () => setThinking(false),
       });
     } catch (error) {
-      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'assistant', content: (error as Error).message || 'AI fejlede.' }]);
+      setMessages(prev => [...prev, { id: `${Date.now()}-err`, role: 'assistant', content: (error as Error).message || t('aiAgent.failed') }]);
       setThinking(false);
     }
   };
@@ -247,6 +259,16 @@ export default function AiAgentWidget() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [open]);
+
+  useEffect(() => {
+    const onExternalOpen = (e: Event) => {
+      const prompt = (e as CustomEvent<{ prompt?: string }>).detail?.prompt;
+      setOpen(true);
+      if (prompt) setInput(prompt);
+    };
+    window.addEventListener(AI_AGENT_OPEN_EVENT, onExternalOpen);
+    return () => window.removeEventListener(AI_AGENT_OPEN_EVENT, onExternalOpen);
+  }, []);
 
   const lastMessages = useMemo(() => messages.slice(-30), [messages]);
 
@@ -278,9 +300,9 @@ export default function AiAgentWidget() {
   }, [dragging]);
 
   const quickActions = [
-    { label: '📋 Lav to-do liste', prompt: 'Lav en prioriteret to-do liste baseret på mine kommende deadlines fra hele systemet.' },
-    { label: `💡 Tip til ${contextLabel}`, prompt: `Giv mig 3 konkrete handlinger jeg bør tage lige nu baseret på ${contextLabel}-data.` },
-    { label: `👁️ Analysér denne side`, prompt: `Analysér alt hvad du kan se på denne side og giv mig konkrete anbefalinger og indsigter.` },
+    { label: t('aiAgent.quickTodo'), prompt: t('aiAgent.quickTodoPrompt') },
+    { label: t('aiAgent.quickTip').replace('{context}', contextLabel), prompt: t('aiAgent.quickTipPrompt').replace('{context}', contextLabel) },
+    { label: t('aiAgent.quickAnalyze'), prompt: t('aiAgent.quickAnalyzePrompt') },
   ];
 
   return (
@@ -290,21 +312,21 @@ export default function AiAgentWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5 rounded-t-lg">
             <div className="flex items-center gap-2">
-              <div onMouseDown={onMouseDown} className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted/50 transition-colors" title="Træk for at flytte">
+              <div onMouseDown={onMouseDown} className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted/50 transition-colors" title={t('aiAgent.dragToMove')}>
                 <GripVertical className="h-4 w-4 text-muted-foreground" />
               </div>
               <UserRound className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">Din PA</span>
+              <span className="text-sm font-semibold">{t('aiAgent.title')}</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 {contextLabel}
               </span>
               {/* Scanning indicator */}
-              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1 text-[10px] text-success">
                 <Eye className="h-3 w-3" />
-                <span>Overvåger</span>
+                <span>{t('aiAgent.monitoring')}</span>
               </span>
             </div>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setOpen(false)} title="Luk – stopper overvågning">
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setOpen(false)} title={t('aiAgent.close')}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -315,11 +337,11 @@ export default function AiAgentWidget() {
               {lastMessages.length === 0 && (
                 <div className="text-center py-6 text-muted-foreground text-sm">
                   <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium">Hej! Jeg er din personlige PA 👋</p>
-                  <p className="text-xs mt-1">Jeg kan se alt på din {contextLabel}-side og hjælper dig proaktivt.</p>
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                  <p className="font-medium">{t('aiAgent.greeting')}</p>
+                  <p className="text-xs mt-1">{t('aiAgent.greetingHint').replace('{context}', contextLabel)}</p>
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[10px] text-success">
                     <Eye className="h-3 w-3" />
-                    <span>Altid aktiv overvågning – jeg scanner løbende</span>
+                    <span>{t('aiAgent.alwaysScanning')}</span>
                   </div>
                 </div>
               )}
@@ -346,7 +368,7 @@ export default function AiAgentWidget() {
               ))}
               {thinking && messages[messages.length - 1]?.role !== 'assistant' && (
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="animate-pulse">●</span> AI tænker...
+                  <span className="animate-pulse">●</span> {t('aiAgent.thinking')}
                 </div>
               )}
               <div ref={scrollEndRef} />
@@ -382,12 +404,12 @@ export default function AiAgentWidget() {
               </div>
             )}
             <div className="flex gap-2">
-              <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" onClick={() => fileInputRef.current?.click()} disabled={thinking} title="Vedhæft fil">
+              <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" onClick={() => fileInputRef.current?.click()} disabled={thinking} title={t('aiAgent.attachFile')}>
                 <Paperclip className="h-4 w-4" />
               </Button>
               <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx" className="hidden" onChange={handleFileAttach} />
               <Input
-                placeholder={`Spørg om ${contextLabel}...`}
+                placeholder={t('aiAgent.askAbout').replace('{context}', contextLabel)}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
@@ -403,7 +425,7 @@ export default function AiAgentWidget() {
       )}
       {!open && (
         <div className="flex items-center gap-1.5">
-          <div onMouseDown={onMouseDown} className="cursor-grab active:cursor-grabbing p-1.5 rounded-full bg-muted/80 hover:bg-muted shadow-md transition-colors" title="Træk for at flytte">
+          <div onMouseDown={onMouseDown} className="cursor-grab active:cursor-grabbing p-1.5 rounded-full bg-muted/80 hover:bg-muted shadow-md transition-colors" title={t('aiAgent.dragToMove')}>
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="flex items-center gap-0 bg-card/95 backdrop-blur-xl rounded-full shadow-lg border border-border overflow-hidden">
@@ -411,7 +433,7 @@ export default function AiAgentWidget() {
               <UserRound className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium hidden sm:inline">PA</span>
               <span className="flex items-center gap-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               </span>
             </Button>
             <form
@@ -425,7 +447,7 @@ export default function AiAgentWidget() {
               }}
             >
               <Input
-                placeholder="Skriv til PA..."
+                placeholder={t('aiAgent.typeToAgent')}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="h-9 w-[160px] sm:w-[200px] border-0 bg-transparent text-sm focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
