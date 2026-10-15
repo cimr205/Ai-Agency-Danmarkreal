@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { AppSidebar, MobileSidebarTrigger } from './app/AppSidebar';
 import Topbar from './Topbar';
 import AiAgentWidget from './AiAgentWidget';
+import CommandPalette from './CommandPalette';
 import { useSessionTracker } from '@/hooks/useSessionTracker';
 import { GuidedTour } from './onboarding/GuidedTour';
 
@@ -21,6 +22,7 @@ export default function AppShell({ basePath, children }: { basePath: string; chi
       </div>
       <AiAgentWidget />
       <GuidedTour />
+      <CommandPalette />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Plus, User, Briefcase, FileText, Calendar, Mail, type LucideIcon } from "lucide-react";
+import { Plus, User, Briefcase, FileText, ClipboardList, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/lib/i18n";
 
 interface CreateAction {
   label: string;
@@ -15,24 +16,24 @@ interface CreateAction {
 
 export function CreateMenu({ base }: { base: string }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const actions: CreateAction[] = [
-    { label: "Lead", href: `${base}/crm/leads?create=true`, icon: User },
-    { label: "Deal", href: `${base}/crm/deals?create=true`, icon: Briefcase },
-    { label: "Faktura", href: `${base}/finance/invoices?create=true`, icon: FileText },
-    { label: "Møde", href: `${base}/work/calendar?create=true`, icon: Calendar },
-    { label: "Mail", href: `${base}/email/emails?compose=true`, icon: Mail },
+    { label: t('nav.leads'), href: `${base}/crm/leads?create=true`, icon: User },
+    { label: t('nav.deals'), href: `${base}/crm/deals?create=true`, icon: Briefcase },
+    { label: t('nav.invoices'), href: `${base}/finance/invoices?create=true`, icon: FileText },
+    { label: t('nav.tasks'), href: `${base}/work/tasks?create=true`, icon: ClipboardList },
   ];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[8px] bg-primary px-4 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
-          aria-label="Opret nyt"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[8px] bg-primary px-3.5 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
+          aria-label={t('common.create')}
         >
           <Plus className="h-4 w-4" strokeWidth={2.25} />
-          Opret
+          <span className="hidden sm:inline">{t('common.create')}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-52 rounded-[8px] p-1">
