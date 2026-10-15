@@ -140,7 +140,7 @@ export function useInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, customers(name, email, country, customer_type, vat_number), quotes(id, title, deal_id)')
+        .select('*, customers(name, email, country, customer_type, vat_number), quotes!invoices_quote_id_fkey(id, title, deal_id)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       // Supabase's TS inference doesn't resolve nested-select shapes from the
