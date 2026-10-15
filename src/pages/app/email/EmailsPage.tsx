@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter, Sparkles } from 'lucide-react';
-import { openAiAgent } from '@/components/AiAgentWidget';
+import { openAmbientAI } from '@/components/workspace/AmbientAIBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -589,7 +589,7 @@ export default function EmailsPage() {
                         : locale === 'de'
                           ? `Fasse diese E-Mail zusammen und schlage eine Antwort vor:\n\nBetreff: ${selectedEmail.subject}\nVon: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
                           : `Summarize this email and suggest a reply:\n\nSubject: ${selectedEmail.subject}\nFrom: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`;
-                      openAiAgent(ask);
+                      openAmbientAI(ask);
                     }}
                   >
                     <Sparkles className="h-4 w-4 mr-1" />

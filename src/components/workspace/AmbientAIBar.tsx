@@ -1,20 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Command, X, Send, Loader2 } from "lucide-react";
 import { useAiActions, type AiActionMessage } from "@/hooks/useAiActions";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
+
+export const AMBIENT_AI_OPEN_EVENT = "open-ambient-ai";
+
+/** Opens the action bar from anywhere (e.g. a "Summarize with AI" button on an entity detail view) and prefills the prompt — the user still has to press send, so there's no hidden autonomy. */
+export function openAmbientAI(prompt?: string) {
+  window.dispatchEvent(new CustomEvent(AMBIENT_AI_OPEN_EVENT, { detail: { prompt } }));
+}
 
 /**
  * Workspace action bar — discreet trigger in the workspace shell.
  * Press the dot to open a single-line action prompt that performs real
  * tool calls via the `ai-actions` edge function.
  */
-export function AmbientAIBar() {
+interface Props {
+  /** Set by a parent that owns the "open from elsewhere with this prompt" request — needed because this component may not be mounted yet when the request fires (the context panel is collapsible). Bump the nonce to re-trigger with a new prompt. */
+  openSignal?: { nonce: number; prompt?: string } | null;
+}
+
+export function AmbientAIBar({ openSignal }: Props = {}) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [reply, setReply] = useState<string | null>(null);
   const [pendingConfirm, setPendingConfirm] = useState<{ messages: AiActionMessage[] } | null>(null);
   const ai = useAiActions();
+
+  useEffect(() => {
+    const onExternalOpen = (e: Event) => {
+      const prompt = (e as CustomEvent<{ prompt?: string }>).detail?.prompt;
+      setOpen(true);
+      if (prompt) setValue(prompt);
+    };
+    window.addEventListener(AMBIENT_AI_OPEN_EVENT, onExternalOpen);
+    return () => window.removeEventListener(AMBIENT_AI_OPEN_EVENT, onExternalOpen);
+  }, []);
+
+  useEffect(() => {
+    if (!openSignal) return;
+    setOpen(true);
+    if (openSignal.prompt) setValue(openSignal.prompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSignal?.nonce]);
 
   const run = async (confirm = false) => {
     if (!value.trim() && !pendingConfirm) return;
@@ -35,13 +66,13 @@ export function AmbientAIBar() {
       <button
         onClick={() => setOpen(true)}
         className="flex h-8 items-center gap-2 rounded-md border border-border/60 bg-background px-3 text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
-        aria-label="Åbn handlingsfelt"
+        aria-label={t("ambientAI.openTrigger")}
       >
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full rounded-full bg-stamp/30" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-stamp" />
         </span>
-        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] sm:inline">Klar</span>
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] sm:inline">{t("ambientAI.ready")}</span>
       </button>
 
       <AnimatePresence>
@@ -62,7 +93,7 @@ export function AmbientAIBar() {
                   <Command className="h-4 w-4" />
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Handlingsfelt
+                  {t("ambientAI.title")}
                 </span>
                 <button onClick={() => setOpen(false)} className="ml-auto text-muted-foreground hover:text-foreground">
                   <X className="h-4 w-4" />
@@ -72,7 +103,7 @@ export function AmbientAIBar() {
               <form onSubmit={(e) => { e.preventDefault(); run(false); }} className="p-5 space-y-4">
                 <Input
                   autoFocus value={value} onChange={(e) => setValue(e.target.value)}
-                  placeholder="F.eks. 'Find Acme A/S og opret deal til 50.000 kr næste fredag'"
+                  placeholder={t("ambientAI.placeholder")}
                   className="border-0 bg-transparent text-base focus-visible:ring-0 px-0 placeholder:text-muted-foreground/50"
                   disabled={ai.isPending}
                 />
@@ -85,13 +116,13 @@ export function AmbientAIBar() {
 
                 <div className="flex items-center justify-between gap-3 pt-2">
                   <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/40">
-                    {pendingConfirm ? "Bekræftelse påkrævet" : "Klar til sikre handlinger"}
+                    {pendingConfirm ? t("ambientAI.confirmationRequired") : t("ambientAI.readyForSafeActions")}
                   </span>
                   <div className="flex items-center gap-2">
                     {pendingConfirm && (
                       <button type="button" onClick={() => run(true)}
                         className="h-8 rounded-md bg-foreground px-3 text-xs font-medium text-background hover:opacity-90">
-                        Bekræft & udfør
+                        {t("ambientAI.confirmAndExecute")}
                       </button>
                     )}
                     <button type="submit" disabled={ai.isPending || (!value.trim() && !pendingConfirm)}
