@@ -687,7 +687,8 @@
     "noPositions": "No positions found",
     "fetchRecruitmentError": "Could not load positions",
     "searchPositionPlaceholder": "Search positions...",
-    "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period."
+    "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period.",
+    "departmentRequired": "Department is required"
   },
   "aiInbox": {
     "title": "AI Inbox",

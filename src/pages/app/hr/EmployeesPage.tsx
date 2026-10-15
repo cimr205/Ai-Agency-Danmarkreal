@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, UserCheck, Building2, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { MetricTile } from '@/components/shared/MetricTile';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import EmployeeDetailPanel from '@/components/hr/EmployeeDetailPanel';
@@ -36,8 +38,8 @@ export default function EmployeesPage() {
 
   const handleCreate = async () => {
     if (!newEmployee.full_name || !newEmployee.email) { toast.error(t('hr.nameEmailRequired')); return; }
-    if (!newEmployee.position.trim()) { toast.error(locale === 'da' ? 'Stilling er påkrævet' : 'Position is required'); return; }
-    if (!newEmployee.department.trim()) { toast.error(locale === 'da' ? 'Afdeling er påkrævet' : 'Department is required'); return; }
+    if (!newEmployee.position.trim()) { toast.error(t('hr.positionRequired')); return; }
+    if (!newEmployee.department.trim()) { toast.error(t('hr.departmentRequired')); return; }
     try {
       await createEmployee.mutateAsync(newEmployee);
       toast.success(t('hr.employeeCreated'));
@@ -50,26 +52,30 @@ export default function EmployeesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-foreground">{t('hr.employeesTitle')}</h1><p className="text-muted-foreground">{t('hr.employeesSubtitle')}</p></div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('hr.newEmployee')}</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{t('hr.addEmployee')}</DialogTitle><DialogDescription>{t('hr.addEmployeeDesc')}</DialogDescription></DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2"><Label>{t('hr.nameLabel')}</Label><Input value={newEmployee.full_name} onChange={(e) => setNewEmployee({ ...newEmployee, full_name: e.target.value })} placeholder={t('hr.namePlaceholder')} /></div>
-              <div className="space-y-2"><Label>{t('hr.emailLabel')}</Label><Input type="email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })} placeholder={t('hr.emailPlaceholder')} /></div>
-              <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newEmployee.position} onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
-              <div className="space-y-2"><Label>{t('hr.departmentLabel')} *</Label><Input value={newEmployee.department} onChange={(e) => setNewEmployee({ ...newEmployee, department: e.target.value })} placeholder={t('hr.departmentPlaceholder')} /></div>
-              <Button onClick={handleCreate} disabled={createEmployee.isPending} className="w-full">{createEmployee.isPending ? t('hr.creating') : t('hr.createEmployee')}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <PageHeader
+        eyebrow={t('nav.hr') || 'HR'}
+        title={t('hr.employeesTitle')}
+        description={t('hr.employeesSubtitle')}
+        actions={
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('hr.newEmployee')}</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{t('hr.addEmployee')}</DialogTitle><DialogDescription>{t('hr.addEmployeeDesc')}</DialogDescription></DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2"><Label>{t('hr.nameLabel')}</Label><Input value={newEmployee.full_name} onChange={(e) => setNewEmployee({ ...newEmployee, full_name: e.target.value })} placeholder={t('hr.namePlaceholder')} /></div>
+                <div className="space-y-2"><Label>{t('hr.emailLabel')}</Label><Input type="email" value={newEmployee.email} onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })} placeholder={t('hr.emailPlaceholder')} /></div>
+                <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newEmployee.position} onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
+                <div className="space-y-2"><Label>{t('hr.departmentLabel')} *</Label><Input value={newEmployee.department} onChange={(e) => setNewEmployee({ ...newEmployee, department: e.target.value })} placeholder={t('hr.departmentPlaceholder')} /></div>
+                <Button onClick={handleCreate} disabled={createEmployee.isPending} className="w-full">{createEmployee.isPending ? t('hr.creating') : t('hr.createEmployee')}</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><UserCheck className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.totalEmployees')}</p><p className="text-2xl font-bold">{employees.length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Building2 className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.departments')}</p><p className="text-2xl font-bold">{departments.length}</p></div></div></CardContent></Card>
+        <MetricTile icon={UserCheck} label={t('hr.totalEmployees')} value={employees.length} />
+        <MetricTile icon={Building2} label={t('hr.departments')} value={departments.length} />
       </div>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>

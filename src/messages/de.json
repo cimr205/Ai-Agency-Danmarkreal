@@ -704,7 +704,8 @@
     "noPositions": "Keine Stellen gefunden",
     "fetchRecruitmentError": "Stellen konnten nicht geladen werden",
     "searchPositionPlaceholder": "Stellen suchen...",
-    "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen."
+    "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen.",
+    "departmentRequired": "Abteilung ist erforderlich"
   },
   "aiInbox": {
     "title": "AI Inbox",

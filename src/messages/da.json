@@ -704,7 +704,8 @@
     "noPositions": "Ingen stillinger fundet",
     "fetchRecruitmentError": "Kunne ikke hente stillinger",
     "searchPositionPlaceholder": "Søg efter stilling...",
-    "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode."
+    "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode.",
+    "departmentRequired": "Afdeling er påkrævet"
   },
   "aiInbox": {
     "title": "AI Inbox",
