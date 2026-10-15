@@ -328,7 +328,24 @@
     "workSchedule": "Arbejdsplan",
     "workforceReports": "Rapporter",
     "quotes": "Tilbud",
-    "emailTemplates": "E-mail skabeloner"
+    "emailTemplates": "E-mail skabeloner",
+    "accountMenu": "Kontomenu",
+    "aiMedia": "AI Medier",
+    "clients": "Klienter",
+    "connectedApps": "Forbundne apps",
+    "help": "Hjælp",
+    "messages": "Beskeder",
+    "openMenu": "Åbn menu",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow-chat",
+    "workspaceNavigation": "Workspace-navigation",
+    "controlRoom": "Kontrolrum",
+    "insights": "Indsigter",
+    "automation": "Automatisering",
+    "assistant": "Assistent",
+    "documents": "Dokumenter",
+    "aiProvider": "AI-udbyder"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -1211,7 +1228,8 @@
       "invoicePreview": "Faktura forhåndsvisning",
       "companyDetails": "Virksomhedsoplysninger",
       "customerDetails": "Kundeoplysninger",
-      "markSelectedSent": "Markér som sendt"
+      "markSelectedSent": "Markér som sendt",
+      "connectPayments": "Forbind betalinger"
     },
     "tasks": {
       "title": "Opgaver",
@@ -1249,7 +1267,19 @@
       "confirmBulkDelete": "Slet {count} opgave(r)? Dette kan ikke fortrydes.",
       "confirmDelete": "Slet denne opgave? Dette kan ikke fortrydes.",
       "archive": "Arkivér",
-      "unarchive": "Fjern fra arkiv"
+      "unarchive": "Fjern fra arkiv",
+      "today": "I dag",
+      "overdue": "Forfaldne",
+      "upcoming": "Kommende",
+      "mine": "Mine",
+      "allActive": "Alle aktive",
+      "archived": "Arkiverede",
+      "allAssignees": "Alle ansvarlige",
+      "allPriorities": "Alle prioriteter",
+      "assignee": "Ansvarlig",
+      "priority": "Prioritet",
+      "bulkComplete": "Fuldfør",
+      "bulkAssignTo": "Tildel til"
     },
     "calendar": {
       "title": "Kalender",
@@ -2124,7 +2154,11 @@
     "importCta": "Importér",
     "noNewResults": "Ingen nye leads fundet",
     "allDuplicated": "Alle fundne virksomheder eksisterer allerede i din database. Prøv en anden søgning.",
-    "newSearch": "Ny søgning"
+    "newSearch": "Ny søgning",
+    "statusVerified": "Verificeret",
+    "statusLikelyValid": "Sandsynligvis gyldig",
+    "statusUnverified": "Ikke verificeret",
+    "statusMissing": "Mangler"
   },
   "invitations": {
     "title": "Invitationer",
@@ -2449,7 +2483,18 @@
     "deals": "Deals",
     "tasks": "Opgaver",
     "invoices": "Fakturaer",
-    "employees": "Medarbejdere"
+    "employees": "Medarbejdere",
+    "modeOverview": "Overblik",
+    "modeOverviewHint": "Hjem, klienter, kalender",
+    "modeSales": "Salg",
+    "modeSalesHint": "Leads, deals, kommunikation",
+    "modeOperations": "Drift",
+    "modeOperationsHint": "Fakturaer, betalinger, automation",
+    "modePeople": "Folk",
+    "modePeopleHint": "Medarbejdere, tid, løn",
+    "searchPlaceholderV2": "Søg klienter, deals, fakturaer eller naviger…",
+    "noResultsV2": "Ingen resultater.",
+    "switchMode": "Skift tilstand"
   },
   "clientView": {
     "loadError": "Klienten kunne ikke indlæses.",
@@ -2478,5 +2523,22 @@
     "quickTipPrompt": "Giv mig 3 konkrete handlinger jeg bør tage lige nu baseret på {context}-data.",
     "quickAnalyze": "👁️ Analysér denne side",
     "quickAnalyzePrompt": "Analysér alt hvad du kan se på denne side og giv mig konkrete anbefalinger og indsigter."
+  },
+  "contextPanel": {
+    "open": "Åbn",
+    "close": "Luk",
+    "actions": "Handlinger",
+    "signals": "Signaler",
+    "noSignals": "Ingen signaler lige nu.",
+    "title": "Kontrolcenter"
+  },
+  "ambientAI": {
+    "openTrigger": "Åbn handlingsfelt",
+    "ready": "Klar",
+    "title": "Handlingsfelt",
+    "placeholder": "F.eks. \"Find Acme A/S og opret deal til 50.000 kr næste fredag\"",
+    "confirmationRequired": "Bekræftelse påkrævet",
+    "readyForSafeActions": "Klar til sikre handlinger",
+    "confirmAndExecute": "Bekræft & udfør"
   }
 }

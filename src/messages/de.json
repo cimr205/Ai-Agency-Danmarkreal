@@ -328,7 +328,24 @@
     "workSchedule": "Arbeitsplan",
     "workforceReports": "Berichte",
     "quotes": "Angebote",
-    "emailTemplates": "E-Mail-Vorlagen"
+    "emailTemplates": "E-Mail-Vorlagen",
+    "accountMenu": "Kontomenü",
+    "aiMedia": "KI-Medien",
+    "clients": "Kunden",
+    "connectedApps": "Verbundene Apps",
+    "help": "Hilfe",
+    "messages": "Nachrichten",
+    "openMenu": "Menü öffnen",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow-Chat",
+    "workspaceNavigation": "Workspace-Navigation",
+    "controlRoom": "Kontrollraum",
+    "insights": "Einblicke",
+    "automation": "Automatisierung",
+    "assistant": "Assistent",
+    "documents": "Dokumente",
+    "aiProvider": "KI-Anbieter"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -1211,7 +1228,8 @@
       "invoicePreview": "Rechnungsvorschau",
       "companyDetails": "Firmendetails",
       "customerDetails": "Kundendetails",
-      "markSelectedSent": "Als gesendet markieren"
+      "markSelectedSent": "Als gesendet markieren",
+      "connectPayments": "Zahlungen verbinden"
     },
     "tasks": {
       "title": "Aufgaben",
@@ -1244,7 +1262,19 @@
       "confirmBulkDelete": "{count} Aufgabe(n) löschen? Dies kann nicht rückgängig gemacht werden.",
       "confirmDelete": "Diese Aufgabe löschen? Dies kann nicht rückgängig gemacht werden.",
       "archive": "Archivieren",
-      "unarchive": "Aus Archiv entfernen"
+      "unarchive": "Aus Archiv entfernen",
+      "today": "Heute",
+      "overdue": "Überfällig",
+      "upcoming": "Anstehend",
+      "mine": "Meine",
+      "allActive": "Alle aktiv",
+      "archived": "Archiviert",
+      "allAssignees": "Alle Verantwortlichen",
+      "allPriorities": "Alle Prioritäten",
+      "assignee": "Verantwortlich",
+      "priority": "Priorität",
+      "bulkComplete": "Abschließen",
+      "bulkAssignTo": "Zuweisen an"
     },
     "calendar": {
       "title": "Kalender",
@@ -2101,7 +2131,11 @@
     "leadsImported": "{count} Leads importiert",
     "errorSearchFailed": "Suche fehlgeschlagen",
     "errorRetry": "Versuchen Sie es gleich erneut",
-    "noResults": "Keine Ergebnisse gefunden"
+    "noResults": "Keine Ergebnisse gefunden",
+    "statusVerified": "Verifiziert",
+    "statusLikelyValid": "Wahrscheinlich gültig",
+    "statusUnverified": "Nicht verifiziert",
+    "statusMissing": "Fehlt"
   },
   "invitations": {
     "title": "Einladungen",
@@ -2426,7 +2460,18 @@
     "deals": "Deals",
     "tasks": "Aufgaben",
     "invoices": "Rechnungen",
-    "employees": "Mitarbeiter"
+    "employees": "Mitarbeiter",
+    "modeOverview": "Übersicht",
+    "modeOverviewHint": "Start, Kunden, Kalender",
+    "modeSales": "Vertrieb",
+    "modeSalesHint": "Leads, Deals, Kommunikation",
+    "modeOperations": "Betrieb",
+    "modeOperationsHint": "Rechnungen, Zahlungen, Automatisierung",
+    "modePeople": "Team",
+    "modePeopleHint": "Mitarbeiter, Zeit, Lohn",
+    "searchPlaceholderV2": "Kunden, Deals, Rechnungen suchen oder navigieren…",
+    "noResultsV2": "Keine Ergebnisse.",
+    "switchMode": "Modus wechseln"
   },
   "clientView": {
     "loadError": "Kunde konnte nicht geladen werden.",
@@ -2455,5 +2500,22 @@
     "quickTipPrompt": "Gib mir 3 konkrete Maßnahmen, die ich jetzt basierend auf {context}-Daten ergreifen sollte.",
     "quickAnalyze": "👁️ Diese Seite analysieren",
     "quickAnalyzePrompt": "Analysiere alles, was du auf dieser Seite siehst, und gib mir konkrete Empfehlungen und Erkenntnisse."
+  },
+  "contextPanel": {
+    "open": "Öffnen",
+    "close": "Schließen",
+    "actions": "Aktionen",
+    "signals": "Signale",
+    "noSignals": "Gerade keine Signale.",
+    "title": "Kontrollzentrum"
+  },
+  "ambientAI": {
+    "openTrigger": "Aktionsleiste öffnen",
+    "ready": "Bereit",
+    "title": "Aktionsleiste",
+    "placeholder": "z.B. \"Finde Acme GmbH und erstelle einen Deal über 50.000 kr für nächsten Freitag\"",
+    "confirmationRequired": "Bestätigung erforderlich",
+    "readyForSafeActions": "Bereit für sichere Aktionen",
+    "confirmAndExecute": "Bestätigen & ausführen"
   }
 }

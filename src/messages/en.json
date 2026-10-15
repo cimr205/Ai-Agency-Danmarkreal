@@ -311,7 +311,24 @@
     "workSchedule": "Work Schedule",
     "workforceReports": "Reports",
     "quotes": "Quotes",
-    "emailTemplates": "Email Templates"
+    "emailTemplates": "Email Templates",
+    "accountMenu": "Account menu",
+    "aiMedia": "AI Media",
+    "clients": "Customers",
+    "connectedApps": "Connected apps",
+    "help": "Help",
+    "messages": "Messages",
+    "openMenu": "Open menu",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow Chat",
+    "workspaceNavigation": "Workspace navigation",
+    "controlRoom": "Control room",
+    "insights": "Insights",
+    "automation": "Automation",
+    "assistant": "Assistant",
+    "documents": "Documents",
+    "aiProvider": "AI Provider"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -1194,7 +1211,8 @@
       "invoicePreview": "Invoice preview",
       "companyDetails": "Company details",
       "customerDetails": "Customer details",
-      "markSelectedSent": "Mark as sent"
+      "markSelectedSent": "Mark as sent",
+      "connectPayments": "Connect payments"
     },
     "tasks": {
       "title": "Tasks",
@@ -1232,7 +1250,19 @@
       "confirmBulkDelete": "Delete {count} task(s)? This cannot be undone.",
       "confirmDelete": "Delete this task? This cannot be undone.",
       "archive": "Archive",
-      "unarchive": "Unarchive"
+      "unarchive": "Unarchive",
+      "today": "Today",
+      "overdue": "Overdue",
+      "upcoming": "Upcoming",
+      "mine": "Mine",
+      "allActive": "All active",
+      "archived": "Archived",
+      "allAssignees": "All assignees",
+      "allPriorities": "All priorities",
+      "assignee": "Assignee",
+      "priority": "Priority",
+      "bulkComplete": "Complete",
+      "bulkAssignTo": "Assign to"
     },
     "calendar": {
       "title": "Calendar",
@@ -2107,7 +2137,11 @@
     "importCta": "Import",
     "noNewResults": "No new leads found",
     "allDuplicated": "All found companies already exist in your database. Try a different search.",
-    "newSearch": "New search"
+    "newSearch": "New search",
+    "statusVerified": "Verified",
+    "statusLikelyValid": "Likely valid",
+    "statusUnverified": "Unverified",
+    "statusMissing": "Missing"
   },
   "invitations": {
     "title": "Invitations",
@@ -2486,7 +2520,18 @@
     "deals": "Deals",
     "tasks": "Tasks",
     "invoices": "Invoices",
-    "employees": "Employees"
+    "employees": "Employees",
+    "modeOverview": "Overview",
+    "modeOverviewHint": "Home, clients, calendar",
+    "modeSales": "Sales",
+    "modeSalesHint": "Leads, deals, communication",
+    "modeOperations": "Operations",
+    "modeOperationsHint": "Invoices, payments, automation",
+    "modePeople": "People",
+    "modePeopleHint": "Employees, time, payroll",
+    "searchPlaceholderV2": "Search clients, deals, invoices, or navigate…",
+    "noResultsV2": "No results.",
+    "switchMode": "Switch mode"
   },
   "clientView": {
     "loadError": "Could not load client.",
@@ -2515,5 +2560,22 @@
     "quickTipPrompt": "Give me 3 concrete actions I should take right now based on {context} data.",
     "quickAnalyze": "👁️ Analyze this page",
     "quickAnalyzePrompt": "Analyze everything you can see on this page and give me concrete recommendations and insights."
+  },
+  "contextPanel": {
+    "open": "Open",
+    "close": "Close",
+    "actions": "Actions",
+    "signals": "Signals",
+    "noSignals": "No signals right now.",
+    "title": "Control center"
+  },
+  "ambientAI": {
+    "openTrigger": "Open action bar",
+    "ready": "Ready",
+    "title": "Action bar",
+    "placeholder": "e.g. \"Find Acme Inc and create a 50,000 deal for next Friday\"",
+    "confirmationRequired": "Confirmation required",
+    "readyForSafeActions": "Ready for safe actions",
+    "confirmAndExecute": "Confirm & execute"
   }
 }
