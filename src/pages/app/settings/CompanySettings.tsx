@@ -108,10 +108,10 @@ export default function CompanySettingsPage() {
 
       {/* Setup Progress Banner */}
       {!isComplete && isAdmin && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
+        <Card className="border-warning/30 bg-warning/5">
           <CardContent className="pt-6 space-y-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
               <div>
                 <p className="font-semibold text-sm">
                   {locale === 'da' ? 'Firmaprofil er ufuldstændig' : locale === 'de' ? 'Firmenprofil ist unvollständig' : 'Company profile is incomplete'}

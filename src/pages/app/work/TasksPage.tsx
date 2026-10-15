@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTasks, useCreateTask, useUpdateTask, useUpdateTaskStatus, useTeamProfiles, useBulkUpdateTasks, useBulkDeleteTasks, useDeleteTask } from '@/hooks/api/useTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads } from '@/hooks/api/useLeads';
@@ -48,6 +49,17 @@ export default function TasksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', due_date: '', priority: 'medium', assigned_to: '', lead_id: '', deal_id: '' });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Open the create dialog if navigated with ?create=true (e.g. from the command palette)
+  useEffect(() => {
+    if (searchParams.get('create') !== 'true') return;
+    setIsCreateOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('create');
+    setSearchParams(nextParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const priorityColors: Record<string, string> = {
     low: 'bg-muted text-muted-foreground',
@@ -184,7 +196,7 @@ export default function TasksPage() {
   const handleBulkArchive = async () => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { archived: view !== 'archived' } });
-      toast.success('Opdateret');
+      toast.success(t('common.saved'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -192,25 +204,25 @@ export default function TasksPage() {
   const handleBulkReassign = async (userId: string) => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { assigned_to: userId } });
-      toast.success('Opdateret');
+      toast.success(t('common.saved'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`)) return;
+    if (!confirm(t('pages.tasks.confirmBulkDelete').replace('{count}', String(selectedIds.size)))) return;
     try {
       await bulkDelete.mutateAsync(Array.from(selectedIds));
-      toast.success('Slettet');
+      toast.success(t('common.deleted'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Slet denne opgave? Dette kan ikke fortrydes.')) return;
+    if (!confirm(t('pages.tasks.confirmDelete'))) return;
     try {
       await deleteTask.mutateAsync(id);
-      toast.success('Slettet');
+      toast.success(t('common.deleted'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
@@ -223,7 +235,7 @@ export default function TasksPage() {
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`Vælg: ${task.title}`} />
+            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={t('pages.tasks.selectTask').replace('{title}', task.title)} />
             <Checkbox checked={task.status === 'completed'} onCheckedChange={() => handleToggleComplete(task)} className="mt-1" aria-label={`${t('pages.tasks.completed')}: ${task.title}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -274,7 +286,7 @@ export default function TasksPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => updateTask.mutate({ id: task.id, data: { archived: !task.archived } })}>
-                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? 'Fjern fra arkiv' : 'Arkivér'}
+                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? t('pages.tasks.unarchive') : t('pages.tasks.archive')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive focus:text-destructive">
                   <Trash2 className="h-3.5 w-3.5 mr-2" />Slet
@@ -401,11 +413,11 @@ export default function TasksPage() {
 
       {viewFiltered.length > 0 && (
         <div className="flex items-center gap-3">
-          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label="Vælg alle" />
-          <span className="text-xs text-muted-foreground">Vælg alle synlige ({viewFiltered.length})</span>
+          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label={t('common.selectAllVisible').replace('{count}', String(viewFiltered.length))} />
+          <span className="text-xs text-muted-foreground">{t('common.selectAllVisible').replace('{count}', String(viewFiltered.length))}</span>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-muted-foreground">{selectedIds.size} valgt</span>
+              <span className="text-xs text-muted-foreground">{t('common.selected').replace('{count}', String(selectedIds.size))}</span>
               <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
@@ -415,7 +427,7 @@ export default function TasksPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? 'Fjern fra arkiv' : 'Arkivér'}</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t('pages.tasks.unarchive') : t('pages.tasks.archive')}</Button>
               <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
             </div>
           )}

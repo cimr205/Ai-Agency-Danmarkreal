@@ -159,28 +159,28 @@ export default function WebhooksPage() {
               <div>
                 <p className="font-semibold text-base">{t("webhooks.zapierGuideTitle")}</p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Zapier og Make bruger webhook-URL'er til at modtage data. Du logger ind på din egen Zapier/Make-konto, opretter en Zap/scenario med en "Webhook" trigger, kopierer URL'en, og indsætter den her.
+                  {t('webhooks.zapierMakeIntro')}
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
-                  <p className="font-medium text-sm flex items-center gap-1.5"><Zap className="h-4 w-4 text-orange-500" /> Zapier</p>
+                  <p className="font-medium text-sm flex items-center gap-1.5"><Zap className="h-4 w-4 text-warning" /> Zapier</p>
                   <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal ml-4">
-                    <li>Log ind på <a href="https://zapier.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">zapier.com</a></li>
-                    <li>Opret en ny Zap → vælg <strong>"Webhooks by Zapier"</strong> som trigger</li>
-                    <li>Vælg <strong>"Catch Hook"</strong></li>
-                    <li>Kopiér den webhook-URL Zapier giver dig</li>
-                    <li>Indsæt URL'en her med knappen "Opret webhook"</li>
+                    <li>{t('webhooks.loginAt')} <a href="https://zapier.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">zapier.com</a></li>
+                    <li>{t('webhooks.createNewZap')} <strong>"Webhooks by Zapier"</strong> {t('webhooks.asTrigger')}</li>
+                    <li>{t('webhooks.select')} <strong>"Catch Hook"</strong></li>
+                    <li>{t('webhooks.copyUrlFrom').replace('{service}', 'Zapier')}</li>
+                    <li>{t('webhooks.pasteUrlHere').replace('{button}', t('webhooks.connectButton'))}</li>
                   </ol>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
-                  <p className="font-medium text-sm flex items-center gap-1.5"><ExternalLink className="h-4 w-4 text-violet-500" /> Make (Integromat)</p>
+                  <p className="font-medium text-sm flex items-center gap-1.5"><ExternalLink className="h-4 w-4 text-accent" /> Make (Integromat)</p>
                   <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal ml-4">
-                    <li>Log ind på <a href="https://www.make.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">make.com</a></li>
-                    <li>Opret et nyt scenario → tilføj <strong>"Webhook"</strong> modul</li>
-                    <li>Vælg <strong>"Custom webhook"</strong></li>
-                    <li>Kopiér den webhook-URL Make giver dig</li>
-                    <li>Indsæt URL'en her med knappen "Opret webhook"</li>
+                    <li>{t('webhooks.loginAt')} <a href="https://www.make.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">make.com</a></li>
+                    <li>{t('webhooks.createNewScenario')} <strong>"Webhook"</strong> {t('webhooks.module')}</li>
+                    <li>{t('webhooks.select')} <strong>"Custom webhook"</strong></li>
+                    <li>{t('webhooks.copyUrlFrom').replace('{service}', 'Make')}</li>
+                    <li>{t('webhooks.pasteUrlHere').replace('{button}', t('webhooks.connectButton'))}</li>
                   </ol>
                 </div>
               </div>

@@ -8,6 +8,8 @@ import { useI18n } from '@/lib/i18n';
 import { format, differenceInMinutes } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { MetricTile, type Tone } from '@/components/shared/MetricTile';
 
 function LiveTimer({ checkIn }: { checkIn: string }) {
   const [elapsed, setElapsed] = useState('');
@@ -34,43 +36,30 @@ export default function WorkforceDashboardPage() {
   const activeNow = live?.activeNow?.length ?? 0;
   const notCheckedIn = totalEmployees - (live?.totalEntriesToday ?? 0);
 
-  const kpis = [
-    { label: t('workforce.activeNow'), value: activeNow, icon: Activity, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
-    { label: t('workforce.totalHoursToday'), value: `${live?.totalHoursToday ?? 0}h`, icon: Clock, color: 'text-primary', bgColor: 'bg-primary/10' },
-    { label: t('workforce.notCheckedIn'), value: Math.max(0, notCheckedIn), icon: UserX, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
-    { label: t('workforce.totalEmployees'), value: totalEmployees, icon: Users, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+  const kpis: { label: string; value: string | number; icon: typeof Activity; tone: Tone }[] = [
+    { label: t('workforce.activeNow'), value: activeNow, icon: Activity, tone: 'success' },
+    { label: t('workforce.totalHoursToday'), value: `${live?.totalHoursToday ?? 0}h`, icon: Clock, tone: 'primary' },
+    { label: t('workforce.notCheckedIn'), value: Math.max(0, notCheckedIn), icon: UserX, tone: notCheckedIn > 0 ? 'warning' : 'primary' },
+    { label: t('workforce.totalEmployees'), value: totalEmployees, icon: Users, tone: 'primary' },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('workforce.dashboardTitle')}</h1>
-        <p className="text-muted-foreground">{t('workforce.dashboardSubtitle')}</p>
-      </div>
+      <PageHeader
+        eyebrow={t('nav.hr') || 'HR'}
+        title={t('workforce.dashboardTitle')}
+        description={t('workforce.dashboardSubtitle')}
+      />
 
       {error && <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />}
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((kpi) => (
-          <Card key={kpi.label} className="border-border/50">
-            <CardContent className="pt-6">
-              {isLoading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : (
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${kpi.bgColor} flex items-center justify-center`}>
-                    <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                    <p className="text-2xl font-bold">{kpi.value}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+        ) : (
+          kpis.map((kpi) => <MetricTile key={kpi.label} label={kpi.label} value={kpi.value} icon={kpi.icon} tone={kpi.tone} />)
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -78,7 +67,7 @@ export default function WorkforceDashboardPage() {
         <Card className="border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <UserCheck className="h-5 w-5 text-emerald-500" />
+              <UserCheck className="h-5 w-5 text-success" />
               {t('workforce.currentlyWorking')}
               <Badge variant="secondary" className="ml-auto">{activeNow}</Badge>
             </CardTitle>
@@ -98,7 +87,7 @@ export default function WorkforceDashboardPage() {
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
                         <LiveTimer checkIn={entry.check_in} />
                       </div>
                       <p className="text-xs text-muted-foreground">{t('workforce.since')} {format(new Date(entry.check_in), 'HH:mm')}</p>
@@ -114,7 +103,7 @@ export default function WorkforceDashboardPage() {
         <Card className="border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               {t('workforce.alerts')}
             </CardTitle>
           </CardHeader>
@@ -133,8 +122,8 @@ export default function WorkforceDashboardPage() {
                   </div>
                 ))}
                 {Math.max(0, notCheckedIn) > 0 && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                    <UserX className="h-4 w-4 text-amber-500 shrink-0" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
+                    <UserX className="h-4 w-4 text-warning shrink-0" />
                     <div>
                       <p className="text-sm font-medium">{Math.max(0, notCheckedIn)} {t('workforce.employeesNotCheckedIn')}</p>
                       <p className="text-xs text-muted-foreground">{t('workforce.haveNotStartedToday')}</p>
@@ -194,7 +183,7 @@ export default function WorkforceDashboardPage() {
                           {entry.check_out ? (
                             <Badge variant="secondary">{t('workforce.completed')}</Badge>
                           ) : (
-                            <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">{t('workforce.active')}</Badge>
+                            <Badge className="bg-success/15 text-success border-success/30">{t('workforce.active')}</Badge>
                           )}
                         </td>
                       </tr>
