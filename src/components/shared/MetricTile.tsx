@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-type Tone = "primary" | "success" | "warning" | "destructive";
+export type Tone = "primary" | "success" | "warning" | "destructive";
 
 const TONE_GRADIENT: Record<Tone, string> = {
   primary: "bg-[image:var(--gradient-primary)]",
