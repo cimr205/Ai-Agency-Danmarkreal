@@ -23,6 +23,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { RelationshipChip } from '@/components/shared/RelationshipChip';
 import { Plus, Search, Mail, Upload, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet, Phone, Save, Briefcase, Sparkles, X, BookmarkPlus, FolderPlus, FolderOpen, Download, MoreHorizontal, SlidersHorizontal, Plug, RefreshCw, Radio } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -540,17 +542,12 @@ export default function LeadsPage() {
   const cellPad = density === 'compact' ? 'py-2' : 'py-3.5';
 
   if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-destructive">{t('common.error')}: {error.message}</p>
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
-      </div>
-    );
+    return <ErrorState title={`${t('common.error')}: ${error.message}`} onRetry={() => window.location.reload()} retryLabel={t('common.retry')} />;
   }
 
   return (
     <div
-      className="relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
+      className="space-y-5"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -573,118 +570,94 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Lead cockpit — same visual language as the dashboard hero */}
-      <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl">
-        <div className="grid lg:grid-cols-[minmax(0,1.45fr)_360px]">
-          <div className="p-6 sm:p-8 lg:p-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">CRM · Lead cockpit</p>
-            <h1 className="mt-4 text-[40px] font-semibold leading-[0.96] tracking-[-0.055em] text-slate-950 sm:text-[54px]">
-              Relationer i bevægelse.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
-              Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-2">
-          {crmSyncAvailable ? (
-            <Button
-              variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
-              disabled={syncCrmContacts.isPending}
-              onClick={() => syncCrmContacts.mutate()}
-              title={`Synkroniseret via ${crmSyncProvider}`}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> Synkronisér nu
+      <PageHeader
+        eyebrow={t('nav.crm')}
+        title={t('pages.leads.title')}
+        description={t('pages.leads.subtitle')}
+        actions={
+          <>
+            {crmSyncAvailable ? (
+              <Button
+                variant="outline" size="sm" className="gap-1.5"
+                disabled={syncCrmContacts.isPending}
+                onClick={() => syncCrmContacts.mutate()}
+                title={`${t('pages.leads.syncedVia') || 'Synced via'} ${crmSyncProvider}`}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> {t('pages.leads.syncNow')}
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}>
+                <Plug className="h-3.5 w-3.5" /> {t('pages.leads.connectCrm')}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={exportCSV} disabled={leads.length === 0}>
+              <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
             </Button>
-          ) : (
-            <Button
-              variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
-              onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
-            >
-              <Plug className="h-3.5 w-3.5" /> Forbind CRM
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsImportOpen(true)}>
+              <Upload className="h-3.5 w-3.5" /> {t('pages.leads.import')}
             </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
-            <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
-            <Upload className="h-3.5 w-3.5" /> {t('pages.leads.import')}
-          </Button>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="h-11 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('pages.leads.addLead')}</DialogTitle>
-                <DialogDescription>{t('pages.leads.addLeadDesc')}</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>{t('common.name')} *</Label>
-                  <Input value={newLead.name} onChange={e => { setNewLead(p => ({ ...p, name: e.target.value })); setCreateErrors(prev => ({ ...prev, name: undefined })); }} className={createErrors.name ? 'border-destructive' : ''} />
-                  {createErrors.name && <p className="text-xs text-destructive mt-1">{createErrors.name}</p>}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" /> {t('pages.leads.addLead')}</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('pages.leads.addLead')}</DialogTitle>
+                  <DialogDescription>{t('pages.leads.addLeadDesc')}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>{t('common.name')} *</Label>
+                    <Input value={newLead.name} onChange={e => { setNewLead(p => ({ ...p, name: e.target.value })); setCreateErrors(prev => ({ ...prev, name: undefined })); }} className={createErrors.name ? 'border-destructive' : ''} />
+                    {createErrors.name && <p className="text-xs text-destructive mt-1">{createErrors.name}</p>}
+                  </div>
+                  <div>
+                    <Label>{t('common.email')} *</Label>
+                    <Input type="email" value={newLead.email} onChange={e => { setNewLead(p => ({ ...p, email: e.target.value })); setCreateErrors(prev => ({ ...prev, email: undefined })); }} className={createErrors.email ? 'border-destructive' : ''} />
+                    {createErrors.email && <p className="text-xs text-destructive mt-1">{createErrors.email}</p>}
+                  </div>
+                  <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))} /></div>
+                  <div><Label>{t('pages.leads.company')}</Label><Input value={newLead.company_name} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} /></div>
+                  <Button onClick={handleCreate} disabled={createLead.isPending} className="w-full">
+                    {createLead.isPending ? t('common.saving') : t('pages.leads.addLead')}
+                  </Button>
                 </div>
-                <div>
-                  <Label>{t('common.email')} *</Label>
-                  <Input type="email" value={newLead.email} onChange={e => { setNewLead(p => ({ ...p, email: e.target.value })); setCreateErrors(prev => ({ ...prev, email: undefined })); }} className={createErrors.email ? 'border-destructive' : ''} />
-                  {createErrors.email && <p className="text-xs text-destructive mt-1">{createErrors.email}</p>}
-                </div>
-                <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))} /></div>
-                <div><Label>{t('pages.leads.company')}</Label><Input value={newLead.company_name} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} /></div>
-                <Button onClick={handleCreate} disabled={createLead.isPending} className="w-full">
-                  {createLead.isPending ? t('common.saving') : t('pages.leads.addLead')}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-            </div>
-          </div>
-          <div className="relative border-t border-white/60 bg-slate-950/92 p-6 text-white lg:border-l lg:border-t-0 lg:p-8">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_5%,rgba(92,124,255,0.52),transparent_34%),radial-gradient(circle_at_100%_30%,rgba(244,114,255,0.28),transparent_38%)]" />
-            <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Live lead signal</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Kontakter</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{totalCount}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Følg op</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNeedsContact}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Nye</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNew}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Uden aktivitet</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countStale}</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              </DialogContent>
+            </Dialog>
+          </>
+        }
+      />
 
       {/* Saved views: smart pills + custom saved lists, merged into one row */}
-      <div className="flex items-center gap-2 overflow-x-auto rounded-[1.5rem] border border-white/70 bg-white/58 p-2 shadow-[0_16px_45px_rgba(45,77,150,0.10)] backdrop-blur-xl">
+      <div className="flex items-center gap-1.5 overflow-x-auto rounded-lg border border-border bg-muted/40 p-1.5">
         <button
           onClick={resetToAllView}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'all' && !activeListId ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
           {t('pages.leads.allLeads')} {totalCount}
         </button>
         <button
           onClick={() => { setQuickView('new'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'new' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
           {t('pages.leads.viewNew')} {countNew}
         </button>
         <button
           onClick={() => { setQuickView('followup'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'followup' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
           {t('pages.leads.viewNeedsContact')} {countNeedsContact}
         </button>
         <button
           onClick={() => { setQuickView('stale'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'stale' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
         >
           {t('pages.leads.viewStale')} {countStale}
         </button>
         {user && (
           <button
             onClick={() => { setQuickView('mine'); setActiveListId(null); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${quickView === 'mine' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
           >
             {t('pages.leads.viewMine')} {countMine}
           </button>
@@ -709,10 +682,10 @@ export default function LeadsPage() {
       </div>
 
       {/* Unified control row: search, status, owner, more filters */}
-      <div className="flex flex-col gap-2 rounded-[1.75rem] border border-white/70 bg-white/62 p-3 shadow-[0_20px_60px_rgba(45,77,150,0.11)] backdrop-blur-2xl sm:flex-row">
+      <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('pages.leads.search')} className="h-11 rounded-full border-white/80 bg-white/70 pl-10 shadow-none" value={search} onChange={e => handleSearchChange(e.target.value)} />
+          <Input placeholder={t('pages.leads.search')} className="pl-10" value={search} onChange={e => handleSearchChange(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder={t('pages.leads.statusLabel')} /></SelectTrigger>
@@ -935,7 +908,7 @@ export default function LeadsPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/68 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         {isLoading ? (
           <div className="p-6 space-y-3">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
         ) : visibleLeads.length === 0 ? (
@@ -949,8 +922,8 @@ export default function LeadsPage() {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-white/55">
-                <TableRow className="border-white/80 hover:bg-transparent">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[40px]">
                     <Checkbox
                       checked={visibleLeads.length > 0 && selectedIds.size === visibleLeads.length}
@@ -980,7 +953,7 @@ export default function LeadsPage() {
                 {visibleLeads.map(lead => {
                   const priority = getPriorityInfo(lead.score, t);
                   return (
-                    <TableRow key={lead.id} className="group cursor-pointer border-white/80 transition-all hover:bg-blue-50/70" onClick={() => openLeadDetail(lead)}>
+                    <TableRow key={lead.id} className="group cursor-pointer transition-colors hover:bg-muted/50" onClick={() => openLeadDetail(lead)}>
                       <TableCell className={cellPad} onClick={e => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedIds.has(lead.id)}
@@ -995,8 +968,8 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className={cellPad}>
                         <div className="flex flex-col gap-1">
-                          <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
-                          <span className="max-w-[320px] truncate text-xs text-slate-500">
+                          <span className="font-semibold tracking-[-0.01em] text-foreground">{lead.name}</span>
+                          <span className="max-w-[320px] truncate text-xs text-muted-foreground">
                             {[lead.company_name, lead.email, lead.phone].filter(Boolean).join(' · ')}
                           </span>
                           {getSourceLabel(lead, campaignNames) && (
