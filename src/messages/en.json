@@ -2593,5 +2593,10 @@
     "back": "Back",
     "next": "Next",
     "done": "Done"
+  },
+  "helpCenter": {
+    "title": "Help Center",
+    "subtitle": "Find answers to your questions",
+    "noResults": "No articles found. Try a different search term."
   }
 }

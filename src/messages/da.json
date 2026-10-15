@@ -2556,5 +2556,10 @@
     "back": "Tilbage",
     "next": "Næste",
     "done": "Færdig"
+  },
+  "helpCenter": {
+    "title": "Hjælpecenter",
+    "subtitle": "Find svar på dine spørgsmål",
+    "noResults": "Ingen artikler fundet. Prøv et andet søgeord."
   }
 }

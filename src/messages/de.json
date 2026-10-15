@@ -2533,5 +2533,10 @@
     "back": "Zurück",
     "next": "Weiter",
     "done": "Fertig"
+  },
+  "helpCenter": {
+    "title": "Hilfecenter",
+    "subtitle": "Finde Antworten auf deine Fragen",
+    "noResults": "Keine Artikel gefunden. Versuche einen anderen Suchbegriff."
   }
 }
