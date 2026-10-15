@@ -27,7 +27,7 @@ export function useTeamProfiles() {
       if (!session) return [];
       const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', session.user.id).single();
       if (!profile?.company_id) return [];
-      const { data, error } = await supabase.from('profiles').select('user_id, full_name, email').eq('company_id', profile.company_id);
+      const { data, error } = await supabase.from('profiles').select('user_id, full_name, email, avatar_url, created_at').eq('company_id', profile.company_id);
       if (error) throw error;
       return data ?? [];
     },
