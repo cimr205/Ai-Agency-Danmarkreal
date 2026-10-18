@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 5 — deal→customer→task→invoice hand-off, propose-only)
+**Last updated:** 2026-10-18 (iteration 6 — personalized email DRAFT proposer, lawful-basis gated)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -64,8 +64,10 @@ CRM-relevant actions that already exist (reuse, do not recreate):
 ## CRM capability coverage so far (all propose-only, tested)
 lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off. Remaining HOVEDMÅL items: company discovery (lawful public data + dedupe + source registry), personalized email drafts, lawful follow-up sequences, reply sync, pipeline-update suggestions, future calling prep.
 
-## Next action (iteration 6)
-**Personalized email DRAFT proposer** (propose-only): from a lead/customer + context, build a personalized draft surfaced as a `tasks.create` draft (holds the email body) — NOT `email.send` (sending always requires approval and a legal basis; no cold email without one). Unit tests for personalization-from-real-fields and that nothing is sent. Then typecheck.
+- **Iteration 6** — personalized email DRAFT proposer (platform commit `1058305`): `src/mastra/agents/crm/email-drafter.ts` + test (**5/5 passing**, typecheck clean). Personalizes from real fields only, refuses cold outreach without a lawful basis, and proposes a `tasks.create` holding the body — never `email.send`. Missing fields omitted, not guessed. Sending stays a separate human-approved step.
+
+## Next action (iteration 7)
+**Company discovery + dedupe + source registry** (lawful public data): wrap the existing `cvr-search`/`companies-house-search` as read-only lookups, dedupe candidates against existing `leads` (by normalized name/CVR), record the data source per candidate, and propose `crm.lead.create` DRAFTs only for net-new, lawfully-sourced companies (no fabricated contact data). Unit tests for dedupe + source recording + that unknown/missing data is never invented.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
