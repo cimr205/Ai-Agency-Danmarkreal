@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 2 — propose-only tool bridge built + tested on the platform branch)
+**Last updated:** 2026-10-18 (iteration 3 — lead prioritizer + propose-only follow-ups, reusing icp-score)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -55,8 +55,10 @@ CRM-relevant actions that already exist (reuse, do not recreate):
 - **Iteration 1** — read-only inventory + Action Registry contract (commit `5525210`, this branch).
 - **Iteration 2** — propose-only tool bridge `createActionProposer` built on the **platform** branch `chore/mastra-install` (commit `316e867`): `src/mastra/tools/action-proposal.ts` + `src/test/mastra-action-proposal.test.ts`, **7/7 passing**, typecheck clean. Proves a tool holds no DB client and can only propose into the registry; OFF/DRAFT_APPROVAL/AUTO gating, AUTO limited to low-risk. (Built on the platform branch because `@mastra/core` + `node_modules` live there; it is the shared tool-interface every specialist agent reuses.)
 
-## Next action (iteration 3)
-First real scored read-only capability: an **explainable ICP lead-scoring** contract (0–100 from documented, deterministic criteria + weights, surfaced to the user — no black-box number). Read-only: it scores existing `leads` and returns a `tasks.create` *proposal* (DRAFT_APPROVAL) to follow up on high scorers; it does not write leads or send anything. Add unit tests for the scoring math and the proposal shape. Depends on branch coordination (OWNER_DECISIONS #3) to import the platform tool, or re-expose the proposer locally until merge.
+- **Iteration 3** — lead prioritizer + propose-only follow-ups (platform commit `166caf4`): `src/mastra/agents/crm/lead-prioritizer.ts` + test (**7/7 passing**, typecheck clean). Important: it **reuses** the existing `icp-score` edge function (the explainable 0–100 scorer with match_reasons/red_flags, persisted to `lead_icp_scores`) — it does **not** re-score, to avoid a parallel execution path. It ranks already-scored leads by threshold and proposes a `tasks.create` DRAFT per top lead (idempotency keyed per lead), carrying the explainable reasons. No DB client, no scoring, no sends.
+
+## Next action (iteration 4)
+**Stalled-deal detector + daily sales brief** (read-only, propose-only): from (mocked) `deals` + `deal_activity`, flag deals with no activity past a configurable age, and assemble a read-only daily brief (grounded in real aggregates, no fabricated numbers). Propose a `tasks.create` nudge per stalled deal via the bridge. Unit tests for the staleness math + brief shape + that nothing writes/sends. Then typecheck. Also: the deal→customer→task→quote/invoice hand-off as a sequence of propose-only steps.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
