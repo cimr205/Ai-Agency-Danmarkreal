@@ -57,8 +57,10 @@ CRM-relevant actions that already exist (reuse, do not recreate):
 
 - **Iteration 3** — lead prioritizer + propose-only follow-ups (platform commit `166caf4`): `src/mastra/agents/crm/lead-prioritizer.ts` + test (**7/7 passing**, typecheck clean). Important: it **reuses** the existing `icp-score` edge function (the explainable 0–100 scorer with match_reasons/red_flags, persisted to `lead_icp_scores`) — it does **not** re-score, to avoid a parallel execution path. It ranks already-scored leads by threshold and proposes a `tasks.create` DRAFT per top lead (idempotency keyed per lead), carrying the explainable reasons. No DB client, no scoring, no sends.
 
-## Next action (iteration 4)
-**Stalled-deal detector + daily sales brief** (read-only, propose-only): from (mocked) `deals` + `deal_activity`, flag deals with no activity past a configurable age, and assemble a read-only daily brief (grounded in real aggregates, no fabricated numbers). Propose a `tasks.create` nudge per stalled deal via the bridge. Unit tests for the staleness math + brief shape + that nothing writes/sends. Then typecheck. Also: the deal→customer→task→quote/invoice hand-off as a sequence of propose-only steps.
+- **Iteration 4** — stalled-deal detector + daily sales brief (platform commit `2993112`): `src/mastra/agents/crm/stalled-deals.ts` + test (**5/5 passing**, typecheck clean). Flags non-terminal deals idle past a threshold (by `updated_at`), builds a brief aggregated only from real deal rows (no fabricated metrics), proposes a `tasks.create` nudge per stalled deal via the bridge. No writes, no sends.
+
+## Next action (iteration 5)
+**deal→customer→task→quote/invoice hand-off** as a sequence of propose-only steps (on verified won deals): propose `crm.customer.create` (if no customer), then `tasks.create` for onboarding, then `invoice.create` DRAFT linked to the deal — each DRAFT_APPROVAL, idempotency-keyed, nothing auto-executed. Unit tests for the step sequence + that each step is a proposal only.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
