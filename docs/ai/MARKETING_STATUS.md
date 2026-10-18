@@ -43,12 +43,12 @@ These are the foundation for most marketing features and do not exist yet. Build
 - Marketing external actions reuse `marketing.campaign.create` (medium; draft only) and `email.send`. Publishing a paid campaign spends budget → **approve** regardless of mode.
 - OFF: agent proposes nothing. DRAFT_APPROVAL (default): propose → human approves. AUTO: only low-risk, policy-gated, never for paid publish.
 
-## Next action (iteration 2) — the first safe vertical, fully mockable
-**Channel-adapted post DRAFTS from company knowledge**, read-only + propose-only:
-- A pure module that takes a (mocked) company-knowledge object + a target channel (FB/IG/LinkedIn-draft-only) and produces a channel-adapted **draft** (length, tone, hashtags) — text only, no publish.
-- Output is surfaced as a `marketing.campaign.create` **draft proposal** (DRAFT_APPROVAL) via the propose-only bridge. No external calls, no live gen (gateway creds BLOCKED), no fake metrics.
-- Unit tests: channel adaptation rules + proposal shape + that nothing publishes. Then typecheck.
-Deferred until a schema decision: company-knowledge persistence and the content calendar (OWNER_DECISIONS #7).
+## Done
+- **Iteration 2** — channel-adapted post drafter (platform commit `23f6f3f`): `src/mastra/agents/marketing/post-drafter.ts` + test (**5/5 passing**, typecheck clean). Deterministically shapes a channel draft from supplied company-knowledge facts (length cap + hashtag count per channel), flags publish-unsupported channels (LinkedIn/TikTok/IG/Shorts) so nothing is auto-published, and proposes `marketing.campaign.create` DRAFTs via the propose-only bridge. **Not** live AI generation (gateway creds BLOCKED, #1/#8); no fabricated metrics; no publish.
+
+## Next action (iteration 3)
+**Meta Ads read-only analysis + budget-suggestion drafts**: from (mocked) `meta-sync` metrics, summarize campaign performance and propose budget changes as DRAFT proposals (never auto-apply spend; paid publish stays `approve`). Unit tests + typecheck.
+Deferred until a schema decision (OWNER_DECISIONS #7): company-knowledge persistence (versioned, sourced), website change-detection, and the 30-day content calendar.
 
 ## This iteration — evidence
 Integration mapping only, read-only. No code, no DB, no external calls, nothing published. Worktree `feature/marketing-agents` created off `eeaa028`; this file is the only change. `localhost:8080` untouched (other agent's).
