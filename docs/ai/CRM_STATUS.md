@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 1 — read-only inventory; no code written yet)
+**Last updated:** 2026-10-18 (iteration 2 — propose-only tool bridge built + tested on the platform branch)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -51,8 +51,12 @@ CRM-relevant actions that already exist (reuse, do not recreate):
 4. **Deal→customer→task→quote/invoice hand-off** — actions exist individually; need an orchestrated, approval-gated flow.
 5. **Mastra tool → Action Registry bridge** — a Mastra tool that can only *propose* (no DB client in tool scope). Blocked on the shared tool-interface task in `MASTER_STATE.md` (platform side).
 
-## Next action (iteration 2)
-Write the Mastra→Action-Registry *propose-only* tool contract (types + a unit test proving a tool cannot write to the DB directly), on `feature/crm-agents`, then run typecheck + the new unit test. No live sends, no DB writes.
+## Done
+- **Iteration 1** — read-only inventory + Action Registry contract (commit `5525210`, this branch).
+- **Iteration 2** — propose-only tool bridge `createActionProposer` built on the **platform** branch `chore/mastra-install` (commit `316e867`): `src/mastra/tools/action-proposal.ts` + `src/test/mastra-action-proposal.test.ts`, **7/7 passing**, typecheck clean. Proves a tool holds no DB client and can only propose into the registry; OFF/DRAFT_APPROVAL/AUTO gating, AUTO limited to low-risk. (Built on the platform branch because `@mastra/core` + `node_modules` live there; it is the shared tool-interface every specialist agent reuses.)
 
-## This iteration — evidence
-Read-only inventory only. No code changed, no DB touched, nothing proposed or executed. Worktree `feature/crm-agents` created off `eeaa028`; this file is the only change. `localhost:8080` untouched (owned by the other agent; verified 200 earlier this session).
+## Next action (iteration 3)
+First real scored read-only capability: an **explainable ICP lead-scoring** contract (0–100 from documented, deterministic criteria + weights, surfaced to the user — no black-box number). Read-only: it scores existing `leads` and returns a `tasks.create` *proposal* (DRAFT_APPROVAL) to follow up on high scorers; it does not write leads or send anything. Add unit tests for the scoring math and the proposal shape. Depends on branch coordination (OWNER_DECISIONS #3) to import the platform tool, or re-expose the proposer locally until merge.
+
+## Evidence / safety
+No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
