@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 3 — lead prioritizer + propose-only follow-ups, reusing icp-score)
+**Last updated:** 2026-10-18 (iteration 5 — deal→customer→task→invoice hand-off, propose-only)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -59,8 +59,13 @@ CRM-relevant actions that already exist (reuse, do not recreate):
 
 - **Iteration 4** — stalled-deal detector + daily sales brief (platform commit `2993112`): `src/mastra/agents/crm/stalled-deals.ts` + test (**5/5 passing**, typecheck clean). Flags non-terminal deals idle past a threshold (by `updated_at`), builds a brief aggregated only from real deal rows (no fabricated metrics), proposes a `tasks.create` nudge per stalled deal via the bridge. No writes, no sends.
 
-## Next action (iteration 5)
-**deal→customer→task→quote/invoice hand-off** as a sequence of propose-only steps (on verified won deals): propose `crm.customer.create` (if no customer), then `tasks.create` for onboarding, then `invoice.create` DRAFT linked to the deal — each DRAFT_APPROVAL, idempotency-keyed, nothing auto-executed. Unit tests for the step sequence + that each step is a proposal only.
+- **Iteration 5** — deal→customer→task→invoice hand-off (platform commit `40e172b`): `src/mastra/agents/crm/deal-handoff.ts` + test (**6/6 passing**, typecheck clean). `planHandoff` orders the steps for a won deal; `proposeHandoff` submits only the proposable ones. Honours registry required fields (customer.create: name+email; invoice.create: customer_id+amount). When data is missing it returns steps as **blocked** (no customer data) or **deferred** (invoice needs a customer id that only exists after approval) instead of fabricating values. Nothing auto-executes.
+
+## CRM capability coverage so far (all propose-only, tested)
+lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off. Remaining HOVEDMÅL items: company discovery (lawful public data + dedupe + source registry), personalized email drafts, lawful follow-up sequences, reply sync, pipeline-update suggestions, future calling prep.
+
+## Next action (iteration 6)
+**Personalized email DRAFT proposer** (propose-only): from a lead/customer + context, build a personalized draft surfaced as a `tasks.create` draft (holds the email body) — NOT `email.send` (sending always requires approval and a legal basis; no cold email without one). Unit tests for personalization-from-real-fields and that nothing is sent. Then typecheck.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
