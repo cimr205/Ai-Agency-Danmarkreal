@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 6 — personalized email DRAFT proposer, lawful-basis gated)
+**Last updated:** 2026-10-18 (iteration 7 — company discovery + dedupe + source registry)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -66,8 +66,19 @@ lead prioritization (reuses icp-score) · stalled-deal detector + daily brief ·
 
 - **Iteration 6** — personalized email DRAFT proposer (platform commit `1058305`): `src/mastra/agents/crm/email-drafter.ts` + test (**5/5 passing**, typecheck clean). Personalizes from real fields only, refuses cold outreach without a lawful basis, and proposes a `tasks.create` holding the body — never `email.send`. Missing fields omitted, not guessed. Sending stays a separate human-approved step.
 
-## Next action (iteration 7)
-**Company discovery + dedupe + source registry** (lawful public data): wrap the existing `cvr-search`/`companies-house-search` as read-only lookups, dedupe candidates against existing `leads` (by normalized name/CVR), record the data source per candidate, and propose `crm.lead.create` DRAFTs only for net-new, lawfully-sourced companies (no fabricated contact data). Unit tests for dedupe + source recording + that unknown/missing data is never invented.
+- **Iteration 7** — company discovery + dedupe + source registry (platform commit `2fdaffc`): `src/mastra/agents/crm/company-discovery.ts` + test (**4/4 passing**, typecheck clean). Candidates from lawful public registries (cvr-search / companies-house-search) carry source+sourceId; deduped against existing leads (normalized name / email / phone) and within the list; proposes `crm.lead.create` DRAFTs only for net-new companies. Candidates without a real email are skipped (email required, never fabricated).
+
+## CRM capability coverage so far (all propose-only, tested, 35 unit tests)
+lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry.
+
+## Remaining HOVEDMÅL items (next iterations)
+- Lawful follow-up sequences (multi-step, each step a proposal; no auto-send).
+- Reply sync (ingest inbound replies → update lead last_touched_at via proposal).
+- Pipeline-update suggestions (stage-move proposals from activity signals).
+- Future calling prep (no unauthorized calls; data model only).
+
+## Next action (iteration 8)
+**Lawful follow-up sequence planner** (propose-only): from a lead with a lawful basis + a cadence (e.g. day 0/3/7), plan a sequence of `tasks.create` draft steps (each holding a draft, none auto-sent), skipping any step without a lawful basis. Unit tests for cadence generation + that nothing sends.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
