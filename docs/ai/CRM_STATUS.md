@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 8 — lawful follow-up sequence planner)
+**Last updated:** 2026-10-18 (iteration 9 — pipeline-update suggester)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -70,16 +70,17 @@ lead prioritization (reuses icp-score) · stalled-deal detector + daily brief ·
 
 - **Iteration 8** — lawful follow-up sequence planner (platform commit `76f8235`): `src/mastra/agents/crm/followup-sequence.ts` + test (**5/5 passing**; full CRM suite **39/39**; typecheck clean). Plans a dated cadence (default day 0/3/7) of scheduled `tasks.create` DRAFTs (each holds a draft + due_date) for leads with a lawful basis — never `email.send`, never auto-sent; cold recipients refused.
 
-## CRM capability coverage so far (all propose-only, tested, 39 unit tests)
-lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry · lawful follow-up sequences.
+- **Iteration 9** — pipeline-update suggester (platform commit `e627944`): `src/mastra/agents/crm/pipeline-suggester.ts` + test (**4/4 passing**, typecheck clean). Uses the tenant's real `pipeline_stages` order + deal signals (completed deal-linked tasks, `expected_close_date`) to propose advancing to the NEXT real stage (`crm.deal.move_stage` DRAFT — high-risk, never auto-approved even under AUTO) or flagging an overdue-open deal for review (`tasks.create`). Never auto-moves; never invents a stage.
+
+## CRM capability coverage so far (all propose-only, tested, 43 unit tests)
+lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry · lawful follow-up sequences · pipeline-update suggester.
 
 ## Remaining HOVEDMÅL items (next iterations)
 - Reply sync (ingest inbound replies → propose updating lead `last_touched_at` / `next_followup_at`).
-- Pipeline-update suggestions (stage-move proposals from activity signals).
-- Future calling prep (no unauthorized calls; data model/consent only).
+- Future calling prep (consent/data-model only; no unauthorized calls).
 
-## Next action (iteration 9)
-**Pipeline-update suggester** (propose-only): from deal activity signals (e.g. recent `last_touched_at`, completed tasks, stage age), propose `crm.deal.move_stage` DRAFTs with an explainable rationale — never auto-moves; manager role enforced server-side. Unit tests for the signal→suggestion rules + that nothing auto-executes.
+## Next action (iteration 10)
+**Reply-sync intake** (propose-only): from (mocked) inbound email replies matched to a lead, propose `crm.lead.update` DRAFTs to record the touch (`last_touched_at`) and clear/adjust `next_followup_at`, and a `tasks.create` to review the reply — no auto-update, no auto-reply. Unit tests for matching + that nothing is sent/auto-applied.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
