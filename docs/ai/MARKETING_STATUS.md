@@ -2,7 +2,7 @@
 
 **Owner:** Marketing loop (MASTERPROMPT 3) · **Worktree:** `/Users/macbookpro/marketing-agents-worktree` · **Branch:** `feature/marketing-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`) and the propose-only Action Registry bridge (commit `316e867`). Marketing agents are specialist agents on that platform — not a new chatbot. All external writes go through `ai-operating-manager`.
-**Last updated:** 2026-10-19 (iteration 5 — competitor price analysis, source-tagged)
+**Last updated:** 2026-10-19 (iteration 6 — 30-day content-calendar generator + schema proposal)
 
 ## Hard rules
 - Map REAL integrations only. Mark missing ones BLOCKED; never build fictional connectors or fake metrics/publishing.
@@ -61,8 +61,20 @@ channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · 
 - **LinkedIn/TikTok/Shorts/organic posting** — no connector (#9); draft-only.
 - **Live competitor sources** — needs authorized sources per market (#5/FO-5); module runs on supplied, source-tagged inputs.
 
-## Next action (iteration 6)
-Draft the **company-knowledge schema proposal** (tables + fields with version/source/date/manual-correction, and a website-snapshot + change-detection design) as a written spec for owner review (#7) — no migration applied. Once approved it unlocks the content calendar + source-based website analysis. No new runtime surface this step.
+- **Iteration 6** — 30-day content-calendar generator + schema proposal (platform commit `1ca46b7`): `src/mastra/agents/marketing/content-calendar.ts` + test (**3/3 passing**, typecheck clean). Deterministically lays out a dated content plan from company-knowledge facts + channel rotation/cadence (reuses the drafter), proposes `marketing.campaign.create` DRAFTs with `scheduled_date` and unique keys — never publishes, no live gen, no fabricated metrics. Persistence/editing deferred to the schema. Wrote `MARKETING_SCHEMA_PROPOSAL.md` (this branch): `company_knowledge` (versioned/sourced/correctable), `website_snapshots` (change detection), `content_calendar` (editable 30-day plan) + 2 new registry actions — for owner review (#7), no migration applied.
+
+## Marketing capability coverage so far (all propose-only, tested, 19 unit tests)
+channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · results→leads→CRM feedback · competitor price analysis · 30-day content-calendar generator.
+
+## Status
+Marketing HOVEDMÅL are covered at the propose-only / generation layer for everything buildable without new schema or live creds. The remaining items are owner-gated and documented, not faked:
+- **Persistence** (company knowledge, website snapshots/change-detection, content calendar) → needs the migration in `MARKETING_SCHEMA_PROPOSAL.md` (#7).
+- **Live text/image generation** → AI-gateway creds + budget (#1/#8).
+- **LinkedIn/TikTok/Shorts/organic publishing** → no connector (#9); draft-only.
+- **Live competitor/trend sources** → authorized sources per market (#5/FO-5).
+
+## Next action (iteration 7)
+**BLOCKED pending owner input** (#7 schema, #1/#8 creds, #9 connectors, #5 sources). No further propose-only surface adds value without one of these. The track holds; if a blocker is lifted, resume with that specific work (e.g. wire persistence once the migration is approved). No low-value churn.
 
 ## This iteration — evidence
 Integration mapping only, read-only. No code, no DB, no external calls, nothing published. Worktree `feature/marketing-agents` created off `eeaa028`; this file is the only change. `localhost:8080` untouched (other agent's).
