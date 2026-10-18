@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 9 — pipeline-update suggester)
+**Last updated:** 2026-10-19 (iteration 10 — reply-sync intake; CRM HOVEDMÅL functionally complete)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -72,15 +72,20 @@ lead prioritization (reuses icp-score) · stalled-deal detector + daily brief ·
 
 - **Iteration 9** — pipeline-update suggester (platform commit `e627944`): `src/mastra/agents/crm/pipeline-suggester.ts` + test (**4/4 passing**, typecheck clean). Uses the tenant's real `pipeline_stages` order + deal signals (completed deal-linked tasks, `expected_close_date`) to propose advancing to the NEXT real stage (`crm.deal.move_stage` DRAFT — high-risk, never auto-approved even under AUTO) or flagging an overdue-open deal for review (`tasks.create`). Never auto-moves; never invents a stage.
 
-## CRM capability coverage so far (all propose-only, tested, 43 unit tests)
-lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry · lawful follow-up sequences · pipeline-update suggester.
+- **Iteration 10** — reply-sync intake (platform commit `fe0dfbf`): `src/mastra/agents/crm/reply-sync.ts` + test (**3/3 passing**, typecheck clean). Matches inbound replies to leads by sender email (case-insensitive) and proposes a `tasks.create` review DRAFT per matched reply; unmatched replies reported, never guessed onto a lead. No field auto-updated, no reply sent. Registry gap flagged: no `crm.lead.update` action (OWNER_DECISIONS #10) — the touch is handled via a review task rather than a fabricated action.
 
-## Remaining HOVEDMÅL items (next iterations)
-- Reply sync (ingest inbound replies → propose updating lead `last_touched_at` / `next_followup_at`).
-- Future calling prep (consent/data-model only; no unauthorized calls).
+## CRM capability coverage (all propose-only, tested, 46 unit tests) — HOVEDMÅL functionally complete
+lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry · lawful follow-up sequences · pipeline-update suggester · reply-sync intake.
 
-## Next action (iteration 10)
-**Reply-sync intake** (propose-only): from (mocked) inbound email replies matched to a lead, propose `crm.lead.update` DRAFTs to record the touch (`last_touched_at`) and clear/adjust `next_followup_at`, and a `tasks.create` to review the reply — no auto-update, no auto-reply. Unit tests for matching + that nothing is sent/auto-applied.
+All agent actions route through the propose-only Action Registry bridge (OFF/DRAFT_APPROVAL/AUTO; high-risk never auto-approved; idempotency per entity). No DB writes, no sends, no fabricated data.
+
+## Status & blockers
+- **Functionally complete** for the stated CRM/sales HOVEDMÅL, at the propose-only layer. Each capability has unit tests; nothing is auto-executed.
+- **Future calling prep**: deferred — needs a consent/data model and authorized telephony; no unauthorized calls. Owner decision pending.
+- **Live end-to-end verification BLOCKED**: agent→approval→DB→UI and cross-tenant need safe auth test accounts (OWNER_DECISIONS QA-1). `crm.lead.update` action missing (#10). Model creds for any LLM-authored drafting (#1–2) — current drafters are deterministic, so not required for what is built.
+
+## Next action (iteration 11)
+Consolidate: a small integration-style test that chains discovery→prioritize→follow-up→handoff proposals through one proposer to prove the pieces compose (still mock transport, no DB), and draft the `crm.lead.update` action spec for owner review (#10). No new external surface.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
