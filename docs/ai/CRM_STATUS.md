@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-19 (iteration 11 — integration test + crm.lead.update action spec)
+**Last updated:** 2026-10-19 (iteration 13 — calling PREP; all buildable HOVEDMÅL now covered)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -94,8 +94,18 @@ CRM/sales HOVEDMÅL are functionally complete at the propose-only layer, compose
 
 - **Iteration 12** — hardening: cross-module idempotency-key collision guard (platform commit `6871347`). Runs every CRM proposer over a dataset reusing the same id across lead/deal/recipient/reply/discovery and asserts all idempotency keys are globally unique, so the server's (company_id, idempotency_key) dedupe can never drop one capability's proposal for another's. 1/1, typecheck clean. (49 CRM tests total.)
 
-## Next action (iteration 13)
-**BLOCKED pending owner input** — no further propose-only surface adds value. Required to progress: QA-1 (safe auth test accounts, to run the authenticated/cross-tenant/agent→DB→UI Playwright chain) and #10 (`crm.lead.update` action; spec ready in `CRM_LEAD_UPDATE_ACTION_SPEC.md`). Until one is provided, the CRM track holds — I will not manufacture low-value churn. If a blocker is lifted, resume with that specific work.
+- **Iteration 13** — calling PREP (platform commit `4c7c716`): `src/mastra/agents/crm/calling-prep.ts` + test (**4/4 passing**, typecheck clean). Builds a consent-gated, phone-required, ICP-sorted call list and proposes `tasks.create` call-back reminders — never dials, never integrates telephony, never fabricates a phone or consent; excluded leads reported. The actual calling integration stays owner-authorized (no unauthorized calls).
+
+## CRM HOVEDMÅL — all buildable items covered (propose-only, tested, 53 unit tests)
+discover companies (lawful public data + dedupe + source) · score leads 0–100 (reuses icp-score) · prioritize tasks · personalized email drafts (lawful-basis) · lawful follow-up sequences · reply sync · pipeline-update suggestions · deal→customer→task→invoice hand-off · stalled-deal detection + daily brief · **calling prep (consent-gated, no dialing)**. Everything routes through the propose-only Action Registry bridge; composed + invariant-checked + idempotency-collision-guarded.
+
+## Remaining = owner-gated only (not buildable by the agent, never faked)
+- **QA-1** — safe auth test accounts → run authenticated/cross-tenant/agent→DB→UI Playwright chain.
+- **#10** — `crm.lead.update` action (spec ready) to record touches directly.
+- **Telephony integration** for calling (Power Dialer/voice-agent) — owner-authorized; prep is done, dialing is not ours to enable.
+
+## Next action
+Track holds pending QA-1 / #10 / telephony authorization. The CRM/sales HOVEDMÅL are functionally complete at the layer the agent can safely own. If a blocker is lifted, resume with exactly that work. No low-value churn.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
