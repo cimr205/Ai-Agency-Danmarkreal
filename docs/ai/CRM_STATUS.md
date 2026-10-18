@@ -92,8 +92,10 @@ CRM/sales HOVEDMÅL are functionally complete at the propose-only layer, compose
 - Live end-to-end (agent→approval→DB→UI, cross-tenant) needs safe auth test accounts (QA-1).
 - Future calling prep: needs consent/data model + authorized telephony (no unauthorized calls).
 
-## Next action (iteration 12)
-Hold for an owner decision on #10 / QA-1. If none, do a low-risk hardening pass: property-style tests for idempotency-key uniqueness and threshold boundaries across modules. No new external surface until a blocker is lifted.
+- **Iteration 12** — hardening: cross-module idempotency-key collision guard (platform commit `6871347`). Runs every CRM proposer over a dataset reusing the same id across lead/deal/recipient/reply/discovery and asserts all idempotency keys are globally unique, so the server's (company_id, idempotency_key) dedupe can never drop one capability's proposal for another's. 1/1, typecheck clean. (49 CRM tests total.)
+
+## Next action (iteration 13)
+**BLOCKED pending owner input** — no further propose-only surface adds value. Required to progress: QA-1 (safe auth test accounts, to run the authenticated/cross-tenant/agent→DB→UI Playwright chain) and #10 (`crm.lead.update` action; spec ready in `CRM_LEAD_UPDATE_ACTION_SPEC.md`). Until one is provided, the CRM track holds — I will not manufacture low-value churn. If a blocker is lifted, resume with that specific work.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
