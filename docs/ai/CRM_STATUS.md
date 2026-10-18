@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-18 (iteration 7 — company discovery + dedupe + source registry)
+**Last updated:** 2026-10-18 (iteration 8 — lawful follow-up sequence planner)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -68,17 +68,18 @@ lead prioritization (reuses icp-score) · stalled-deal detector + daily brief ·
 
 - **Iteration 7** — company discovery + dedupe + source registry (platform commit `2fdaffc`): `src/mastra/agents/crm/company-discovery.ts` + test (**4/4 passing**, typecheck clean). Candidates from lawful public registries (cvr-search / companies-house-search) carry source+sourceId; deduped against existing leads (normalized name / email / phone) and within the list; proposes `crm.lead.create` DRAFTs only for net-new companies. Candidates without a real email are skipped (email required, never fabricated).
 
-## CRM capability coverage so far (all propose-only, tested, 35 unit tests)
-lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry.
+- **Iteration 8** — lawful follow-up sequence planner (platform commit `76f8235`): `src/mastra/agents/crm/followup-sequence.ts` + test (**5/5 passing**; full CRM suite **39/39**; typecheck clean). Plans a dated cadence (default day 0/3/7) of scheduled `tasks.create` DRAFTs (each holds a draft + due_date) for leads with a lawful basis — never `email.send`, never auto-sent; cold recipients refused.
+
+## CRM capability coverage so far (all propose-only, tested, 39 unit tests)
+lead prioritization (reuses icp-score) · stalled-deal detector + daily brief · deal→customer→task→invoice hand-off · personalized email drafts (lawful-basis gated) · company discovery + dedupe + source registry · lawful follow-up sequences.
 
 ## Remaining HOVEDMÅL items (next iterations)
-- Lawful follow-up sequences (multi-step, each step a proposal; no auto-send).
-- Reply sync (ingest inbound replies → update lead last_touched_at via proposal).
+- Reply sync (ingest inbound replies → propose updating lead `last_touched_at` / `next_followup_at`).
 - Pipeline-update suggestions (stage-move proposals from activity signals).
-- Future calling prep (no unauthorized calls; data model only).
+- Future calling prep (no unauthorized calls; data model/consent only).
 
-## Next action (iteration 8)
-**Lawful follow-up sequence planner** (propose-only): from a lead with a lawful basis + a cadence (e.g. day 0/3/7), plan a sequence of `tasks.create` draft steps (each holding a draft, none auto-sent), skipping any step without a lawful basis. Unit tests for cadence generation + that nothing sends.
+## Next action (iteration 9)
+**Pipeline-update suggester** (propose-only): from deal activity signals (e.g. recent `last_touched_at`, completed tasks, stage age), propose `crm.deal.move_stage` DRAFTs with an explainable rationale — never auto-moves; manager role enforced server-side. Unit tests for the signal→suggestion rules + that nothing auto-executes.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
