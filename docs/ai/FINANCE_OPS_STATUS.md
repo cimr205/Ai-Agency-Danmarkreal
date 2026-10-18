@@ -47,8 +47,15 @@
 ## Done
 - **Iteration 2** — overdue-invoice detector + dunning drafts + cashflow projection (platform commit `99be513`): `src/mastra/agents/finance/overdue-invoices.ts` + test (**5/5 passing**, typecheck clean). Read-only over real invoice fields (amount/status/due_date/paid_at): overdue set (most overdue first), deterministic aging buckets (current / 1–30 / 31–60 / 60+), outstanding + overdue totals. Proposes a `tasks.create` reminder DRAFT per overdue invoice via the bridge — **no email sent, no payment taken, no accounting push**. Settled/paid invoices excluded.
 
-## Next action (iteration 3) — operations vertical, fully mockable
-**Staffing/deadline monitor**: from (mocked) `tasks` + `shifts`/`work_schedule` + `attendance`, detect overdue tasks and calendar conflicts, and propose `tasks.create`/`calendar.event.update` DRAFTs for rescheduling — propose-only, idempotency-keyed, nothing auto-applied. Plus a read-only "work completed → invoice basis" preparer that links verified-done tasks to an `invoice.create` DRAFT (never auto-issued). Unit tests + typecheck.
+## Done
+- **Iteration 3** — deadline monitor + work→invoice-basis preparer (platform commit `5596c9f`): `src/mastra/agents/finance/deadline-monitor.ts` + test (**6/6 passing**, typecheck clean). Read-only over real `tasks` (due_date/status/completed_at/deal_id): overdue + due-soon detection, and grouping of completed deal-linked work into a per-deal invoice basis (no amounts invented). Proposes `tasks.create` reschedule/review DRAFTs — never reschedules automatically, never issues an invoice (invoice.create stays a separate human-approved step), never contacts a customer.
+  - Note: staffing conflicts are covered by the HR agent's `staffing-gaps` module (shifts+leave); not duplicated here.
+
+## Finance/Ops capability coverage so far (all propose-only, tested)
+overdue-invoice detector + dunning drafts + cashflow projection · deadline monitor + work→invoice-basis preparer.
+
+## Next action (iteration 4)
+**Competitive pricing analysis** (read-only, verifiable sources): compare own prices against public competitor prices for a chosen country/market, with currency + VAT notes and an explicit source per data point. Price changes stay proposals (never applied). Needs owner input on country/market + authorized sources (FINANCE_OPS_DECISIONS FO-4, FO-5) — until then, build the deterministic comparison module against mocked, source-tagged inputs with unit tests; no live scraping.
 
 ## This iteration — evidence
 Mapping only, read-only. No code, no DB writes, no external calls, no payments/sends/pushes. Worktree `feature/finance-ops-agents` created off `eeaa028`; this file + `FINANCE_OPS_DECISIONS.md` are the only changes. `localhost:8080` untouched.
