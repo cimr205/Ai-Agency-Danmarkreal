@@ -54,8 +54,15 @@
 ## Finance/Ops capability coverage so far (all propose-only, tested)
 overdue-invoice detector + dunning drafts + cashflow projection · deadline monitor + work→invoice-basis preparer.
 
-## Next action (iteration 4)
-**Competitive pricing analysis** (read-only, verifiable sources): compare own prices against public competitor prices for a chosen country/market, with currency + VAT notes and an explicit source per data point. Price changes stay proposals (never applied). Needs owner input on country/market + authorized sources (FINANCE_OPS_DECISIONS FO-4, FO-5) — until then, build the deterministic comparison module against mocked, source-tagged inputs with unit tests; no live scraping.
+- **Iteration 4** — revenue analysis + payment reconciliation (platform commit `86f84c1`): `src/mastra/agents/finance/revenue-analysis.ts` + test (**4/4 passing**; full finance suite **15/15**; typecheck clean). Recognizes revenue from real `payments` (paid, not reversed), grouped by month, reversed amounts reported separately; reconciles each invoice (fully/partially/unpaid/overpaid) and proposes `tasks.create` review DRAFTs for discrepancies. No payment taken/reversed.
+  - Note on KONKURRENCE: competitive pricing comparison was built by the **marketing** agent (`competitor-analysis`, source-tagged, price changes stay proposals). Not duplicated here to avoid a parallel implementation.
+
+## Finance/Ops capability coverage so far (all propose-only, tested, 15 unit tests)
+overdue-invoice detector + dunning + cashflow projection · deadline monitor + work→invoice-basis · revenue analysis + payment reconciliation.
+
+## Next action (iteration 5)
+**Process-optimization suggestions from actual data** (read-only): from real tasks/deals/invoice timing, compute simple cycle-time metrics (e.g. avg days deal-won→invoice, invoice→payment) and flag outliers as `tasks.create` review DRAFTs — grounded in real rows, no fabricated benchmarks. Unit tests + typecheck.
+Blocked/deferred: live e-conomic/Dinero push (FO-1, needs connected tenant), payment capture (owner/approve only).
 
 ## This iteration — evidence
 Mapping only, read-only. No code, no DB writes, no external calls, no payments/sends/pushes. Worktree `feature/finance-ops-agents` created off `eeaa028`; this file + `FINANCE_OPS_DECISIONS.md` are the only changes. `localhost:8080` untouched.
