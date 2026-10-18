@@ -9,9 +9,18 @@
 - `src/mastra/verify.ts` — mock invocation runner.
 - Server-side only; not imported by the Vite client.
 
+## Built
+- **Tool interface (propose-only) → Action Registry** — `src/mastra/tools/action-proposal.ts`.
+  `createActionProposer(submit, modeFor)` returns a frozen object whose only capability is `propose`.
+  It holds no DB/Supabase client, so it is structurally incapable of a direct write; it builds an
+  `ActionProposal` (with idempotency key) and hands it to an injected transport that, in production,
+  POSTs to `ai-operating-manager` (where auth/RLS/idempotency/audit run server-side). Mode gating:
+  OFF proposes nothing; DRAFT_APPROVAL always awaits human approval; AUTO requests auto-approval only
+  for low-risk actions; unknown actions are rejected. Verified: `src/test/mastra-action-proposal.test.ts`
+  — **7/7 passing**, typecheck clean (2026-10-18).
+
 ## Not built yet (nothing below exists)
 - Shared agent registry beyond the diagnostic agent
-- Tool interface bound to the Action Registry
 - Memory interface
 - Provider-neutral model-router with live provider (`@ai-sdk/openai-compatible` not installed)
 - Specialist-agent routing

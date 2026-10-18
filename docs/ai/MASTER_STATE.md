@@ -37,9 +37,9 @@ Full strict `npm run type-check` fails on **3 pre-existing errors in another age
 | Dependency integration into `feature/frontend-operating-system` | joint; needs explicit coordination, see `OWNER_DECISIONS.md` |
 
 ## Next tasks (in order, each only after the previous is verified)
-1. Re-run in the worktree and record per-step output: `node src/mastra/verify.ts`, `npm run type-check`, `npm run build`, `curl :8080`. Commit the foundation on `chore/mastra-install`.
-2. Read the existing Action Registry (`supabase/functions/ai-operating-manager`), `requireCompanyAuth`, and the event bus; write the exact contract (action name, `requiredRoles`, `risk`, `rollback`, idempotency key) into `CORE_STATUS.md`.
-3. Add the tool interface: a Mastra tool that can only *propose* an action to the Action Registry (no DB client in tool scope), with tests that a tool cannot write directly.
+1. ✅ DONE — foundation re-verified + committed (`f045cbd`, `6407118`). Mock PASS, src/mastra typecheck clean, build green, :8080 200.
+2. ✅ DONE — Action Registry contract documented (17 actions, risk/roles/idempotency/audit) in `CRM_STATUS.md` (CRM worktree).
+3. ✅ DONE — propose-only tool interface + tests (`src/mastra/tools/action-proposal.ts`, 7/7 passing). Commit on `chore/mastra-install`.
 4. Add the agent registry + model-router (provider-neutral, env-driven; mock default) with unit tests.
 5. Add the memory interface (interface + in-memory impl; persistent adapter deferred).
 6. Add specialist routing (router agent → department agent stubs) behind tests; do not implement department logic.
