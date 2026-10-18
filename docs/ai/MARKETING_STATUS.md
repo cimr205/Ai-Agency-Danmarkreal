@@ -2,7 +2,7 @@
 
 **Owner:** Marketing loop (MASTERPROMPT 3) · **Worktree:** `/Users/macbookpro/marketing-agents-worktree` · **Branch:** `feature/marketing-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`) and the propose-only Action Registry bridge (commit `316e867`). Marketing agents are specialist agents on that platform — not a new chatbot. All external writes go through `ai-operating-manager`.
-**Last updated:** 2026-10-18 (iteration 1 — integration mapping; no code written)
+**Last updated:** 2026-10-18 (iteration 3 — Meta Ads read-only analysis + budget-suggestion drafts)
 
 ## Hard rules
 - Map REAL integrations only. Mark missing ones BLOCKED; never build fictional connectors or fake metrics/publishing.
@@ -46,8 +46,13 @@ These are the foundation for most marketing features and do not exist yet. Build
 ## Done
 - **Iteration 2** — channel-adapted post drafter (platform commit `23f6f3f`): `src/mastra/agents/marketing/post-drafter.ts` + test (**5/5 passing**, typecheck clean). Deterministically shapes a channel draft from supplied company-knowledge facts (length cap + hashtag count per channel), flags publish-unsupported channels (LinkedIn/TikTok/IG/Shorts) so nothing is auto-published, and proposes `marketing.campaign.create` DRAFTs via the propose-only bridge. **Not** live AI generation (gateway creds BLOCKED, #1/#8); no fabricated metrics; no publish.
 
-## Next action (iteration 3)
-**Meta Ads read-only analysis + budget-suggestion drafts**: from (mocked) `meta-sync` metrics, summarize campaign performance and propose budget changes as DRAFT proposals (never auto-apply spend; paid publish stays `approve`). Unit tests + typecheck.
+- **Iteration 3** — Meta Ads read-only analysis + budget-suggestion drafts (platform commit `f67b865`): `src/mastra/agents/marketing/meta-ads-analysis.ts` + test (**4/4 passing**, typecheck clean). Aggregates real `meta_daily_insights` (spend/clicks/impressions/conversions) per campaign, derives CTR/CPC/CPA (CPA null when no conversions — never faked), and makes deterministic increase/decrease/pause/hold suggestions surfaced as `tasks.create` review DRAFTs. **Never changes spend**; paid budget changes stay a separate human-approved step.
+
+## Marketing capability coverage so far (all propose-only, tested)
+channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts. Real metric tables confirmed: `meta_campaigns` (daily_budget/objective/status), `meta_daily_insights` (spend/clicks/impressions/conversions/cpc/cpm/ctr/reach), `meta_leadgen_events`, `meta_ad_sets`, `meta_creatives`.
+
+## Next action (iteration 4)
+**results→leads→CRM feedback**: from (mocked) `meta_leadgen_events`, attribute ad-sourced leads back to campaigns and summarize cost-per-lead per campaign (read-only, grounded in real rows). Hand off to CRM as a `crm.lead.create` DRAFT only for net-new, lawfully-sourced leads (dedupe, record source) — no fabricated contacts. Unit tests + typecheck.
 Deferred until a schema decision (OWNER_DECISIONS #7): company-knowledge persistence (versioned, sourced), website change-detection, and the 30-day content calendar.
 
 ## This iteration — evidence
