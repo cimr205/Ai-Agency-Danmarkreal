@@ -2,7 +2,7 @@
 
 **Owner:** CRM-agents loop (MASTERPROMPT 2) · **Worktree:** `/Users/macbookpro/crm-agents-worktree` · **Branch:** `feature/crm-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`, commit `6407118`) — CRM agents are specialist agents on that platform, not a new chatbot.
-**Last updated:** 2026-10-19 (iteration 10 — reply-sync intake; CRM HOVEDMÅL functionally complete)
+**Last updated:** 2026-10-19 (iteration 11 — integration test + crm.lead.update action spec)
 
 ## Hard rules
 - No new execution system. Every mutation goes through the existing Action Registry (`supabase/functions/ai-operating-manager`). No direct DB writes from an LLM.
@@ -84,8 +84,16 @@ All agent actions route through the propose-only Action Registry bridge (OFF/DRA
 - **Future calling prep**: deferred — needs a consent/data model and authorized telephony; no unauthorized calls. Owner decision pending.
 - **Live end-to-end verification BLOCKED**: agent→approval→DB→UI and cross-tenant need safe auth test accounts (OWNER_DECISIONS QA-1). `crm.lead.update` action missing (#10). Model creds for any LLM-authored drafting (#1–2) — current drafters are deterministic, so not required for what is built.
 
-## Next action (iteration 11)
-Consolidate: a small integration-style test that chains discovery→prioritize→follow-up→handoff proposals through one proposer to prove the pieces compose (still mock transport, no DB), and draft the `crm.lead.update` action spec for owner review (#10). No new external surface.
+- **Iteration 11** — integration test + action spec (platform commit `b6cdc06`): `src/test/crm-integration.test.ts` chains discovery→prioritize→stalled→sequence→handoff→pipeline through ONE AUTO proposer and asserts the global invariants (known actions; high-risk never auto-approved even under AUTO; never email.send; unique idempotency keys) + an OFF proves-nothing test. **2/2**; full CRM suite **48/48**; typecheck clean. Wrote `CRM_LEAD_UPDATE_ACTION_SPEC.md` (this branch) — the exact registry entry + executor constraints for the missing `crm.lead.update` action (OWNER_DECISIONS #10), no code applied.
+
+## Status
+CRM/sales HOVEDMÅL are functionally complete at the propose-only layer, composed and invariant-checked (48 unit + integration tests). Everything routes through the shared Action Registry bridge; nothing auto-executes, no DB writes, no sends, no fabricated data. Remaining work is owner-gated:
+- `crm.lead.update` action (#10) to record touches directly (spec ready).
+- Live end-to-end (agent→approval→DB→UI, cross-tenant) needs safe auth test accounts (QA-1).
+- Future calling prep: needs consent/data model + authorized telephony (no unauthorized calls).
+
+## Next action (iteration 12)
+Hold for an owner decision on #10 / QA-1. If none, do a low-risk hardening pass: property-style tests for idempotency-key uniqueness and threshold boundaries across modules. No new external surface until a blocker is lifted.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
