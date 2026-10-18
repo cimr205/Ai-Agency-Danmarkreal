@@ -44,12 +44,11 @@
 | task→schedule→execution→invoice→payment chain | NOT_TESTED | mappable to existing actions; to be exercised with mocks |
 | Mastra finance/ops agents | NOT STARTED | this iteration is mapping only |
 
-## Next action (iteration 2) — first safe vertical, fully mockable
-**Overdue-invoice detector + dunning-draft proposer**, read-only + propose-only:
-- A pure module: given (mocked) `invoices` rows (due_date, status, amount), return the overdue set and, for each, a **reminder draft** (no send) surfaced as a `tasks.create` or `email.send` **draft proposal** (DRAFT_APPROVAL) via the propose-only bridge.
-- Deterministic aging buckets (0–30 / 31–60 / 60+). No real email, no payment action, no accounting push.
-- Unit tests: aging math, that overdue is computed from real fields, and that nothing sends/executes. Then typecheck.
-- Also drafts a read-only **cashflow projection** from `invoices`/`payments` (grounded in real aggregates, no fabricated metrics) — reported, not acted on.
+## Done
+- **Iteration 2** — overdue-invoice detector + dunning drafts + cashflow projection (platform commit `99be513`): `src/mastra/agents/finance/overdue-invoices.ts` + test (**5/5 passing**, typecheck clean). Read-only over real invoice fields (amount/status/due_date/paid_at): overdue set (most overdue first), deterministic aging buckets (current / 1–30 / 31–60 / 60+), outstanding + overdue totals. Proposes a `tasks.create` reminder DRAFT per overdue invoice via the bridge — **no email sent, no payment taken, no accounting push**. Settled/paid invoices excluded.
+
+## Next action (iteration 3) — operations vertical, fully mockable
+**Staffing/deadline monitor**: from (mocked) `tasks` + `shifts`/`work_schedule` + `attendance`, detect overdue tasks and calendar conflicts, and propose `tasks.create`/`calendar.event.update` DRAFTs for rescheduling — propose-only, idempotency-keyed, nothing auto-applied. Plus a read-only "work completed → invoice basis" preparer that links verified-done tasks to an `invoice.create` DRAFT (never auto-issued). Unit tests + typecheck.
 
 ## This iteration — evidence
 Mapping only, read-only. No code, no DB writes, no external calls, no payments/sends/pushes. Worktree `feature/finance-ops-agents` created off `eeaa028`; this file + `FINANCE_OPS_DECISIONS.md` are the only changes. `localhost:8080` untouched.
