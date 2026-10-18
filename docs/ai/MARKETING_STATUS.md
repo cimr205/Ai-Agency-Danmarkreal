@@ -2,7 +2,7 @@
 
 **Owner:** Marketing loop (MASTERPROMPT 3) · **Worktree:** `/Users/macbookpro/marketing-agents-worktree` · **Branch:** `feature/marketing-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`) and the propose-only Action Registry bridge (commit `316e867`). Marketing agents are specialist agents on that platform — not a new chatbot. All external writes go through `ai-operating-manager`.
-**Last updated:** 2026-10-18 (iteration 4 — results→leads→CRM feedback)
+**Last updated:** 2026-10-19 (iteration 5 — competitor price analysis, source-tagged)
 
 ## Hard rules
 - Map REAL integrations only. Mark missing ones BLOCKED; never build fictional connectors or fake metrics/publishing.
@@ -50,12 +50,19 @@ These are the foundation for most marketing features and do not exist yet. Build
 
 - **Iteration 4** — results→leads→CRM feedback (platform commit `fa22c05`): `src/mastra/agents/marketing/results-feedback.ts` + test (**4/4 passing**, typecheck clean). Attributes real `meta_leadgen_events` to campaigns, computes cost-per-lead (null when spend unknown — never faked), parses contact fields defensively from the event `raw` (Meta field_data, never fabricated), and proposes `crm.lead.create` DRAFTs for net-new emailed, unlinked leads (dedupe by email incl. in-batch; already-linked skipped), recording the campaign as source.
 
-## Marketing capability coverage so far (all propose-only, tested, 13 unit tests)
-channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · results→leads→CRM feedback. Real metric tables confirmed: `meta_campaigns`, `meta_daily_insights`, `meta_leadgen_events`, `meta_ad_sets`, `meta_creatives`.
+- **Iteration 5** — competitor price analysis (platform commit `b7d4d6f`): `src/mastra/agents/marketing/competitor-analysis.ts` + test (**3/3 passing**, typecheck clean). Compares own offerings vs competitor data points that each carry an explicit source + date (verifiable; no invented figures, no live scraping). Same-currency only (different currency flagged, never silently converted), VAT/incl-VAT noted, median + price position. Flags gaps as `tasks.create` review DRAFTs — price changes stay proposals, never applied.
 
-## Next action (iteration 5)
-**Competitor analysis in a chosen country** (read-only, verifiable sources): compare public competitor offerings/prices with an explicit source + date per data point; VAT/currency noted; no live scraping until owner authorizes sources (OWNER_DECISIONS #5/FO-5). Build the deterministic comparison module against mocked, source-tagged inputs with unit tests.
-Still deferred until a schema decision (OWNER_DECISIONS #7): company-knowledge persistence (versioned, sourced), website change-detection, and the 30-day content calendar.
+## Marketing capability coverage so far (all propose-only, tested, 16 unit tests)
+channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · results→leads→CRM feedback · competitor price analysis.
+
+## Blocked / deferred (needs owner decisions, NOT fabricated)
+- **Company-knowledge base** (versioned, sourced, with manual correction), **website analysis + change detection**, **30-day content calendar + monthly strategy** — no tables exist; need a migration (OWNER_DECISIONS #7). These are the remaining HOVEDMÅL items and depend on that schema decision.
+- **Live text/image generation** (ai-generate / meta/muse-image) — needs AI-gateway creds + budget (#1/#8). Current drafters are deterministic.
+- **LinkedIn/TikTok/Shorts/organic posting** — no connector (#9); draft-only.
+- **Live competitor sources** — needs authorized sources per market (#5/FO-5); module runs on supplied, source-tagged inputs.
+
+## Next action (iteration 6)
+Draft the **company-knowledge schema proposal** (tables + fields with version/source/date/manual-correction, and a website-snapshot + change-detection design) as a written spec for owner review (#7) — no migration applied. Once approved it unlocks the content calendar + source-based website analysis. No new runtime surface this step.
 
 ## This iteration — evidence
 Integration mapping only, read-only. No code, no DB, no external calls, nothing published. Worktree `feature/marketing-agents` created off `eeaa028`; this file is the only change. `localhost:8080` untouched (other agent's).
