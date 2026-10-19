@@ -104,8 +104,11 @@ discover companies (lawful public data + dedupe + source) · score leads 0–100
 - **#10** — `crm.lead.update` action (spec ready) to record touches directly.
 - **Telephony integration** for calling (Power Dialer/voice-agent) — owner-authorized; prep is done, dialing is not ours to enable.
 
+## Regression / health (2026-10-19)
+Full platform test run (`npx vitest run` in the mastra worktree): **167 passed, 2 skipped** across 35 files — the pre-existing app tests PLUS all four department agents + the bridge + system-verification, green together (no cross-agent regressions). The 2 skipped are the auth-gated `tenant-isolation.integration.test.ts` (BLOCKED without a service-role key — honest, not a false PASS). Typecheck clean on `src/mastra`; `npm run build` green earlier this session.
+
 ## Next action
-Track holds pending QA-1 / #10 / telephony authorization. The CRM/sales HOVEDMÅL are functionally complete at the layer the agent can safely own. If a blocker is lifted, resume with exactly that work. No low-value churn.
+**CRM/sales HOVEDMÅL functionally complete at the agent-ownable layer.** Track holds pending owner input (QA-1 / #10 / telephony authorization). Re-running identical work on each loop fire adds no value, so the CRM loop is being stopped (job `07d9a887`); the other department loops continue. Restart `/loop 30m MASTERPROMPT 2 …` when a blocker is lifted, and resume with exactly that work. No low-value churn.
 
 ## Evidence / safety
 No DB touched, nothing proposed or executed against real data, no external sends. `localhost:8080` untouched (other agent's; verified 200 this session). No push, no deploy.
