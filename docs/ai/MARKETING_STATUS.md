@@ -2,7 +2,7 @@
 
 **Owner:** Marketing loop (MASTERPROMPT 3) · **Worktree:** `/Users/macbookpro/marketing-agents-worktree` · **Branch:** `feature/marketing-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** the Mastra platform (`chore/mastra-install`) and the propose-only Action Registry bridge (commit `316e867`). Marketing agents are specialist agents on that platform — not a new chatbot. All external writes go through `ai-operating-manager`.
-**Last updated:** 2026-10-19 (iteration 6 — 30-day content-calendar generator + schema proposal)
+**Last updated:** 2026-10-19 (iteration 7 — lawful trend monitoring; all buildable HOVEDMÅL covered, loop stopping)
 
 ## Hard rules
 - Map REAL integrations only. Mark missing ones BLOCKED; never build fictional connectors or fake metrics/publishing.
@@ -63,8 +63,10 @@ channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · 
 
 - **Iteration 6** — 30-day content-calendar generator + schema proposal (platform commit `1ca46b7`): `src/mastra/agents/marketing/content-calendar.ts` + test (**3/3 passing**, typecheck clean). Deterministically lays out a dated content plan from company-knowledge facts + channel rotation/cadence (reuses the drafter), proposes `marketing.campaign.create` DRAFTs with `scheduled_date` and unique keys — never publishes, no live gen, no fabricated metrics. Persistence/editing deferred to the schema. Wrote `MARKETING_SCHEMA_PROPOSAL.md` (this branch): `company_knowledge` (versioned/sourced/correctable), `website_snapshots` (change detection), `content_calendar` (editable 30-day plan) + 2 new registry actions — for owner review (#7), no migration applied.
 
-## Marketing capability coverage so far (all propose-only, tested, 19 unit tests)
-channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · results→leads→CRM feedback · competitor price analysis · 30-day content-calendar generator.
+- **Iteration 7** — lawful trend monitoring (platform commit `43ca5db`): `src/mastra/agents/marketing/trend-monitor.ts` + test (**3/3 passing**, typecheck clean). Ingests source-tagged trend signals, filters by market/score/relevance to company keywords, dedupes, flags stale, proposes `tasks.create` content-idea DRAFTs for fresh relevant trends. No publish, no fabricated metrics; live sources owner-authorized (#5).
+
+## Marketing capability coverage (all propose-only, tested, 22 unit tests) — buildable HOVEDMÅL complete
+channel-adapted post drafter · Meta Ads analysis + budget-suggestion drafts · results→leads→CRM feedback · competitor price analysis · 30-day content-calendar generator · lawful trend monitoring.
 
 ## Status
 Marketing HOVEDMÅL are covered at the propose-only / generation layer for everything buildable without new schema or live creds. The remaining items are owner-gated and documented, not faked:
@@ -73,8 +75,14 @@ Marketing HOVEDMÅL are covered at the propose-only / generation layer for every
 - **LinkedIn/TikTok/Shorts/organic publishing** → no connector (#9); draft-only.
 - **Live competitor/trend sources** → authorized sources per market (#5/FO-5).
 
-## Next action (iteration 7)
-**BLOCKED pending owner input** (#7 schema, #1/#8 creds, #9 connectors, #5 sources). No further propose-only surface adds value without one of these. The track holds; if a blocker is lifted, resume with that specific work (e.g. wire persistence once the migration is approved). No low-value churn.
+## Next action
+**Marketing HOVEDMÅL functionally complete at the agent-ownable layer.** All buildable propose-only/generation verticals are done, tested (22 unit tests) and compose through the shared Action Registry bridge. Remaining items are owner-gated only, documented, never faked:
+- **#7** — persistence migration (company knowledge / website snapshots / content calendar; spec in `MARKETING_SCHEMA_PROPOSAL.md`) → unlocks persist/edit + source-based website analysis.
+- **#1/#8** — AI-gateway creds + budget → live text/image generation.
+- **#9** — LinkedIn/TikTok/Shorts/organic connectors → publishing beyond Meta.
+- **#5/FO-5** — authorized competitor/trend sources → live data instead of supplied inputs.
+
+Re-running identical work each loop fire adds no value, so the **marketing loop is being stopped** (job `917f95c3`). Restart `/loop 1h MASTERPROMPT 3 …` when a blocker is lifted, and resume with exactly that work (e.g. wire persistence once the migration is approved). No low-value churn.
 
 ## This iteration — evidence
 Integration mapping only, read-only. No code, no DB, no external calls, nothing published. Worktree `feature/marketing-agents` created off `eeaa028`; this file is the only change. `localhost:8080` untouched (other agent's).
