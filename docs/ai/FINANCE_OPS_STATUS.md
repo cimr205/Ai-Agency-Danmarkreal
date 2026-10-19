@@ -60,9 +60,19 @@ overdue-invoice detector + dunning drafts + cashflow projection · deadline moni
 ## Finance/Ops capability coverage so far (all propose-only, tested, 15 unit tests)
 overdue-invoice detector + dunning + cashflow projection · deadline monitor + work→invoice-basis · revenue analysis + payment reconciliation.
 
-## Next action (iteration 5)
-**Process-optimization suggestions from actual data** (read-only): from real tasks/deals/invoice timing, compute simple cycle-time metrics (e.g. avg days deal-won→invoice, invoice→payment) and flag outliers as `tasks.create` review DRAFTs — grounded in real rows, no fabricated benchmarks. Unit tests + typecheck.
-Blocked/deferred: live e-conomic/Dinero push (FO-1, needs connected tenant), payment capture (owner/approve only).
+- **Iteration 5** — process-optimization metrics (platform commit `2b88892`): `src/mastra/agents/finance/process-metrics.ts` + test (**4/4 passing**, typecheck clean). Computes invoice lifecycle cycle times from real timestamps (created→issued, issued→paid), flags slow-payment outliers above both an absolute floor and avg*multiple (grounded, no fabricated benchmarks, honest on empty input), proposes `tasks.create` process-review DRAFTs. Read-only; no payment taken/changed.
+
+## Finance/Ops capability coverage (all propose-only, tested, 19 unit tests) — buildable HOVEDMÅL complete
+overdue-invoice detector + dunning + cashflow projection · deadline monitor + work→invoice-basis · revenue analysis + payment reconciliation · process-optimization metrics. (Staffing covered by HR's staffing-gaps; competitive pricing by marketing's competitor-analysis — not duplicated.)
+
+## Status
+Finance/Ops HOVEDMÅL are functionally complete at the agent-ownable layer. Everything routes through the propose-only Action Registry bridge; no payments/transfers/sends/accounting-pushes; no fabricated numbers. Remaining items are owner-gated only, documented, never faked:
+- **FO-1** — live e-conomic/Dinero push needs a connected tenant + sandbox creds (real `push_invoice`/`push_customer` stay NOT_TESTED).
+- **FO-2/FO-3** — automation level for invoice/dunning drafts + customer messages.
+- Payment capture / Stripe — money-moving, owner/approve only (never in tests).
+- Full task→plan→execute→invoice→payment chain end-to-end needs auth test accounts (QA-1, shared).
+
+Re-running identical work each loop fire adds no value, so the **finance/ops loop is being stopped** (job `3b8c289e`). Restart `/loop 2h MASTERPROMPT 4 …` when a blocker is lifted (e.g. a connected accounting tenant), and resume with exactly that work. No low-value churn.
 
 ## This iteration — evidence
 Mapping only, read-only. No code, no DB writes, no external calls, no payments/sends/pushes. Worktree `feature/finance-ops-agents` created off `eeaa028`; this file + `FINANCE_OPS_DECISIONS.md` are the only changes. `localhost:8080` untouched.
