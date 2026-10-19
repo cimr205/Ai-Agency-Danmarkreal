@@ -3,7 +3,7 @@
 **Owner:** HR/QA loop (MASTERPROMPT 5) · **Worktree:** `/Users/macbookpro/hr-qa-worktree` · **Branch:** `feature/hr-qa-agents` (based on `feature/frontend-operating-system` @ `eeaa028`)
 **Depends on:** Mastra platform (`chore/mastra-install`) + propose-only Action Registry bridge (`316e867`).
 **Coordination:** reads `MASTER_STATE.md`, does NOT write it. Owner questions in local `HR_QA_DECISIONS.md`.
-**Last updated:** 2026-10-19 (iteration 3 — system-verification negative-path suite; platform suite 91/91)
+**Last updated:** 2026-10-19 (iteration 4 — roster cover suggester; HR buildable set complete; loop stopping)
 
 ## Hard rules
 - Work hours from **actual registration** (`attendance`), not just planned `shifts`. No automatic payroll payout; payroll prep is verified against real data only.
@@ -46,8 +46,22 @@
 
 **Not all verifiable conditions are PASS → not reporting completion.** Everything achievable without owner-gated inputs is green and tested; the rest is explicitly BLOCKED and documented, with nothing shown as false success.
 
-## Next action (iteration 4)
-Hold for QA-1 (safe auth test accounts). When provided: run `authed-smoke`, `crm-crud`, `cross-tenant`, `sales-flow` Playwright specs + the tenant-isolation integration test against localhost with disposable data, and capture evidence/screenshots. Until then, no new runtime surface; optionally extend negative-path coverage (retry/replay semantics) at the unit level.
+- **Iteration 4** — roster cover suggester (platform commit `08d7f63`): `src/mastra/agents/hr/roster-suggester.ts` + test (**3/3 passing**, typecheck clean). Complements staffing-gaps by suggesting cover for unassigned shifts — offers only available employees (not on approved leave, not double-booked) + required-skill match when supplied; proposes `tasks.create` cover-review DRAFTs, never assigns a roster, never fabricates availability. Scheduling only (no actual-time table, HR-4).
+
+## HR buildable set complete (propose-only, tested, 8 HR unit tests)
+staffing-gap detector (under/over-staffing, conflicts, shift-vs-leave) · roster cover suggester (availability-based). Payroll stays prep-only and BLOCKED for actual-hours (no attendance table, HR-4); no individual wellbeing/burnout inference anywhere.
+
+## Final verification (2026-10-19)
+Full platform regression `npx vitest run`: **177 passed, 2 skipped** across 38 files — pre-existing app tests + all four department agents + bridge + system-verification, green together; no regressions. The 2 skipped are the auth-gated `tenant-isolation.integration.test.ts` (BLOCKED, honest). Typecheck clean on `src/mastra`.
+
+## Overall verifiable status — reporting the honest end state
+- **PASS** (no auth needed): agent platform 177/179 (2 auth-gated skipped), typecheck clean, `npm run build` green earlier, localhost 200. All four department agents' propose-only logic + bridge invariants + negative paths verified.
+- **BLOCKED** (owner-gated, never faked): the authenticated/cross-tenant/agent→DB→UI Playwright chain + tenant-isolation integration test need safe auth test accounts (QA-1). Plus: `crm.lead.update` (#10), actual-time table (HR-4), live AI creds (#1/#8), live accounting push (FO-1), marketing schema (#7), connectors (#9), authorized sources (#5).
+
+**Not all verifiable conditions are PASS → NOT reporting completion.** Everything achievable without owner-gated inputs is green and tested; the rest is explicitly BLOCKED and documented, with nothing shown as false success.
+
+## Loop status
+HR buildable work is done and the remaining QA is BLOCKED on QA-1, so the **HR/QA loop is being stopped** (job `91835cdf`). All four department loops are now stopped — the system is complete at the agent-ownable (propose-only) layer. The single highest-leverage unblocker is **QA-1 (safe auth test accounts)**: it lifts the entire live agent→approval→DB→UI + cross-tenant verification across every agent. Restart `/loop 3h MASTERPROMPT 5 …` (or provide QA-1) to resume.
 
 ## This iteration — evidence
 Mapping + baseline only, read-only. No code, no DB writes, no external calls, no payroll. Worktree `feature/hr-qa-agents` created off `eeaa028`; this file + `HR_QA_DECISIONS.md` are the only changes. `localhost:8080` untouched (verified 200).
