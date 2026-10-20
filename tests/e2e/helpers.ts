@@ -37,8 +37,11 @@ export async function expectAppMounted(page: Page) {
   await expect(root).toBeVisible();
   // #root must contain actual rendered nodes, not an empty shell.
   await expect.poll(async () => (await root.innerText()).trim().length, { timeout: 10_000 }).toBeGreaterThan(0);
-  // The ErrorBoundary fallback must not be showing.
-  await expect(page.getByText(/something went wrong|page not found|404/i)).toHaveCount(0);
+  // The ErrorBoundary / NotFound fallback must not be showing. Match the standalone
+  // "404" badge only (anchored) so we never false-positive on page data that merely
+  // contains "404" — e.g. a customer whose timestamped name is "...95404 72".
+  await expect(page.getByText(/something went wrong|page not found/i)).toHaveCount(0);
+  await expect(page.getByText(/^\s*404\s*$/)).toHaveCount(0);
 }
 
 /** Run axe and fail only on critical violations; record all as annotations. */

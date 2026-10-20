@@ -22,6 +22,20 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+async function createLead(page: Page, name: string, email: string, phone: string) {
+  await page.goto(`/${LOCALE}/app/crm/leads?create=true`, { waitUntil: "domcontentloaded" });
+  await expectAppMounted(page);
+  const dlg = page.getByRole("dialog");
+  await expect(dlg).toBeVisible({ timeout: 10_000 });
+  const inputs = dlg.locator("input");
+  await inputs.nth(0).fill(name);
+  await inputs.nth(1).fill(email);
+  await inputs.nth(2).fill(phone);
+  await inputs.nth(3).fill("QA Co");
+  await dlg.getByRole("button", { name: /add lead/i }).click();
+  await expect(dlg).toBeHidden({ timeout: 10_000 });
+}
+
 async function createCustomer(page: Page, name: string, email: string) {
   await page.goto(`/${LOCALE}/app/clients`, { waitUntil: "domcontentloaded" });
   await expectAppMounted(page);
@@ -197,4 +211,61 @@ test("concurrent full payments settle the invoice exactly once (no double-charge
   expect(settled).toBe(amount);
   const after = await restGet(page, `invoices?select=status&id=eq.${invoiceId}`, creds);
   expect(after[0].status).toBe("paid");
+});
+
+test("partial payment leaves a remaining balance and the invoice is not marked paid", async ({ page }) => {
+  const stamp = Date.now();
+  const cust = `QA Part ${stamp}`;
+  const creds = await supaCreds(page);
+  await createCustomer(page, cust, `qa.part.${stamp}@example.com`);
+  await createInvoiceFor(page, cust); // total 10 000
+
+  const inv = await restGet(page, `invoices?select=id,amount,status&order=created_at.desc&limit=1`, creds);
+  const invoiceId = inv[0].id as string;
+  const amount = Number(inv[0].amount);
+  const half = amount / 2;
+
+  const res = await rpc(page, "register_invoice_payment", { p_invoice_id: invoiceId, p_amount: half, p_payment_method: "bank_transfer", p_idempotency_key: `part-${stamp}` }, creds);
+  expect(res.ok(), "a valid partial payment is accepted").toBeTruthy();
+
+  // Invoice must NOT be paid; the remaining balance is exactly the other half.
+  const after = await restGet(page, `invoices?select=status&id=eq.${invoiceId}`, creds);
+  expect(after[0].status).not.toBe("paid");
+  const pays = await restGet(page, `payments?select=amount&invoice_id=eq.${invoiceId}&status=eq.completed`, creds);
+  const paid = pays.reduce((s: number, p: { amount: number }) => s + Number(p.amount), 0);
+  expect(amount - paid).toBe(half);
+
+  // UI confirms it is not shown as paid.
+  await page.goto(`/${LOCALE}/app/finance/invoices`, { waitUntil: "domcontentloaded" });
+  await expectAppMounted(page);
+  await page.getByPlaceholder(/search invoice no, customer/i).fill(cust);
+  await expect(page.getByRole("row").filter({ hasText: cust })).not.toContainText(/paid/i);
+});
+
+test("converting the same lead twice is idempotent — no duplicate customer or deal", async ({ page }) => {
+  const stamp = Date.now();
+  const leadName = `QA Dedupe Lead ${stamp}`;
+  const creds = await supaCreds(page);
+  await createLead(page, leadName, `qa.dedupe.${stamp}@example.com`, `+45${String(stamp).slice(-8)}`);
+
+  const leads = await restGet(page, `customers?select=id&record_type=eq.lead&name=eq.${encodeURIComponent(leadName)}&limit=1`, creds);
+  expect(leads.length).toBe(1);
+  const leadId = leads[0].id as string;
+
+  const first = await rpc(page, "convert_lead_to_deal", { p_lead_id: leadId, p_deal_name: `Deal: ${leadName}` }, creds);
+  const second = await rpc(page, "convert_lead_to_deal", { p_lead_id: leadId, p_deal_name: `Deal: ${leadName}` }, creds);
+  expect(first.ok() && second.ok(), "both convert calls return ok").toBeTruthy();
+  const r1 = (await first.json())[0];
+  const r2 = (await second.json())[0];
+
+  // Second call is recognised as a replay and returns the SAME ids.
+  expect(r2.dedupe_result).toBe("already_converted");
+  expect(r2.customer_id).toBe(r1.customer_id);
+  expect(r2.deal_id).toBe(r1.deal_id);
+
+  // Exactly one customer and one deal exist for this lead — no duplicates.
+  const customers = await restGet(page, `customers?select=id&record_type=eq.customer&converted_from_lead_id=eq.${leadId}`, creds);
+  expect(customers.length).toBe(1);
+  const deals = await restGet(page, `deals?select=id&customer_id=eq.${r1.customer_id}`, creds);
+  expect(deals.length).toBe(1);
 });

@@ -3,7 +3,38 @@
 _Autonomous quality system: tests, fixes and hardens the SaaS via real Chrome on localhost._
 
 **Last run:** 2026-10-20 · **Engine:** Playwright 1.64 (real Google Chrome, `channel: "chrome"`) + axe-core
-**Overall:** 🟢 Public + core authenticated finance flows GREEN & verified. ⛔ One pre-existing P1 blocker: `npm run type-check` is RED on `main` (invitations `token`→`token_hash` schema drift) — see BLOCKER-TS-001.
+**Overall:** 🟢 **Milestone 1 (manual Lead→…→Payment) VERIFIED.** Public + authenticated finance flows GREEN. ⛔ One pre-existing P1 blocker outside the flow: `npm run type-check` is RED (invitations `token`→`token_hash` drift) — see BLOCKER-TS-001.
+
+---
+
+## Milestone 1 — the complete MANUAL sales flow · ✅ VERIFIED (2026-10-20)
+
+**Lead → Customer → Deal → Quote → Invoice → Payment**, driven end-to-end through the real UI in authenticated Chrome (Tenant A, synthetic data, no real payments). Spec: `tests/e2e/manual-sales-flow.spec.ts` (+ `sales-flow`, `finance-edge`). **11/11 milestone specs pass together** (3.3m).
+
+Acceptance criteria (from /goal §6) — each verified:
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Create a lead | ✅ | `crm-crud`, `manual-sales-flow` |
+| Register contact / follow-up | ✅ | `LogActivityForm` → persisted (REST-verified) + shown in timeline |
+| Convert lead → customer | ✅ | atomic `convert_lead_to_deal` (find-or-create customer, no dup) |
+| Create a deal (linked to customer) | ✅ | deal shows the customer; persists after refresh |
+| Create a quote with customer data | ✅ | quote linked to the converted lead |
+| Accept the quote (authorized transition) | ✅ | draft→sent→accepted (server-enforced `transition_quote`) |
+| Convert quote → invoice | ✅ | `quote_to_invoice` resolves the billable customer via the converted lead |
+| Register a simulated payment | ✅ | `register_invoice_payment`; invoice flips to **paid** |
+| Correct payment status + remaining balance | ✅ | partial payment → not paid, remaining = balance (`finance-edge`) |
+| Full history on the customer | ✅ | ClientView ledger+timeline: deal, quote, invoice, payment, lead backlink |
+| Refresh without data loss | ✅ | persistence asserted at every hop |
+| No re-entry of existing customer data | ✅ | convert reuses the lead's data |
+| No duplicate customers/invoices/payments on retry | ✅ | convert idempotent (`already_converted`, 1 customer/1 deal); concurrent payments settle exactly once |
+| Critical relations survive refresh | ✅ | Customer↔Deal↔Quote↔Invoice↔Payment |
+| Two companies isolated | ✅ | `cross-tenant.spec.ts` (RLS, both tenants) |
+| No real payments / sends | ✅ | sandbox data only |
+
+**Regression gates:** `npm run build` ✅ · Playwright milestone suite ✅ 11/11 · `npm run type-check` ❌ (only BLOCKER-TS-001, in the invitations admin pages — **not** on the sales-flow path).
+
+**Next:** Milestone 1 is functionally DONE. Remaining for a fully-green `type-check` gate: resolve BLOCKER-TS-001 (owner: auth/invitations). Then the flow is ready to advance to **AI ASSISTED** (/goal §6, second pass).
 
 ---
 
