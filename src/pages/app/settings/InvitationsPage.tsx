@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getErrorMessage } from '@/lib/errors';
 
+// The raw invite token is only ever available once, at creation. It is never
+// stored in readable form (only token_hash) and never selected back.
 type Invitation = {
   id: string;
   email: string;
@@ -23,7 +25,6 @@ type Invitation = {
   status: string;
   created_at: string;
   expires_at: string;
-  token: string;
 };
 
 export default function InvitationsPage() {
@@ -36,12 +37,14 @@ export default function InvitationsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<string>('employee');
   const [creating, setCreating] = useState(false);
+  // The one-time invite link, shown only right after creation.
+  const [createdLink, setCreatedLink] = useState<string | null>(null);
 
   const loadInvitations = async () => {
     setLoading(true);
     const { data } = await supabase
       .from('invitations')
-      .select('id, email, role, status, created_at, expires_at, token')
+      .select('id, email, role, status, created_at, expires_at')
       .order('created_at', { ascending: false });
     setInvitations((data || []) as Invitation[]);
     setLoading(false);
@@ -61,10 +64,13 @@ export default function InvitationsPage() {
         invite_role: newRole as Enums<'app_role'>,
       });
       if (error) throw error;
+      // The RPC returns the raw one-time token exactly once — turn it into a
+      // shareable invite link and surface it now (it can never be shown again).
+      const rawToken = data as string;
+      setCreatedLink(`${window.location.origin}/${locale || 'en'}/invite?token=${rawToken}`);
       toast.success(t('invitations.invitationSentTo').replace('{email}', newEmail));
       setNewEmail('');
       setNewRole('employee');
-      setIsCreateOpen(false);
       await loadInvitations();
     } catch (err) {
       toast.error(getErrorMessage(err) || t('invitations.couldNotCreate'));
@@ -84,9 +90,7 @@ export default function InvitationsPage() {
     }
   };
 
-  const copyLink = (token: string) => {
-    const baseUrl = window.location.origin;
-    const link = `${baseUrl}/${locale || 'en'}/invite?token=${token}`;
+  const copyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     toast.success(t('invitations.invitationLinkCopied'));
   };
@@ -114,7 +118,7 @@ export default function InvitationsPage() {
           <h1 className="text-2xl font-bold text-foreground">{t('invitations.title')}</h1>
           <p className="text-muted-foreground">{t('invitations.subtitle')}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) setCreatedLink(null); }}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" />{t('invitations.inviteMember')}</Button>
           </DialogTrigger>
@@ -123,27 +127,45 @@ export default function InvitationsPage() {
               <DialogTitle>{t('invitations.inviteTeamMember')}</DialogTitle>
               <DialogDescription>{t('invitations.inviteDesc')}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('auth.email')} *</Label>
-                <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
+            {createdLink ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 text-sm text-success">
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Copy this invite link now — it is shown only once.</span>
+                </div>
+                <div className="flex gap-2">
+                  <Input readOnly value={createdLink} data-testid="invite-link" className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+                  <Button variant="outline" size="icon" onClick={() => copyLink(createdLink)} title={t('invitations.copyLink')}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button className="w-full" onClick={() => { setIsCreateOpen(false); setCreatedLink(null); }}>
+                  {t('common.done') || 'Færdig'}
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label>{t('invitations.roleLabel')}</Label>
-                <Select value={newRole} onValueChange={setNewRole}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="employee">{t('roles.employee')}</SelectItem>
-                    <SelectItem value="manager">{t('roles.manager')}</SelectItem>
-                    <SelectItem value="company_admin">{t('invitations.adminRole')}</SelectItem>
-                  </SelectContent>
-                </Select>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t('auth.email')} *</Label>
+                  <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('invitations.roleLabel')}</Label>
+                  <Select value={newRole} onValueChange={setNewRole}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">{t('roles.employee')}</SelectItem>
+                      <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+                      <SelectItem value="company_admin">{t('invitations.adminRole')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCreate} disabled={creating} className="w-full">
+                  {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                  {creating ? t('common.loading') : t('settings.sendInvitation')}
+                </Button>
               </div>
-              <Button onClick={handleCreate} disabled={creating} className="w-full">
-                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-                {creating ? t('common.loading') : t('settings.sendInvitation')}
-              </Button>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -192,14 +214,9 @@ export default function InvitationsPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center gap-1 justify-end">
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
-                          <>
-                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title={t('invitations.copyLink')}>
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
-                              <XCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
+                          <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>

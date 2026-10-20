@@ -3,7 +3,19 @@
 _Autonomous quality system: tests, fixes and hardens the SaaS via real Chrome on localhost._
 
 **Last run:** 2026-10-20 · **Engine:** Playwright 1.64 (real Google Chrome, `channel: "chrome"`) + axe-core
-**Overall:** 🟢 **Milestone 1 (manual) VERIFIED** · 🟢 **Milestone 2 (AI-assisted action) VERIFIED** (model-free core). ⛔ Pre-existing `type-check` blocker (BLOCKER-TS-001) outside both flows. ⚠️ Live-model lead *analysis* blocked by the provider (configured model unavailable) — BLOCKER-AI-001.
+**Overall:** 🟢 **Milestone 1 (manual) VERIFIED** · 🟢 **Milestone 2 (AI-assisted action) VERIFIED** · 🟢 **`npm run type-check` now GREEN (0 errors)** — BLOCKER-TS-001 **RESOLVED** (secure invitations). ⚠️ Live-model lead *analysis* still blocked by provider — BLOCKER-AI-001.
+
+---
+
+## Invitations — token/token_hash drift · ✅ RESOLVED (secure, 2026-10-20)
+
+**BLOCKER-TS-001 is fixed; `type-check` is now 0 errors** (was red across every prior milestone). The secure one-time-token backend was already deployed and verified working (`create_invitation` returns the raw token once, `token_hash` stored, `get_invitation_by_token`/`accept_invitation` round-trip, `AcceptInvite` page handles the email-confirmation case). The bug was frontend-only: three pages selected a non-existent `token` column and read `inv.token`.
+
+**Fix (frontend only, no migration):**
+- `InvitationsPage`, `AdminUsers`, `AdminEmployees`: list only safe columns (`id,email,role,status,created_at,expires_at`), never `token`/`token_hash`; removed the broken per-row "copy link" (a link can't be rebuilt from a hash — it's shown once at creation).
+- `InvitationsPage` now surfaces the **one-time invite link** at creation (it previously discarded the returned token), pointing at the existing `/:locale/invite` accept flow. Evidence: `docs/qa/evidence/invitations-one-time-link.png`.
+
+**Verified (real Chrome + REST, Tenant A company_admin):** `tests/e2e/invitations.spec.ts` — the list loads (previously silently failed), creating an invite shows a well-formed one-time link (`/en/invite?token=<64-hex>`), the invite appears in the list, and the client receives **no `token` or `token_hash`**. `type-check` ✅ 0 · `build` ✅. (Admin pages are system_admin-only — not reachable by the test tenant — but are covered by the green type-check + build.)
 
 ---
 

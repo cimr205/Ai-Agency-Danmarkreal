@@ -6,22 +6,26 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Copy, Users, Key, Shield, Loader2 } from 'lucide-react';
+import { Users, Key, Shield, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
+
+/** Invitation shape safe to expose to the client — never the token or its hash. */
+type SafeInvitation = { id: string; email: string; role: string; status: string; created_at: string; expires_at: string };
 
 export default function AdminEmployees() {
   const { isAdmin, profile } = useAuth();
-  const [invitations, setInvitations] = useState<Tables<'invitations'>[]>([]);
+  // Invite tokens are never read back (only token_hash is stored, and the raw
+  // one-time token is shown once at creation), so we never select them.
+  const [invitations, setInvitations] = useState<SafeInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [email, setEmail] = useState('');
 
   const loadInvitations = async () => {
     if (!profile?.company_id) return;
-    const { data } = await supabase.from('invitations').select('*').eq('company_id', profile.company_id).order('created_at', { ascending: false });
-    setInvitations(data || []);
+    const { data } = await supabase.from('invitations').select('id, email, role, status, created_at, expires_at').eq('company_id', profile.company_id).order('created_at', { ascending: false });
+    setInvitations((data ?? []) as SafeInvitation[]);
     setLoading(false);
   };
 
@@ -46,11 +50,6 @@ export default function AdminEmployees() {
     }
   };
 
-  const handleCopyLink = (token: string) => {
-    const link = `${window.location.origin}/en/invite?token=${token}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Invite-link kopieret');
-  };
 
   if (!isAdmin) {
     return (
@@ -96,11 +95,6 @@ export default function AdminEmployees() {
                         {inv.status}
                       </span>
                     </div>
-                    {inv.status === 'pending' && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopyLink(inv.token)}>
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                    )}
                   </div>
                 ))}
               </div>
