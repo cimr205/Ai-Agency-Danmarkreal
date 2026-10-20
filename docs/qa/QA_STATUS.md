@@ -3,7 +3,28 @@
 _Autonomous quality system: tests, fixes and hardens the SaaS via real Chrome on localhost._
 
 **Last run:** 2026-10-20 · **Engine:** Playwright 1.64 (real Google Chrome, `channel: "chrome"`) + axe-core
-**Overall:** 🟢 **Milestone 1 (manual Lead→…→Payment) VERIFIED.** Public + authenticated finance flows GREEN. ⛔ One pre-existing P1 blocker outside the flow: `npm run type-check` is RED (invitations `token`→`token_hash` drift) — see BLOCKER-TS-001.
+**Overall:** 🟢 **Milestone 1 (manual) VERIFIED** · 🟢 **Milestone 2 (AI-assisted action) VERIFIED** (model-free core). ⛔ Pre-existing `type-check` blocker (BLOCKER-TS-001) outside both flows. ⚠️ Live-model lead *analysis* blocked by the provider (configured model unavailable) — BLOCKER-AI-001.
+
+---
+
+## Milestone 2 — AI-ASSISTED action (prepare → approve → execute) · ✅ VERIFIED (2026-10-20)
+
+**Build reused, not rebuilt.** The deployed `ai-operating-manager` edge function already implements the full AI Execution Contract (§5/§6/§7): propose → approve/reject/edit/retry over `autopilot_actions`, with RBAC (`canExecute`), tenant scoping, idempotent execution (`claim_ai_action_execution`), real business executors (`tasks.create` → `tasks`), verification, and an `ai_action_audit` trail. We verified it and added the missing **contextual lead UX**.
+
+### What was added (scoped, product code)
+- `src/hooks/api/useLeadAssist.ts` — `useProposeFollowup` (propose a `tasks.create` action bound to the lead, idempotency-keyed) + `useReviewAction` (approve/reject). The browser never executes the side effect; it proposes and records the decision.
+- `src/components/leads/LeadFollowupAction.tsx` — "Forbered opfølgning (AI)" → an immutable proposal card (**Hvad / Hvorfor / Hvad ændres / risiko** + "udføres server-side efter godkendelse") → **Godkend / Afvis** → result. Evidence: `docs/qa/evidence/ai-assist-followup-proposal.png`.
+- `src/pages/app/crm/LeadsPage.tsx` — renders it in the lead detail (next to the existing grounded analysis panel).
+
+### Verified behaviour (real Chrome + REST, Tenant A/B)
+- `tests/e2e/ai-assist-pipeline.spec.ts` (backend contract, 4/4): propose → `awaiting_approval` (no side effect); approve → task created **once**, `pending`, linked to the lead, action `completed` + `verification`; audit has `proposed/approved/completed`; **double approval is idempotent** (one task); **missing `title` rejected**; **Tenant B cannot read or approve** A's action/task.
+- `tests/e2e/lead-ai-assist.spec.ts` (UX, 2/2): open lead → prepare → review proposal (low risk) → **approve → task created exactly once → persists after refresh → audited**; **reject → nothing created**.
+
+### DoD checklist (/goal §12)
+Open lead ✅ · analyse (grounded UI) ✅ (live text ⛔ BLOCKER-AI-001) · prepare follow-up ✅ · review ✅ · approve/reject ✅ · created exactly once ✅ · persists after refresh ✅ · audit trail ✅ · tenant-isolated ✅ · regression green ✅ · no new TS errors ✅ · build ✅ · existing manual flow still works ✅ (8/8 regression).
+
+### ⚠️ BLOCKER-AI-001 — live-model analysis unavailable (external dependency)
+`lead-ai-recommend` fetches the lead + activities + deals (grounding is real) and calls the company's configured provider, which returns **404 "Den konfigurerede model kunne ikke findes hos udbyderen."** — the self-hosted model isn't available at the endpoint. So the *analysis text* can't be generated right now. This is an environment/provider-config issue, **not** a code defect, and the AI-assisted **action** pipeline is model-independent and fully verified. Per §10, live-model output is **not** mocked-as-passed; it is reported as blocked pending an available model.
 
 ---
 
