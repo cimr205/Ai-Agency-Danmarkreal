@@ -39,7 +39,11 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 | AI-assisted action (follow-up) | **VERIFIED** | `ai-assist-pipeline.spec.ts`, `lead-ai-assist.spec.ts` — propose→approve→execute-once→audit, tenant-isolated. Live-model *analysis* **BLOCKED** (BLOCKER-AI-001) |
 | Settings — Invitations | **VERIFIED** | `invitations.spec.ts` — secure one-time token, no token/hash exposed |
 | Admin — Users/Employees | **PARTIAL** | Compiles + green type-check; system_admin-only, not reachable by the test tenant (no fixture) |
-| HR (attendance/time/leave/payroll) | **NOT TESTED** | Payroll must NOT be represented as production-ready |
+| Settings — Company details | **NOT TESTED (UI)** | `handleSave` is a standard RLS-scoped `companies` update; UI inputs are unlabeled + a global search box shares the textbox role, so a robust UI edit test was deferred. Data path/RLS covered by cross-tenant tests |
+| Settings — Subscription | **NOT TESTED** | No real subscription transactions in QA |
+| Onboarding / first-run (new company) | **BLOCKED** | Signup yields no session (Supabase "Confirm email" ON) → a brand-new company can't be provisioned in automated QA. Existing-tenant surfaces verified elsewhere |
+| HR — Employees / Schedule / Attendance / Time / Leave | **NOT TESTED / BLOCKED** | Multi-employee role separation needs ≥2 confirmed accounts (BLOCKED-signup). Single-user surfaces not yet exercised |
+| HR — Payroll / legal (DK) | **BLOCKED** | Must NOT be represented as production-ready; calculations/permissions/legal assumptions unverified |
 | Marketing (Meta Ads etc.) | **NOT TESTED** | No real ad spend in QA |
 
 ---
