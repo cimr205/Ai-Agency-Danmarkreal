@@ -13,7 +13,7 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 |---|---|---|---|
 | **A. Sales-to-cash** — Lead → Customer → Deal → Quote → Invoice → Payment | **VERIFIED** | `manual-sales-flow.spec.ts`, `sales-flow.spec.ts`, `finance-edge.spec.ts` | Atomic lead conversion (dedupe), quote draft→sent→accepted, quote→invoice, partial payment + remaining, overpayment/negative rejected, concurrent-payment exactly-once, persistence, cross-tenant isolation |
 | **B. Service operations** — Customer → Task → Assignment → Schedule → Progress → Completion | **VERIFIED** | `service-ops.spec.ts` | Customer-linked task (`lead_id`→customers), assignee, due date, pending→in_progress→completed, `completed_at`, traceable on customer timeline, tenant-isolated. ⚠️ true multi-user role separation not exercised (see BLOCKED-signup) |
-| **C. Employee operations** — Invite → Role → Schedule → Attendance → Time → Leave → Reporting | **PARTIAL** | `invitations.spec.ts` (invite create + one-time link + list); | Secure invitations VERIFIED. Schedule/attendance/time/leave/payroll **NOT TESTED** this phase |
+| **C. Employee operations** — Invite → Role → Schedule → Attendance → Time → Leave → Reporting | **PARTIAL** | `invitations.spec.ts`, `hr-time-tracking.spec.ts` | Secure invitations VERIFIED; **self-service time tracking** (clock in→out→persisted) VERIFIED. Multi-employee role separation, manager approval, schedule/leave/payroll **BLOCKED** (need ≥2 confirmed accounts — service-role key) |
 | **D. Customer communication** — Email → thread → follow-up → task | **PARTIAL** | `email-xss.spec.ts` (sandbox), `lead-ai-assist.spec.ts` (follow-up) | Stored-XSS defense VERIFIED; follow-up task VERIFIED. Live Gmail connect/send **BLOCKED** (needs a connected sandbox mailbox; no real sends in QA) |
 | **E. First-customer experience** — Signup → company → first customer → first action | **PARTIAL / BLOCKED** | — | Signup→session **BLOCKED** (Supabase "Confirm email" ON; no automated session). Existing-tenant flows verified elsewhere |
 
@@ -43,7 +43,8 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 | Settings — Company details | **NOT TESTED (UI)** | `handleSave` is a standard RLS-scoped `companies` update; UI inputs are unlabeled + a global search box shares the textbox role, so a robust UI edit test was deferred. Data path/RLS covered by cross-tenant tests |
 | Settings — Subscription | **NOT TESTED** | No real subscription transactions in QA |
 | Onboarding / first-run (new company) | **BLOCKED** | Signup yields no session (Supabase "Confirm email" ON) → a brand-new company can't be provisioned in automated QA. Existing-tenant surfaces verified elsewhere |
-| HR — Employees / Schedule / Attendance / Time / Leave | **NOT TESTED / BLOCKED** | Multi-employee role separation needs ≥2 confirmed accounts (BLOCKED-signup). Single-user surfaces not yet exercised |
+| HR — Time tracking (self) | **VERIFIED** | `hr-time-tracking.spec.ts` — clock in → active session → clock out → completed attendance_log persists (employee profile auto-provisioned) |
+| HR — Employees / Schedule / Attendance / Leave | **BLOCKED** | Multi-employee role separation + manager approval need ≥2 confirmed accounts (BLOCKED-signup / service-role key) |
 | HR — Payroll / legal (DK) | **BLOCKED** | Must NOT be represented as production-ready; calculations/permissions/legal assumptions unverified |
 | Marketing (Meta Ads etc.) | **NOT TESTED** | No real ad spend in QA |
 
