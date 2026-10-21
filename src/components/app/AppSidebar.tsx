@@ -65,8 +65,9 @@ function useNavData() {
   ];
 
   const hrAdminItems: NavItem[] = [
-    { title: t('nav.employees') || 'Employees', url: "hr/employees", icon: UserCheck },
+    // Workforce Dashboard is the managers' operational entry point — list it first.
     { title: t('nav.workforceDashboard') || 'Workforce', url: "hr/workforce", icon: BarChart3 },
+    { title: t('nav.employees') || 'Employees', url: "hr/employees", icon: UserCheck },
     { title: t('nav.payroll') || 'Payroll', url: "hr/payroll", icon: Wallet },
     { title: t('nav.recruitment') || 'Recruitment', url: "hr/recruitment", icon: UserPlus },
   ];

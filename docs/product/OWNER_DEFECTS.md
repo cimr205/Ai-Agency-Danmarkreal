@@ -8,7 +8,7 @@ Branch `feature/frontend-operating-system`. Writes use isolated QA tenants; no r
 |---|---|---|---|---|
 | 2 | CVR lookup | High | **PARTIAL** | Two real bugs: (a) frontend built the function URL from an **undefined** `VITE_SUPABASE_PROJECT_ID` → every call hit `https://undefined.supabase.co` (FIXED → `supabase.functions.invoke`, name search enabled; `cvr-lookup.spec.ts`); (b) the `cvr-search` function mislabels cvrapi.dk's **403 QUOTA_EXCEEDED** as "invalid User-Agent" (FIXED in code). **Live lookup BLOCKED:** cvrapi.dk free tier is quota-exhausted on the Supabase edge IP (proved: the exact UA returns **200 + real Novo Nordisk data** from a non-quota IP). Needs a **paid cvrapi.dk token** (owner) + edge-function deploy. |
 | 1 | Control Center / right sidebar | High | AUDIT | Pending — likely the Operating Manager command path (needs the AI model, BLOCKER-AI-001) vs. unwired approve buttons. |
-| 8 | Workforce Dashboard first in nav | Low | AUDIT | Pending nav config change. |
+| 8 | Workforce Dashboard first in nav | Low | **PARTIAL** | Reordered in `AppSidebar.tsx` (Workforce now first in the manager HR group). The **active** nav `WorkspaceRail.tsx` has the workforce item **last** but is in the *other agent's uncommitted* changes → BLOCKED on coordination (1-line move: put the `hr/workforce` item at the top of the HR group). |
 | 6 | Paid user seats / invitations | High | AUDIT | Needs Stripe test keys + owner pricing decisions (proration/trials/non-billable admins). Likely BLOCKED for live billing. |
 | 7 | Recruitment workflow | Medium | AUDIT | Pending. |
 | 5 | AI Media image generation | Medium | AUDIT | Likely BLOCKED (provider/model, cf. BLOCKER-AI-001). |
