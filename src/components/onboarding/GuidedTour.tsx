@@ -8,42 +8,17 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface TourStep {
   target: string; // CSS selector
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
 }
 
 const TOUR_STEPS: TourStep[] = [
-  {
-    target: '[data-tour="dashboard"]',
-    title: 'Dit Dashboard',
-    description: 'Her får du et komplet overblik over din virksomheds KPI\'er, leads og pipeline.',
-    position: 'bottom',
-  },
-  {
-    target: '[data-tour="leads"]',
-    title: 'Leads & CRM',
-    description: 'Administrer alle dine kundeemner, score dem med AI og følg op automatisk.',
-    position: 'right',
-  },
-  {
-    target: '[data-tour="pipeline"]',
-    title: 'Pipeline',
-    description: 'Visualiser din salgspipeline med drag-and-drop og se forventet omsætning.',
-    position: 'right',
-  },
-  {
-    target: '[data-tour="pa"]',
-    title: 'AI Assistent',
-    description: 'Din personlige AI-assistent der kan hjælpe med emails, analyser og opgaver.',
-    position: 'right',
-  },
-  {
-    target: '[data-tour="settings"]',
-    title: 'Indstillinger',
-    description: 'Tilpas din virksomhedsprofil, inviter teammedlemmer og konfigurer integrationer.',
-    position: 'right',
-  },
+  { target: '[data-tour="dashboard"]', titleKey: 'tour.dashboardTitle', descriptionKey: 'tour.dashboardDesc', position: 'bottom' },
+  { target: '[data-tour="leads"]', titleKey: 'tour.leadsTitle', descriptionKey: 'tour.leadsDesc', position: 'right' },
+  { target: '[data-tour="pipeline"]', titleKey: 'tour.pipelineTitle', descriptionKey: 'tour.pipelineDesc', position: 'right' },
+  { target: '[data-tour="pa"]', titleKey: 'tour.aiTitle', descriptionKey: 'tour.aiDesc', position: 'right' },
+  { target: '[data-tour="settings"]', titleKey: 'tour.settingsTitle', descriptionKey: 'tour.settingsDesc', position: 'right' },
 ];
 
 export function GuidedTour() {
@@ -142,15 +117,15 @@ export function GuidedTour() {
             </Button>
           </div>
 
-          <h3 className="font-semibold text-sm mb-1">{step.title}</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed mb-3">{step.description}</p>
+          <h3 className="font-semibold text-sm mb-1">{t(step.titleKey)}</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed mb-3">{t(step.descriptionKey)}</p>
 
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={prevStep} disabled={currentStep === 0} className="h-7 text-xs">
-              <ArrowLeft className="w-3 h-3 mr-1" /> Tilbage
+              <ArrowLeft className="w-3 h-3 mr-1" /> {t('tour.back')}
             </Button>
             <Button size="sm" onClick={nextStep} className="h-7 text-xs">
-              {currentStep === TOUR_STEPS.length - 1 ? 'Færdig' : 'Næste'}
+              {currentStep === TOUR_STEPS.length - 1 ? t('tour.done') : t('tour.next')}
               {currentStep < TOUR_STEPS.length - 1 && <ArrowRight className="w-3 h-3 ml-1" />}
             </Button>
           </div>

@@ -33,7 +33,10 @@
     "actions": "Handlinger",
     "noData": "Ingen data endnu",
     "close": "Luk",
-    "account": "Konto"
+    "account": "Konto",
+    "create": "Opret",
+    "selectAllVisible": "Vælg alle synlige ({count})",
+    "selected": "{count} valgt"
   },
   "language": {
     "label": "Sprog",
@@ -325,7 +328,24 @@
     "workSchedule": "Arbejdsplan",
     "workforceReports": "Rapporter",
     "quotes": "Tilbud",
-    "emailTemplates": "E-mail skabeloner"
+    "emailTemplates": "E-mail skabeloner",
+    "accountMenu": "Kontomenu",
+    "aiMedia": "AI Medier",
+    "clients": "Klienter",
+    "connectedApps": "Forbundne apps",
+    "help": "Hjælp",
+    "messages": "Beskeder",
+    "openMenu": "Åbn menu",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow-chat",
+    "workspaceNavigation": "Workspace-navigation",
+    "controlRoom": "Kontrolrum",
+    "insights": "Indsigter",
+    "automation": "Automatisering",
+    "assistant": "Assistent",
+    "documents": "Dokumenter",
+    "aiProvider": "AI-udbyder"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -529,7 +549,25 @@
     "inProgressSuffix": "i gang",
     "unreadEmailsLabel": "ulæste emails",
     "ofTotalSuffix": "af {n} totalt",
-    "pipelineByStage": "Pipeline efter fase"
+    "pipelineByStage": "Pipeline efter fase",
+    "needsAttentionEmpty": "Intet presserende lige nu. Brug tiden på pipeline, outreach eller fakturering.",
+    "cashCollected": "Indbetalt",
+    "pressureLabel": "Pres",
+    "workloadLabel": "Arbejdsbyrde",
+    "vsLastMonth": "vs. sidste måned",
+    "firstActiveMonth": "første aktive måned",
+    "openOpportunitiesSuffix": "åbne muligheder",
+    "meetingsToday": "Dagens møder",
+    "noMeetings": "Ingen møder planlagt i dag.",
+    "taskQueueTitle": "Opgavekø",
+    "teamToday": "Team i dag",
+    "cashflowTitle": "Cashflow",
+    "noRevenueYet": "Ingen faktureret omsætning endnu",
+    "noRevenueYetDesc": "Opret din første faktura for at se omsætningstempoet bygge op her.",
+    "noDealsYetDesc": "Opret din første deal for at se pipeline-momentum og pres.",
+    "viewAll": "Se alle",
+    "activeLabel": "Aktive",
+    "teamLabel": "Team"
   },
   "crm": {
     "leadsTitle": "Leads",
@@ -666,7 +704,8 @@
     "noPositions": "Ingen stillinger fundet",
     "fetchRecruitmentError": "Kunne ikke hente stillinger",
     "searchPositionPlaceholder": "Søg efter stilling...",
-    "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode."
+    "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode.",
+    "departmentRequired": "Afdeling er påkrævet"
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -1033,6 +1072,7 @@
       "moreFilters": "Flere filtre",
       "allOwners": "Alle ejere",
       "nextAction": "Næste handling",
+      "sourceLabel": "Kilde",
       "actionCallToday": "Ring i dag",
       "actionFollowUpTomorrow": "Følg op i morgen",
       "actionFollowUpIn": "Følg op om",
@@ -1054,7 +1094,9 @@
       "buildYourListDesc": "Importér eksisterende kontakter, eller find nye virksomheder.",
       "startLeadGen": "Start leadgenerering",
       "aiEmailWriter": "AI mailskribent",
-      "folderNameTooShort": "Mappenavn skal være mindst 2 tegn"
+      "folderNameTooShort": "Mappenavn skal være mindst 2 tegn",
+      "syncNow": "Synkronisér nu",
+      "connectCrm": "Forbind CRM"
     },
     "deals": {
       "title": "Deals",
@@ -1096,7 +1138,9 @@
       "markLost": "Markér som Tabt",
       "lead": "Lead",
       "selectLead": "Vælg lead...",
-      "noLead": "Intet lead"
+      "noLead": "Intet lead",
+      "moveToStage": "Flyt til stadie",
+      "bulkStageUpdated": "Deals opdateret"
     },
     "invoices": {
       "title": "Fakturaer",
@@ -1184,7 +1228,9 @@
       "printInvoice": "Print faktura",
       "invoicePreview": "Faktura forhåndsvisning",
       "companyDetails": "Virksomhedsoplysninger",
-      "customerDetails": "Kundeoplysninger"
+      "customerDetails": "Kundeoplysninger",
+      "markSelectedSent": "Markér som sendt",
+      "connectPayments": "Forbind betalinger"
     },
     "tasks": {
       "title": "Opgaver",
@@ -1217,7 +1263,24 @@
       "fetchError": "Kunne ikke hente opgaver",
       "empty": "Ingen opgaver fundet. Opret din første opgave!",
       "assignedTo": "Tildelt til",
-      "selectAssignee": "Vælg medarbejder"
+      "selectAssignee": "Vælg medarbejder",
+      "selectTask": "Vælg: {title}",
+      "confirmBulkDelete": "Slet {count} opgave(r)? Dette kan ikke fortrydes.",
+      "confirmDelete": "Slet denne opgave? Dette kan ikke fortrydes.",
+      "archive": "Arkivér",
+      "unarchive": "Fjern fra arkiv",
+      "today": "I dag",
+      "overdue": "Forfaldne",
+      "upcoming": "Kommende",
+      "mine": "Mine",
+      "allActive": "Alle aktive",
+      "archived": "Arkiverede",
+      "allAssignees": "Alle ansvarlige",
+      "allPriorities": "Alle prioriteter",
+      "assignee": "Ansvarlig",
+      "priority": "Prioritet",
+      "bulkComplete": "Fuldfør",
+      "bulkAssignTo": "Tildel til"
     },
     "calendar": {
       "title": "Kalender",
@@ -1251,31 +1314,41 @@
       }
     },
     "inbox": {
-      "title": "Indbakke",
-      "subtitle": "Beskeder og notifikationer",
-      "newMessage": "Ny Besked",
-      "sendTitle": "Send besked",
-      "sendSubtitle": "Skriv en besked til en kollega",
-      "to": "Til (bruger-ID)",
-      "toPlaceholder": "Bruger ID",
-      "messageLabel": "Besked",
-      "messagePlaceholder": "Skriv din besked...",
-      "sendCta": "Send besked",
-      "sending": "Sender...",
-      "unreadMessages": "Ulæste beskeder",
-      "unreadNotifications": "Ulæste notifikationer",
-      "totalLabel": "Total",
-      "messagesTab": "Beskeder",
-      "notificationsTab": "Notifikationer",
-      "unknownSender": "Ukendt afsender",
-      "new": "Ny",
-      "fetchErrorMessages": "Kunne ikke hente beskeder",
-      "fetchErrorNotifications": "Kunne ikke hente notifikationer",
-      "emptyMessages": "Ingen beskeder",
-      "emptyNotifications": "Ingen notifikationer",
-      "receiverRequired": "Modtager og besked er påkrævet",
-      "sent_success": "Besked sendt",
-      "sent_error": "Kunne ikke sende besked"
+      "title": "Beskeder",
+      "subtitle": "Interne samtaler med dine kollegaer",
+      "searchPlaceholder": "Søg personer eller beskeder",
+      "filterAll": "Alle",
+      "filterUnread": "Ulæste",
+      "newConversation": "Ny besked",
+      "newConversationTitle": "Start en samtale",
+      "newConversationDescription": "Vælg en kollega at skrive til",
+      "colleagueSearchPlaceholder": "Søg kollegaer på navn eller email",
+      "noColleaguesFound": "Ingen kollegaer fundet",
+      "firstMessagePlaceholder": "Skriv din første besked...",
+      "startConversation": "Start samtale",
+      "composerPlaceholder": "Skriv en besked...",
+      "send": "Send",
+      "sendHint": "Enter for at sende, Shift+Enter for ny linje",
+      "sendError": "Kunne ikke sende besked",
+      "markUnread": "Markér som ulæst",
+      "pinConversation": "Fastgør samtale",
+      "unpinConversation": "Frigør samtale",
+      "toggleDetails": "Vis/skjul detaljepanel",
+      "back": "Tilbage til samtaler",
+      "detailsHeading": "Samtaledetaljer",
+      "detailsEmail": "Email",
+      "detailsColleagueSince": "Kollega siden",
+      "detailsMessageCount": "Udvekslede beskeder",
+      "detailsFirstMessage": "Første besked",
+      "emptyNoSelectionTitle": "Vælg en samtale",
+      "emptyNoSelectionHint": "Vælg en samtale på listen, eller start en ny.",
+      "emptyNoConversationsTitle": "Ingen samtaler endnu",
+      "emptyNoConversationsHint": "Start en samtale med en kollega for at komme i gang.",
+      "noSearchResults": "Ingen samtaler matcher din søgning",
+      "loadError": "Kunne ikke hente beskeder",
+      "you": "Dig",
+      "unknownColleague": "Ukendt kollega",
+      "read": "Læst"
     },
     "meta": {
       "title": "Meta Ads Management",
@@ -1370,7 +1443,8 @@
       "priorityExplanation": "Emails prioriteres af AI baseret på indhold: møder, deadlines, fakturaer og kontrakter markeres automatisk.",
       "todoExplanation": "To-do forslag genereres af AI baseret på email-indhold der kræver handling fra dig.",
       "disconnectConfirmTitle": "Afbryd email?",
-      "disconnectConfirmDesc": "Dette fjerner din email-forbindelse. Du kan genoptage forbindelsen når som helst."
+      "disconnectConfirmDesc": "Dette fjerner din email-forbindelse. Du kan genoptage forbindelsen når som helst.",
+      "askAi": "Spørg AI"
     }
   },
   "companySettings": {
@@ -1505,7 +1579,32 @@
     "completeSetup": "Færdiggør din opsætning →",
     "markAsPaid": "Markér som betalt",
     "sendToCustomer": "Send til kunde",
-    "status": "Status"
+    "status": "Status",
+    "gdprTitle": "GDPR & Datarettigheder",
+    "gdprIntro": "I henhold til GDPR har du ret til at eksportere og slette dine persondata.",
+    "exportTitle": "Eksportér mine data",
+    "exportDesc": "Download alle dine persondata som JSON (GDPR Art. 20)",
+    "exportButton": "Eksportér",
+    "dataExported": "Data eksporteret",
+    "privacyPolicyTitle": "Privatlivspolitik",
+    "privacyPolicyDesc": "Læs hvordan vi behandler dine data",
+    "readButton": "Læs",
+    "deletionTitle": "Anmod om datasletning",
+    "deletionDesc": "Anmod om sletning af alle dine persondata (GDPR Art. 17). Behandles inden 30 dage.",
+    "requestButton": "Anmod",
+    "confirmDeletionTitle": "Bekræft anmodning om datasletning",
+    "confirmDeletionDesc": "Denne handling sender en formel anmodning om sletning af alle dine persondata. Din konto og alle tilknyttede data vil blive permanent slettet inden for 30 dage. Denne handling kan ikke fortrydes.",
+    "confirmDeleteData": "Ja, slet mine data",
+    "roleLabels": {
+      "system_admin": "System Admin",
+      "company_admin": "Virksomhedsadmin",
+      "owner": "Ejer",
+      "manager": "Leder",
+      "employee": "Medarbejder",
+      "readonly": "Kun læsning",
+      "partner": "Partner"
+    },
+    "deletionRequested": "Anmodning om datasletning modtaget. Vi behandler den inden for 30 dage."
   },
   "phoneCompanion": {
     "pairTitle": "Forbind denne telefon",
@@ -2066,7 +2165,11 @@
     "importCta": "Importér",
     "noNewResults": "Ingen nye leads fundet",
     "allDuplicated": "Alle fundne virksomheder eksisterer allerede i din database. Prøv en anden søgning.",
-    "newSearch": "Ny søgning"
+    "newSearch": "Ny søgning",
+    "statusVerified": "Verificeret",
+    "statusLikelyValid": "Sandsynligvis gyldig",
+    "statusUnverified": "Ikke verificeret",
+    "statusMissing": "Mangler"
   },
   "invitations": {
     "title": "Invitationer",
@@ -2147,7 +2250,16 @@
     "error": "Fejl",
     "noLogs": "Ingen logs endnu",
     "ok": "OK",
-    "failed": "Fejlet"
+    "failed": "Fejlet",
+    "zapierMakeIntro": "Zapier og Make bruger webhook-URL'er til at modtage data. Du logger ind på din egen Zapier/Make-konto, opretter en Zap/scenario med en \"Webhook\" trigger, kopierer URL'en, og indsætter den her.",
+    "loginAt": "Log ind på",
+    "createNewZap": "Opret en ny Zap → vælg",
+    "asTrigger": "som trigger",
+    "select": "Vælg",
+    "copyUrlFrom": "Kopiér den webhook-URL {service} giver dig",
+    "pasteUrlHere": "Indsæt URL'en her med knappen \"{button}\"",
+    "createNewScenario": "Opret et nyt scenario → tilføj",
+    "module": "modul"
   },
   "system": {
     "onlyAdminsCanChange": "Kun administratorer kan ændre systemtilstand",
@@ -2353,6 +2465,9 @@
     "ctr": "CTR",
     "cpc": "CPC",
     "conv": "KONV.",
+    "leads": "LEADS",
+    "won": "VUNDET",
+    "revenue": "OMSÆTNING",
     "trend": "TENDENS",
     "last7": "Sidste 7 dage",
     "last14": "Sidste 14 dage",
@@ -2367,5 +2482,94 @@
     "objective": "Formål",
     "noCampaignsYet": "Ingen kampagner endnu",
     "createFirstCampaign": "Opret din første kampagne for at komme i gang"
+  },
+  "command": {
+    "placeholder": "Søg eller gå til...",
+    "noResults": "Ingen resultater",
+    "quickCreate": "Opret ny",
+    "goTo": "Gå til",
+    "createPrefix": "Opret",
+    "leads": "Leads",
+    "customers": "Kunder",
+    "deals": "Deals",
+    "tasks": "Opgaver",
+    "invoices": "Fakturaer",
+    "employees": "Medarbejdere",
+    "modeOverview": "Overblik",
+    "modeOverviewHint": "Hjem, klienter, kalender",
+    "modeSales": "Salg",
+    "modeSalesHint": "Leads, deals, kommunikation",
+    "modeOperations": "Drift",
+    "modeOperationsHint": "Fakturaer, betalinger, automation",
+    "modePeople": "Folk",
+    "modePeopleHint": "Medarbejdere, tid, løn",
+    "searchPlaceholderV2": "Søg klienter, deals, fakturaer eller naviger…",
+    "noResultsV2": "Ingen resultater.",
+    "switchMode": "Skift tilstand"
+  },
+  "clientView": {
+    "loadError": "Klienten kunne ikke indlæses.",
+    "timeline": "Tidslinje",
+    "context": "Kontekst"
+  },
+  "aiAgent": {
+    "contextCustomers": "Kunder",
+    "dragToMove": "Træk for at flytte",
+    "attachFile": "Vedhæft fil",
+    "analyzeImage": "Analysér dette billede",
+    "attachedFile": "Vedhæftet fil",
+    "failed": "AI fejlede. Prøv igen.",
+    "title": "Din PA",
+    "monitoring": "Overvåger",
+    "close": "Luk – stopper overvågning",
+    "greeting": "Hej! Jeg er din personlige PA 👋",
+    "greetingHint": "Jeg kan se alt på din {context}-side og hjælper dig proaktivt.",
+    "alwaysScanning": "Altid aktiv overvågning – jeg scanner løbende",
+    "thinking": "AI tænker...",
+    "askAbout": "Spørg om {context}...",
+    "typeToAgent": "Skriv til PA...",
+    "quickTodo": "📋 Lav to-do liste",
+    "quickTodoPrompt": "Lav en prioriteret to-do liste baseret på mine kommende deadlines fra hele systemet.",
+    "quickTip": "💡 Tip til {context}",
+    "quickTipPrompt": "Giv mig 3 konkrete handlinger jeg bør tage lige nu baseret på {context}-data.",
+    "quickAnalyze": "👁️ Analysér denne side",
+    "quickAnalyzePrompt": "Analysér alt hvad du kan se på denne side og giv mig konkrete anbefalinger og indsigter."
+  },
+  "contextPanel": {
+    "open": "Åbn",
+    "close": "Luk",
+    "actions": "Handlinger",
+    "signals": "Signaler",
+    "noSignals": "Ingen signaler lige nu.",
+    "title": "Kontrolcenter"
+  },
+  "ambientAI": {
+    "openTrigger": "Åbn handlingsfelt",
+    "ready": "Klar",
+    "title": "Handlingsfelt",
+    "placeholder": "F.eks. \"Find Acme A/S og opret deal til 50.000 kr næste fredag\"",
+    "confirmationRequired": "Bekræftelse påkrævet",
+    "readyForSafeActions": "Klar til sikre handlinger",
+    "confirmAndExecute": "Bekræft & udfør"
+  },
+  "tour": {
+    "dashboardTitle": "Dit Dashboard",
+    "dashboardDesc": "Her får du et komplet overblik over din virksomheds KPI'er, leads og pipeline.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Administrer alle dine kundeemner, score dem med AI og følg op automatisk.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualiser din salgspipeline med drag-and-drop og se forventet omsætning.",
+    "aiTitle": "AI Assistent",
+    "aiDesc": "Din personlige AI-assistent der kan hjælpe med emails, analyser og opgaver.",
+    "settingsTitle": "Indstillinger",
+    "settingsDesc": "Tilpas din virksomhedsprofil, inviter teammedlemmer og konfigurer integrationer.",
+    "back": "Tilbage",
+    "next": "Næste",
+    "done": "Færdig"
+  },
+  "helpCenter": {
+    "title": "Hjælpecenter",
+    "subtitle": "Find svar på dine spørgsmål",
+    "noResults": "Ingen artikler fundet. Prøv et andet søgeord."
   }
 }

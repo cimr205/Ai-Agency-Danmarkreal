@@ -9,7 +9,9 @@ import { ClientRelationshipBar } from "@/components/clients/ClientRelationshipBa
 import { ClientContextSidebar } from "@/components/clients/ClientContextSidebar";
 import { LogActivityForm } from "@/components/clients/LogActivityForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { deriveClientSignals, buildAiSummary } from "@/lib/clientIntelligence";
+import { useI18n } from "@/lib/i18n";
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -21,7 +23,8 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function ClientView() {
   const { id } = useParams();
-  const { data, isLoading, error } = useClientGraph(id);
+  const { t } = useI18n();
+  const { data, isLoading, error, refetch } = useClientGraph(id);
 
   const intelligence = useMemo(() => {
     if (!data) return null;
@@ -46,10 +49,10 @@ export default function ClientView() {
     );
   }
   if (error || !data || !intelligence) {
-    return <div className="text-sm text-muted-foreground">Klienten kunne ikke indlæses.</div>;
+    return <ErrorState title={t('clientView.loadError')} onRetry={() => refetch()} bare />;
   }
 
-  const { customer, timeline, stats, deals, invoices, payments } = data;
+  const { customer, timeline, stats, deals, invoices, quotes, payments } = data;
 
   return (
     <div className="space-y-16 pb-20">
@@ -66,28 +69,28 @@ export default function ClientView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-x-16 gap-y-14">
         <section className="space-y-5">
-          <SectionLabel>Tidslinje</SectionLabel>
+          <SectionLabel>{t('clientView.timeline')}</SectionLabel>
           <LogActivityForm entityType="customer" entityId={customer.id} />
           <ClientTimeline events={timeline.slice(0, 60)} />
         </section>
 
         <aside className="lg:sticky lg:top-16 lg:self-start">
-          <SectionLabel>Kontekst</SectionLabel>
+          <SectionLabel>{t('clientView.context')}</SectionLabel>
           <ClientContextSidebar signals={intelligence.signals} deals={deals} />
         </aside>
       </div>
 
       {deals.length > 0 && (
         <section>
-          <SectionLabel>Deals</SectionLabel>
+          <SectionLabel>{t('nav.deals')}</SectionLabel>
           <ClientDeals deals={deals} />
         </section>
       )}
 
-      {(invoices.length > 0 || payments.length > 0) && (
+      {(invoices.length > 0 || payments.length > 0 || quotes.length > 0) && (
         <section>
-          <SectionLabel>Økonomi</SectionLabel>
-          <ClientLedger invoices={invoices} payments={payments} />
+          <SectionLabel>{t('nav.finance')}</SectionLabel>
+          <ClientLedger invoices={invoices} payments={payments} quotes={quotes} />
         </section>
       )}
     </div>

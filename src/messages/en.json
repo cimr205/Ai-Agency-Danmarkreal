@@ -36,7 +36,10 @@
     "copy": "Copy",
     "copied": "Copied to clipboard",
     "back": "Back",
-    "account": "Account"
+    "account": "Account",
+    "create": "Create",
+    "selectAllVisible": "Select all visible ({count})",
+    "selected": "{count} selected"
   },
   "language": {
     "label": "Language",
@@ -308,7 +311,24 @@
     "workSchedule": "Work Schedule",
     "workforceReports": "Reports",
     "quotes": "Quotes",
-    "emailTemplates": "Email Templates"
+    "emailTemplates": "Email Templates",
+    "accountMenu": "Account menu",
+    "aiMedia": "AI Media",
+    "clients": "Customers",
+    "connectedApps": "Connected apps",
+    "help": "Help",
+    "messages": "Messages",
+    "openMenu": "Open menu",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow Chat",
+    "workspaceNavigation": "Workspace navigation",
+    "controlRoom": "Control room",
+    "insights": "Insights",
+    "automation": "Automation",
+    "assistant": "Assistant",
+    "documents": "Documents",
+    "aiProvider": "AI Provider"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -512,7 +532,25 @@
     "inProgressSuffix": "in progress",
     "unreadEmailsLabel": "unread emails",
     "ofTotalSuffix": "of {n} total",
-    "pipelineByStage": "Pipeline by stage"
+    "pipelineByStage": "Pipeline by stage",
+    "needsAttentionEmpty": "Nothing urgent right now. Use the time on pipeline, outreach, or invoicing.",
+    "cashCollected": "Cash collected",
+    "pressureLabel": "Pressure",
+    "workloadLabel": "Workload",
+    "vsLastMonth": "vs. last month",
+    "firstActiveMonth": "first active month",
+    "openOpportunitiesSuffix": "open opportunities",
+    "meetingsToday": "Today's meetings",
+    "noMeetings": "No meetings scheduled today.",
+    "taskQueueTitle": "Task queue",
+    "teamToday": "Team today",
+    "cashflowTitle": "Cashflow",
+    "noRevenueYet": "No invoiced revenue yet",
+    "noRevenueYetDesc": "Create your first invoice to see revenue pace build up here.",
+    "noDealsYetDesc": "Create your first deal to see pipeline momentum and pressure.",
+    "viewAll": "View all",
+    "activeLabel": "Active",
+    "teamLabel": "Team"
   },
   "crm": {
     "leadsTitle": "Leads",
@@ -649,7 +687,8 @@
     "noPositions": "No positions found",
     "fetchRecruitmentError": "Could not load positions",
     "searchPositionPlaceholder": "Search positions...",
-    "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period."
+    "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period.",
+    "departmentRequired": "Department is required"
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -1016,6 +1055,7 @@
       "moreFilters": "More filters",
       "allOwners": "All owners",
       "nextAction": "Next action",
+      "sourceLabel": "Source",
       "actionCallToday": "Call today",
       "actionFollowUpTomorrow": "Follow up tomorrow",
       "actionFollowUpIn": "Follow up in",
@@ -1037,7 +1077,9 @@
       "buildYourListDesc": "Import existing contacts, or find new companies.",
       "startLeadGen": "Start lead generation",
       "aiEmailWriter": "AI Email Writer",
-      "folderNameTooShort": "Folder name must be at least 2 characters"
+      "folderNameTooShort": "Folder name must be at least 2 characters",
+      "syncNow": "Sync now",
+      "connectCrm": "Connect CRM"
     },
     "deals": {
       "title": "Deals",
@@ -1079,7 +1121,9 @@
       "markLost": "Mark as Lost",
       "lead": "Lead",
       "selectLead": "Select lead...",
-      "noLead": "No lead"
+      "noLead": "No lead",
+      "moveToStage": "Move to stage",
+      "bulkStageUpdated": "Deals updated"
     },
     "invoices": {
       "title": "Invoices",
@@ -1167,7 +1211,9 @@
       "printInvoice": "Print invoice",
       "invoicePreview": "Invoice preview",
       "companyDetails": "Company details",
-      "customerDetails": "Customer details"
+      "customerDetails": "Customer details",
+      "markSelectedSent": "Mark as sent",
+      "connectPayments": "Connect payments"
     },
     "tasks": {
       "title": "Tasks",
@@ -1200,7 +1246,24 @@
       "fetchError": "Could not fetch tasks",
       "empty": "No tasks found. Create your first task!",
       "assignedTo": "Assigned to",
-      "selectAssignee": "Select assignee"
+      "selectAssignee": "Select assignee",
+      "selectTask": "Select: {title}",
+      "confirmBulkDelete": "Delete {count} task(s)? This cannot be undone.",
+      "confirmDelete": "Delete this task? This cannot be undone.",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "today": "Today",
+      "overdue": "Overdue",
+      "upcoming": "Upcoming",
+      "mine": "Mine",
+      "allActive": "All active",
+      "archived": "Archived",
+      "allAssignees": "All assignees",
+      "allPriorities": "All priorities",
+      "assignee": "Assignee",
+      "priority": "Priority",
+      "bulkComplete": "Complete",
+      "bulkAssignTo": "Assign to"
     },
     "calendar": {
       "title": "Calendar",
@@ -1234,31 +1297,41 @@
       }
     },
     "inbox": {
-      "title": "Inbox",
-      "subtitle": "Messages and notifications",
-      "newMessage": "New Message",
-      "sendTitle": "Send message",
-      "sendSubtitle": "Write a message to a colleague",
-      "to": "To (user ID)",
-      "toPlaceholder": "User ID",
-      "messageLabel": "Message",
-      "messagePlaceholder": "Write your message...",
-      "sendCta": "Send message",
-      "sending": "Sending...",
-      "unreadMessages": "Unread messages",
-      "unreadNotifications": "Unread notifications",
-      "totalLabel": "Total",
-      "messagesTab": "Messages",
-      "notificationsTab": "Notifications",
-      "unknownSender": "Unknown sender",
-      "new": "New",
-      "fetchErrorMessages": "Could not fetch messages",
-      "fetchErrorNotifications": "Could not fetch notifications",
-      "emptyMessages": "No messages",
-      "emptyNotifications": "No notifications",
-      "receiverRequired": "Recipient and message are required",
-      "sent_success": "Message sent",
-      "sent_error": "Could not send message"
+      "title": "Messages",
+      "subtitle": "Internal conversations with your colleagues",
+      "searchPlaceholder": "Search people or messages",
+      "filterAll": "All",
+      "filterUnread": "Unread",
+      "newConversation": "New message",
+      "newConversationTitle": "Start a conversation",
+      "newConversationDescription": "Pick a colleague to message",
+      "colleagueSearchPlaceholder": "Search colleagues by name or email",
+      "noColleaguesFound": "No colleagues found",
+      "firstMessagePlaceholder": "Write your first message...",
+      "startConversation": "Start conversation",
+      "composerPlaceholder": "Write a message...",
+      "send": "Send",
+      "sendHint": "Enter to send, Shift+Enter for a new line",
+      "sendError": "Could not send message",
+      "markUnread": "Mark as unread",
+      "pinConversation": "Pin conversation",
+      "unpinConversation": "Unpin conversation",
+      "toggleDetails": "Toggle details panel",
+      "back": "Back to conversations",
+      "detailsHeading": "Conversation details",
+      "detailsEmail": "Email",
+      "detailsColleagueSince": "Colleague since",
+      "detailsMessageCount": "Messages exchanged",
+      "detailsFirstMessage": "First message",
+      "emptyNoSelectionTitle": "Select a conversation",
+      "emptyNoSelectionHint": "Choose a conversation from the list, or start a new one.",
+      "emptyNoConversationsTitle": "No conversations yet",
+      "emptyNoConversationsHint": "Start a conversation with a colleague to get going.",
+      "noSearchResults": "No conversations match your search",
+      "loadError": "Could not load messages",
+      "you": "You",
+      "unknownColleague": "Unknown colleague",
+      "read": "Read"
     },
     "meta": {
       "title": "Meta Ads Management",
@@ -1353,7 +1426,8 @@
       "priorityExplanation": "Emails are prioritized by AI based on content: meetings, deadlines, invoices and contracts are flagged automatically.",
       "todoExplanation": "To-do suggestions are generated by AI based on email content that implies an action is needed from you.",
       "disconnectConfirmTitle": "Disconnect email?",
-      "disconnectConfirmDesc": "This will remove your email connection. You can reconnect at any time."
+      "disconnectConfirmDesc": "This will remove your email connection. You can reconnect at any time.",
+      "askAi": "Ask AI"
     }
   },
   "companySettings": {
@@ -1488,7 +1562,32 @@
     "completeSetup": "Complete your workspace setup →",
     "markAsPaid": "Mark as paid",
     "sendToCustomer": "Send to customer",
-    "status": "Status"
+    "status": "Status",
+    "gdprTitle": "GDPR & Data Rights",
+    "gdprIntro": "Under GDPR you have the right to export and delete your personal data.",
+    "exportTitle": "Export My Data",
+    "exportDesc": "Download all your personal data as JSON (GDPR Art. 20)",
+    "exportButton": "Export",
+    "dataExported": "Data exported",
+    "privacyPolicyTitle": "Privacy Policy",
+    "privacyPolicyDesc": "Read how we process your data",
+    "readButton": "Read",
+    "deletionTitle": "Request Data Deletion",
+    "deletionDesc": "Request deletion of all your personal data (GDPR Art. 17). Processed within 30 days.",
+    "requestButton": "Request",
+    "confirmDeletionTitle": "Confirm Data Deletion Request",
+    "confirmDeletionDesc": "This action submits a formal request to delete all your personal data. Your account and all associated data will be permanently deleted within 30 days. This action cannot be undone.",
+    "confirmDeleteData": "Yes, delete my data",
+    "roleLabels": {
+      "system_admin": "System Admin",
+      "company_admin": "Company Admin",
+      "owner": "Owner",
+      "manager": "Manager",
+      "employee": "Employee",
+      "readonly": "Read only",
+      "partner": "Partner"
+    },
+    "deletionRequested": "Data deletion request received. We will process it within 30 days."
   },
   "phoneCompanion": {
     "pairTitle": "Connect this phone",
@@ -2049,7 +2148,11 @@
     "importCta": "Import",
     "noNewResults": "No new leads found",
     "allDuplicated": "All found companies already exist in your database. Try a different search.",
-    "newSearch": "New search"
+    "newSearch": "New search",
+    "statusVerified": "Verified",
+    "statusLikelyValid": "Likely valid",
+    "statusUnverified": "Unverified",
+    "statusMissing": "Missing"
   },
   "invitations": {
     "title": "Invitations",
@@ -2130,7 +2233,16 @@
     "error": "Error",
     "noLogs": "No logs yet",
     "ok": "OK",
-    "failed": "Failed"
+    "failed": "Failed",
+    "zapierMakeIntro": "Zapier and Make use webhook URLs to receive data. Log in to your own Zapier/Make account, create a Zap/scenario with a \"Webhook\" trigger, copy the URL, and paste it here.",
+    "loginAt": "Log in at",
+    "createNewZap": "Create a new Zap → select",
+    "asTrigger": "as the trigger",
+    "select": "Select",
+    "copyUrlFrom": "Copy the webhook URL {service} gives you",
+    "pasteUrlHere": "Paste the URL here with the \"{button}\" button",
+    "createNewScenario": "Create a new scenario → add",
+    "module": "module"
   },
   "system": {
     "onlyAdminsCanChange": "Only administrators can change system state",
@@ -2390,6 +2502,9 @@
     "ctr": "CTR",
     "cpc": "CPC",
     "conv": "CONV.",
+    "leads": "LEADS",
+    "won": "WON",
+    "revenue": "REVENUE",
     "trend": "TREND",
     "last7": "Last 7 Days",
     "last14": "Last 14 Days",
@@ -2404,5 +2519,94 @@
     "objective": "Objective",
     "noCampaignsYet": "No campaigns yet",
     "createFirstCampaign": "Create your first campaign to get started"
+  },
+  "command": {
+    "placeholder": "Search or jump to...",
+    "noResults": "No results found",
+    "quickCreate": "Quick create",
+    "goTo": "Go to",
+    "createPrefix": "Create",
+    "leads": "Leads",
+    "customers": "Customers",
+    "deals": "Deals",
+    "tasks": "Tasks",
+    "invoices": "Invoices",
+    "employees": "Employees",
+    "modeOverview": "Overview",
+    "modeOverviewHint": "Home, clients, calendar",
+    "modeSales": "Sales",
+    "modeSalesHint": "Leads, deals, communication",
+    "modeOperations": "Operations",
+    "modeOperationsHint": "Invoices, payments, automation",
+    "modePeople": "People",
+    "modePeopleHint": "Employees, time, payroll",
+    "searchPlaceholderV2": "Search clients, deals, invoices, or navigate…",
+    "noResultsV2": "No results.",
+    "switchMode": "Switch mode"
+  },
+  "clientView": {
+    "loadError": "Could not load client.",
+    "timeline": "Timeline",
+    "context": "Context"
+  },
+  "aiAgent": {
+    "contextCustomers": "Customers",
+    "dragToMove": "Drag to move",
+    "attachFile": "Attach file",
+    "analyzeImage": "Analyze this image",
+    "attachedFile": "Attached file",
+    "failed": "AI failed. Please try again.",
+    "title": "Your PA",
+    "monitoring": "Monitoring",
+    "close": "Close — stops monitoring",
+    "greeting": "Hi! I'm your personal PA 👋",
+    "greetingHint": "I can see everything on your {context} page and help proactively.",
+    "alwaysScanning": "Always monitoring — I scan continuously",
+    "thinking": "AI is thinking...",
+    "askAbout": "Ask about {context}...",
+    "typeToAgent": "Message your PA...",
+    "quickTodo": "📋 Make a to-do list",
+    "quickTodoPrompt": "Make a prioritized to-do list based on my upcoming deadlines across the whole system.",
+    "quickTip": "💡 Tip for {context}",
+    "quickTipPrompt": "Give me 3 concrete actions I should take right now based on {context} data.",
+    "quickAnalyze": "👁️ Analyze this page",
+    "quickAnalyzePrompt": "Analyze everything you can see on this page and give me concrete recommendations and insights."
+  },
+  "contextPanel": {
+    "open": "Open",
+    "close": "Close",
+    "actions": "Actions",
+    "signals": "Signals",
+    "noSignals": "No signals right now.",
+    "title": "Control center"
+  },
+  "ambientAI": {
+    "openTrigger": "Open action bar",
+    "ready": "Ready",
+    "title": "Action bar",
+    "placeholder": "e.g. \"Find Acme Inc and create a 50,000 deal for next Friday\"",
+    "confirmationRequired": "Confirmation required",
+    "readyForSafeActions": "Ready for safe actions",
+    "confirmAndExecute": "Confirm & execute"
+  },
+  "tour": {
+    "dashboardTitle": "Your Dashboard",
+    "dashboardDesc": "Here you get a complete overview of your company's KPIs, leads and pipeline.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Manage all your leads, score them with AI and follow up automatically.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualize your sales pipeline with drag-and-drop and see expected revenue.",
+    "aiTitle": "AI Assistant",
+    "aiDesc": "Your personal AI assistant that can help with emails, analysis and tasks.",
+    "settingsTitle": "Settings",
+    "settingsDesc": "Customize your company profile, invite team members and configure integrations.",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
+  },
+  "helpCenter": {
+    "title": "Help Center",
+    "subtitle": "Find answers to your questions",
+    "noResults": "No articles found. Try a different search term."
   }
 }

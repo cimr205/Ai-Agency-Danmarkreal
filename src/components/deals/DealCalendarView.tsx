@@ -58,13 +58,13 @@ export function DealCalendarView({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
+        <Button variant="outline" size="icon" aria-label={locale === 'da' ? 'Forrige måned' : locale === 'de' ? 'Vorheriger Monat' : 'Previous month'} onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h3 className="text-lg font-semibold min-w-[200px] text-center">
           {format(currentDate, 'MMMM yyyy', { locale: dateFnsLocale })}
         </h3>
-        <Button variant="outline" size="icon" onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
+        <Button variant="outline" size="icon" aria-label={locale === 'da' ? 'Næste måned' : locale === 'de' ? 'Nächster Monat' : 'Next month'} onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

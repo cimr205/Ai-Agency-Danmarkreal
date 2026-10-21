@@ -54,6 +54,12 @@
     --warning: 38 92% 50%;              /* #F59E0B */
     --warning-foreground: 0 0% 0%;
 
+    --chart-blue: 217 91% 55%;
+    --chart-cyan: 189 80% 42%;
+    --chart-violet: 258 70% 56%;
+    --chart-teal: 172 66% 38%;
+    --chart-amber: 38 80% 50%;
+
     --gradient-primary: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(222 36% 18%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(42 22% 97%) 0%, hsl(40 18% 93%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(14 88% 50%) 0%, hsl(0 72% 51%) 100%);
@@ -91,89 +97,100 @@
   }
 
   .dark {
-    /* Crater — Dark theme · crimson accent · near-black maroon surfaces */
-    --background: 350 32% 6%;          /* #170B0C deep maroon-black */
-    --foreground: 20 20% 96%;          /* #F7F3F2 warm white */
+    /* Nebula — dark enterprise theme · deep navy surfaces · electric blue/cyan accent */
+    --background: 224 36% 7%;          /* #0B0F18 near-black navy */
+    --foreground: 210 20% 96%;         /* #F3F5F7 cool white */
 
-    --card: 350 28% 10%;               /* #241213 */
-    --card-foreground: 20 20% 96%;
+    --card: 222 28% 10%;               /* #121721 */
+    --card-foreground: 210 20% 96%;
 
-    --popover: 350 30% 8%;
-    --popover-foreground: 20 20% 96%;
+    --popover: 222 30% 12%;            /* #151B28 — one step above card, for floating surfaces */
+    --popover-foreground: 210 20% 96%;
 
-    --primary: 0 72% 51%;              /* #DC2626 crimson */
+    --primary: 217 91% 60%;            /* #3C83F6 electric blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 350 22% 15%;          /* #2E1719 */
-    --secondary-foreground: 20 15% 90%;
+    --secondary: 222 24% 15%;          /* #1D232F elevated/hover panel */
+    --secondary-foreground: 210 18% 92%;
 
-    --muted: 350 20% 13%;
-    --muted-foreground: 15 12% 62%;    /* warm grey */
+    --muted: 222 22% 13%;              /* #1A1E28 */
+    --muted-foreground: 217 15% 60%;   /* #8A95A8 desaturated blue-grey */
 
-    --accent: 0 72% 51%;
-    --accent-foreground: 0 0% 100%;
+    /* Hover/selected surface for menus, command items, nav rows — deliberately
+       neutral rather than tinted blue, so interaction feedback reads as
+       "lighter panel" not a color flash. Primary stays the only loud blue. */
+    --accent: 222 22% 17%;
+    --accent-foreground: 210 20% 97%;
 
-    --destructive: 0 84% 60%;          /* #EF4444 */
+    --destructive: 0 70% 58%;          /* #DF4949 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 22% 18%;             /* subtle warm hairline */
-    --input: 350 22% 18%;
-    --ring: 0 72% 51%;
+    --border: 222 20% 16%;             /* #212631 subtle hairline */
+    --input: 222 20% 16%;
+    --ring: 217 91% 60%;
 
-    --radius: 1rem;
+    --radius: 0.625rem;                /* 10px cards; md/sm derive to 8px/6px controls */
 
-    --sidebar-background: 350 35% 5%;  /* near-black maroon, slightly deeper than bg */
-    --sidebar-foreground: 20 15% 90%;
-    --sidebar-primary: 0 72% 51%;
+    --sidebar-background: 224 38% 6%;  /* #090D15 — marginally deeper than app bg */
+    --sidebar-foreground: 210 18% 90%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 350 22% 15%;
-    --sidebar-accent-foreground: 20 20% 96%;
-    --sidebar-border: 350 22% 15%;
-    --sidebar-ring: 0 72% 51%;
-    --sidebar-muted: 15 10% 55%;
+    --sidebar-accent: 222 24% 14%;
+    --sidebar-accent-foreground: 210 20% 97%;
+    --sidebar-border: 222 20% 14%;
+    --sidebar-ring: 217 91% 60%;
+    --sidebar-muted: 217 14% 55%;
 
-    --success: 152 69% 45%;            /* #22C57E — green, contrasts against red */
+    --success: 152 55% 45%;            /* #34B277 */
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 0%;
+    --warning: 38 80% 55%;             /* #E8A530 */
+    --warning-foreground: 222 47% 8%;
 
-    --stamp: 0 72% 51%;
-    --stamp-foreground: 0 0% 100%;
+    --stamp: 189 80% 50%;              /* #19C7E6 cyan — secondary accent for "live/ready" signals */
+    --stamp-foreground: 222 47% 8%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(350 80% 40%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(350 32% 6%) 0%, hsl(350 28% 9%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(0 72% 51%) 0%, hsl(15 85% 48%) 100%);
+    /* Secondary chart/accent hues — pipeline stages, chart series, AI badges.
+       Pull from these instead of inventing per-component hex. */
+    --chart-blue: 217 91% 60%;
+    --chart-cyan: 189 80% 50%;
+    --chart-violet: 258 70% 62%;
+    --chart-teal: 172 66% 45%;
+    --chart-amber: 38 80% 55%;
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
-    --shadow-md: 0 4px 16px -4px rgba(0,0,0,0.6);
-    --shadow-lg: 0 16px 40px -8px rgba(0,0,0,0.5);
-    --shadow-xl: 0 32px 64px -16px rgba(0,0,0,0.5);
-    --shadow-glow: 0 0 60px -10px rgba(220,38,38,0.28);
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(199 89% 52%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(224 36% 7%) 0%, hsl(222 30% 9%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(258 70% 62%) 100%);
 
-    --bg-base: #170B0C;
-    --bg-surface: #241213;
-    --bg-elevated: #2A1517;
-    --bg-overlay: #130809;
-    --bg-highlight: #2E1719;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.45);
+    --shadow-md: 0 2px 10px -2px rgba(0,0,0,0.5);
+    --shadow-lg: 0 10px 28px -8px rgba(0,0,0,0.5);
+    --shadow-xl: 0 20px 48px -12px rgba(0,0,0,0.5);
+    --shadow-glow: 0 0 40px -12px rgba(60,131,246,0.35);
+
+    --bg-base: #0B0F18;
+    --bg-surface: #121721;
+    --bg-elevated: #151B28;
+    --bg-overlay: #1A2130;
+    --bg-highlight: #1D232F;
     --border-subtle: rgba(255,255,255,0.06);
     --border-default: rgba(255,255,255,0.10);
     --border-strong: rgba(255,255,255,0.16);
-    --text-primary: #F7F3F2;
-    --text-secondary: #B8A8A8;
-    --text-muted: #8C7A7A;
-    --text-disabled: #4A3C3C;
-    --accent-base: #DC2626;
-    --accent-hover: #EF4444;
-    --accent-subtle: rgba(220,38,38,0.16);
-    --accent-glow: rgba(220,38,38,0.28);
-    --success-color: #22C57E;
-    --success-subtle: rgba(34,197,126,0.14);
-    --warning-color: #F5A623;
-    --warning-subtle: rgba(245,166,35,0.14);
-    --danger: #EF4444;
-    --danger-subtle: rgba(239,68,68,0.14);
-    --info: #DC2626;
-    --info-subtle: rgba(220,38,38,0.14);
+    --text-primary: #F3F5F7;
+    --text-secondary: #A9B3C4;
+    --text-muted: #8A95A8;
+    --text-disabled: #4A5366;
+    --accent-base: #3C83F6;
+    --accent-hover: #5B9AF8;
+    --accent-subtle: rgba(60,131,246,0.16);
+    --accent-glow: rgba(60,131,246,0.28);
+    --success-color: #34B277;
+    --success-subtle: rgba(52,178,119,0.14);
+    --warning-color: #E8A530;
+    --warning-subtle: rgba(232,165,48,0.14);
+    --danger: #DF4949;
+    --danger-subtle: rgba(223,73,73,0.14);
+    --info: #19C7E6;
+    --info-subtle: rgba(25,199,230,0.14);
   }
 
   /* Forces the light token set inside a .dark ancestor — used to scope the
@@ -224,6 +241,12 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
+
+    --chart-blue: 221 83% 53%;
+    --chart-cyan: 189 80% 42%;
+    --chart-violet: 258 70% 56%;
+    --chart-teal: 172 66% 38%;
+    --chart-amber: 38 80% 50%;
 
     --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(221 83% 45%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(214 33% 97%) 0%, hsl(214 32% 94%) 100%);

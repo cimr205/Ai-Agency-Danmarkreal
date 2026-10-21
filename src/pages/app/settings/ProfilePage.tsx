@@ -25,7 +25,6 @@ import { getErrorMessage } from '@/lib/errors';
 
 export default function ProfilePage() {
   const { t, locale } = useI18n();
-  const isDa = locale === 'da';
   const { profile, roles, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [saving, setSaving] = useState(false);
@@ -118,7 +117,7 @@ export default function ProfilePage() {
         metadata: { article: 'GDPR Art. 20' },
       });
 
-      toast.success(isDa ? 'Data eksporteret' : 'Data exported');
+      toast.success(t('profile.dataExported'));
     } catch (e) {
       toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
@@ -144,9 +143,7 @@ export default function ProfilePage() {
         metadata: { article: 'GDPR Art. 17' },
       });
 
-      toast.success(isDa
-        ? 'Anmodning om datasletning modtaget. Vi behandler den inden for 30 dage.'
-        : 'Data deletion request received. We will process it within 30 days.');
+      toast.success(t('profile.deletionRequested'));
     } catch (e) {
       toast.error(getErrorMessage(e) || t('common.error'));
     } finally {
@@ -155,13 +152,13 @@ export default function ProfilePage() {
   };
 
   const roleLabels: Record<string, string> = {
-    system_admin: 'System Admin',
-    company_admin: 'Virksomhedsadmin',
-    owner: 'Ejer',
-    manager: 'Leder',
-    employee: 'Medarbejder',
-    readonly: 'Kun læsning',
-    partner: 'Partner',
+    system_admin: t('profile.roleLabels.system_admin'),
+    company_admin: t('profile.roleLabels.company_admin'),
+    owner: t('profile.roleLabels.owner'),
+    manager: t('profile.roleLabels.manager'),
+    employee: t('profile.roleLabels.employee'),
+    readonly: t('profile.roleLabels.readonly'),
+    partner: t('profile.roleLabels.partner'),
   };
 
   return (
@@ -245,30 +242,26 @@ export default function ProfilePage() {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <Shield className="h-4 w-4" /> {isDa ? 'GDPR & Datarettigheder' : 'GDPR & Data Rights'}
+            <Shield className="h-4 w-4" /> {t('profile.gdprTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {isDa
-              ? 'I henhold til GDPR har du ret til at eksportere og slette dine persondata.'
-              : 'Under GDPR you have the right to export and delete your personal data.'}
+            {t('profile.gdprIntro')}
           </p>
 
           {/* Data Export */}
           <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
             <Download className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium">{isDa ? 'Eksportér mine data' : 'Export My Data'}</p>
+              <p className="text-sm font-medium">{t('profile.exportTitle')}</p>
               <p className="text-xs text-muted-foreground">
-                {isDa
-                  ? 'Download alle dine persondata som JSON (GDPR Art. 20)'
-                  : 'Download all your personal data as JSON (GDPR Art. 20)'}
+                {t('profile.exportDesc')}
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={handleExportData} disabled={exporting}>
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-              {isDa ? 'Eksportér' : 'Export'}
+              {t('profile.exportButton')}
             </Button>
           </div>
 
@@ -276,14 +269,14 @@ export default function ProfilePage() {
           <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
             <FileText className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium">{isDa ? 'Privatlivspolitik' : 'Privacy Policy'}</p>
+              <p className="text-sm font-medium">{t('profile.privacyPolicyTitle')}</p>
               <p className="text-xs text-muted-foreground">
-                {isDa ? 'Læs hvordan vi behandler dine data' : 'Read how we process your data'}
+                {t('profile.privacyPolicyDesc')}
               </p>
             </div>
             <Button size="sm" variant="outline" asChild>
               <a href={`/${locale}/privacy`} target="_blank" rel="noopener">
-                {isDa ? 'Læs' : 'Read'}
+                {t('profile.readButton')}
               </a>
             </Button>
           </div>
@@ -292,35 +285,31 @@ export default function ProfilePage() {
           <div className="flex items-start gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
             <Trash2 className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">{isDa ? 'Anmod om datasletning' : 'Request Data Deletion'}</p>
+              <p className="text-sm font-medium text-destructive">{t('profile.deletionTitle')}</p>
               <p className="text-xs text-muted-foreground">
-                {isDa
-                  ? 'Anmod om sletning af alle dine persondata (GDPR Art. 17). Behandles inden 30 dage.'
-                  : 'Request deletion of all your personal data (GDPR Art. 17). Processed within 30 days.'}
+                {t('profile.deletionDesc')}
               </p>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="destructive" disabled={requestingDeletion}>
                   {requestingDeletion ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
-                  {isDa ? 'Anmod' : 'Request'}
+                  {t('profile.requestButton')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>
-                    {isDa ? 'Bekræft anmodning om datasletning' : 'Confirm Data Deletion Request'}
+                    {t('profile.confirmDeletionTitle')}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    {isDa
-                      ? 'Denne handling sender en formel anmodning om sletning af alle dine persondata. Din konto og alle tilknyttede data vil blive permanent slettet inden for 30 dage. Denne handling kan ikke fortrydes.'
-                      : 'This action submits a formal request to delete all your personal data. Your account and all associated data will be permanently deleted within 30 days. This action cannot be undone.'}
+                    {t('profile.confirmDeletionDesc')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{isDa ? 'Annuller' : 'Cancel'}</AlertDialogCancel>
+                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleRequestDeletion} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    {isDa ? 'Ja, slet mine data' : 'Yes, delete my data'}
+                    {t('profile.confirmDeleteData')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

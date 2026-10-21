@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useInvoices, useCreateInvoice, useCreateInvoiceCheckout, useUpdateInvoiceStatus, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
+import { useInvoices, useCreateInvoice, useUpdateInvoiceStatus, useBulkMarkInvoicesSent, useDeleteInvoice, useCustomers, useCreateCustomer, useCompanyInfo, useCreateInvoiceCheckout, usePayments, type InvoiceLine, type InvoiceWithCustomer, type Company } from '@/hooks/api/useFinance';
 import { useModuleAvailability, useSyncFinancePayments } from '@/hooks/api/useIntegrations';
 import { useGmailAccount, useConnectGmail, useSendEmail } from '@/hooks/api/useEmail';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,15 +14,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check, Plug, RefreshCw } from 'lucide-react';
+import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check, Plug, RefreshCw, Briefcase, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useLeads } from '@/hooks/api/useLeads';
+import { useDeals } from '@/hooks/api/useDeals';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -47,14 +51,6 @@ function getVatInfo(country: string, customerType: string): { rate: number; note
   if (EU_COUNTRIES.includes(country) && customerType === 'private') return { rate: 25, note: 'EU private – Danish VAT' };
   return { rate: 0, note: 'Non-EU – VAT exempt' };
 }
-
-const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  sent: 'bg-primary/10 text-primary',
-  paid: 'bg-accent/10 text-accent',
-  overdue: 'bg-destructive/10 text-destructive',
-  cancelled: 'bg-muted text-muted-foreground',
-};
 
 function useFormatCurrency() {
   const { format } = useCurrency();
@@ -110,6 +106,7 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithCustomer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingInvoice, setEditingInvoice] = useState<EditingInvoice | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -163,13 +160,28 @@ export default function InvoicesPage() {
   };
 
   const { data, isLoading, error } = useInvoices();
+  const { data: allDeals } = useDeals();
+  const { data: allPayments } = usePayments();
   const { data: customers, refetch: refetchCustomers } = useCustomers();
   const { data: company, refetch: refetchCompany } = useCompanyInfo();
   const createInvoice = useCreateInvoice();
   const createCustomer = useCreateCustomer();
   const updateStatus = useUpdateInvoiceStatus();
+  const bulkMarkSent = useBulkMarkInvoicesSent();
   const createCheckout = useCreateInvoiceCheckout();
   const deleteInvoice = useDeleteInvoice();
+
+  // Open a specific invoice's detail sheet if navigated with ?invoiceId=... (e.g. from the command palette)
+  useEffect(() => {
+    const invoiceId = searchParams.get('invoiceId');
+    if (!invoiceId || !data || data.length === 0) return;
+    const target = data.find((invoice) => invoice.id === invoiceId);
+    if (target) setSelectedInvoice(target);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('invoiceId');
+    setSearchParams(nextParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, data]);
 
   const templateOptions = useMemo(() => getTemplateOptions(locale), [locale]);
 
@@ -274,6 +286,33 @@ export default function InvoicesPage() {
     inv.customers?.name?.toLowerCase().includes(search.toLowerCase())
   );
   const filteredInvoices = statusFilter === 'all' ? searchFiltered : searchFiltered.filter(inv => inv.status === statusFilter);
+  const draftIdsVisible = filteredInvoices.filter((inv) => inv.status === 'draft').map((inv) => inv.id);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, statusFilter]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisibleDrafts = () => {
+    setSelectedIds((prev) => prev.size === draftIdsVisible.length ? new Set() : new Set(draftIdsVisible));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkMarkSent = async () => {
+    try {
+      await bulkMarkSent.mutateAsync(Array.from(selectedIds));
+      toast.success(t('pages.invoices.markedSent'));
+      clearSelection();
+    } catch { toast.error(t('common.error')); }
+  };
 
   const selectedCustomer = useMemo(() => customers?.find(c => c.id === selectedCustomerId), [customers, selectedCustomerId]);
   const vatInfo = useMemo(() => {
@@ -364,7 +403,7 @@ export default function InvoicesPage() {
               className="gap-1.5 text-muted-foreground"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
-              <Plug className="h-3.5 w-3.5" /> Forbind betalinger
+              <Plug className="h-3.5 w-3.5" /> {t('pages.invoices.connectPayments')}
             </Button>
           )}
           {/* Template selector with visual color preview */}
@@ -677,7 +716,7 @@ export default function InvoicesPage() {
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<Input type="number" min={1} value={line.quantity} onChange={e => updateLine(i, 'quantity', Number(e.target.value))} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<Input type="number" min={0} value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.lineTotal')}</Label>}<Input value={formatCurrency(line.total)} readOnly className="bg-muted/50" /></div>
-                        <Button variant="ghost" size="icon" onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     ))}
                     <Button variant="outline" size="sm" onClick={addLine}><Plus className="h-3 w-3 mr-1" />{t('pages.invoices.addLine')}</Button>
@@ -708,7 +747,7 @@ export default function InvoicesPage() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><FileText className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalInvoices')}</p><p className="text-2xl font-bold">{invoiceStats.total}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-accent" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-accent">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-success">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalAmount')}</p><p className="text-2xl font-bold">{formatCurrency(invoiceStats.totalAmount)}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center"><FileText className="h-6 w-6 text-destructive" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.overdue')}</p><p className="text-2xl font-bold text-destructive">{invoiceStats.overdue}</p></div></div></CardContent></Card>
       </div>
@@ -730,11 +769,34 @@ export default function InvoicesPage() {
         </Tabs>
       </div>
 
+      {draftIdsVisible.length > 0 && (
+        <div className="flex items-center gap-3">
+          <Checkbox
+            checked={selectedIds.size > 0 && selectedIds.size === draftIdsVisible.length}
+            onCheckedChange={selectAllVisibleDrafts}
+            aria-label={t('common.selectAllVisible').replace('{count}', String(draftIdsVisible.length))}
+          />
+          <span className="text-xs text-muted-foreground">
+            {t('common.selectAllVisible').replace('{count}', String(draftIdsVisible.length))}
+          </span>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-xs text-muted-foreground">
+                {t('common.selected').replace('{count}', String(selectedIds.size))}
+              </span>
+              <Button size="sm" variant="outline" onClick={handleBulkMarkSent}>{t('pages.invoices.markSelectedSent')}</Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>{t('common.cancel')}</Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <Card><CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10" />
               <TableHead>{t('pages.invoices.invoiceNo')}</TableHead>
               <TableHead>{t('pages.invoices.customer')}</TableHead>
               <TableHead className="text-right">{t('pages.invoices.subtotal')}</TableHead>
@@ -747,9 +809,9 @@ export default function InvoicesPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
+              <TableRow key={i}>{Array.from({ length: 9 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>)}</TableRow>
             )) : filteredInvoices.length === 0 ? (
-              <TableRow><TableCell colSpan={8}>
+              <TableRow><TableCell colSpan={9}>
                 <EmptyState
                   bare
                   icon={FileText}
@@ -759,12 +821,21 @@ export default function InvoicesPage() {
               </TableCell></TableRow>
             ) : filteredInvoices.map(invoice => (
               <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedInvoice(invoice)}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {invoice.status === 'draft' && (
+                    <Checkbox
+                      checked={selectedIds.has(invoice.id)}
+                      onCheckedChange={() => toggleSelect(invoice.id)}
+                      aria-label={invoice.invoice_number}
+                    />
+                  )}
+                </TableCell>
                 <TableCell className="font-mono font-medium">{invoice.invoice_number}</TableCell>
                 <TableCell>{invoice.customers?.name || '–'}</TableCell>
                 <TableCell className="text-right">{formatCurrency(Number(invoice.subtotal || 0))}</TableCell>
                 <TableCell className="text-right">{formatCurrency(Number(invoice.vat_amount || 0))}</TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(invoice.amount))}</TableCell>
-                <TableCell><Badge className={statusColors[invoice.status]}>{statusLabels[invoice.status]}</Badge></TableCell>
+                <TableCell><StatusBadge status={invoice.status} label={statusLabels[invoice.status]} /></TableCell>
                 <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
@@ -782,7 +853,7 @@ export default function InvoicesPage() {
                       <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
                         try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
                       }}>
-                        <DollarSign className="h-4 w-4 text-accent" />
+                        <DollarSign className="h-4 w-4 text-success" />
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" title={t('pages.invoices.sendEmail')} onClick={() => openEmailDialog(invoice)}>
@@ -902,7 +973,7 @@ export default function InvoicesPage() {
               <div className="space-y-6 mt-6">
                 {/* Status & actions */}
                 <div className="flex items-center gap-3">
-                  <Badge className={statusColors[selectedInvoice.status]}>{statusLabels[selectedInvoice.status]}</Badge>
+                  <StatusBadge status={selectedInvoice.status} label={statusLabels[selectedInvoice.status]} />
                   {selectedInvoice.status !== 'paid' && (
                     <Select value={selectedInvoice.status} onValueChange={async (v) => {
                       try {
@@ -931,6 +1002,21 @@ export default function InvoicesPage() {
                     <p className="text-sm text-muted-foreground">{selectedInvoice.customers?.email || ''}</p>
                   </div>
                 </div>
+
+                {/* Source: quote and deal this invoice traces back to */}
+                {(selectedInvoice.quotes || selectedInvoice.quotes?.deal_id) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedInvoice.quotes && (
+                      <RelationshipChip icon={FileText} label={locale === 'da' ? 'Tilbud' : 'Quote'} value={selectedInvoice.quotes.title} />
+                    )}
+                    {selectedInvoice.quotes?.deal_id && (() => {
+                      const deal = allDeals?.find((d) => d.id === selectedInvoice.quotes!.deal_id);
+                      return deal ? (
+                        <RelationshipChip icon={Briefcase} label={t('pages.deals.title')} value={deal.title} href={`/${locale}/app/crm/deals`} />
+                      ) : null;
+                    })()}
+                  </div>
+                )}
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-4">
@@ -981,6 +1067,30 @@ export default function InvoicesPage() {
                     </div>
                   </>
                 )}
+
+                {/* Payment history — payments.invoice_id already exists and
+                    usePayments() is already loaded elsewhere in the app; this
+                    was previously fetched but never shown here. */}
+                {(() => {
+                  const invoicePayments = (allPayments ?? []).filter((p) => p.invoice_id === selectedInvoice.id);
+                  if (invoicePayments.length === 0) return null;
+                  return (
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground uppercase">{t('payments.title')}</Label>
+                        {invoicePayments.map((p) => (
+                          <div key={p.id} className="flex items-center gap-2 text-sm">
+                            <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <span className="flex-1">{formatCurrency(Number(p.amount))}</span>
+                            <span className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '–'}</span>
+                            <StatusBadge status={p.status} />
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Action buttons */}
                 <div className="flex gap-2 pt-4 flex-wrap">
@@ -1041,7 +1151,7 @@ export default function InvoicesPage() {
                         updated[i] = { ...updated[i], unit_price: price, total: updated[i].quantity * price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => {
                         setEditingInvoice({ ...editingInvoice, editLines: editingInvoice.editLines.filter((_, idx) => idx !== i) });
                       }} disabled={editingInvoice.editLines.length <= 1}><Trash2 className="h-4 w-4" /></Button>
                     </div>

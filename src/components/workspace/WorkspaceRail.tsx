@@ -38,8 +38,6 @@ interface NavGroup {
 
 function useNavGroups(): NavGroup[] {
   const { t } = useI18n();
-  const params = useParams();
-  const locale = isLocale(params.locale) ? params.locale : "en";
   return [
     {
       label: null,
@@ -104,17 +102,17 @@ function useNavGroups(): NavGroup[] {
       ],
     },
     {
-      label: locale === "da" ? "Kontrolrum" : "Control room",
+      label: t("nav.controlRoom"),
       eyebrow: "Workspace",
       module: "system",
       items: [
         { label: t("nav.studio"), path: "workspace/studio", icon: Workflow },
-        { label: t("nav.workflowChat") || "Workflow-chat", path: "workspace/workflow-chat", icon: MessageCircle },
-        { label: t("nav.operatingManager") || "Operating Manager", path: "workspace/operating-manager", icon: ShieldCheck },
+        { label: t("nav.workflowChat"), path: "workspace/workflow-chat", icon: MessageCircle },
+        { label: t("nav.operatingManager"), path: "workspace/operating-manager", icon: ShieldCheck },
         { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: Plug },
-        { label: locale === "da" ? "Indsigter" : "Insights", path: "workspace/intelligence", icon: Brain },
-        { label: locale === "da" ? "Automatisering" : "Automation", path: "autopilot", icon: Zap },
-        { label: locale === "da" ? "Assistent" : "Assistant", path: "pa", icon: Bot, dataTour: "pa" },
+        { label: t("nav.insights"), path: "workspace/intelligence", icon: Brain },
+        { label: t("nav.automation"), path: "autopilot", icon: Zap },
+        { label: t("nav.assistant"), path: "pa", icon: Bot, dataTour: "pa" },
         { label: t("nav.webhooks") || "Webhooks", path: "settings/webhooks", icon: Webhook },
         { label: t("nav.help"), path: "help", icon: BookOpen },
         { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings, dataTour: "settings" },

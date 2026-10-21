@@ -70,7 +70,7 @@ export function ContextBar({ onOpenPalette }: Props) {
         <button
           onClick={() => navigate(`${base}/settings/company`)}
           className="grid h-10 w-10 place-items-center rounded-md border border-border/70 bg-card text-muted-foreground transition-colors hover:border-border hover:text-foreground"
-          aria-label="Settings"
+          aria-label={t('nav.settings')}
         >
           <Settings className="h-4 w-4" />
         </button>
@@ -80,7 +80,7 @@ export function ContextBar({ onOpenPalette }: Props) {
         <button
           onClick={() => navigate(`${base}/settings/profile`)}
           className="grid h-10 w-10 place-items-center overflow-hidden rounded-md border border-border/70"
-          aria-label="Profile"
+          aria-label={t('nav.profile')}
         >
           <Avatar className="h-10 w-10">
             <AvatarImage src={profile?.avatar_url || undefined} />

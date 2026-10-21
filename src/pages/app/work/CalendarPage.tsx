@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Calendar, Clock, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
@@ -34,7 +35,7 @@ export default function CalendarPage() {
   const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
   const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
-  const { data: events, isLoading, error } = useMyCalendar({ start, end });
+  const { data: events, isLoading, error, refetch } = useMyCalendar({ start, end });
   const { data: tasks } = useTasks();
   const createEvent = useCreateCalendarEvent();
 
@@ -122,15 +123,15 @@ export default function CalendarPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="capitalize">{format(currentMonth, 'MMMM yyyy', { locale: dateFnsLocale })}</CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" aria-label={t('pages.calendar.previousMonth') || 'Previous month'} onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" aria-label={t('pages.calendar.nextMonth') || 'Next month'} onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-1 mb-2">
               {dayNames.map((day) => (<div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">{day}</div>))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className={`grid grid-cols-7 gap-1 transition-opacity ${isLoading ? 'opacity-50' : ''}`}>
               {Array.from({ length: (days[0].getDay() + 6) % 7 }).map((_, i) => (<div key={`empty-${i}`} className="aspect-square" />))}
               {days.map((day) => {
                 const dayEvents = getEventsForDay(day);
@@ -167,7 +168,7 @@ export default function CalendarPage() {
             {isLoading ? (
               <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-24" /></div>))}</div>
             ) : error ? (
-              <p className="text-muted-foreground text-sm">{t('pages.calendar.fetchError')}</p>
+              <ErrorState title={t('pages.calendar.fetchError')} onRetry={() => refetch()} bare />
             ) : upcomingEvents.length === 0 ? (
               <EmptyState bare icon={Calendar} title={t('pages.calendar.empty')} action={{ label: t('pages.calendar.newEvent'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
             ) : (

@@ -33,7 +33,10 @@
     "actions": "Aktionen",
     "noData": "Noch keine Daten",
     "close": "Schließen",
-    "account": "Konto"
+    "account": "Konto",
+    "create": "Erstellen",
+    "selectAllVisible": "Alle sichtbaren auswählen ({count})",
+    "selected": "{count} ausgewählt"
   },
   "language": {
     "label": "Sprache",
@@ -325,7 +328,24 @@
     "workSchedule": "Arbeitsplan",
     "workforceReports": "Berichte",
     "quotes": "Angebote",
-    "emailTemplates": "E-Mail-Vorlagen"
+    "emailTemplates": "E-Mail-Vorlagen",
+    "accountMenu": "Kontomenü",
+    "aiMedia": "KI-Medien",
+    "clients": "Kunden",
+    "connectedApps": "Verbundene Apps",
+    "help": "Hilfe",
+    "messages": "Nachrichten",
+    "openMenu": "Menü öffnen",
+    "operatingManager": "Operating Manager",
+    "studio": "Studio",
+    "workflowChat": "Workflow-Chat",
+    "workspaceNavigation": "Workspace-Navigation",
+    "controlRoom": "Kontrollraum",
+    "insights": "Einblicke",
+    "automation": "Automatisierung",
+    "assistant": "Assistent",
+    "documents": "Dokumente",
+    "aiProvider": "KI-Anbieter"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -529,7 +549,25 @@
     "inProgressSuffix": "in Bearbeitung",
     "unreadEmailsLabel": "ungelesene E-Mails",
     "ofTotalSuffix": "von {n} insgesamt",
-    "pipelineByStage": "Pipeline nach Phase"
+    "pipelineByStage": "Pipeline nach Phase",
+    "needsAttentionEmpty": "Nichts Dringendes gerade. Nutze die Zeit für Pipeline, Outreach oder Rechnungen.",
+    "cashCollected": "Eingenommen",
+    "pressureLabel": "Druck",
+    "workloadLabel": "Arbeitslast",
+    "vsLastMonth": "vs. letzter Monat",
+    "firstActiveMonth": "erster aktiver Monat",
+    "openOpportunitiesSuffix": "offene Chancen",
+    "meetingsToday": "Heutige Termine",
+    "noMeetings": "Heute keine Termine geplant.",
+    "taskQueueTitle": "Aufgabenliste",
+    "teamToday": "Team heute",
+    "cashflowTitle": "Cashflow",
+    "noRevenueYet": "Noch kein abgerechneter Umsatz",
+    "noRevenueYetDesc": "Erstelle deine erste Rechnung, um hier das Umsatztempo zu sehen.",
+    "noDealsYetDesc": "Erstelle deinen ersten Deal, um Pipeline-Momentum und Druck zu sehen.",
+    "viewAll": "Alle anzeigen",
+    "activeLabel": "Aktiv",
+    "teamLabel": "Team"
   },
   "crm": {
     "leadsTitle": "Leads",
@@ -666,7 +704,8 @@
     "noPositions": "Keine Stellen gefunden",
     "fetchRecruitmentError": "Stellen konnten nicht geladen werden",
     "searchPositionPlaceholder": "Stellen suchen...",
-    "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen."
+    "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen.",
+    "departmentRequired": "Abteilung ist erforderlich"
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -1033,6 +1072,7 @@
       "moreFilters": "Weitere Filter",
       "allOwners": "Alle Inhaber",
       "nextAction": "Nächster Schritt",
+      "sourceLabel": "Quelle",
       "actionCallToday": "Heute anrufen",
       "actionFollowUpTomorrow": "Morgen nachfassen",
       "actionFollowUpIn": "Nachfassen in",
@@ -1054,7 +1094,9 @@
       "buildYourListDesc": "Importiere bestehende Kontakte oder finde neue Unternehmen.",
       "startLeadGen": "Leadgenerierung starten",
       "aiEmailWriter": "KI-E-Mail-Assistent",
-      "folderNameTooShort": "Der Ordnername muss mindestens 2 Zeichen lang sein"
+      "folderNameTooShort": "Der Ordnername muss mindestens 2 Zeichen lang sein",
+      "syncNow": "Jetzt synchronisieren",
+      "connectCrm": "CRM verbinden"
     },
     "deals": {
       "title": "Deals",
@@ -1096,7 +1138,9 @@
       "markLost": "Als Verloren markieren",
       "lead": "Lead",
       "selectLead": "Lead auswählen...",
-      "noLead": "Kein Lead"
+      "noLead": "Kein Lead",
+      "moveToStage": "In Phase verschieben",
+      "bulkStageUpdated": "Deals aktualisiert"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -1184,7 +1228,9 @@
       "printInvoice": "Rechnung drucken",
       "invoicePreview": "Rechnungsvorschau",
       "companyDetails": "Firmendetails",
-      "customerDetails": "Kundendetails"
+      "customerDetails": "Kundendetails",
+      "markSelectedSent": "Als gesendet markieren",
+      "connectPayments": "Zahlungen verbinden"
     },
     "tasks": {
       "title": "Aufgaben",
@@ -1212,7 +1258,24 @@
       "fetchError": "Aufgaben konnten nicht geladen werden",
       "empty": "Keine Aufgaben gefunden. Erstelle deine erste Aufgabe!",
       "assignedTo": "Zugewiesen an",
-      "selectAssignee": "Mitarbeiter auswählen"
+      "selectAssignee": "Mitarbeiter auswählen",
+      "selectTask": "Auswählen: {title}",
+      "confirmBulkDelete": "{count} Aufgabe(n) löschen? Dies kann nicht rückgängig gemacht werden.",
+      "confirmDelete": "Diese Aufgabe löschen? Dies kann nicht rückgängig gemacht werden.",
+      "archive": "Archivieren",
+      "unarchive": "Aus Archiv entfernen",
+      "today": "Heute",
+      "overdue": "Überfällig",
+      "upcoming": "Anstehend",
+      "mine": "Meine",
+      "allActive": "Alle aktiv",
+      "archived": "Archiviert",
+      "allAssignees": "Alle Verantwortlichen",
+      "allPriorities": "Alle Prioritäten",
+      "assignee": "Verantwortlich",
+      "priority": "Priorität",
+      "bulkComplete": "Abschließen",
+      "bulkAssignTo": "Zuweisen an"
     },
     "calendar": {
       "title": "Kalender",
@@ -1246,31 +1309,41 @@
       }
     },
     "inbox": {
-      "title": "Posteingang",
-      "subtitle": "Nachrichten und Benachrichtigungen",
-      "newMessage": "Neue Nachricht",
-      "sendTitle": "Nachricht senden",
-      "sendSubtitle": "Schreibe eine Nachricht an einen Kollegen",
-      "to": "An (Benutzer-ID)",
-      "toPlaceholder": "Benutzer-ID",
-      "messageLabel": "Nachricht",
-      "messagePlaceholder": "Schreibe deine Nachricht...",
-      "sendCta": "Nachricht senden",
-      "sending": "Sende...",
-      "unreadMessages": "Ungelesene Nachrichten",
-      "unreadNotifications": "Ungelesene Benachrichtigungen",
-      "totalLabel": "Gesamt",
-      "messagesTab": "Nachrichten",
-      "notificationsTab": "Benachrichtigungen",
-      "unknownSender": "Unbekannter Absender",
-      "new": "Neu",
-      "fetchErrorMessages": "Nachrichten konnten nicht geladen werden",
-      "fetchErrorNotifications": "Benachrichtigungen konnten nicht geladen werden",
-      "emptyMessages": "Keine Nachrichten",
-      "emptyNotifications": "Keine Benachrichtigungen",
-      "receiverRequired": "Empfänger und Nachricht sind erforderlich",
-      "sent_success": "Nachricht gesendet",
-      "sent_error": "Nachricht konnte nicht gesendet werden"
+      "title": "Nachrichten",
+      "subtitle": "Interne Gespräche mit deinen Kollegen",
+      "searchPlaceholder": "Personen oder Nachrichten suchen",
+      "filterAll": "Alle",
+      "filterUnread": "Ungelesen",
+      "newConversation": "Neue Nachricht",
+      "newConversationTitle": "Gespräch starten",
+      "newConversationDescription": "Wähle einen Kollegen aus",
+      "colleagueSearchPlaceholder": "Kollegen nach Name oder E-Mail suchen",
+      "noColleaguesFound": "Keine Kollegen gefunden",
+      "firstMessagePlaceholder": "Schreibe deine erste Nachricht...",
+      "startConversation": "Gespräch starten",
+      "composerPlaceholder": "Schreibe eine Nachricht...",
+      "send": "Senden",
+      "sendHint": "Enter zum Senden, Shift+Enter für eine neue Zeile",
+      "sendError": "Nachricht konnte nicht gesendet werden",
+      "markUnread": "Als ungelesen markieren",
+      "pinConversation": "Gespräch anheften",
+      "unpinConversation": "Anheftung lösen",
+      "toggleDetails": "Detailbereich ein-/ausblenden",
+      "back": "Zurück zu Gesprächen",
+      "detailsHeading": "Gesprächsdetails",
+      "detailsEmail": "E-Mail",
+      "detailsColleagueSince": "Kollege seit",
+      "detailsMessageCount": "Ausgetauschte Nachrichten",
+      "detailsFirstMessage": "Erste Nachricht",
+      "emptyNoSelectionTitle": "Wähle ein Gespräch",
+      "emptyNoSelectionHint": "Wähle ein Gespräch aus der Liste oder starte ein neues.",
+      "emptyNoConversationsTitle": "Noch keine Gespräche",
+      "emptyNoConversationsHint": "Starte ein Gespräch mit einem Kollegen, um loszulegen.",
+      "noSearchResults": "Keine Gespräche entsprechen deiner Suche",
+      "loadError": "Nachrichten konnten nicht geladen werden",
+      "you": "Du",
+      "unknownColleague": "Unbekannter Kollege",
+      "read": "Gelesen"
     },
     "meta": {
       "title": "Meta Ads Verwaltung",
@@ -1365,7 +1438,8 @@
       "priorityExplanation": "E-Mails werden von der KI basierend auf ihrem Inhalt priorisiert: Meetings, Fristen, Rechnungen und Verträge werden automatisch markiert.",
       "todoExplanation": "To-do-Vorschläge werden von der KI basierend auf E-Mail-Inhalten generiert, die eine Handlung deinerseits nahelegen.",
       "disconnectConfirmTitle": "E-Mail trennen?",
-      "disconnectConfirmDesc": "Dies entfernt deine E-Mail-Verbindung. Du kannst sie jederzeit wiederherstellen."
+      "disconnectConfirmDesc": "Dies entfernt deine E-Mail-Verbindung. Du kannst sie jederzeit wiederherstellen.",
+      "askAi": "KI fragen"
     }
   },
   "companySettings": {
@@ -1500,7 +1574,32 @@
     "completeSetup": "Workspace-Einrichtung abschließen →",
     "markAsPaid": "Als bezahlt markieren",
     "sendToCustomer": "An Kunden senden",
-    "status": "Status"
+    "status": "Status",
+    "gdprTitle": "DSGVO & Datenrechte",
+    "gdprIntro": "Gemäß der DSGVO hast du das Recht, deine persönlichen Daten zu exportieren und zu löschen.",
+    "exportTitle": "Meine Daten exportieren",
+    "exportDesc": "Lade alle deine persönlichen Daten als JSON herunter (DSGVO Art. 20)",
+    "exportButton": "Exportieren",
+    "dataExported": "Daten exportiert",
+    "privacyPolicyTitle": "Datenschutzrichtlinie",
+    "privacyPolicyDesc": "Lies, wie wir deine Daten verarbeiten",
+    "readButton": "Lesen",
+    "deletionTitle": "Datenlöschung beantragen",
+    "deletionDesc": "Beantrage die Löschung all deiner persönlichen Daten (DSGVO Art. 17). Wird innerhalb von 30 Tagen bearbeitet.",
+    "requestButton": "Beantragen",
+    "confirmDeletionTitle": "Antrag auf Datenlöschung bestätigen",
+    "confirmDeletionDesc": "Diese Aktion sendet einen formellen Antrag zur Löschung all deiner persönlichen Daten. Dein Konto und alle zugehörigen Daten werden innerhalb von 30 Tagen dauerhaft gelöscht. Diese Aktion kann nicht widerrufen werden.",
+    "confirmDeleteData": "Ja, meine Daten löschen",
+    "roleLabels": {
+      "system_admin": "System-Admin",
+      "company_admin": "Firmen-Admin",
+      "owner": "Inhaber",
+      "manager": "Manager",
+      "employee": "Mitarbeiter",
+      "readonly": "Nur Lesen",
+      "partner": "Partner"
+    },
+    "deletionRequested": "Antrag auf Datenlöschung erhalten. Wir bearbeiten ihn innerhalb von 30 Tagen."
   },
   "phoneCompanion": {
     "pairTitle": "Dieses Telefon verbinden",
@@ -2043,7 +2142,11 @@
     "leadsImported": "{count} Leads importiert",
     "errorSearchFailed": "Suche fehlgeschlagen",
     "errorRetry": "Versuchen Sie es gleich erneut",
-    "noResults": "Keine Ergebnisse gefunden"
+    "noResults": "Keine Ergebnisse gefunden",
+    "statusVerified": "Verifiziert",
+    "statusLikelyValid": "Wahrscheinlich gültig",
+    "statusUnverified": "Nicht verifiziert",
+    "statusMissing": "Fehlt"
   },
   "invitations": {
     "title": "Einladungen",
@@ -2124,7 +2227,16 @@
     "error": "Fehler",
     "noLogs": "Noch keine Logs",
     "ok": "OK",
-    "failed": "Fehlgeschlagen"
+    "failed": "Fehlgeschlagen",
+    "zapierMakeIntro": "Zapier und Make verwenden Webhook-URLs, um Daten zu empfangen. Melde dich bei deinem eigenen Zapier/Make-Konto an, erstelle einen Zap/Szenario mit einem „Webhook\"-Trigger, kopiere die URL und füge sie hier ein.",
+    "loginAt": "Einloggen bei",
+    "createNewZap": "Erstelle einen neuen Zap → wähle",
+    "asTrigger": "als Trigger",
+    "select": "Wähle",
+    "copyUrlFrom": "Kopiere die Webhook-URL, die dir {service} gibt",
+    "pasteUrlHere": "Füge die URL hier mit der Schaltfläche „{button}\" ein",
+    "createNewScenario": "Erstelle ein neues Szenario → füge",
+    "module": "Modul"
   },
   "system": {
     "onlyAdminsCanChange": "Nur Administratoren können den Systemstatus ändern",
@@ -2330,6 +2442,9 @@
     "ctr": "CTR",
     "cpc": "CPC",
     "conv": "KONV.",
+    "leads": "LEADS",
+    "won": "GEWONNEN",
+    "revenue": "UMSATZ",
     "trend": "TREND",
     "last7": "Letzte 7 Tage",
     "last14": "Letzte 14 Tage",
@@ -2344,5 +2459,94 @@
     "objective": "Ziel",
     "noCampaignsYet": "Noch keine Kampagnen",
     "createFirstCampaign": "Erstelle deine erste Kampagne, um loszulegen"
+  },
+  "command": {
+    "placeholder": "Suchen oder wechseln zu...",
+    "noResults": "Keine Ergebnisse",
+    "quickCreate": "Schnell erstellen",
+    "goTo": "Gehe zu",
+    "createPrefix": "Erstellen",
+    "leads": "Leads",
+    "customers": "Kunden",
+    "deals": "Deals",
+    "tasks": "Aufgaben",
+    "invoices": "Rechnungen",
+    "employees": "Mitarbeiter",
+    "modeOverview": "Übersicht",
+    "modeOverviewHint": "Start, Kunden, Kalender",
+    "modeSales": "Vertrieb",
+    "modeSalesHint": "Leads, Deals, Kommunikation",
+    "modeOperations": "Betrieb",
+    "modeOperationsHint": "Rechnungen, Zahlungen, Automatisierung",
+    "modePeople": "Team",
+    "modePeopleHint": "Mitarbeiter, Zeit, Lohn",
+    "searchPlaceholderV2": "Kunden, Deals, Rechnungen suchen oder navigieren…",
+    "noResultsV2": "Keine Ergebnisse.",
+    "switchMode": "Modus wechseln"
+  },
+  "clientView": {
+    "loadError": "Kunde konnte nicht geladen werden.",
+    "timeline": "Zeitleiste",
+    "context": "Kontext"
+  },
+  "aiAgent": {
+    "contextCustomers": "Kunden",
+    "dragToMove": "Zum Verschieben ziehen",
+    "attachFile": "Datei anhängen",
+    "analyzeImage": "Dieses Bild analysieren",
+    "attachedFile": "Angehängte Datei",
+    "failed": "KI fehlgeschlagen. Bitte versuche es erneut.",
+    "title": "Dein PA",
+    "monitoring": "Überwachung",
+    "close": "Schließen – stoppt Überwachung",
+    "greeting": "Hallo! Ich bin dein persönlicher PA 👋",
+    "greetingHint": "Ich sehe alles auf deiner {context}-Seite und helfe proaktiv.",
+    "alwaysScanning": "Ständig aktiv – ich scanne laufend",
+    "thinking": "KI denkt nach...",
+    "askAbout": "Frage zu {context}...",
+    "typeToAgent": "Schreib deinem PA...",
+    "quickTodo": "📋 To-Do-Liste erstellen",
+    "quickTodoPrompt": "Erstelle eine priorisierte To-Do-Liste basierend auf meinen anstehenden Fristen im gesamten System.",
+    "quickTip": "💡 Tipp für {context}",
+    "quickTipPrompt": "Gib mir 3 konkrete Maßnahmen, die ich jetzt basierend auf {context}-Daten ergreifen sollte.",
+    "quickAnalyze": "👁️ Diese Seite analysieren",
+    "quickAnalyzePrompt": "Analysiere alles, was du auf dieser Seite siehst, und gib mir konkrete Empfehlungen und Erkenntnisse."
+  },
+  "contextPanel": {
+    "open": "Öffnen",
+    "close": "Schließen",
+    "actions": "Aktionen",
+    "signals": "Signale",
+    "noSignals": "Gerade keine Signale.",
+    "title": "Kontrollzentrum"
+  },
+  "ambientAI": {
+    "openTrigger": "Aktionsleiste öffnen",
+    "ready": "Bereit",
+    "title": "Aktionsleiste",
+    "placeholder": "z.B. \"Finde Acme GmbH und erstelle einen Deal über 50.000 kr für nächsten Freitag\"",
+    "confirmationRequired": "Bestätigung erforderlich",
+    "readyForSafeActions": "Bereit für sichere Aktionen",
+    "confirmAndExecute": "Bestätigen & ausführen"
+  },
+  "tour": {
+    "dashboardTitle": "Dein Dashboard",
+    "dashboardDesc": "Hier erhältst du einen vollständigen Überblick über die KPIs, Leads und Pipeline deines Unternehmens.",
+    "leadsTitle": "Leads & CRM",
+    "leadsDesc": "Verwalte alle deine Leads, bewerte sie mit KI und verfolge sie automatisch.",
+    "pipelineTitle": "Pipeline",
+    "pipelineDesc": "Visualisiere deine Vertriebspipeline per Drag-and-Drop und sieh den erwarteten Umsatz.",
+    "aiTitle": "KI-Assistent",
+    "aiDesc": "Dein persönlicher KI-Assistent, der bei E-Mails, Analysen und Aufgaben hilft.",
+    "settingsTitle": "Einstellungen",
+    "settingsDesc": "Passe dein Firmenprofil an, lade Teammitglieder ein und konfiguriere Integrationen.",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig"
+  },
+  "helpCenter": {
+    "title": "Hilfecenter",
+    "subtitle": "Finde Antworten auf deine Fragen",
+    "noResults": "Keine Artikel gefunden. Versuche einen anderen Suchbegriff."
   }
 }

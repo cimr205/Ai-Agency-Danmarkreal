@@ -173,6 +173,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <p className="text-xs text-muted-foreground">{t('wizard.stepOf').replace('{step}', String(step)).replace('{total}', String(totalSteps))}</p>
             </div>
           </div>
+          <div className="flex gap-1.5" aria-hidden="true">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-muted'}`} />
+            ))}
+          </div>
           <CardDescription>
             {step === 1 && t('wizard.companyDesc')}
             {step === 2 && t('wizard.seatsDesc')}
