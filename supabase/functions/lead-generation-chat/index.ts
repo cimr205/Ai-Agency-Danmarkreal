@@ -1,4 +1,6 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 interface Lead {
   name: string;
@@ -992,14 +994,38 @@ const REGION_CITIES: Record<string, string[]> = {
 // ═══════════════════════════════════════════════════════════
 // MAIN HANDLER
 // ═══════════════════════════════════════════════════════════
-serve(async (req) => {
+serve(withSentry("lead-generation-chat", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Only checked that an Authorization header was PRESENT, not that it
+    // was a real session — any non-empty Bearer value passed, letting
+    // anyone burn the project's AI Gateway budget. Same gap already found
+    // and fixed in the `chat` function earlier this session.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseAuthClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: { user: authedUser }, error: authError } = await supabaseAuthClient.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
+    if (authError || !authedUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: callerProfile } = await supabaseAuthClient.from("profiles").select("company_id").eq("user_id", authedUser.id).single();
+    if (!callerProfile?.company_id) {
+      return new Response(JSON.stringify({ error: "No company associated" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: withinQuota } = await supabaseAuthClient.rpc("increment_usage_quota", { _company_id: callerProfile.company_id, _quota_type: "ai_lead_generation_chat" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -1400,4 +1426,4 @@ Regler:
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
-});
+}));

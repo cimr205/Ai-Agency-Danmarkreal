@@ -31,8 +31,8 @@ describeIfService('tenant isolation: profiles.company_id cannot be self-assigned
   let companyBId: string;
 
   beforeAll(async () => {
-    admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY!);
-    anon = createClient(SUPABASE_URL, ANON_KEY);
+    admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+    anon = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
     const { data: userData, error: userErr } = await admin.auth.admin.createUser({
       email: testEmail,

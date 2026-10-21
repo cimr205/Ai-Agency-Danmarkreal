@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fireWebhookEvent } from '@/hooks/api/useWebhooks';
 
 export function useTasks(opts: { archived?: boolean } = {}) {
   const archived = opts.archived ?? false;
@@ -52,19 +51,12 @@ export function useCreateTask() {
         .select()
         .single();
       if (error) throw error;
-      if (data) fireWebhookEvent(data.company_id, 'task.created', { task_id: data.id, title: data.title, priority: data.priority, due_date: data.due_date });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
 }
 
-// General field edits (title, description, due_date, assigned_to,
-// archived, ...) — deliberately does not fire any outbound webhook. It
-// previously fired 'task.completed' whenever the update payload contained
-// status: 'completed', even if the task was already completed (double
-// click, retry) — the same class of bug as deal.won. Status transitions go
-// through useUpdateTaskStatus below instead.
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -76,25 +68,6 @@ export function useUpdateTask() {
         .select()
         .single();
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-}
-
-// Status transitions go through update_task_status (company-scoped,
-// row-locked, reports whether the status actually changed server-side) —
-// 'task.completed' only fires on a real transition into 'completed', so a
-// double submit/retry can't re-fire it.
-export function useUpdateTaskStatus() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'pending' | 'in_progress' | 'completed' }) => {
-      const { data, error } = await supabase.rpc('update_task_status', { p_task_id: id, p_status: status }).single();
-      if (error) throw error;
-      if (data.changed && data.status === 'completed') {
-        fireWebhookEvent(data.company_id, 'task.completed', { task_id: data.id, title: data.title });
-      }
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

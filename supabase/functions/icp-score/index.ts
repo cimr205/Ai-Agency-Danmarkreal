@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -5,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("icp-score", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -27,6 +28,9 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .single();
     if (!profile?.company_id) return new Response(JSON.stringify({ error: "No company" }), { status: 400, headers: corsHeaders });
+
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_icp_score" });
+    if (withinQuota === false) return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), { status: 429, headers: corsHeaders });
 
     const { icp_profile_id } = await req.json();
     if (!icp_profile_id) return new Response(JSON.stringify({ error: "icp_profile_id required" }), { status: 400, headers: corsHeaders });
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
       { status: 500, headers: corsHeaders }
     );
   }
-});
+}));
 
 // ─── Scoring Engine ─────────────────────────────────────────
 interface Lead {

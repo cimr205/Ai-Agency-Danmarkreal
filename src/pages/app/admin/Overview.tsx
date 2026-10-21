@@ -66,6 +66,12 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+  const [health, setHealth] = useState<Record<string, number | null> | null>(null);
+
+  const loadHealth = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_system_health_summary', { _hours: 24 });
+    if (!error && data) setHealth(data as Record<string, number | null>);
+  }, []);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -109,8 +115,8 @@ export default function AdminOverviewPage() {
   }, []);
 
   useEffect(() => {
-    if (isSystemAdmin) loadAll();
-  }, [isSystemAdmin, loadAll]);
+    if (isSystemAdmin) { loadAll(); loadHealth(); }
+  }, [isSystemAdmin, loadAll, loadHealth]);
 
   if (!authLoading && !isSystemAdmin) return <Navigate to="/app" replace />;
 
@@ -173,6 +179,28 @@ export default function AdminOverviewPage() {
           <RefreshCw className="h-3.5 w-3.5" /> Opdater
         </Button>
       </div>
+
+      {health && (() => {
+        // Gauges, not failure counts — shown elsewhere, excluded from the sum.
+        const nonFailureKeys = new Set(['since', 'scope', 'workflow_queue_depth', 'workflow_queue_oldest_pending_at']);
+        const failureEntries = Object.entries(health).filter(([k]) => !nonFailureKeys.has(k));
+        const totalFailures = failureEntries.reduce((sum, [, v]) => sum + (typeof v === 'number' ? v : 0), 0);
+        if (totalFailures === 0) return null;
+        return (
+          <Card className="border-destructive/30 bg-destructive/5">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-destructive">{totalFailures} fejl i de sidste 24 timer</p>
+                <p className="text-muted-foreground">
+                  {failureEntries.filter(([, v]) => typeof v === 'number' && v > 0)
+                    .map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {loading ? [1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-24 rounded-lg" />) : (

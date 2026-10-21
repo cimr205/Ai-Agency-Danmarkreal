@@ -33,6 +33,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTemplate, type InvoicePdfData } from '@/lib/invoicePdf';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
+import { reportError } from '@/lib/sentry';
 
 type Lead = Tables<'leads'>;
 
@@ -228,6 +229,7 @@ export default function InvoicesPage() {
       downloadPdf(blob, `${invoice.invoice_number}.pdf`);
     } catch (err) {
       console.error('PDF generation error:', err);
+      reportError(err, { module: 'invoices', action: 'generate_invoice_pdf' });
       toast.error(t('common.error'));
     }
   };
@@ -837,22 +839,21 @@ export default function InvoicesPage() {
                 <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
+                    {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Åbn Stripe-betaling' : 'Open Stripe payment'} onClick={async () => {
+                        try {
+                          const checkout = await createCheckout.mutateAsync(invoice.id);
+                          window.open(checkout.checkout_url, '_blank', 'noopener,noreferrer');
+                        } catch (error) { toast.error(getErrorMessage(error)); }
+                      }}>
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
                     {invoice.status !== 'paid' && (
                       <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
                         try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
                       }}>
                         <DollarSign className="h-4 w-4 text-success" />
-                      </Button>
-                    )}
-                    {invoice.status !== 'paid' && (
-                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Opret Stripe-betalingslink' : 'Create Stripe payment link'} onClick={async () => {
-                        try {
-                          const { checkout_url } = await createCheckout.mutateAsync({ invoice_id: invoice.id, invoice_number: invoice.invoice_number, locale });
-                          await navigator.clipboard.writeText(checkout_url);
-                          toast.success(locale === 'da' ? 'Betalingslink kopieret' : 'Payment link copied');
-                        } catch { toast.error(t('common.error')); }
-                      }}>
-                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" title={t('pages.invoices.sendEmail')} onClick={() => openEmailDialog(invoice)}>

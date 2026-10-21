@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withSentry } from "../_shared/sentry.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
@@ -1265,7 +1266,7 @@ async function runPipeline(
 
 // ─── Route Handler ──────────────────────────────────────────
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("lead-gen-api", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -1500,4 +1501,4 @@ Deno.serve(async (req) => {
     if (msg === "Unauthorized") return errorResponse(msg, 401);
     return errorResponse(msg, 500);
   }
-});
+}));

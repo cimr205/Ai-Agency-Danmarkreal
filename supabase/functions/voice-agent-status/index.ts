@@ -1,17 +1,18 @@
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withSentry } from "../_shared/sentry.ts";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { verifyTwilioRequest } from "../_shared/twilioSignature.ts";
 
 // Public endpoint - Twilio status callbacks (no JWT verification).
 // Receives both call status updates and recording status callbacks.
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-status", async (req) => {
   try {
+    const { valid, params } = await verifyTwilioRequest(req);
+    if (!valid) return new Response("invalid signature", { status: 403 });
+
     const url = new URL(req.url);
     const callId = url.searchParams.get("call_id");
     if (!callId) return new Response("missing call id", { status: 400 });
-
-    const formData = await req.formData();
-    const params: Record<string, string> = {};
-    formData.forEach((v, k) => { params[k] = String(v); });
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -74,7 +75,7 @@ Deno.serve(async (req) => {
     console.error("voice-agent-status error:", e);
     return new Response("error", { status: 500 });
   }
-});
+}));
 
 async function transcribeRecording(serviceClient: SupabaseClient, callId: string, companyId: string, recordingUrl: string) {
   try {

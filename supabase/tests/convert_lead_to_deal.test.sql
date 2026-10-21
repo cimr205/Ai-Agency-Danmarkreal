@@ -11,6 +11,9 @@
 -- checks so they can be re-run in CI or by a future engineer without a
 -- browser session.
 
+begin;
+select plan(1);
+
 do $$
 declare
   v_company_a uuid;
@@ -123,3 +126,6 @@ end $$;
 --    customer insert or deal insert without also updating the lead's
 --    conversion_status, since all three happen in the same PL/pgSQL
 --    function body with no intermediate commit.
+select pass('lead conversion contract script completed');
+select * from finish();
+rollback;

@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
@@ -837,7 +838,7 @@ async function fetchContextData(supabase: SupabaseClient, context: string, compa
   return parts.length ? "\n\n--- LIVE DATA FRA SYSTEMET ---\n" + parts.join("\n\n") : "";
 }
 
-serve(async (req) => {
+serve(withSentry("smart-assistant", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -868,6 +869,8 @@ serve(async (req) => {
     }
 
     if (!companyId) throw new Error("Ingen virksomhed tilknyttet");
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: companyId, _quota_type: "ai_smart_assistant" });
+    if (withinQuota === false) throw new Error("Månedlig AI-grænse nået for jeres virksomhed.");
     const ai = await getCompanyAI(supabase, companyId);
     if (!ai) throw new Error(AI_NOT_CONNECTED_MESSAGE);
 
@@ -1082,4 +1085,4 @@ ${contextData}${pageSnapshotSection}`;
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

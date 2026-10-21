@@ -1,5 +1,6 @@
 // Autopilot Agent — Lovable AI Gateway via Vercel AI SDK with operational tools
 // across the entire workspace (CRM, Finance, Productivity, Webhook bridge).
+import { withSentry } from "../_shared/sentry.ts";
 import { Hono } from "npm:hono@4";
 import {
   convertToModelMessages, streamText, tool, stepCountIs, type UIMessage,
@@ -259,6 +260,13 @@ app.post("/*", async (c) => {
     const companyId = profile.company_id as string;
     const userId = user.id;
 
+    const { data: withinQuota } = await serviceClient.rpc("increment_usage_quota", { _company_id: companyId, _quota_type: "ai_autopilot_agent" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ai = await getCompanyAI(serviceClient, companyId);
     if (!ai) {
       return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), {
@@ -297,4 +305,4 @@ app.post("/*", async (c) => {
   }
 });
 
-Deno.serve(app.fetch);
+Deno.serve(withSentry("autopilot-agent", (req) => app.fetch(req)));

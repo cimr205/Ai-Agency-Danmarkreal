@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { withSentry } from "../_shared/sentry.ts";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { validateLeadUpdate } from "../_shared/leadUpdate.ts";
@@ -538,9 +539,10 @@ async function executeRegisteredAction(db: any, authHeader: string, companyId: s
     if (error) throw new Error(error.message); if (!data) throw new Error("Lead blev ikke fundet"); return data;
   }
   if (name === "crm.deal.move_stage") {
-    const { data, error } = await db.from("deals").update({ stage: input.stage })
-      .eq("id", input.deal_id).eq("company_id", companyId).select("id,title,stage").maybeSingle();
-    if (error) throw new Error(error.message); if (!data) throw new Error("Deal blev ikke fundet"); return data;
+    const { data, error } = await db.rpc("transition_deal_stage_service", {
+      p_company_id: companyId, p_deal_id: input.deal_id, p_target_stage: input.stage, p_actor: userId,
+    });
+    if (error) throw new Error(error.message); return data;
   }
   if (name === "crm.deal.create") {
     const { data, error } = await db.from("deals").insert({ company_id: companyId, created_by: userId, stage: "discovery", ...input })
@@ -724,7 +726,7 @@ Regler:
   return { reply: planned.reply, proposals, route: model.tier, model: { provider: model.provider, name: model.model }, latencyMs: Date.now() - started };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("ai-operating-manager", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonError("Method not allowed", 405);
   const ctx = await requireCompanyAuth(req);
@@ -807,4 +809,4 @@ Deno.serve(async (req) => {
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Operating Manager failed", 400);
   }
-});
+}));

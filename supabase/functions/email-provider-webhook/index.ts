@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 function bytesToHex(bytes: ArrayBuffer): string {
@@ -16,7 +17,7 @@ async function verifySignature(rawBody: string, signature: string, secret: strin
   return mismatch === 0
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("email-provider-webhook", async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
   const secret = Deno.env.get('EMAIL_WEBHOOK_SECRET')
   const signature = req.headers.get('x-webhook-signature') ?? ''
@@ -51,4 +52,4 @@ Deno.serve(async (req) => {
   })
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } })
-})
+}))

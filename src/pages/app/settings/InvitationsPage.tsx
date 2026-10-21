@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Mail, Copy, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, Mail, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getErrorMessage } from '@/lib/errors';
@@ -23,7 +23,6 @@ type Invitation = {
   status: string;
   created_at: string;
   expires_at: string;
-  token: string;
 };
 
 export default function InvitationsPage() {
@@ -41,7 +40,7 @@ export default function InvitationsPage() {
     setLoading(true);
     const { data } = await supabase
       .from('invitations')
-      .select('id, email, role, status, created_at, expires_at, token')
+      .select('id, email, role, status, created_at, expires_at')
       .order('created_at', { ascending: false });
     setInvitations((data || []) as Invitation[]);
     setLoading(false);
@@ -61,6 +60,9 @@ export default function InvitationsPage() {
         invite_role: newRole as Enums<'app_role'>,
       });
       if (error) throw error;
+      // The raw token is only ever returned here at creation — the table
+      // stores just a hash of it, so this is the one chance to copy the link.
+      if (typeof data === 'string') copyLink(data);
       toast.success(t('invitations.invitationSentTo').replace('{email}', newEmail));
       setNewEmail('');
       setNewRole('employee');
@@ -192,14 +194,9 @@ export default function InvitationsPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center gap-1 justify-end">
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
-                          <>
-                            <Button size="sm" variant="ghost" onClick={() => copyLink(inv.token)} title={t('invitations.copyLink')}>
-                              <Copy className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
-                              <XCircle className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
+                          <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
+                            <XCircle className="h-3.5 w-3.5" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>

@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
@@ -6,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(withSentry("autopilot-execute", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -62,7 +63,18 @@ serve(async (req) => {
           const emailData = await emailResp.json();
           result = { success: emailResp.ok, message: emailResp.ok ? "Email sendt" : emailData.error || "Email fejl" };
         } else if (fn === "update_deal_stage") {
-          await supabase.from("deals").update({ stage: payload.stage, notes: payload.notes }).eq("id", payload.deal_id);
+          const { error: stageError } = await supabase.rpc("transition_deal_stage_service", {
+            p_company_id: profile.company_id,
+            p_deal_id: payload.deal_id,
+            p_target_stage: payload.stage,
+            p_actor: user.id,
+          });
+          if (stageError) throw stageError;
+          if (payload.notes) {
+            const { error: notesError } = await supabase.from("deals").update({ notes: payload.notes })
+              .eq("id", payload.deal_id).eq("company_id", profile.company_id);
+            if (notesError) throw notesError;
+          }
           result = { success: true, message: "Deal opdateret" };
         } else if (fn === "create_task" || fn === "create_followup_task") {
           await supabase.from("tasks").insert({
@@ -96,7 +108,7 @@ serve(async (req) => {
           });
           result = { success: true, message: "HR-alert oprettet" };
         } else if (fn === "contact_lead") {
-          await supabase.from("customers").update({ status: "contacted", last_touched_at: new Date().toISOString() }).eq("id", payload.lead_id).eq("record_type", "lead");
+          await supabase.from("customers").update({ status: "contacted", last_touched_at: new Date().toISOString() }).eq("id", payload.lead_id).eq("company_id", profile.company_id).eq("record_type", "lead");
           result = { success: true, message: "Lead markeret som kontaktet" };
         } else {
           // Generic: create a task for the action
@@ -126,4 +138,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

@@ -119,14 +119,3 @@ export function useTestWebhook() {
     },
   });
 }
-
-/** Fire webhooks for an event — call from anywhere in the app */
-export async function fireWebhookEvent(companyId: string, event: WebhookEvent, data: Record<string, unknown>) {
-  try {
-    await supabase.functions.invoke("webhook-dispatch", {
-      body: { event, company_id: companyId, data },
-    });
-  } catch (e) {
-    console.warn("Webhook dispatch failed (non-blocking):", e);
-  }
-}

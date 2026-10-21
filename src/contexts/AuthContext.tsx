@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { reportError, setSentryUser } from '@/lib/sentry';
 
 export interface UserProfile {
   id: string;
@@ -28,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [roles, setRoles] = useState<{ role: string; can_grant_permissions: boolean }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       // Ensure we still clear loading on error
+      reportError(e, { module: 'auth', action: 'load_user_profile' });
     } finally {
       if (mountedRef.current) setIsLoading(false);
     }
@@ -82,6 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profile = await fetchProfile(session.user.id);
     if (mountedRef.current && profile) setUser(profile);
   };
+
+  // Monitoring only: tag error reports with opaque user/company ids.
+  useEffect(() => {
+    setSentryUser(user);
+  }, [user]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -193,6 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setRoles([]);
+    // Without this, a different user signing in on the same tab within the
+    // cache's staleTime window would see the previous user's company data
+    // served straight from memory, with no network request and no RLS check.
+    queryClient.clear();
   };
 
   return (

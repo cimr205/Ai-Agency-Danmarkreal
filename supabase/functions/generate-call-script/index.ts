@@ -1,5 +1,6 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
@@ -7,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(withSentry("generate-call-script", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -25,6 +26,9 @@ serve(async (req) => {
 
     const { data: profile } = await client.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!profile?.company_id) throw new Error("No company associated");
+
+    const { data: withinQuota } = await client.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_call_script" });
+    if (withinQuota === false) throw new Error("Monthly AI limit reached for your company.");
 
     const { leadName, companyName, industry, phone, email, notes, scriptType } = await req.json();
 
@@ -82,4 +86,4 @@ ${email ? `- Email: ${email}` : ""}`;
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

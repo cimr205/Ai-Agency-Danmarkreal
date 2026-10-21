@@ -4,6 +4,11 @@
 -- Every fixture is wrapped in a transaction and rolled back.
 
 begin;
+select plan(1);
+
+insert into public.companies(id,name) values('82000000-0000-0000-0000-000000000001','Backend epics fixture');
+insert into auth.users(id,email) values('82000000-0000-0000-0000-000000000002','backend-epics@test.local');
+update public.profiles set company_id='82000000-0000-0000-0000-000000000001' where user_id='82000000-0000-0000-0000-000000000002';
 
 do $$
 declare
@@ -145,4 +150,6 @@ begin
 end;
 $$;
 
+select pass('backend epics runtime contract completed');
+select * from finish();
 rollback;

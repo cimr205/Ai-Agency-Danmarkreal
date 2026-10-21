@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
@@ -5,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,16 +25,34 @@ Deno.serve(async (req) => {
       return redirectWithError("Missing code or state");
     }
 
-    let state: { user_id: string };
-    try {
-      state = JSON.parse(atob(stateParam));
-    } catch {
-      return redirectWithError("Invalid state");
-    }
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAdmin = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Resolve the server-issued state row rather than trusting a
+    // client-decodable blob — same single-use, expiring pattern as the
+    // Dinero/e-conomic OAuth callbacks.
+    const { data: stateRow } = await supabaseAdmin
+      .from("oauth_states")
+      .select("*")
+      .eq("id", stateParam)
+      .eq("provider", "gmail")
+      .is("consumed_at", null)
+      .single();
+
+    if (!stateRow) return redirectWithError("Invalid or already-used state");
+    if (new Date(stateRow.expires_at) < new Date()) return redirectWithError("Expired state");
+
+    // Consume immediately so the state can't be replayed
+    await supabaseAdmin.from("oauth_states").update({ consumed_at: new Date().toISOString() }).eq("id", stateParam);
+
+    const state = { user_id: (stateRow.metadata as Record<string, string>).user_id };
 
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const redirectUri = `${SUPABASE_URL}/functions/v1/gmail-oauth-callback`;
 
     // Exchange code for tokens
@@ -60,13 +79,6 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const userInfo = await userInfoRes.json();
-
-    // Store tokens using service role
-    const supabaseAdmin = createClient(
-      SUPABASE_URL,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
 
     // Get user's company_id
     const { data: profile } = await supabaseAdmin
@@ -126,7 +138,7 @@ Deno.serve(async (req) => {
     console.error("gmail-oauth-callback error:", err);
     return redirectWithError(err.message);
   }
-});
+}));
 
 function getAppRedirectUrl(): string {
   return "https://www.aiagencydanmark.dk";

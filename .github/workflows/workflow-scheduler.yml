@@ -1,0 +1,35 @@
+name: Workflow scheduler
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: production-workflow-drain
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Drain durable workflow queue
+        env:
+          WORKFLOW_DRAIN_URL: ${{ secrets.WORKFLOW_DRAIN_URL }}
+          WORKFLOW_DRAIN_SECRET: ${{ secrets.WORKFLOW_DRAIN_SECRET }}
+        run: |
+          test -n "$WORKFLOW_DRAIN_URL"
+          test -n "$WORKFLOW_DRAIN_SECRET"
+          for attempt in 1 2 3; do
+            if curl --fail-with-body --silent --show-error \
+              --connect-timeout 10 --max-time 90 \
+              -H "Authorization: Bearer $WORKFLOW_DRAIN_SECRET" \
+              -H "Content-Type: application/json" \
+              --data "{\"action\":\"drain\",\"worker_id\":\"github-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}\",\"limit\":25}" \
+              "$WORKFLOW_DRAIN_URL"; then
+              exit 0
+            fi
+            echo "Workflow drain attempt $attempt failed" >&2
+          done
+          exit 1

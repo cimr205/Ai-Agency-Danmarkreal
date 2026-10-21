@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withSentry } from "../_shared/sentry.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,7 +18,7 @@ function jsonError(message: string, status = 400) {
   });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("voice-agent-call", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -190,4 +191,4 @@ Deno.serve(async (req) => {
     console.error("voice-agent-call error:", e);
     return jsonError(e instanceof Error ? e.message : "Unknown error");
   }
-});
+}));

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Shield, Users, Loader2, Crown, UserCog, User, Eye, Mail, Copy, Clock, XCircle, CheckCircle2, Send } from "lucide-react";
 import { ROLE_LABELS, ROLE_HIERARCHY, canManageRole } from "@/lib/auth";
 import { getErrorMessage } from '@/lib/errors';
+import { reportError } from '@/lib/sentry';
 
 interface UserWithRole {
   user_id: string;
@@ -27,7 +28,6 @@ interface Invitation {
   email: string;
   role: string;
   status: string;
-  token: string;
   created_at: string;
   expires_at: string;
 }
@@ -84,6 +84,7 @@ export default function AdminUsers() {
       setUsers(mapped);
     } catch (error) {
       console.error("Error fetching users:", error);
+      reportError(error, { module: "admin", action: "fetch_users" });
       toast.error("Kunne ikke hente brugere");
     }
   };
@@ -93,7 +94,7 @@ export default function AdminUsers() {
     try {
       const { data, error } = await supabase
         .from("invitations")
-        .select("id, email, role, status, token, created_at, expires_at")
+        .select("id, email, role, status, created_at, expires_at")
         .eq("company_id", user.company_id)
         .order("created_at", { ascending: false });
 
@@ -101,6 +102,7 @@ export default function AdminUsers() {
       setInvitations((data as Invitation[]) || []);
     } catch (error) {
       console.error("Error fetching invitations:", error);
+      reportError(error, { module: "invitations", action: "fetch_invitations" });
     }
   };
 
@@ -371,14 +373,9 @@ export default function AdminUsers() {
                   <TableCell>
                     <div className="flex gap-1">
                       {inv.status === "pending" && new Date(inv.expires_at) > new Date() && (
-                        <>
-                          <Button size="icon" variant="ghost" onClick={() => copyInviteLink(inv.token)} title="Kopiér link">
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleRevoke(inv.id)} title="Tilbagekald">
-                            <XCircle className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </>
+                        <Button size="icon" variant="ghost" onClick={() => handleRevoke(inv.id)} title="Tilbagekald">
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        </Button>
                       )}
                     </div>
                   </TableCell>

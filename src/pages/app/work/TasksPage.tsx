@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useTasks, useCreateTask, useUpdateTask, useUpdateTaskStatus, useTeamProfiles, useBulkUpdateTasks, useBulkDeleteTasks, useDeleteTask } from '@/hooks/api/useTasks';
+import { useMemo, useState } from 'react';
+import { useTasks, useCreateTask, useUpdateTask, useTeamProfiles, useBulkUpdateTasks, useBulkDeleteTasks, useDeleteTask } from '@/hooks/api/useTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
@@ -17,9 +16,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Clock, CheckCircle, AlertCircle, User, MoreHorizontal, Archive, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { ErrorState } from '@/components/shared/ErrorState';
-import { RelationshipChip } from '@/components/shared/RelationshipChip';
-import { Target, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 
@@ -27,7 +23,6 @@ type Task = {
   id: string; title: string; description?: string | null; status: string;
   due_date?: string | null; priority?: string | null; assigned_to?: string | null;
   completed_at?: string | null; created_at: string; archived: boolean;
-  lead_id?: string | null; deal_id?: string | null;
   assigned_profile?: { full_name: string | null; email: string } | null;
 };
 
@@ -49,17 +44,6 @@ export default function TasksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', due_date: '', priority: 'medium', assigned_to: '', lead_id: '', deal_id: '' });
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  // Open the create dialog if navigated with ?create=true (e.g. from the command palette)
-  useEffect(() => {
-    if (searchParams.get('create') !== 'true') return;
-    setIsCreateOpen(true);
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('create');
-    setSearchParams(nextParams, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const priorityColors: Record<string, string> = {
     low: 'bg-muted text-muted-foreground',
@@ -87,10 +71,9 @@ export default function TasksPage() {
   const { data: leadsData } = useLeads({ page: 0 });
   const { data: dealsData } = useDeals();
   const { data: teamProfiles } = useTeamProfiles();
-  const { data, isLoading, error, refetch } = useTasks({ archived: view === 'archived' });
+  const { data, isLoading, error } = useTasks({ archived: view === 'archived' });
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
-  const updateTaskStatus = useUpdateTaskStatus();
   const deleteTask = useDeleteTask();
   const bulkUpdate = useBulkUpdateTasks();
   const bulkDelete = useBulkDeleteTasks();
@@ -159,14 +142,14 @@ export default function TasksPage() {
   const handleToggleComplete = async (task: Task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
     try {
-      await updateTaskStatus.mutateAsync({ id: task.id, status: newStatus });
+      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } });
       toast.success(newStatus === 'completed' ? t('pages.tasks.taskCompleted') : t('pages.tasks.taskReopened'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleStatusChange = async (task: Task, newStatus: string) => {
     try {
-      await updateTaskStatus.mutateAsync({ id: task.id, status: newStatus as 'pending' | 'in_progress' | 'completed' });
+      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } });
       toast.success(t('pages.tasks.created_success'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -196,7 +179,7 @@ export default function TasksPage() {
   const handleBulkArchive = async () => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { archived: view !== 'archived' } });
-      toast.success(t('common.saved'));
+      toast.success('Opdateret');
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -204,38 +187,36 @@ export default function TasksPage() {
   const handleBulkReassign = async (userId: string) => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { assigned_to: userId } });
-      toast.success(t('common.saved'));
+      toast.success('Opdateret');
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(t('pages.tasks.confirmBulkDelete').replace('{count}', String(selectedIds.size)))) return;
+    if (!confirm(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`)) return;
     try {
       await bulkDelete.mutateAsync(Array.from(selectedIds));
-      toast.success(t('common.deleted'));
+      toast.success('Slettet');
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('pages.tasks.confirmDelete'))) return;
+    if (!confirm('Slet denne opgave? Dette kan ikke fortrydes.')) return;
     try {
       await deleteTask.mutateAsync(id);
-      toast.success(t('common.deleted'));
+      toast.success('Slettet');
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const TaskCard = ({ task }: { task: Task }) => {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
     const assigneeName = task.assigned_profile?.full_name;
-    const linkedLead = task.lead_id ? (leadsData?.data || []).find((l) => l.id === task.lead_id) : null;
-    const linkedDeal = task.deal_id ? (dealsData || []).find((d) => d.id === task.deal_id) : null;
     return (
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={t('pages.tasks.selectTask').replace('{title}', task.title)} />
+            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`Vælg: ${task.title}`} />
             <Checkbox checked={task.status === 'completed'} onCheckedChange={() => handleToggleComplete(task)} className="mt-1" aria-label={`${t('pages.tasks.completed')}: ${task.title}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -247,12 +228,6 @@ export default function TasksPage() {
                 {task.archived && <Badge variant="outline">Arkiveret</Badge>}
               </div>
               {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>}
-              {(linkedLead || linkedDeal) && (
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {linkedLead && <RelationshipChip icon={Target} label={t('nav.leads')} value={linkedLead.name} />}
-                  {linkedDeal && <RelationshipChip icon={Briefcase} label={t('nav.deals')} value={linkedDeal.title} />}
-                </div>
-              )}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {assigneeName && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -282,11 +257,11 @@ export default function TasksPage() {
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label={t('common.actions')}><MoreHorizontal className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => updateTask.mutate({ id: task.id, data: { archived: !task.archived } })}>
-                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? t('pages.tasks.unarchive') : t('pages.tasks.archive')}
+                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? 'Fjern fra arkiv' : 'Arkivér'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive focus:text-destructive">
                   <Trash2 className="h-3.5 w-3.5 mr-2" />Slet
@@ -376,13 +351,13 @@ export default function TasksPage() {
 
       <Tabs value={view} onValueChange={(v) => { setView(v as ViewKey); clearSelection(); }}>
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="today">{t('pages.tasks.today')} {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
-          <TabsTrigger value="overdue">{t('pages.tasks.overdue')} {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
-          <TabsTrigger value="upcoming">{t('pages.tasks.upcoming')} {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
-          <TabsTrigger value="mine">{t('pages.tasks.mine')} {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
-          <TabsTrigger value="all">{t('pages.tasks.allActive')} ({counts.all})</TabsTrigger>
-          <TabsTrigger value="completed">{t('pages.tasks.completed')} ({counts.completed})</TabsTrigger>
-          <TabsTrigger value="archived">{t('pages.tasks.archived')}</TabsTrigger>
+          <TabsTrigger value="today">I dag {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
+          <TabsTrigger value="overdue">Forfaldne {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
+          <TabsTrigger value="upcoming">Kommende {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
+          <TabsTrigger value="mine">Mine {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
+          <TabsTrigger value="all">Alle aktive ({counts.all})</TabsTrigger>
+          <TabsTrigger value="completed">Fuldførte ({counts.completed})</TabsTrigger>
+          <TabsTrigger value="archived">Arkiverede</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -392,18 +367,18 @@ export default function TasksPage() {
           <Input placeholder={t('pages.tasks.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder={t('pages.tasks.assignee')} /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Ansvarlig" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('pages.tasks.allAssignees')}</SelectItem>
+            <SelectItem value="all">Alle ansvarlige</SelectItem>
             {(teamProfiles ?? []).map(p => (
               <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || p.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder={t('pages.tasks.priority')} /></SelectTrigger>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Prioritet" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('pages.tasks.allPriorities')}</SelectItem>
+            <SelectItem value="all">Alle prioriteter</SelectItem>
             {PRIORITY_OPTIONS.map(p => (
               <SelectItem key={p} value={p}>{priorityLabels[p]}</SelectItem>
             ))}
@@ -413,22 +388,22 @@ export default function TasksPage() {
 
       {viewFiltered.length > 0 && (
         <div className="flex items-center gap-3">
-          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label={t('common.selectAllVisible').replace('{count}', String(viewFiltered.length))} />
-          <span className="text-xs text-muted-foreground">{t('common.selectAllVisible').replace('{count}', String(viewFiltered.length))}</span>
+          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label="Vælg alle" />
+          <span className="text-xs text-muted-foreground">Vælg alle synlige ({viewFiltered.length})</span>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-muted-foreground">{t('common.selected').replace('{count}', String(selectedIds.size))}</span>
-              <Button size="sm" variant="outline" onClick={handleBulkComplete}>{t('pages.tasks.bulkComplete')}</Button>
+              <span className="text-xs text-muted-foreground">{selectedIds.size} valgt</span>
+              <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">{t('pages.tasks.bulkAssignTo')}</Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {(teamProfiles ?? []).map(p => (
                     <DropdownMenuItem key={p.user_id} onClick={() => handleBulkReassign(p.user_id)}>{p.full_name || p.email}</DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t('pages.tasks.unarchive') : t('pages.tasks.archive')}</Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>{t('common.delete')}</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? 'Fjern fra arkiv' : 'Arkivér'}</Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
             </div>
           )}
         </div>
@@ -437,7 +412,7 @@ export default function TasksPage() {
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => (<Card key={i}><CardContent className="p-4"><div className="flex items-start gap-3"><Skeleton className="h-4 w-4 mt-1" /><div className="flex-1"><Skeleton className="h-5 w-48 mb-2" /><Skeleton className="h-4 w-32" /></div></div></CardContent></Card>))}</div>
       ) : error ? (
-        <ErrorState title={t('pages.tasks.fetchError')} onRetry={() => refetch()} />
+        <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.fetchError')}</CardContent></Card>
       ) : viewFiltered.length === 0 ? (
         <EmptyState icon={CheckCircle} title={t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
       ) : (

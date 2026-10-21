@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
@@ -48,7 +48,6 @@ export default function VoiceAgentPage() {
 
   // Last logged status transition (shown in header)
   const [lastStatusChange, setLastStatusChange] = useState<{ status: string; at: string } | null>(null);
-  const prevStatusRef = useRef<string | null>(null);
 
   // Auto-refresh: on focus + every 10s while tab is visible
   useEffect(() => {
@@ -78,44 +77,6 @@ export default function VoiceAgentPage() {
       setLastStatusChange({ status, at: data.created_at });
     }
   };
-
-  // Detect transitions and log them to activity_logs
-  useEffect(() => {
-    if (!companyId || !user || twilioInfo === undefined) return;
-    const current = !twilioConnected
-      ? 'not_connected'
-      : hasTwilioNumber
-        ? 'connected'
-        : 'connected_no_number';
-
-    // Initialize baseline on first load (no log entry)
-    if (prevStatusRef.current === null) {
-      prevStatusRef.current = current;
-      return;
-    }
-    if (prevStatusRef.current === current) return;
-
-    const prev = prevStatusRef.current;
-    prevStatusRef.current = current;
-
-    const labels: Record<string, string> = {
-      connected: 'Twilio fully connected',
-      connected_no_number: 'Twilio connected — no phone number',
-      not_connected: 'Twilio disconnected',
-    };
-
-    supabase.from('activity_logs').insert({
-      user_id: user.id,
-      company_id: companyId,
-      action_type: 'twilio_status_changed',
-      entity_type: 'voice_agent',
-      description: `${labels[prev]} → ${labels[current]}`,
-      metadata: { prev_status: prev, new_status: current, source: 'voice_agent' },
-    }).then(({ error }) => {
-      if (!error) setLastStatusChange({ status: current, at: new Date().toISOString() });
-    });
-  }, [twilioConnected, hasTwilioNumber, companyId, user, twilioInfo]);
-
 
   // New agent dialog
   const [agentDialog, setAgentDialog] = useState(false);

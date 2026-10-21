@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
@@ -365,7 +366,7 @@ async function executeTool(
   }
 }
 
-serve(async (req) => {
+serve(withSentry("workflow-assistant", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -395,6 +396,14 @@ serve(async (req) => {
     if (!profile?.company_id) {
       return new Response(JSON.stringify({ error: "Ingen virksomhed tilknyttet" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_workflow_assistant" });
+    if (withinQuota === false) {
+      return new Response(JSON.stringify({ error: "Månedlig AI-grænse nået for jeres virksomhed." }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -522,4 +531,4 @@ VIGTIGT:
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

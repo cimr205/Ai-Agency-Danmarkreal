@@ -6,9 +6,6 @@ project_id = "inyrwsygghdjhmqejgwk"
 [functions.admin-data]
 verify_jwt = true
 
-[functions.google-auth-proxy]
-verify_jwt = false
-
 [functions.lead-ai-recommend]
 verify_jwt = false
 
@@ -29,6 +26,24 @@ verify_jwt = true
 
 [functions.meta-sync]
 verify_jwt = true
+
+[functions.meta-lead-webhook]
+verify_jwt = false
+
+[functions.stripe-payment-webhook]
+verify_jwt = false
+
+[functions.create-invoice-checkout]
+verify_jwt = true
+
+[functions.workflow-runner]
+# false because this function handles two distinct callers internally:
+# a real user JWT for on-demand "run this workflow" calls, and a shared
+# WORKFLOW_DRAIN_SECRET bearer token (not a JWT) for the cron-triggered
+# queue drain — verify_jwt=true would reject the drain call at the
+# platform gateway before the function's own check ever runs, silently
+# stopping every durable workflow from ever executing.
+verify_jwt = false
 
 [functions.meta-disconnect]
 verify_jwt = false
@@ -78,9 +93,6 @@ verify_jwt = false
 [functions.email-track]
 verify_jwt = false
 
-[functions.cold-caller]
-verify_jwt = false
-
 [functions.cvr-search]
 verify_jwt = false
 
@@ -91,9 +103,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.meeting-summary]
-verify_jwt = false
-
-[functions.voice-agent-connect-openai]
 verify_jwt = false
 
 [functions.voice-agent-call]

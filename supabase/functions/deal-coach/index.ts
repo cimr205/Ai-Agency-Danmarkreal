@@ -1,5 +1,6 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 
 const corsHeaders = {
@@ -7,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
+serve(withSentry("deal-coach", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -24,6 +25,9 @@ serve(async (req) => {
     // Service-role client bypasses RLS, so tenant isolation must be enforced explicitly here.
     const { data: profile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!profile?.company_id) return new Response(JSON.stringify({ error: "No company associated" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_deal_coach" });
+    if (withinQuota === false) return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -135,4 +139,4 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

@@ -2,9 +2,26 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
+
+// Release = the deployed git SHA, so a Sentry issue maps to an exact commit.
+// Vercel exposes it at build time; SENTRY_RELEASE overrides for other CI.
+const sentryRelease =
+  process.env.SENTRY_RELEASE || process.env.VITE_SENTRY_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA || "";
+// production / preview / development on Vercel; falls back to the Vite mode at runtime.
+const sentryEnvironment = process.env.VITE_SENTRY_ENVIRONMENT || process.env.VERCEL_ENV || "";
+// Source maps are uploaded only when the build has credentials for it. Without
+// them the build is byte-for-byte what it was before (no maps emitted).
+const uploadSourceMaps = Boolean(
+  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT,
+);
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    __SENTRY_RELEASE__: JSON.stringify(sentryRelease),
+    __SENTRY_ENVIRONMENT__: JSON.stringify(sentryEnvironment),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -22,7 +39,22 @@ export default defineConfig(({ mode }) => ({
       ],
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    // Must stay last. Uploads maps to Sentry, then deletes them from dist/ so
+    // they are never served publicly.
+    uploadSourceMaps &&
+      sentryVitePlugin({
+        org: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        url: process.env.SENTRY_URL,
+        release: sentryRelease ? { name: sentryRelease } : undefined,
+        sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
+        telemetry: false,
+      }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -30,6 +62,8 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: "esnext",
+    // "hidden" = emit maps for the upload without a sourceMappingURL comment.
+    sourcemap: uploadSourceMaps ? "hidden" : false,
     rollupOptions: {
       output: {
         // NOTE: every key in this static manualChunks object gets a

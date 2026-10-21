@@ -213,6 +213,17 @@ export function useDeleteInvoice() {
   });
 }
 
+export function useCreateInvoiceCheckout() {
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { data, error } = await supabase.functions.invoke('create-invoice-checkout', { body: { invoice_id: invoiceId } });
+      if (error) throw error;
+      if (!data?.checkout_url) throw new Error(data?.error || 'Checkout URL was not created');
+      return data as { checkout_url: string; expires_at: string };
+    },
+  });
+}
+
 export function useUpdateInvoiceStatus() {
   const qc = useQueryClient();
   return useMutation({
@@ -302,23 +313,6 @@ export function useCreatePayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['invoices'] });
-    },
-  });
-}
-
-// Generates a Stripe Checkout link for an invoice. Ownership is verified
-// entirely server-side (create-invoice-checkout-session resolves the
-// caller's company from their session and re-checks the invoice belongs to
-// it) — this call never sends a company_id, only the invoice_id the user
-// is already viewing.
-export function useCreateInvoiceCheckout() {
-  return useMutation({
-    mutationFn: async (input: { invoice_id: string; invoice_number?: string; locale?: string }) => {
-      const { data, error } = await supabase.functions.invoke('create-invoice-checkout-session', {
-        body: input,
-      });
-      if (error) throw error;
-      return data as { checkout_url: string };
     },
   });
 }

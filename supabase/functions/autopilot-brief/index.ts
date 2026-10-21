@@ -1,3 +1,4 @@
+import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
@@ -38,7 +39,7 @@ Return ONLY valid JSON with this structure:
   "tomorrow_preview": "string"
 }`;
 
-serve(async (req) => {
+serve(withSentry("autopilot-brief", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -61,6 +62,9 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
     if (!profile?.company_id) throw new Error("No company");
+
+    const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: profile.company_id, _quota_type: "ai_autopilot_brief" });
+    if (withinQuota === false) throw new Error("Monthly AI limit reached for your company.");
 
     const companyId = profile.company_id;
     const now = new Date();
@@ -218,4 +222,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

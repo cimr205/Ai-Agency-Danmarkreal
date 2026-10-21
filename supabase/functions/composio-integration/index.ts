@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withSentry } from "../_shared/sentry.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -97,6 +98,10 @@ function toolkitIsConnectable(t: { composio_managed_auth_schemes?: string[]; aut
 // action categorization drives approval requirements later — kept generic,
 // no per-provider hardcoding. Callers must declare the category up front.
 const VALID_CATEGORIES = ["read", "write", "destructive", "financial", "communication"];
+// Mirrors ai-operating-manager's MANAGER_ROLES — kept local rather than
+// imported since the two functions don't currently share a roles module.
+const MANAGER_ROLES = ["system_admin", "owner", "company_admin", "manager"];
+const RESTRICTED_CATEGORIES = ["financial", "destructive"];
 
 // ─── Capability Engine ───────────────────────────────────────────────────
 // The generic layer the whole "connect once, use everywhere" architecture
@@ -163,7 +168,7 @@ function findConnectionForCapability(
   return match ? { id: match.id, provider: match.provider } : null;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry("composio-integration", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const ctx = await requireCompanyAuth(req);
@@ -592,7 +597,7 @@ Deno.serve(async (req) => {
           ? (await supabase.from("customers").select("id").eq("company_id", companyId).eq("email", email).maybeSingle()).data
           : null;
 
-        const invoiceMatch = customerMatch
+        const invoiceCandidates = customerMatch
           ? (await supabase
               .from("invoices")
               .select("id")
@@ -601,9 +606,11 @@ Deno.serve(async (req) => {
               .eq("amount", amount)
               .not("status", "in", "(paid,cancelled)")
               .order("issued_at", { ascending: true })
-              .limit(1)
-              .maybeSingle()).data
-          : null;
+              .limit(2)).data ?? []
+          : [];
+        // Exact amount/email is still unsafe when two open invoices match.
+        // Leave the charge unresolved instead of guessing an invoice.
+        const invoiceMatch = invoiceCandidates.length === 1 ? invoiceCandidates[0] : null;
 
         if (!invoiceMatch) {
           unmatched++;
@@ -616,7 +623,9 @@ Deno.serve(async (req) => {
             action_category: "financial",
             sanitized_input: { chargeId: charge.id, amount, email },
             status: "failed",
-            error: "Ingen matchende ubetalt faktura fundet",
+            error: invoiceCandidates.length > 1
+              ? "Flere ubetalte fakturaer matcher; manuel afklaring kræves"
+              : "Ingen matchende ubetalt faktura fundet",
             completed_at: new Date().toISOString(),
           });
           continue;
@@ -648,6 +657,14 @@ Deno.serve(async (req) => {
 
       if (!integrationId || !toolSlug || !actionCategory) throw new Error("Missing integrationId, toolSlug, or actionCategory");
       if (!VALID_CATEGORIES.includes(actionCategory)) throw new Error(`Invalid actionCategory: ${actionCategory}`);
+
+      if (RESTRICTED_CATEGORIES.includes(actionCategory)) {
+        const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+        const roles = (roleRows ?? []).map((r: { role: string }) => r.role);
+        if (!roles.some((role: string) => MANAGER_ROLES.includes(role))) {
+          return jsonError(`Du har ikke rettighed til at udføre en ${actionCategory}-handling`, 403);
+        }
+      }
 
       const { data: row } = await supabase
         .from("integrations")
@@ -707,7 +724,7 @@ Deno.serve(async (req) => {
     const message = err instanceof Error ? err.message : String(err);
     return jsonError(message, 400);
   }
-});
+}));
 
 function jsonResponse(data: unknown) {
   return new Response(JSON.stringify(data), {

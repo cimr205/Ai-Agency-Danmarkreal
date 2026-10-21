@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
 import { useCampaignAttribution } from "@/hooks/api/useMetaAdsData";
+import { reportError } from "@/lib/sentry";
 
 type BalanceView = "funds" | "outstanding";
 
@@ -91,6 +92,7 @@ export function MetaOverviewKPIs() {
       });
     } catch (e) {
       console.error("Failed to fetch Meta KPIs:", e);
+      reportError(e, { module: "meta_ads", action: "fetch_kpis" });
     } finally {
       setLoading(false);
     }

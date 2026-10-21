@@ -1,6 +1,11 @@
 -- AI Operating Manager database contract.
 -- Run after migrations; every fixture is rolled back.
 begin;
+select plan(1);
+
+insert into public.companies(id,name) values('81000000-0000-0000-0000-000000000001','AI manager fixture');
+insert into auth.users(id,email) values('81000000-0000-0000-0000-000000000002','ai-manager@test.local');
+update public.profiles set company_id='81000000-0000-0000-0000-000000000001' where user_id='81000000-0000-0000-0000-000000000002';
 
 create temporary table ai_manager_test_context as
 select user_id, company_id, gen_random_uuid() as action_id,
@@ -97,5 +102,6 @@ begin
 end;
 $$;
 
+select pass('AI operating manager runtime contract completed');
+select * from finish();
 rollback;
-

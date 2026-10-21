@@ -4,7 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ const CookieConsentLazy = lazy(() => import("@/components/shared/CookieConsent")
 import { SessionTimeoutWarning } from '@/components/session/SessionTimeoutWarning';
 import { useMyBlockedModules, pathToModule } from '@/hooks/api/useModuleAccess';
 import { SeoManager } from '@/components/SeoManager';
+import { reportError, withSentryRouting } from '@/lib/sentry';
 
 // Lazy-load ALL pages for fast initial load
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -97,7 +98,25 @@ const DocumentsPage = lazy(() => import("@/pages/app/workspace/DocumentsPage"));
 const WorkflowStudioPage = lazy(() => import("@/pages/app/workspace/WorkflowStudioPage"));
 const IntelligencePage = lazy(() => import("@/pages/app/workspace/IntelligencePage"));
 
+// Parameterised route names for Sentry tracing (`/:locale/app/clients/:id`
+// instead of one transaction per customer id). Renders identically to <Routes>.
+const SentryRoutes = withSentryRouting(Routes);
+
 const queryClient = new QueryClient({
+  // Central error reporting for every query/mutation in the app. Only the
+  // first key segment is sent — later segments hold ids and search terms.
+  // Expected failures (validation, 4xx, RLS denials) are dropped in reportError.
+  queryCache: new QueryCache({
+    onError: (error, query) =>
+      reportError(error, { action: 'query', extra: { queryKey: String(query.queryKey[0] ?? '') } }),
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) =>
+      reportError(error, {
+        action: 'mutation',
+        extra: { mutationKey: String(mutation.options.mutationKey?.[0] ?? '') },
+      }),
+  }),
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,      // 5 min — don't refetch fresh data
@@ -220,7 +239,7 @@ const App = () => (
           <SpeedInsights />
           <BrowserRouter>
             <SeoManager />
-            <Routes>
+            <SentryRoutes>
               <Route path="/" element={<Navigate to="/en" replace />} />
               <Route path="/auth/meta/callback" element={<Suspense fallback={<PageLoader />}><MetaOAuthCallbackPage /></Suspense>} />
               <Route path="/:locale" element={<LocaleLayout />}>
@@ -315,7 +334,7 @@ const App = () => (
                 </Route>
               </Route>
               <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
-            </Routes>
+            </SentryRoutes>
             <CookieConsentWrapper />
           </BrowserRouter>
           <SessionTimeoutWarning />

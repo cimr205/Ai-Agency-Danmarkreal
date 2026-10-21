@@ -25,8 +25,10 @@ export async function encryptMetaToken(token: string): Promise<{ ciphertext: str
 }
 
 export async function decryptMetaToken(ciphertext: string, encodedIv: string): Promise<string> {
+  const iv = fromBase64(encodedIv)
+  const encrypted = fromBase64(ciphertext)
   const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: fromBase64(encodedIv) }, await encryptionKey(), fromBase64(ciphertext),
+    { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer }, await encryptionKey(), encrypted.buffer as ArrayBuffer,
   )
   return new TextDecoder().decode(plaintext)
 }
