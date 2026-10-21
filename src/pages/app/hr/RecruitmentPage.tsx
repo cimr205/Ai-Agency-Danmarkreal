@@ -3,6 +3,7 @@ import { useRecruitment, useCreateRecruitment, useUpdateRecruitmentStatus } from
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -18,7 +19,7 @@ export default function RecruitmentPage() {
   const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newPosition, setNewPosition] = useState({ position: '' });
+  const [newPosition, setNewPosition] = useState({ position: '', department: '', description: '', requirements: '', salary_range: '' });
 
   const statusLabels: Record<string, string> = {
     open: t('hr.statusOpen'), interviewing: t('hr.statusInterviewing'),
@@ -32,9 +33,15 @@ export default function RecruitmentPage() {
   const handleCreate = async () => {
     if (!newPosition.position) { toast.error(t('hr.positionRequired')); return; }
     try {
-      await createRecruitment.mutateAsync(newPosition);
+      await createRecruitment.mutateAsync({
+        position: newPosition.position,
+        department: newPosition.department || undefined,
+        description: newPosition.description || undefined,
+        requirements: newPosition.requirements || undefined,
+        salary_range: newPosition.salary_range || undefined,
+      });
       toast.success(t('hr.positionCreated'));
-      setNewPosition({ position: '' });
+      setNewPosition({ position: '', department: '', description: '', requirements: '', salary_range: '' });
       setIsCreateOpen(false);
     } catch { toast.error(t('hr.positionCreateError')); }
   };
@@ -64,7 +71,13 @@ export default function RecruitmentPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{t('hr.createPosition')}</DialogTitle><DialogDescription>{t('hr.createPositionDesc')}</DialogDescription></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newPosition.position} onChange={(e) => setNewPosition({ position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
+              <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newPosition.position} onChange={(e) => setNewPosition({ ...newPosition, position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>{t('hr.department')}</Label><Input value={newPosition.department} onChange={(e) => setNewPosition({ ...newPosition, department: e.target.value })} placeholder="Sales" /></div>
+                <div className="space-y-2"><Label>{t('hr.salaryRange')}</Label><Input value={newPosition.salary_range} onChange={(e) => setNewPosition({ ...newPosition, salary_range: e.target.value })} placeholder="40.000–55.000 kr." /></div>
+              </div>
+              <div className="space-y-2"><Label>{t('hr.description')}</Label><Textarea value={newPosition.description} onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })} rows={3} /></div>
+              <div className="space-y-2"><Label>{t('hr.requirements')}</Label><Textarea value={newPosition.requirements} onChange={(e) => setNewPosition({ ...newPosition, requirements: e.target.value })} rows={3} /></div>
               <Button onClick={handleCreate} disabled={createRecruitment.isPending} className="w-full">{createRecruitment.isPending ? t('hr.creating') : t('hr.createPosition')}</Button>
             </div>
           </DialogContent>
