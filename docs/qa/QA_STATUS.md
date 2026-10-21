@@ -3,7 +3,22 @@
 _Autonomous quality system: tests, fixes and hardens the SaaS via real Chrome on localhost._
 
 **Last run:** 2026-10-20 · **Engine:** Playwright 1.64 (real Google Chrome, `channel: "chrome"`) + axe-core
-**Overall:** 🟢 **Milestone 1 (manual) VERIFIED** · 🟢 **Milestone 2 (AI-assisted action) VERIFIED** · 🟢 **`npm run type-check` now GREEN (0 errors)** — BLOCKER-TS-001 **RESOLVED** (secure invitations). ⚠️ Live-model lead *analysis* still blocked by provider — BLOCKER-AI-001.
+**Overall:** 🟢 Sales-to-cash (A) · AI-assisted action · secure invitations · **Service ops (B) VERIFIED** · `type-check` GREEN (0) · `build` GREEN. ⚠️ Live-model analysis BLOCKER-AI-001. See `docs/product/PRODUCT_READINESS.md` for the full module matrix.
+
+---
+
+## Workflow B — Service operations · ✅ VERIFIED (2026-10-20)
+
+**Customer → Task → Employee assignment → Schedule → Progress → Completion → traceable.** Reused the existing Tasks module (`useTasks`, `update_task_status` RPC — row-locked/idempotent); fixed the customer↔task linkage that was missing.
+
+**Fix (WP-SVC-01):**
+- `ClientQuickWorkflow`: the customer "Workflow → Opgave" action now sets `lead_id = customer.id` (it previously only put the name in free text), so tasks created from a customer are **structurally linked** (`tasks.lead_id` references `customers(id)`).
+- `useClientGraph` + `ClientTimeline`: the customer page now fetches and shows the customer's **service tasks** in the timeline (traceable back to the customer).
+- `TasksPage`: the create dialog can link a task to a **customer** (not just a lead), and task cards show the linked customer's name.
+
+**Verified (real Chrome + REST, Tenant A/B — `tests/e2e/service-ops.spec.ts`):** manager creates a customer-linked task, assigns an employee, schedules it (due date); status advances **pending → in progress → completed**; `completed_at` persists; the task is **traceable on the customer timeline** ("Opgave: …"); **Tenant B cannot see it** (RLS). `type-check` ✅ 0 · `build` ✅. Regression: `manual-sales-flow` (customer history via the extended `useClientGraph`) still green.
+
+⚠️ **Limitation:** true multi-user role separation (a distinct employee account seeing only their tasks) is not exercised — automated signup is blocked by Supabase "Confirm email" (BLOCKED-signup). The assignment→visibility mechanic is verified with the admin as assignee (`assigned_to`, "Mine" filter).
 
 ---
 

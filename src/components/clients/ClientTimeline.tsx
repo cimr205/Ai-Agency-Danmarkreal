@@ -1,10 +1,10 @@
-import { Mail, FileText, CreditCard, Calendar, Briefcase, Activity } from "lucide-react";
+import { Mail, FileText, CreditCard, Calendar, Briefcase, Activity, CheckSquare } from "lucide-react";
 import type { TimelineEvent } from "@/hooks/useClientGraph";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 const ICONS = {
   email: Mail, invoice: FileText, payment: CreditCard,
-  meeting: Calendar, deal: Briefcase, activity: Activity,
+  meeting: Calendar, deal: Briefcase, activity: Activity, task: CheckSquare,
 } as const;
 
 function groupKey(d: Date): string {

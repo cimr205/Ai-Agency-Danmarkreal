@@ -4,6 +4,7 @@ import { useTasks, useCreateTask, useUpdateTask, useUpdateTaskStatus, useTeamPro
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
+import { useCustomers } from '@/hooks/api/useFinance';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ import { Plus, Search, Clock, CheckCircle, AlertCircle, User, MoreHorizontal, Ar
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { RelationshipChip } from '@/components/shared/RelationshipChip';
-import { Target, Briefcase } from 'lucide-react';
+import { Target, Briefcase, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 
@@ -86,6 +87,7 @@ export default function TasksPage() {
 
   const { data: leadsData } = useLeads({ page: 0 });
   const { data: dealsData } = useDeals();
+  const { data: customersData } = useCustomers();
   const { data: teamProfiles } = useTeamProfiles();
   const { data, isLoading, error, refetch } = useTasks({ archived: view === 'archived' });
   const createTask = useCreateTask();
@@ -230,6 +232,8 @@ export default function TasksPage() {
     const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
     const assigneeName = task.assigned_profile?.full_name;
     const linkedLead = task.lead_id ? (leadsData?.data || []).find((l) => l.id === task.lead_id) : null;
+    // tasks.lead_id can reference a customer too (shared customers table).
+    const linkedCustomer = task.lead_id && !linkedLead ? (customersData || []).find((c) => c.id === task.lead_id) : null;
     const linkedDeal = task.deal_id ? (dealsData || []).find((d) => d.id === task.deal_id) : null;
     return (
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
@@ -247,9 +251,10 @@ export default function TasksPage() {
                 {task.archived && <Badge variant="outline">Arkiveret</Badge>}
               </div>
               {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>}
-              {(linkedLead || linkedDeal) && (
+              {(linkedLead || linkedCustomer || linkedDeal) && (
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {linkedLead && <RelationshipChip icon={Target} label={t('nav.leads')} value={linkedLead.name} />}
+                  {linkedCustomer && <RelationshipChip icon={Building2} label={t('nav.customers') || 'Kunde'} value={linkedCustomer.name} />}
                   {linkedDeal && <RelationshipChip icon={Briefcase} label={t('nav.deals')} value={linkedDeal.title} />}
                 </div>
               )}
@@ -344,11 +349,14 @@ export default function TasksPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('nav.leads')}</Label>
+                  <Label>{t('pages.tasks.relatedTo') || 'Kunde / lead'}</Label>
                   <Select value={newTask.lead_id} onValueChange={(v) => setNewTask({ ...newTask, lead_id: v === 'none' ? '' : v })}>
                     <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">—</SelectItem>
+                      {(customersData || []).slice(0, 50).map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
                       {(leadsData?.data || []).slice(0, 50).map(l => (
                         <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                       ))}

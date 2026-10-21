@@ -5,7 +5,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type EmailSummary = Pick<Tables<"emails">, "id" | "subject" | "from_address" | "from_name" | "received_at" | "snippet">;
 type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "description" | "start_time" | "end_time" | "event_type">;
 
-export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity";
+export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity" | "task";
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   call: "Opkald", email_sent: "Email sendt", email_received: "Email modtaget",
@@ -49,7 +49,7 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes] = await Promise.all([
+      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes, tasksRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
         supabase.from("quotes").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
@@ -71,6 +71,14 @@ export function useClientGraph(customerId: string | undefined) {
           .eq("entity_id", customerId)
           .order("created_at", { ascending: false })
           .limit(50),
+        // Service tasks structurally linked to this customer (tasks.lead_id
+        // references customers(id), so it holds customers as well as leads).
+        supabase.from("tasks")
+          .select("id,title,status,priority,due_date,completed_at,created_at,assigned_to,assigned_profile:profiles!tasks_assigned_to_fkey(full_name,email)")
+          .eq("lead_id", customerId)
+          .eq("archived", false)
+          .order("created_at", { ascending: false })
+          .limit(50),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
@@ -83,6 +91,7 @@ export function useClientGraph(customerId: string | undefined) {
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
       const activities = activitiesRes.data ?? [];
+      const tasks = (tasksRes.data ?? []) as Array<{ id: string; title: string; status: string; priority: string | null; due_date: string | null; completed_at: string | null; created_at: string; assigned_to: string | null; assigned_profile?: { full_name: string | null; email: string } | null }>;
 
       // Payments tied to this customer's invoices
       const invoiceIds = invoices.map(i => i.id);
@@ -153,6 +162,16 @@ export function useClientGraph(customerId: string | undefined) {
           meta: a.body || undefined,
         });
       }
+      for (const task of tasks) {
+        const statusLabel = task.status === "completed" ? "Afsluttet" : task.status === "in_progress" ? "I gang" : "Afventer";
+        const who = task.assigned_profile?.full_name || task.assigned_profile?.email;
+        tl.push({
+          id: `t:${task.id}`, kind: "task",
+          at: task.completed_at || task.created_at,
+          title: `Opgave: ${task.title}`,
+          meta: [statusLabel, who ? `· ${who}` : null].filter(Boolean).join(" "),
+        });
+      }
 
       tl.sort((a, b) => +new Date(b.at) - +new Date(a.at));
 
@@ -169,7 +188,7 @@ export function useClientGraph(customerId: string | undefined) {
 
       return {
         customer,
-        deals, invoices, quotes, payments, emails, meetings, activities,
+        deals, invoices, quotes, payments, emails, meetings, activities, tasks,
         timeline: tl,
         stats: {
           openDeals: deals.filter(d => !["won", "lost"].includes(d.stage)).length,
