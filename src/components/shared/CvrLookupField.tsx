@@ -17,41 +17,32 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
   const [loading, setLoading] = useState(false);
 
   const lookup = async () => {
-    const clean = cvr.replace(/\D/g, '');
-    if (clean.length < 2) {
-      toast.error('CVR-nummer skal være mindst 2 tegn');
+    // The backend (cvrapi.dk via the cvr-search function) searches by CVR
+    // number OR company name, so pass the raw term — do not strip to digits.
+    const term = cvr.trim();
+    if (term.length < 2) {
+      toast.error('Indtast mindst 2 tegn (CVR-nummer eller virksomhedsnavn)');
       return;
     }
     setLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error('Log ind for at søge');
+      // Use the Supabase client so the function URL + auth are resolved from the
+      // configured project — the previous code built the URL from an undefined
+      // VITE_SUPABASE_PROJECT_ID, so every lookup hit https://undefined.supabase.co.
+      const { data, error } = await supabase.functions.invoke('cvr-search', { body: { search: term } });
+      if (error) throw error;
+      const payload = data as { error?: string; results?: Array<{ name?: string; address?: string; zipcode?: string; city?: string; cvr?: string }> };
+      if (payload?.error) throw new Error(payload.error);
 
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/cvr-search`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ search: clean }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Opslag fejlede');
-
-      if (!data.results?.length) {
-        toast.error(`Ingen virksomhed fundet for "${clean}"`);
+      const results = payload?.results ?? [];
+      if (!results.length) {
+        toast.error(`Ingen virksomhed fundet for "${term}"`);
         return;
       }
 
-      const company = data.results[0];
+      const company = results[0];
       const address = [company.address, company.zipcode, company.city].filter(Boolean).join(', ');
-      onResult({ name: company.name || '', address, cvr: company.cvr || clean });
+      onResult({ name: company.name || '', address, cvr: company.cvr || term.replace(/\D/g, '') });
       toast.success(`Fandt: ${company.name}`);
     } catch (e) {
       toast.error((getErrorMessage(e) || 'Kunne ikke slå CVR op'));

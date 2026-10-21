@@ -281,11 +281,19 @@ export default function InvoicesPage() {
   };
 
   const invoices = data ?? [];
+  // An unpaid, uncancelled invoice past its due date is overdue. The DB never
+  // flips status to 'overdue' (the dashboard computes it the same way from
+  // due_date), so we derive it at display time rather than relying on a stored
+  // status that is never set — otherwise overdue invoices would be invisible here.
+  const isOverdue = (inv: { status: string; due_date?: string | null }) =>
+    inv.status !== 'paid' && inv.status !== 'cancelled' && !!inv.due_date && new Date(inv.due_date) < new Date();
+  const effStatus = (inv: { status: string; due_date?: string | null }) => (isOverdue(inv) ? 'overdue' : inv.status);
+
   const searchFiltered = invoices.filter(inv =>
     inv.invoice_number.toLowerCase().includes(search.toLowerCase()) ||
     inv.customers?.name?.toLowerCase().includes(search.toLowerCase())
   );
-  const filteredInvoices = statusFilter === 'all' ? searchFiltered : searchFiltered.filter(inv => inv.status === statusFilter);
+  const filteredInvoices = statusFilter === 'all' ? searchFiltered : searchFiltered.filter(inv => effStatus(inv) === statusFilter);
   const draftIdsVisible = filteredInvoices.filter((inv) => inv.status === 'draft').map((inv) => inv.id);
 
   useEffect(() => {
@@ -376,7 +384,7 @@ export default function InvoicesPage() {
     total: invoices.length,
     paid: invoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount), 0),
     totalAmount: invoices.reduce((s, i) => s + Number(i.amount), 0),
-    overdue: invoices.filter(i => i.status === 'overdue').length,
+    overdue: invoices.filter(isOverdue).length,
   }), [invoices]);
 
   return (
@@ -835,7 +843,7 @@ export default function InvoicesPage() {
                 <TableCell className="text-right">{formatCurrency(Number(invoice.subtotal || 0))}</TableCell>
                 <TableCell className="text-right">{formatCurrency(Number(invoice.vat_amount || 0))}</TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(invoice.amount))}</TableCell>
-                <TableCell><StatusBadge status={invoice.status} label={statusLabels[invoice.status]} /></TableCell>
+                <TableCell><StatusBadge status={effStatus(invoice)} label={statusLabels[effStatus(invoice)]} /></TableCell>
                 <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
@@ -973,7 +981,7 @@ export default function InvoicesPage() {
               <div className="space-y-6 mt-6">
                 {/* Status & actions */}
                 <div className="flex items-center gap-3">
-                  <StatusBadge status={selectedInvoice.status} label={statusLabels[selectedInvoice.status]} />
+                  <StatusBadge status={effStatus(selectedInvoice)} label={statusLabels[effStatus(selectedInvoice)]} />
                   {selectedInvoice.status !== 'paid' && (
                     <Select value={selectedInvoice.status} onValueChange={async (v) => {
                       try {

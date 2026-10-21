@@ -5,7 +5,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type EmailSummary = Pick<Tables<"emails">, "id" | "subject" | "from_address" | "from_name" | "received_at" | "snippet">;
 type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "description" | "start_time" | "end_time" | "event_type">;
 
-export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity";
+export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity" | "task";
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   call: "Opkald", email_sent: "Email sendt", email_received: "Email modtaget",
@@ -49,7 +49,7 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes, businessEventsRes] = await Promise.all([
+      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes, tasksRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
         supabase.from("quotes").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
@@ -71,7 +71,14 @@ export function useClientGraph(customerId: string | undefined) {
           .eq("entity_id", customerId)
           .order("created_at", { ascending: false })
           .limit(50),
-        supabase.rpc("get_business_timeline", { p_entity_type: "customer", p_entity_id: customerId, p_limit: 100 }),
+        // Service tasks structurally linked to this customer (tasks.lead_id
+        // references customers(id), so it holds customers as well as leads).
+        supabase.from("tasks")
+          .select("id,title,status,priority,due_date,completed_at,created_at,assigned_to,assigned_profile:profiles!tasks_assigned_to_fkey(full_name,email)")
+          .eq("lead_id", customerId)
+          .eq("archived", false)
+          .order("created_at", { ascending: false })
+          .limit(50),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
@@ -84,14 +91,7 @@ export function useClientGraph(customerId: string | undefined) {
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
       const activities = activitiesRes.data ?? [];
-      const businessEvents = businessEventsRes.data ?? [];
-      const eventEntityKeys = new Set(businessEvents.map((event) => `${event.event_type}:${event.entity_id ?? ""}`));
-      const eventEmailIds = new Set(businessEvents.flatMap((event) => {
-        const payload = event.payload && typeof event.payload === "object" && !Array.isArray(event.payload)
-          ? event.payload as Record<string, unknown>
-          : null;
-        return typeof payload?.email_id === "string" ? [payload.email_id] : [];
-      }));
+      const tasks = (tasksRes.data ?? []) as Array<{ id: string; title: string; status: string; priority: string | null; due_date: string | null; completed_at: string | null; created_at: string; assigned_to: string | null; assigned_profile?: { full_name: string | null; email: string } | null }>;
 
       // Payments tied to this customer's invoices
       const invoiceIds = invoices.map(i => i.id);
@@ -103,7 +103,6 @@ export function useClientGraph(customerId: string | undefined) {
       // Build timeline
       const tl: TimelineEvent[] = [];
       for (const e of emails) {
-        if (eventEmailIds.has(e.id)) continue;
         tl.push({
           id: `e:${e.id}`, kind: "email",
           at: e.received_at,
@@ -121,7 +120,6 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const inv of invoices) {
-        if (eventEntityKeys.has(`invoice.created:${inv.id}`)) continue;
         tl.push({
           id: `i:${inv.id}`, kind: "invoice",
           at: inv.issued_at || inv.created_at,
@@ -132,7 +130,6 @@ export function useClientGraph(customerId: string | undefined) {
       }
       for (const p of payments) {
         if (!p.paid_at) continue;
-        if (eventEntityKeys.has(`payment.received:${p.id}`)) continue;
         tl.push({
           id: `p:${p.id}`, kind: "payment",
           at: p.paid_at,
@@ -141,7 +138,6 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const m of meetings) {
-        if (eventEntityKeys.has(`meeting.booked:${m.id}`)) continue;
         tl.push({
           id: `m:${m.id}`, kind: "meeting",
           at: m.start_time,
@@ -150,7 +146,6 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const d of deals) {
-        if (eventEntityKeys.has(`deal.created:${d.id}`)) continue;
         tl.push({
           id: `d:${d.id}`, kind: "deal",
           at: d.created_at,
@@ -167,17 +162,14 @@ export function useClientGraph(customerId: string | undefined) {
           meta: a.body || undefined,
         });
       }
-      for (const event of businessEvents) {
+      for (const task of tasks) {
+        const statusLabel = task.status === "completed" ? "Afsluttet" : task.status === "in_progress" ? "I gang" : "Afventer";
+        const who = task.assigned_profile?.full_name || task.assigned_profile?.email;
         tl.push({
-          id: `event:${event.id}`,
-          kind: event.event_type.startsWith("email.") ? "email"
-            : event.event_type.startsWith("invoice.") ? "invoice"
-            : event.event_type.startsWith("payment.") ? "payment"
-            : event.event_type.startsWith("meeting.") ? "meeting"
-            : event.event_type.startsWith("deal.") ? "deal" : "activity",
-          at: event.occurred_at,
-          title: event.event_type.split(".").join(" "),
-          meta: event.source,
+          id: `t:${task.id}`, kind: "task",
+          at: task.completed_at || task.created_at,
+          title: `Opgave: ${task.title}`,
+          meta: [statusLabel, who ? `· ${who}` : null].filter(Boolean).join(" "),
         });
       }
 
@@ -196,7 +188,7 @@ export function useClientGraph(customerId: string | undefined) {
 
       return {
         customer,
-        deals, invoices, quotes, payments, emails, meetings, activities,
+        deals, invoices, quotes, payments, emails, meetings, activities, tasks,
         timeline: tl,
         stats: {
           openDeals: deals.filter(d => !["won", "lost"].includes(d.stage)).length,

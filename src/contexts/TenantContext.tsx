@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { loadTenantDefaults, loadThemeOverride, saveTenantDefaults, saveThemeOverride, TenantDefaults, ThemeMode } from '@/lib/tenant';
+import { loadTenantDefaults, loadThemeOverride, saveTenantDefaults, saveThemeOverride, normalizeTheme, TenantDefaults, ThemeMode } from '@/lib/tenant';
 import type { Locale } from '@/lib/i18n';
 
 type TenantContextValue = {
@@ -26,8 +26,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!tenant) return;
-    const themeToApply = userThemeOverride || tenant.defaultTheme;
-    setTheme(themeToApply);
+    // An explicit user choice wins. Legacy pre-three-theme tenant defaults
+    // ('light'/'dark') are ignored so everyone lands on the new standard
+    // (Graphite/gold) unless they deliberately switch.
+    const override = normalizeTheme(userThemeOverride);
+    const savedDefault = (['midnight', 'daylight', 'graphite'] as ThemeMode[]).includes(tenant.defaultTheme as ThemeMode)
+      ? (tenant.defaultTheme as ThemeMode)
+      : null;
+    setTheme(override || savedDefault || 'daylight');
   }, [tenant, userThemeOverride, setTheme]);
 
   const setTenantDefaults = (next: TenantDefaults) => {

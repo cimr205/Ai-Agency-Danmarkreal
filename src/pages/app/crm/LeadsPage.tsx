@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
 import { AIEmailWriter } from '@/components/leads/AIEmailWriter';
 import { LeadAiSummaryPanel } from '@/components/leads/LeadAiSummaryPanel';
+import { LeadFollowupAction } from '@/components/leads/LeadFollowupAction';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeads, useCreateLead, useUpdateLeadScore, useDeleteLead, useUpdateLead, useConvertLeadToDeal, useSavedLeadFilters, useCreateSavedFilter, useDeleteSavedFilter, useAllLeadTags, useLeadFolders, useCreateLeadFolder, useDeleteLeadFolder, useMoveLeadToFolder, useBulkDeleteLeads, useBulkUpdateLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
@@ -1291,6 +1292,9 @@ export default function LeadsPage() {
 
                 {/* AI Relationship Summary */}
                 <LeadAiSummaryPanel leadId={selectedLead.id} />
+
+                {/* AI-assisted follow-up: prepare → review → approve */}
+                <LeadFollowupAction leadId={selectedLead.id} leadName={selectedLead.name} />
 
                 {/* Notes */}
                 <div className="space-y-2">

@@ -10,15 +10,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen relative" style={{ background: 'linear-gradient(135deg, var(--bg-base) 0%, var(--bg-surface) 50%, var(--bg-base) 100%)' }}>
-      <div className="absolute top-4 left-4 z-10">
-        <Link to={`/${locale}`}>
-          <img src={logo} alt="AI Agency Danmark" className="h-10 w-auto" />
-        </Link>
-      </div>
-      <div className="absolute top-4 right-4 z-10">
-        <LanguagePicker />
-      </div>
-      {children}
+      <header>
+        <div className="absolute top-4 left-4 z-10">
+          <Link to={`/${locale}`} aria-label="AI Agency Danmark">
+            <img src={logo} alt="AI Agency Danmark" className="h-10 w-auto" />
+          </Link>
+        </div>
+        <div className="absolute top-4 right-4 z-10">
+          <LanguagePicker />
+        </div>
+      </header>
+      <main>{children}</main>
     </div>
   );
 }

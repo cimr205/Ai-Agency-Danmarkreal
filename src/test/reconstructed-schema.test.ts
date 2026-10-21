@@ -7,7 +7,7 @@ import { join } from "node:path";
  * reproducible via the reconstruction migration, with RLS enabled and tenant
  * policies on the company-scoped ones.
  */
-const MIG = join(process.cwd(), "supabase/migrations/20261021000001_reconstruct_orphaned_production_tables.sql");
+const MIG = join(process.cwd(), "supabase/migrations/20261014000000_reconstruct_orphaned_production_tables.sql");
 
 const ALL15 = [
   "ai_conversations", "ai_messages", "ai_execution_runs", "ai_execution_steps",
@@ -17,6 +17,12 @@ const ALL15 = [
 ];
 // company_id-bearing tables must have a tenant policy; these two have none → deny-all.
 const NO_COMPANY = ["ai_execution_steps", "telnyx_webhook_events"];
+// ai_conversations/ai_messages get a SELECT policy named to match
+// 20261014000004_scope_ai_conversations_to_owner.sql, which then tightens them to owner-scoped.
+const OWNER_SELECT: Record<string, string> = {
+  ai_conversations: "Members view own company conversations",
+  ai_messages: "Members view own company messages",
+};
 
 describe("B2 reconstruction migration", () => {
   it("exists", () => {
@@ -32,10 +38,16 @@ describe("B2 reconstruction migration", () => {
     }
   });
 
-  it("applies the standard tenant policy to every company-scoped table", () => {
+  it("applies a company-scoped tenant policy to every company-scoped table", () => {
     for (const t of ALL15.filter((t) => !NO_COMPANY.includes(t))) {
-      const policy = new RegExp(`create policy "[^"]*${t}[^"]*" on public\\.${t} for all[\\s\\S]*?get_user_company_id\\(auth\\.uid\\(\\)\\)`);
-      expect(sql, `tenant policy on ${t}`).toMatch(policy);
+      if (OWNER_SELECT[t]) {
+        // SELECT policy named to match the later owner-scoping migration.
+        const p = new RegExp(`create policy "${OWNER_SELECT[t]}" on public\\.${t} for select[\\s\\S]*?get_user_company_id\\(auth\\.uid\\(\\)\\)`);
+        expect(sql, `owner-aligned policy on ${t}`).toMatch(p);
+      } else {
+        const p = new RegExp(`create policy "[^"]*${t}[^"]*" on public\\.${t} for all[\\s\\S]*?get_user_company_id\\(auth\\.uid\\(\\)\\)`);
+        expect(sql, `tenant policy on ${t}`).toMatch(p);
+      }
     }
   });
 
