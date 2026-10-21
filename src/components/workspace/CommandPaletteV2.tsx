@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { isLocale } from "@/lib/i18n";
+import { isLocale, useI18n } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,6 +20,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
   const locale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${locale}/app`;
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const blockedModules = useMyBlockedModules();
 
@@ -76,12 +77,12 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
   // irrelevant top results. Use plain substring matching instead.
   const q = query.trim().toLowerCase();
   const filteredDestinations = useMemo(
-    () => (q ? allDestinations.filter(d => d.label.toLowerCase().includes(q)) : allDestinations),
-    [allDestinations, q],
+    () => (q ? allDestinations.filter(d => t(d.labelKey).toLowerCase().includes(q)) : allDestinations),
+    [allDestinations, q, t],
   );
   const filteredModes = useMemo(
-    () => (q ? MODES.filter(m => m.label.toLowerCase().includes(q) || m.hint.toLowerCase().includes(q)) : MODES),
-    [q],
+    () => (q ? MODES.filter(m => t(m.labelKey).toLowerCase().includes(q) || t(m.hintKey).toLowerCase().includes(q)) : MODES),
+    [q, t],
   );
 
   const go = (path: string) => {
@@ -93,17 +94,17 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange} shouldFilter={false}>
       <CommandInput
-        placeholder="Søg klienter, deals, fakturaer eller naviger…"
+        placeholder={t('command.searchPlaceholderV2')}
         value={query}
         onValueChange={setQuery}
       />
       <CommandList className="max-h-[480px]">
-        <CommandEmpty>Ingen resultater.</CommandEmpty>
+        <CommandEmpty>{t('command.noResultsV2')}</CommandEmpty>
 
         {entities && (entities.customers.length + entities.deals.length + entities.leads.length + entities.invoices.length) > 0 && (
           <>
             {entities.customers.length > 0 && (
-              <CommandGroup heading="Klienter">
+              <CommandGroup heading={t('nav.clients')}>
                 {entities.customers.map(c => (
                   <CommandItem key={c.id} value={`klient ${c.name} ${c.email}`} onSelect={() => go(`${base}/clients/${c.id}`)} className="gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -115,7 +116,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
               </CommandGroup>
             )}
             {entities.deals.length > 0 && (
-              <CommandGroup heading="Deals">
+              <CommandGroup heading={t('nav.deals')}>
                 {entities.deals.map(d => (
                   <CommandItem key={d.id} value={`deal ${d.title}`} onSelect={() => go(d.customer_id ? `${base}/clients/${d.customer_id}` : `${base}/crm/deals`)} className="gap-2">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -125,7 +126,7 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
               </CommandGroup>
             )}
             {entities.leads.length > 0 && (
-              <CommandGroup heading="Leads">
+              <CommandGroup heading={t('nav.leads')}>
                 {entities.leads.map(l => (
                   <CommandItem key={l.id} value={`lead ${l.name} ${l.email}`} onSelect={() => go(`${base}/crm/leads`)} className="gap-2">
                     <Target className="h-4 w-4 text-muted-foreground" />
@@ -136,12 +137,12 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
               </CommandGroup>
             )}
             {entities.invoices.length > 0 && (
-              <CommandGroup heading="Fakturaer">
+              <CommandGroup heading={t('nav.invoices')}>
                 {entities.invoices.map(i => (
                   <CommandItem key={i.id} value={`faktura ${i.invoice_number}`} onSelect={() => go(i.customer_id ? `${base}/clients/${i.customer_id}` : `${base}/finance/invoices`)} className="gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1">#{i.invoice_number}</span>
-                    <span className="text-xs text-muted-foreground">{Number(i.amount).toLocaleString("da-DK")}</span>
+                    <span className="text-xs text-muted-foreground">{Number(i.amount).toLocaleString(locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-US')}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -150,23 +151,23 @@ export function CommandPaletteV2({ open, onOpenChange }: Props) {
           </>
         )}
 
-        <CommandGroup heading="Modes">
+        <CommandGroup heading={t('command.switchMode')}>
           {filteredModes.map(m => (
-            <CommandItem key={m.id} value={`mode ${m.label} ${m.hint}`} onSelect={() => go(`${base}/dashboard`)} className="gap-2">
+            <CommandItem key={m.id} value={`mode ${t(m.labelKey)} ${t(m.hintKey)}`} onSelect={() => go(`${base}/dashboard`)} className="gap-2">
               <m.icon className="h-4 w-4 text-muted-foreground" />
-              <span className="flex-1">{m.label}</span>
-              <span className="text-xs text-muted-foreground">{m.hint}</span>
+              <span className="flex-1">{t(m.labelKey)}</span>
+              <span className="text-xs text-muted-foreground">{t(m.hintKey)}</span>
             </CommandItem>
           ))}
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Naviger">
+        <CommandGroup heading={t('command.goTo')}>
           {filteredDestinations.map(d => (
-            <CommandItem key={d.path} value={`naviger ${d.label}`} onSelect={() => go(`${base}/${d.path}`)} className="gap-2">
+            <CommandItem key={d.path} value={`naviger ${t(d.labelKey)}`} onSelect={() => go(`${base}/${d.path}`)} className="gap-2">
               <d.icon className="h-4 w-4 text-muted-foreground" />
-              <span>{d.label}</span>
+              <span>{t(d.labelKey)}</span>
             </CommandItem>
           ))}
         </CommandGroup>

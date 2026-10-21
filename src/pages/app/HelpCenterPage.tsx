@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { useI18n } from '@/lib/i18n';
 
 interface HelpArticle {
   id: string;
@@ -91,15 +92,16 @@ const HELP_ARTICLES: HelpArticle[] = [
 const CATEGORIES = [
   { name: 'Kom i gang', icon: BookOpen, color: 'text-primary' },
   { name: 'CRM & Pipeline', icon: BarChart3, color: 'text-success' },
-  { name: 'Email', icon: Mail, color: 'text-accent' },
+  { name: 'Email', icon: Mail, color: 'text-chart-cyan' },
   { name: 'Billing & Abonnement', icon: CreditCard, color: 'text-warning' },
   { name: 'HR & Workforce', icon: Users, color: 'text-primary' },
   { name: 'Sikkerhed', icon: Shield, color: 'text-destructive' },
-  { name: 'AI & Automatisering', icon: Settings, color: 'text-accent' },
+  { name: 'AI & Automatisering', icon: Settings, color: 'text-chart-violet' },
   { name: 'Integrationer', icon: Settings, color: 'text-muted-foreground' },
 ];
 
 export default function HelpCenterPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -115,8 +117,8 @@ export default function HelpCenterPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold">Hjælpecenter</h1>
-        <p className="text-sm text-muted-foreground">Find svar på dine spørgsmål</p>
+        <h1 className="text-2xl font-bold">{t('helpCenter.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('helpCenter.subtitle')}</p>
       </div>
 
       {/* Search */}
@@ -189,7 +191,7 @@ export default function HelpCenterPage() {
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Ingen artikler fundet. Prøv et andet søgeord.</p>
+            <p className="text-sm">{t('helpCenter.noResults')}</p>
           </div>
         )}
       </Accordion>

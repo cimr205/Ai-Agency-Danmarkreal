@@ -217,8 +217,18 @@ Deno.serve(withSentry("cvr-search", async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } else if (status === 403) {
-        errorMsg = "Ugyldig User-Agent. Kontakt support.";
-        code = "INVALID_UA";
+        // CVRAPI returns 403 for BOTH an invalid User-Agent and an exhausted
+        // free-tier quota (per shared/datacenter IP). Read the body so the user
+        // sees the real reason instead of a misleading "invalid User-Agent".
+        let apiCode = "";
+        try { apiCode = ((await apiRes.clone().json()) as { error?: string })?.error ?? ""; } catch { /* ignore */ }
+        if (apiCode === "QUOTA_EXCEEDED") {
+          errorMsg = "CVR-opslaget har nået sin kvote for i dag. Kræver en betalt CVRAPI-nøgle.";
+          code = "QUOTA_EXCEEDED";
+        } else {
+          errorMsg = "Ugyldig User-Agent. Kontakt support.";
+          code = "INVALID_UA";
+        }
       } else if (status === 429) {
         errorMsg = "CVRAPI kvoter opbrugt. Prøv igen senere.";
         code = "QUOTA_EXCEEDED";

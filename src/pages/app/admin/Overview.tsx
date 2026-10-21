@@ -156,8 +156,8 @@ export default function AdminOverviewPage() {
 
   const subBadge = (status: string | null) => {
     switch (status) {
-      case 'active': return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Betaler</Badge>;
-      case 'trialing': return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Prøveperiode</Badge>;
+      case 'active': return <Badge className="bg-success/20 text-success border-success/30">Betaler</Badge>;
+      case 'trialing': return <Badge className="bg-warning/20 text-warning border-warning/30">Prøveperiode</Badge>;
       case 'canceled': return <Badge variant="destructive">Annulleret</Badge>;
       default: return <Badge variant="secondary">Ingen</Badge>;
     }
@@ -203,37 +203,37 @@ export default function AdminOverviewPage() {
       })()}
 
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {loading ? [1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />) : (
+        {loading ? [1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-24 rounded-lg" />) : (
           <>
             <KpiCard icon={Building2} label="Virksomheder" value={totalCompanies.toString()} color="text-primary" />
-            <KpiCard icon={Users} label="Brugere" value={totalUsers.toString()} color="text-blue-500" />
-            <KpiCard icon={UserCheck} label="Medarbejdere" value={totalEmployees.toString()} color="text-emerald-500" />
-            <KpiCard icon={CreditCard} label="Betalende" value={payingCompanies.toString()} color="text-green-500" />
-            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString('da-DK')} color="text-amber-500" />
-            <KpiCard icon={AlertTriangle} label="Deaktiverede" value={disabledCompanies.toString()} color="text-red-500" />
+            <KpiCard icon={Users} label="Brugere" value={totalUsers.toString()} color="text-primary" />
+            <KpiCard icon={UserCheck} label="Medarbejdere" value={totalEmployees.toString()} color="text-success" />
+            <KpiCard icon={CreditCard} label="Betalende" value={payingCompanies.toString()} color="text-success" />
+            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString('da-DK')} color="text-warning" />
+            <KpiCard icon={AlertTriangle} label="Deaktiverede" value={disabledCompanies.toString()} color="text-destructive" />
           </>
         )}
       </div>
 
       {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="rounded-2xl border-emerald-500/20">
+          <Card className="rounded-lg border-success/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-emerald-400 mb-1">💰 Betalende kunder</p>
+              <p className="text-sm font-medium text-success mb-1">💰 Betalende kunder</p>
               <p className="text-3xl font-bold">{payingCompanies}</p>
               <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString('da-DK')} DKK/md omsætning</p>
             </CardContent>
           </Card>
-          <Card className="rounded-2xl border-amber-500/20">
+          <Card className="rounded-lg border-warning/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-amber-400 mb-1">⏳ Prøveperiode</p>
+              <p className="text-sm font-medium text-warning mb-1">⏳ Prøveperiode</p>
               <p className="text-3xl font-bold">{trialingCompanies}</p>
               <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString('da-DK')} DKK/md</p>
             </CardContent>
           </Card>
-          <Card className="rounded-2xl border-red-500/20">
+          <Card className="rounded-lg border-destructive/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-red-400 mb-1">🚫 Ikke betalt / ingen plan</p>
+              <p className="text-sm font-medium text-destructive mb-1">🚫 Ikke betalt / ingen plan</p>
               <p className="text-3xl font-bold">{totalCompanies - payingCompanies - trialingCompanies}</p>
               <p className="text-xs text-muted-foreground mt-1">Kræver opfølgning</p>
             </CardContent>
@@ -242,23 +242,23 @@ export default function AdminOverviewPage() {
       )}
 
       {loading ? (
-        <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}</div>
+        <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}</div>
       ) : companies.length === 0 ? (
-        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent></Card>
+        <Card className="rounded-lg"><CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent></Card>
       ) : (
         <div className="space-y-4">
           {companies.map(company => {
             const isExpanded = expandedId === company.id;
             return (
-              <Card key={company.id} className={`rounded-2xl overflow-hidden transition-all ${company.disabled ? 'opacity-60 border-red-500/30' : ''}`}>
+              <Card key={company.id} className={`rounded-lg overflow-hidden transition-all ${company.disabled ? 'opacity-60 border-destructive/30' : ''}`}>
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between p-5">
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : company.id)}
                       className="flex items-center gap-4 min-w-0 text-left flex-1"
                     >
-                      <div className={`rounded-xl p-2.5 shrink-0 ${company.disabled ? 'bg-red-500/10' : 'bg-primary/10'}`}>
-                        <Building2 className={`h-5 w-5 ${company.disabled ? 'text-red-500' : 'text-primary'}`} />
+                      <div className={`rounded-xl p-2.5 shrink-0 ${company.disabled ? 'bg-destructive/10' : 'bg-primary/10'}`}>
+                        <Building2 className={`h-5 w-5 ${company.disabled ? 'text-destructive' : 'text-primary'}`} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -305,7 +305,7 @@ export default function AdminOverviewPage() {
 
                       <div>
                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                          <Crown className="h-3.5 w-3.5 text-amber-500" /> Ejere ({company.owners.length})
+                          <Crown className="h-3.5 w-3.5 text-warning" /> Ejere ({company.owners.length})
                         </h3>
                         {company.owners.length === 0 ? (
                           <p className="text-sm text-muted-foreground">Ingen ejere registreret</p>
@@ -313,7 +313,7 @@ export default function AdminOverviewPage() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {company.owners.map(owner => (
                               <div key={owner.user_id} className="flex items-center gap-3 p-3 rounded-xl bg-background/60 border border-border/30">
-                                <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+                                <Crown className="h-4 w-4 text-warning shrink-0" />
                                 <div className="min-w-0">
                                   <p className="font-medium text-sm truncate">{owner.full_name || 'Ukendt'}</p>
                                   <p className="text-xs text-muted-foreground truncate">{owner.email}</p>
@@ -326,7 +326,7 @@ export default function AdminOverviewPage() {
 
                       <div>
                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                          <UserCheck className="h-3.5 w-3.5 text-emerald-500" /> Medarbejdere ({company.employees.length})
+                          <UserCheck className="h-3.5 w-3.5 text-success" /> Medarbejdere ({company.employees.length})
                         </h3>
                         {company.employees.length === 0 ? (
                           <p className="text-sm text-muted-foreground">Ingen medarbejdere</p>
@@ -371,7 +371,7 @@ export default function AdminOverviewPage() {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; color: string }) {
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-lg">
       <CardContent className="flex items-center gap-3 p-4">
         <div className="rounded-xl bg-muted/60 p-2.5">
           <Icon className={`h-4 w-4 ${color}`} />

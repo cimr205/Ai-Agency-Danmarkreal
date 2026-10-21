@@ -6,7 +6,7 @@
 -- against a database with `psql -f` / `supabase db query -f` inside a
 -- transaction that's rolled back, so it never leaves fixture data behind.
 begin;
-select plan(18);
+select plan(19);
 
 -- Fixtures: two companies, one user each, one row per table for Company B.
 -- A handle_new_user() trigger auto-creates a public.profiles row (with
@@ -25,8 +25,8 @@ update public.profiles set company_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 
 update public.profiles set company_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', onboarding_completed = true
   where user_id = '22222222-2222-2222-2222-222222222222';
 
-insert into public.leads (id, company_id, name, email, status, created_by) values
-  ('c0000000-0000-0000-0000-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'B Lead', 'blead@test.local', 'new', '22222222-2222-2222-2222-222222222222');
+insert into public.customers (id, company_id, name, email, record_type, status, created_by) values
+  ('c0000000-0000-0000-0000-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'B Lead', 'blead@test.local', 'lead', 'new', '22222222-2222-2222-2222-222222222222');
 
 insert into public.deals (id, company_id, title, stage, value, created_by) values
   ('c0000000-0000-0000-0000-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'B Deal', 'discovery', 1000, '22222222-2222-2222-2222-222222222222');
@@ -48,7 +48,7 @@ set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', '11111111-1111-1111-1111-111111111111', 'role', 'authenticated')::text, true);
 
 -- Cross-tenant READ isolation: User A must not see any Company B row.
-select is((select count(*)::int from public.leads where id = 'c0000000-0000-0000-0000-000000000001'), 0, 'leads: User A cannot read Company B row');
+select is((select count(*)::int from public.customers where id = 'c0000000-0000-0000-0000-000000000001'), 0, 'leads: User A cannot read Company B row');
 select is((select count(*)::int from public.deals where id = 'c0000000-0000-0000-0000-000000000002'), 0, 'deals: User A cannot read Company B row');
 select is((select count(*)::int from public.customers where id = 'c0000000-0000-0000-0000-000000000003'), 0, 'customers: User A cannot read Company B row');
 select is((select count(*)::int from public.invoices where id = 'c0000000-0000-0000-0000-000000000004'), 0, 'invoices: User A cannot read Company B row');
@@ -58,7 +58,7 @@ select is((select count(*)::int from public.employee_profiles where id = 'c00000
 -- Cross-tenant WRITE isolation: User A must not be able to insert a row
 -- claiming Company B's company_id (RLS violation raises SQLSTATE 42501).
 select throws_ok(
-  $$insert into public.leads (company_id, name, email, status, created_by) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Hacked Lead', 'hack@test.local', 'new', '11111111-1111-1111-1111-111111111111')$$,
+  $$insert into public.customers (company_id, name, email, record_type, status, created_by) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Hacked Lead', 'hack@test.local', 'lead', 'new', '11111111-1111-1111-1111-111111111111')$$,
   '42501', null, 'leads: User A cannot insert a row into Company B'
 );
 select throws_ok(
@@ -85,9 +85,9 @@ select throws_ok(
 -- Sanity check: User A CAN still read/write within their own company (a
 -- suite that blocks everything, including same-tenant access, would be
 -- useless as a regression guard).
-insert into public.leads (id, company_id, name, email, status, created_by) values
-  ('c0000000-0000-0000-0000-000000000011', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Lead', 'alead@test.local', 'new', '11111111-1111-1111-1111-111111111111');
-select is((select count(*)::int from public.leads where id = 'c0000000-0000-0000-0000-000000000011'), 1, 'leads: User A can read/write their own company row');
+insert into public.customers (id, company_id, name, email, record_type, status, created_by) values
+  ('c0000000-0000-0000-0000-000000000011', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Lead', 'alead@test.local', 'lead', 'new', '11111111-1111-1111-1111-111111111111');
+select is((select count(*)::int from public.customers where id = 'c0000000-0000-0000-0000-000000000011'), 1, 'leads: User A can read/write their own company row');
 
 insert into public.deals (id, company_id, title, stage, value, created_by) values
   ('c0000000-0000-0000-0000-000000000012', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Deal', 'discovery', 1, '11111111-1111-1111-1111-111111111111');
@@ -108,6 +108,11 @@ select is((select count(*)::int from public.employee_profiles where id = 'c00000
 insert into public.invoices (id, company_id, invoice_number, amount, customer_id, status, created_by) values
   ('c0000000-0000-0000-0000-000000000015', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A-INV-1', 1, 'c0000000-0000-0000-0000-000000000013', 'draft', '11111111-1111-1111-1111-111111111111');
 select is((select count(*)::int from public.invoices where id = 'c0000000-0000-0000-0000-000000000015'), 1, 'invoices: User A can read/write their own company row');
+
+select throws_ok(
+  $$insert into public.leads(company_id,name,email,created_by) values('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','Legacy write','legacy@test.local','11111111-1111-1111-1111-111111111111')$$,
+  '42501', null, 'legacy leads remain read-only even within the owning company'
+);
 
 select * from finish();
 rollback;

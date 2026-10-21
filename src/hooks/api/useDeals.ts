@@ -4,7 +4,11 @@ import type { Database, Tables } from '@/integrations/supabase/types';
 
 type DealStage = string;
 
-export type DealWithCustomer = Tables<'deals'> & { customers: Pick<Tables<'customers'>, 'name'> | null };
+export type DealWithCustomer = Tables<'deals'> & {
+  customers: Pick<Tables<'customers'>, 'name' | 'lead_source' | 'email'> | null;
+};
+
+const DEAL_CUSTOMER_SELECT = "*, customers!deals_customer_id_fkey(name, lead_source, email)";
 
 export function useDeals() {
   return useQuery({
@@ -12,7 +16,7 @@ export function useDeals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deals')
-        .select('*, customers!deals_customer_id_fkey(name)')
+        .select(DEAL_CUSTOMER_SELECT)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as DealWithCustomer[];
@@ -65,11 +69,44 @@ export function useUpdateDeal() {
       }
       const { data, error } = await supabase
         .from('deals')
-        .select('*, customers!deals_customer_id_fkey(name)')
+        .select(DEAL_CUSTOMER_SELECT)
         .eq('id', id)
         .single();
       if (error) throw error;
       return data as unknown as DealWithCustomer;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['pipeline-summary'] });
+    },
+  });
+}
+
+export function useUpdateDealStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, stage }: { id: string; stage: DealStage }) => {
+      const { data, error } = await supabase.rpc('transition_deal_stage', { p_deal_id: id, p_target_stage: stage });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deals'] });
+      qc.invalidateQueries({ queryKey: ['pipeline-summary'] });
+    },
+  });
+}
+
+export function useBulkUpdateDealStage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, stage }: { ids: string[]; stage: DealStage }) => {
+      const results = await Promise.all(
+        ids.map((id) => supabase.rpc('transition_deal_stage', { p_deal_id: id, p_target_stage: stage })),
+      );
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+      return results.map((r) => r.data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deals'] });

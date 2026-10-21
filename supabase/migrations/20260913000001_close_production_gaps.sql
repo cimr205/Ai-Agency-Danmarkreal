@@ -32,6 +32,21 @@ create table if not exists public.invoice_payment_references (
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
+alter table public.invoice_payment_references
+  add column if not exists token_hash text,
+  add column if not exists consumed_at timestamptz,
+  add column if not exists stripe_checkout_session_id text;
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='invoice_payment_references' and column_name='amount') then
+    alter table public.invoice_payment_references alter column amount drop not null;
+  end if;
+end;
+$$;
+create unique index if not exists invoice_payment_references_token_hash_unique
+  on public.invoice_payment_references(token_hash) where token_hash is not null;
+create unique index if not exists invoice_payment_references_checkout_session_unique
+  on public.invoice_payment_references(stripe_checkout_session_id) where stripe_checkout_session_id is not null;
 alter table public.invoice_payment_references enable row level security;
 create policy "Members view invoice payment references" on public.invoice_payment_references
   for select to authenticated using(company_id=public.get_user_company_id(auth.uid()));

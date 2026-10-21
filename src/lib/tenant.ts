@@ -1,6 +1,18 @@
 import type { Locale } from '@/lib/i18n';
 
-export type ThemeMode = 'light' | 'dark';
+/** The three installed product themes. Legacy stored values ('light'/'dark')
+ * are mapped forward by normalizeTheme so old preferences keep working. */
+export type ThemeMode = 'daylight' | 'midnight' | 'graphite';
+
+export const THEME_MODES: ThemeMode[] = ['midnight', 'daylight', 'graphite'];
+
+const LEGACY_THEME: Record<string, ThemeMode> = { light: 'daylight', dark: 'midnight' };
+
+export function normalizeTheme(value: string | null | undefined): ThemeMode | null {
+  if (!value) return null;
+  if (value === 'daylight' || value === 'midnight' || value === 'graphite') return value;
+  return LEGACY_THEME[value] ?? null;
+}
 
 export interface TenantDefaults {
   tenantId: string;
@@ -29,9 +41,7 @@ export function saveTenantDefaults(next: TenantDefaults): void {
 }
 
 export function loadThemeOverride(): ThemeMode | null {
-  const raw = localStorage.getItem(THEME_OVERRIDE_KEY);
-  if (raw === 'light' || raw === 'dark') return raw;
-  return null;
+  return normalizeTheme(localStorage.getItem(THEME_OVERRIDE_KEY));
 }
 
 export function saveThemeOverride(next: ThemeMode | null): void {

@@ -5,7 +5,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type EmailSummary = Pick<Tables<"emails">, "id" | "subject" | "from_address" | "from_name" | "received_at" | "snippet">;
 type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "description" | "start_time" | "end_time" | "event_type">;
 
-export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity";
+export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity" | "task";
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   call: "Opkald", email_sent: "Email sendt", email_received: "Email modtaget",
@@ -49,9 +49,10 @@ export function useClientGraph(customerId: string | undefined) {
       const customerEmailLower = (customer.email || "").toLowerCase();
       const nameLike = `%${customer.name}%`;
 
-      const [dealsRes, invoicesRes, emailsRes, calRes, activitiesRes, businessEventsRes] = await Promise.all([
+      const [dealsRes, invoicesRes, quotesRes, emailsRes, calRes, activitiesRes, businessEventsRes, tasksRes] = await Promise.all([
         supabase.from("deals").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("customer_id", customerId).order("issued_at", { ascending: false }),
+        supabase.from("quotes").select("*").eq("customer_id", customerId).order("created_at", { ascending: false }),
         customerEmailLower
           ? supabase.from("emails")
               .select("id,subject,from_address,from_name,received_at,snippet")
@@ -71,13 +72,23 @@ export function useClientGraph(customerId: string | undefined) {
           .order("created_at", { ascending: false })
           .limit(50),
         supabase.rpc("get_business_timeline", { p_entity_type: "customer", p_entity_id: customerId, p_limit: 100 }),
+        // Service tasks structurally linked to this customer (tasks.lead_id
+        // references customers(id), so it holds customers as well as leads).
+        supabase.from("tasks")
+          .select("id,title,status,priority,due_date,completed_at,created_at,assigned_to,assigned_profile:profiles!tasks_assigned_to_fkey(full_name,email)")
+          .eq("lead_id", customerId)
+          .eq("archived", false)
+          .order("created_at", { ascending: false })
+          .limit(50),
       ]);
 
       if (dealsRes.error) throw dealsRes.error;
       if (invoicesRes.error) throw invoicesRes.error;
+      if (quotesRes.error) throw quotesRes.error;
 
       const deals = dealsRes.data ?? [];
       const invoices = invoicesRes.data ?? [];
+      const quotes = quotesRes.data ?? [];
       const emails = (emailsRes.data ?? []) as EmailSummary[];
       const meetings = (calRes.data ?? []) as CalendarEventSummary[];
       const activities = activitiesRes.data ?? [];
@@ -89,6 +100,7 @@ export function useClientGraph(customerId: string | undefined) {
           : null;
         return typeof payload?.email_id === "string" ? [payload.email_id] : [];
       }));
+      const tasks = (tasksRes.data ?? []) as Array<{ id: string; title: string; status: string; priority: string | null; due_date: string | null; completed_at: string | null; created_at: string; assigned_to: string | null; assigned_profile?: { full_name: string | null; email: string } | null }>;
 
       // Payments tied to this customer's invoices
       const invoiceIds = invoices.map(i => i.id);
@@ -106,6 +118,15 @@ export function useClientGraph(customerId: string | undefined) {
           at: e.received_at,
           title: e.subject || "(uden emne)",
           meta: `fra ${e.from_name || e.from_address}`,
+        });
+      }
+      for (const q of quotes) {
+        tl.push({
+          id: `q:${q.id}`, kind: "invoice",
+          at: q.accepted_at || q.sent_at || q.created_at,
+          title: `Tilbud: ${q.title}`,
+          meta: q.accepted_at ? ACTIVITY_TYPE_LABELS.quote_accepted : q.sent_at ? ACTIVITY_TYPE_LABELS.quote_sent : q.status,
+          amount: Number(q.total),
         });
       }
       for (const inv of invoices) {
@@ -168,6 +189,16 @@ export function useClientGraph(customerId: string | undefined) {
           meta: event.source,
         });
       }
+      for (const task of tasks) {
+        const statusLabel = task.status === "completed" ? "Afsluttet" : task.status === "in_progress" ? "I gang" : "Afventer";
+        const who = task.assigned_profile?.full_name || task.assigned_profile?.email;
+        tl.push({
+          id: `t:${task.id}`, kind: "task",
+          at: task.completed_at || task.created_at,
+          title: `Opgave: ${task.title}`,
+          meta: [statusLabel, who ? `· ${who}` : null].filter(Boolean).join(" "),
+        });
+      }
 
       tl.sort((a, b) => +new Date(b.at) - +new Date(a.at));
 
@@ -184,7 +215,7 @@ export function useClientGraph(customerId: string | undefined) {
 
       return {
         customer,
-        deals, invoices, payments, emails, meetings, activities,
+        deals, invoices, quotes, payments, emails, meetings, activities, tasks,
         timeline: tl,
         stats: {
           openDeals: deals.filter(d => !["won", "lost"].includes(d.stage)).length,

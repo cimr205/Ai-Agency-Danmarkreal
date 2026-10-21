@@ -18,6 +18,7 @@ import {
   type AutopilotAction, type WorkspaceEvent,
 } from "@/hooks/api/useAutopilot";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 
 const AGENT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autopilot-agent`;
 
@@ -390,10 +391,6 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
           {actions.map((a) => {
             const Icon = ACTION_ICON[a.action_type] ?? Sparkles;
             const isProposed = ["proposed", "awaiting_approval"].includes(a.status);
-            const tone = a.status === "executed" ? "text-emerald-300/80"
-              : a.status === "dismissed" ? "text-muted-foreground/60"
-              : a.status === "failed" ? "text-destructive"
-              : "text-primary";
 
             return (
               <motion.div
@@ -408,9 +405,24 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="text-sm font-medium leading-tight">{a.headline}</div>
                     {a.rationale && <div className="text-[11px] text-muted-foreground leading-relaxed">{a.rationale}</div>}
-                    <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.16em]">
-                      <span className={tone}>{a.status}</span>
-                      <span className="text-muted-foreground/50">{new Date(a.created_at).toLocaleString("da-DK")}</span>
+                    {isProposed && a.payload && Object.keys(a.payload).length > 0 && (
+                      <details className="text-[11px]">
+                        <summary className="cursor-pointer text-muted-foreground/70 font-mono uppercase tracking-[0.1em] text-[10px]">
+                          Detaljer
+                        </summary>
+                        <dl className="mt-1 space-y-0.5 pl-2 border-l border-border/40">
+                          {Object.entries(a.payload).map(([key, value]) => (
+                            <div key={key} className="flex gap-2">
+                              <dt className="text-muted-foreground/60 shrink-0">{key}:</dt>
+                              <dd className="truncate text-foreground/80">{typeof value === "object" ? JSON.stringify(value) : String(value)}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </details>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={a.status} className="text-[10px]" />
+                      <span className="text-[10px] font-mono text-muted-foreground/50">{new Date(a.created_at).toLocaleString("da-DK")}</span>
                     </div>
                   </div>
                 </div>

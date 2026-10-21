@@ -12,6 +12,11 @@ export default function WorkspaceShell({ children }: { basePath?: string; childr
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-background text-foreground">
+      {/* Soft ambient so the floating glass rail reads premium on any theme. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+        <div className="absolute -left-20 top-0 h-[520px] w-[520px] rounded-full bg-primary/10 blur-[140px]" />
+        <div className="absolute bottom-0 left-40 h-[420px] w-[460px] rounded-full bg-stamp/10 blur-[150px]" />
+      </div>
       <WorkspaceRail onOpenPalette={() => setPaletteOpen(true)} />
 
       <div className="relative flex h-screen min-w-0 flex-1 flex-col">

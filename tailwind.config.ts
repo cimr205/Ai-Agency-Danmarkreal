@@ -2,7 +2,14 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
-  darkMode: ["class"],
+  // Two of the three product themes are dark (Midnight, Graphite); legacy
+  // `.dark` kept for the marketing/forced-light scope. `dark:` utilities fire
+  // under any of them.
+  darkMode: ["variant", [
+    "&:is(.dark, .dark *)",
+    "&:is(.midnight, .midnight *)",
+    "&:is(.graphite, .graphite *)",
+  ]],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
@@ -67,6 +74,13 @@ export default {
         danger: {
           DEFAULT: "var(--danger)",
           subtle: "var(--danger-subtle)",
+        },
+        chart: {
+          blue: "hsl(var(--chart-blue))",
+          cyan: "hsl(var(--chart-cyan))",
+          violet: "hsl(var(--chart-violet))",
+          teal: "hsl(var(--chart-teal))",
+          amber: "hsl(var(--chart-amber))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

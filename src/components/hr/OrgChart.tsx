@@ -64,7 +64,7 @@ export default function OrgChart() {
                     <p className="text-xs text-muted-foreground truncate">{emp.position || '—'}</p>
                   </div>
                   {emp.is_active !== false && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <div className="ml-auto w-2 h-2 rounded-full bg-success shrink-0" />
                   )}
                 </div>
               ))}

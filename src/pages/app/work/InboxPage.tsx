@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { useInbox, useMarkMessageRead, useMarkNotificationRead, useSendMessage } from '@/hooks/api/useInbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Mail, Bell, Check, Send } from 'lucide-react';
-import { toast } from 'sonner';
-import { formatDistanceToNow } from 'date-fns';
-import { da, de, enUS } from 'date-fns/locale';
-import { useI18n, isLocale } from '@/lib/i18n';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { da, de, enUS } from 'date-fns/locale';
+import { MessageSquarePlus, MessagesSquare } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { useI18n, isLocale } from '@/lib/i18n';
+import {
+  useConversations, useSendMessage, useMarkConversationRead,
+  useMarkMessageUnread, type Conversation,
+} from '@/hooks/api/useInbox';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ConversationList } from '@/components/inbox/ConversationList';
+import { ConversationThread } from '@/components/inbox/ConversationThread';
+import { ConversationDetailsPanel } from '@/components/inbox/ConversationDetailsPanel';
+import { NewConversationDialog } from '@/components/inbox/NewConversationDialog';
 
 const localeMap = { da, de, en: enUS };
 
@@ -24,130 +24,182 @@ export default function InboxPage() {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const dateFnsLocale = localeMap[locale] || enUS;
+  const { profile } = useAuth();
+  const userId = profile?.user_id;
 
-  const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [newMessage, setNewMessage] = useState({ receiver_id: '', content: '' });
-
-  const { data: inbox, isLoading, error } = useInbox();
-  const markMessageRead = useMarkMessageRead();
-  const markNotificationRead = useMarkNotificationRead();
+  const { conversations, isLoading, error, togglePin, colleagues } = useConversations();
   const sendMessage = useSendMessage();
+  const markConversationRead = useMarkConversationRead();
+  const markMessageUnread = useMarkMessageUnread();
 
-  const handleSend = async () => {
-    if (!newMessage.receiver_id || !newMessage.content) { toast.error(t('pages.inbox.receiverRequired')); return; }
-    try {
-      await sendMessage.mutateAsync(newMessage);
-      toast.success(t('pages.inbox.sent_success'));
-      setNewMessage({ receiver_id: '', content: '' });
-      setIsComposeOpen(false);
-    } catch { toast.error(t('pages.inbox.sent_error')); }
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true);
+  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
+
+  const selected: Conversation | undefined = useMemo(
+    () => conversations.find((c) => c.participant.user_id === selectedId),
+    [conversations, selectedId]
+  );
+
+  const unreadTotal = useMemo(() => conversations.reduce((sum, c) => sum + c.unreadCount, 0), [conversations]);
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    setMobileView('thread');
+    if (userId) {
+      const convo = conversations.find((c) => c.participant.user_id === id);
+      if (convo && convo.unreadCount > 0) {
+        markConversationRead.mutate({ otherUserId: id, userId });
+      }
+    }
   };
 
-  const handleMarkMessageRead = async (id: string) => { try { await markMessageRead.mutateAsync(id); } catch { /* ignore */ } };
-  const handleMarkNotificationRead = async (id: string) => { try { await markNotificationRead.mutateAsync(id); } catch { /* ignore */ } };
+  const handleSend = async (content: string) => {
+    if (!selectedId) return;
+    await sendMessage.mutateAsync({ receiver_id: selectedId, content });
+  };
 
-  const unreadMessages = inbox?.messages?.filter(m => !m.read) ?? [];
-  const unreadNotifications = inbox?.notifications?.filter(n => !n.read) ?? [];
+  const handleStartConversation = async (receiverId: string, content: string) => {
+    await sendMessage.mutateAsync({ receiver_id: receiverId, content });
+    setSelectedId(receiverId);
+    setMobileView('thread');
+  };
+
+  const handleMarkUnread = () => {
+    if (!selected) return;
+    const lastFromThem = [...selected.messages].reverse().find((m) => m.sender_id === selected.participant.user_id);
+    if (lastFromThem) {
+      markMessageUnread.mutate(lastFromThem.id, {
+        onError: () => toast.error(t('pages.inbox.sendError')),
+      });
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('pages.inbox.title')}</h1>
-          <p className="text-muted-foreground">{t('pages.inbox.subtitle')}</p>
+    <div className="flex h-[calc(100vh-7rem)] min-h-[600px] flex-col space-y-4 pb-2">
+      <PageHeader
+        eyebrow={t('nav.communication') || 'Communication'}
+        title={t('pages.inbox.title')}
+        description={t('pages.inbox.subtitle')}
+        stats={[{ value: unreadTotal, label: t('pages.inbox.filterUnread') }]}
+        actions={
+          <button
+            type="button"
+            onClick={() => setIsNewOpen(true)}
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+            {t('pages.inbox.newConversation')}
+          </button>
+        }
+      />
+
+      {isLoading ? (
+        <div className="grid flex-1 grid-cols-[320px_1fr] gap-4">
+          <div className="space-y-3 p-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 rounded-full" />
+                <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-24" /><Skeleton className="h-3 w-40" /></div>
+              </div>
+            ))}
+          </div>
+          <Skeleton className="h-full w-full rounded-xl" />
         </div>
-        <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('pages.inbox.newMessage')}</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('pages.inbox.sendTitle')}</DialogTitle>
-              <DialogDescription>{t('pages.inbox.sendSubtitle')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2"><Label htmlFor="receiver">{t('pages.inbox.to')}</Label><Input id="receiver" value={newMessage.receiver_id} onChange={(e) => setNewMessage({ ...newMessage, receiver_id: e.target.value })} placeholder={t('pages.inbox.toPlaceholder')} /></div>
-              <div className="space-y-2"><Label htmlFor="content">{t('pages.inbox.messageLabel')}</Label><Textarea id="content" value={newMessage.content} onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })} placeholder={t('pages.inbox.messagePlaceholder')} rows={4} /></div>
-              <Button onClick={handleSend} disabled={sendMessage.isPending} className="w-full">
-                {sendMessage.isPending ? t('pages.inbox.sending') : (<><Send className="h-4 w-4 mr-2" />{t('pages.inbox.sendCta')}</>)}
-              </Button>
+      ) : error ? (
+        <EmptyState icon={MessagesSquare} title={t('pages.inbox.loadError')} />
+      ) : (
+        <>
+          {/* Desktop 3-panel */}
+          <div
+            className="hidden flex-1 gap-px overflow-hidden rounded-xl bg-border/30 lg:grid"
+            style={{ gridTemplateColumns: isDetailsOpen && selected ? '320px 1fr 300px' : '320px 1fr' }}
+          >
+            <div className="flex flex-col overflow-hidden bg-background">
+              <ConversationList
+                conversations={conversations}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+                search={search}
+                onSearchChange={setSearch}
+                filter={filter}
+                onFilterChange={setFilter}
+                currentUserId={userId}
+                dateFnsLocale={dateFnsLocale}
+                onNewConversation={() => setIsNewOpen(true)}
+              />
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center"><Mail className="h-6 w-6 text-blue-600" /></div><div><p className="text-sm text-muted-foreground">{t('pages.inbox.unreadMessages')}</p><p className="text-2xl font-bold">{unreadMessages.length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center"><Bell className="h-6 w-6 text-yellow-600" /></div><div><p className="text-sm text-muted-foreground">{t('pages.inbox.unreadNotifications')}</p><p className="text-2xl font-bold">{unreadNotifications.length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center"><Check className="h-6 w-6 text-green-600" /></div><div><p className="text-sm text-muted-foreground">{t('pages.inbox.totalLabel')}</p><p className="text-2xl font-bold">{(unreadMessages?.length ?? 0) + (unreadNotifications?.length ?? 0)}</p></div></div></CardContent></Card>
-      </div>
-
-      <Tabs defaultValue="messages">
-        <TabsList>
-          <TabsTrigger value="messages" className="gap-2"><Mail className="h-4 w-4" />{t('pages.inbox.messagesTab')}{unreadMessages.length > 0 && <Badge variant="secondary" className="ml-1">{unreadMessages.length}</Badge>}</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" />{t('pages.inbox.notificationsTab')}{unreadNotifications.length > 0 && <Badge variant="secondary" className="ml-1">{unreadNotifications.length}</Badge>}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="messages">
-          <Card><CardContent className="p-0">
-            <ScrollArea className="h-[400px]">
-              {isLoading ? (
-                <div className="p-4 space-y-4">{Array.from({ length: 5 }).map((_, i) => (<div key={i} className="flex items-start gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="flex-1"><Skeleton className="h-4 w-32 mb-2" /><Skeleton className="h-3 w-full" /></div></div>))}</div>
-              ) : error ? (
-                <div className="p-8 text-center text-muted-foreground">{t('pages.inbox.fetchErrorMessages')}</div>
-              ) : inbox?.messages?.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">{t('pages.inbox.emptyMessages')}</div>
+            <div className="flex flex-col overflow-hidden bg-background">
+              {selected && userId ? (
+                <ConversationThread
+                  conversation={selected}
+                  currentUserId={userId}
+                  dateFnsLocale={dateFnsLocale}
+                  onSend={handleSend}
+                  onMarkUnread={handleMarkUnread}
+                  onTogglePin={() => togglePin(selected.participant.user_id)}
+                  onToggleDetails={() => setIsDetailsOpen((v) => !v)}
+                  isDetailsOpen={isDetailsOpen}
+                />
               ) : (
-                <div className="divide-y">
-                  {inbox?.messages?.map((message) => (
-                    <div key={message.id} className={`p-4 hover:bg-muted/50 cursor-pointer ${!message.read ? 'bg-primary/5' : ''}`} onClick={() => !message.read && handleMarkMessageRead(message.id)}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`font-medium ${!message.read ? 'text-foreground' : 'text-muted-foreground'}`}>{message.sender_id || t('pages.inbox.unknownSender')}</span>
-                            {!message.read && <Badge variant="default" className="text-xs">{t('pages.inbox.new')}</Badge>}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate mt-1">{message.content}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">{formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: dateFnsLocale })}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <EmptyState
+                  bare
+                  icon={MessagesSquare}
+                  title={t('pages.inbox.emptyNoSelectionTitle')}
+                  hint={t('pages.inbox.emptyNoSelectionHint')}
+                  action={{ label: t('pages.inbox.newConversation'), onClick: () => setIsNewOpen(true), icon: MessageSquarePlus }}
+                />
               )}
-            </ScrollArea>
-          </CardContent></Card>
-        </TabsContent>
+            </div>
+            {selected && isDetailsOpen && (
+              <div className="hidden overflow-y-auto bg-background xl:block">
+                <ConversationDetailsPanel conversation={selected} dateFnsLocale={dateFnsLocale} />
+              </div>
+            )}
+          </div>
 
-        <TabsContent value="notifications">
-          <Card><CardContent className="p-0">
-            <ScrollArea className="h-[400px]">
-              {isLoading ? (
-                <div className="p-4 space-y-4">{Array.from({ length: 5 }).map((_, i) => (<div key={i} className="flex items-start gap-3"><Skeleton className="h-8 w-8 rounded" /><div className="flex-1"><Skeleton className="h-4 w-full" /></div></div>))}</div>
-              ) : error ? (
-                <div className="p-8 text-center text-muted-foreground">{t('pages.inbox.fetchErrorNotifications')}</div>
-              ) : inbox?.notifications?.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">{t('pages.inbox.emptyNotifications')}</div>
-              ) : (
-                <div className="divide-y">
-                  {inbox?.notifications?.map((notification) => (
-                    <div key={notification.id} className={`p-4 hover:bg-muted/50 cursor-pointer ${!notification.read ? 'bg-primary/5' : ''}`} onClick={() => !notification.read && handleMarkNotificationRead(notification.id)}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${!notification.read ? 'bg-primary' : 'bg-muted'}`} />
-                          <div>
-                            <p className={!notification.read ? 'font-medium' : 'text-muted-foreground'}>{notification.message}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{notification.type}</p>
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground ml-4 flex-shrink-0">{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: dateFnsLocale })}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent></Card>
-        </TabsContent>
-      </Tabs>
+          {/* Mobile: list or thread */}
+          <div className="flex-1 overflow-hidden rounded-xl border border-border/30 lg:hidden">
+            {mobileView === 'list' || !selected || !userId ? (
+              <ConversationList
+                conversations={conversations}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+                search={search}
+                onSearchChange={setSearch}
+                filter={filter}
+                onFilterChange={setFilter}
+                currentUserId={userId}
+                dateFnsLocale={dateFnsLocale}
+                onNewConversation={() => setIsNewOpen(true)}
+              />
+            ) : (
+              <ConversationThread
+                conversation={selected}
+                currentUserId={userId}
+                dateFnsLocale={dateFnsLocale}
+                onSend={handleSend}
+                onMarkUnread={handleMarkUnread}
+                onTogglePin={() => togglePin(selected.participant.user_id)}
+                onToggleDetails={() => setIsDetailsOpen((v) => !v)}
+                isDetailsOpen={isDetailsOpen}
+                onBack={() => setMobileView('list')}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      <NewConversationDialog
+        open={isNewOpen}
+        onOpenChange={setIsNewOpen}
+        colleagues={colleagues}
+        currentUserId={userId}
+        onStart={handleStartConversation}
+      />
     </div>
   );
 }

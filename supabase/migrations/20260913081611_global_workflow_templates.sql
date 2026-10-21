@@ -3,6 +3,9 @@
 -- git history until this audit found it via `supabase migration list --linked`.
 -- Content is verbatim from the live `statements` column; not authored here.
 
+do $legacy_templates$
+begin
+if to_regclass('public.workflow_templates') is null then
 create table public.workflow_templates (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
@@ -96,3 +99,6 @@ $$;
 revoke all on function public.instantiate_workflow_template(text) from public;
 grant execute on function public.instantiate_workflow_template(text) to authenticated;
 revoke execute on function public.instantiate_workflow_template(text) from anon;
+end if;
+end;
+$legacy_templates$;

@@ -12,7 +12,7 @@ const iconMap: Record<string, { icon: React.ElementType; color: string }> = {
   lead: { icon: UserPlus, color: 'text-primary bg-primary/10' },
   invoice: { icon: FileText, color: 'text-[var(--success-color)] bg-[var(--success-subtle)]' },
   payment: { icon: CreditCard, color: 'text-[var(--success-color)] bg-[var(--success-subtle)]' },
-  employee: { icon: Users, color: 'text-accent bg-accent/10' },
+  employee: { icon: Users, color: 'text-chart-violet bg-chart-violet/10' },
   task: { icon: CheckCircle2, color: 'text-[var(--success-color)] bg-[var(--success-subtle)]' },
   deal: { icon: Zap, color: 'text-[var(--warning-color)] bg-[var(--warning-subtle)]' },
   email: { icon: Mail, color: 'text-[var(--info)] bg-[var(--info-subtle)]' },

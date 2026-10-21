@@ -227,7 +227,7 @@ const AdminRouteLayout = () => {
 
 const App = () => (
   <ErrorBoundary>
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+  <ThemeProvider attribute="class" themes={["midnight", "daylight", "graphite"]} defaultTheme="daylight" enableSystem={false} enableColorScheme={false}>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
