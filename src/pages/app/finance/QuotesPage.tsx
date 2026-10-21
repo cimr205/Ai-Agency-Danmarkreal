@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,14 +19,6 @@ import { useLeads } from '@/hooks/api/useLeads';
 import type { Json } from '@/integrations/supabase/types';
 
 type QuoteLine = { description: string; quantity: number; unit_price: number };
-
-const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  sent: 'bg-primary/10 text-primary',
-  accepted: 'bg-emerald-500/10 text-emerald-600',
-  rejected: 'bg-destructive/10 text-destructive',
-  expired: 'bg-muted text-muted-foreground',
-};
 
 function useQuotes() {
   return useQuery({
@@ -166,7 +158,7 @@ export default function QuotesPage() {
                       <Input type="number" value={line.quantity} onChange={e => updateLine(idx, 'quantity', parseFloat(e.target.value) || 0)} className="w-20" />
                       <Input type="number" value={line.unit_price} onChange={e => updateLine(idx, 'unit_price', parseFloat(e.target.value) || 0)} className="w-28" />
                       <span className="text-sm font-medium w-24 text-right">{formatCurrency(line.quantity * line.unit_price)}</span>
-                      {lines.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeLine(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
+                      {lines.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.delete')} onClick={() => removeLine(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
                     </div>
                   ))}
                   <Button variant="outline" size="sm" onClick={addLine}><Plus className="h-3.5 w-3.5 mr-1" />{t('quotes.addLine')}</Button>
@@ -198,7 +190,7 @@ export default function QuotesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.length}</div><p className="text-xs text-muted-foreground">{t('quotes.totalQuotes')}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-primary">{formatCurrency(filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0))}</div><p className="text-xs text-muted-foreground">{t('quotes.totalValue')}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-emerald-600">{filteredQuotes.filter(q => q.status === 'accepted').length}</div><p className="text-xs text-muted-foreground">{t('quotes.accepted')}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-success">{filteredQuotes.filter(q => q.status === 'accepted').length}</div><p className="text-xs text-muted-foreground">{t('quotes.accepted')}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.filter(q => q.status === 'sent').length}</div><p className="text-xs text-muted-foreground">{t('quotes.pending')}</p></CardContent></Card>
       </div>
 
@@ -235,7 +227,7 @@ export default function QuotesPage() {
                 {filteredQuotes.map((quote) => (
                   <TableRow key={quote.id}>
                     <TableCell className="font-medium">{quote.title}</TableCell>
-                    <TableCell><Badge className={statusColors[quote.status] || ''}>{quote.status}</Badge></TableCell>
+                    <TableCell><StatusBadge status={quote.status} /></TableCell>
                     <TableCell className="font-medium">{formatCurrency(quote.total)}</TableCell>
                     <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString()}</TableCell>

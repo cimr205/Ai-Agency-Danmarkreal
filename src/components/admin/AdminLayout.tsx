@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import Topbar from '@/components/Topbar';
 import AdminSidebar from './AdminSidebar';
+import CommandPalette from '@/components/CommandPalette';
 
 export default function AdminLayout({ basePath, children }: { basePath: string; children: ReactNode }) {
   return (
@@ -14,6 +15,7 @@ export default function AdminLayout({ basePath, children }: { basePath: string; 
           {children}
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

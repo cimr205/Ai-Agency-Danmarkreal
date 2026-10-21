@@ -10,10 +10,13 @@ export type Company = Database['public']['Functions']['get_company_for_user']['R
 
 export interface InvoiceWithCustomer extends Tables<'invoices'> {
   customers: Pick<Customer, 'name' | 'email' | 'country' | 'customer_type' | 'vat_number'> | null;
+  quotes: Pick<Tables<'quotes'>, 'id' | 'title' | 'deal_id'> | null;
 }
 
 export interface PaymentWithInvoice extends Tables<'payments'> {
-  invoices: Pick<Tables<'invoices'>, 'invoice_number' | 'amount' | 'status'> | null;
+  invoices: (Pick<Tables<'invoices'>, 'invoice_number' | 'amount' | 'status'> & {
+    customers: Pick<Customer, 'name'> | null;
+  }) | null;
 }
 
 // Helper to get profile
@@ -137,7 +140,7 @@ export function useInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, customers(name, email, country, customer_type, vat_number)')
+        .select('*, customers(name, email, country, customer_type, vat_number), quotes!invoices_quote_id_fkey(id, title, deal_id)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       // Supabase's TS inference doesn't resolve nested-select shapes from the
@@ -261,6 +264,24 @@ export function useUpdateInvoiceStatus() {
   });
 }
 
+// Bulk-send is intentionally scoped to drafts only (.eq('status', 'draft'))
+// so a multi-select can never silently touch a paid/overdue/cancelled
+// invoice; no bulk delete is exposed for invoices for the same reason.
+export function useBulkMarkInvoicesSent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'sent' as Enums<'invoice_status'> })
+        .in('id', ids)
+        .eq('status', 'draft');
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+  });
+}
+
 // Payments
 export function usePayments() {
   return useQuery({
@@ -268,7 +289,7 @@ export function usePayments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*, invoices(invoice_number, amount, status)')
+        .select('*, invoices(invoice_number, amount, status, customers(name))')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as PaymentWithInvoice[];

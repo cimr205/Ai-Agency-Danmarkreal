@@ -182,8 +182,8 @@ export default function TimeTrackingPage() {
               {isActive ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-sm font-medium text-emerald-500">{t('workforce.currentlyTracking')}</span>
+                    <span className="h-3 w-3 rounded-full bg-success animate-pulse" />
+                    <span className="text-sm font-medium text-success">{t('workforce.currentlyTracking')}</span>
                   </div>
                   <BigTimer checkIn={session.check_in} />
                   <p className="text-sm text-muted-foreground">
@@ -211,7 +211,7 @@ export default function TimeTrackingPage() {
                   )}
                   <button
                     type="button"
-                    className="h-16 w-full max-w-xs text-base sm:text-lg rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 font-medium bg-emerald-600 text-white active:bg-emerald-800 active:scale-95 transition-transform touch-manipulation select-none disabled:opacity-50"
+                    className="h-16 w-full max-w-xs text-base sm:text-lg rounded-2xl shadow-lg shadow-success/25 flex items-center justify-center gap-2 font-medium bg-success text-success-foreground active:bg-success/80 active:scale-95 transition-transform touch-manipulation select-none disabled:opacity-50"
                     onClick={handleClockIn}
                     disabled={clockIn.isPending || (!isReady && !(isAdmin && selectedEmployee))}
                   >
@@ -243,8 +243,8 @@ export default function TimeTrackingPage() {
         <Card className="border-border/50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-blue-500" />
+              <div className="w-12 h-12 rounded-xl bg-chart-blue/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-chart-blue" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('workforce.weekHours')}</p>
@@ -256,8 +256,8 @@ export default function TimeTrackingPage() {
         <Card className="border-border/50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-violet-500" />
+              <div className="w-12 h-12 rounded-xl bg-chart-violet/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-chart-violet" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('workforce.monthHours')}</p>
@@ -305,7 +305,7 @@ export default function TimeTrackingPage() {
                         <td className="py-2.5 font-mono">{co ? format(co, 'HH:mm') : '-'}</td>
                         <td className="py-2.5 font-mono">{hrs}h</td>
                         <td className="py-2.5">
-                          {co ? <Badge variant="secondary">{t('workforce.completed')}</Badge> : <Badge className="bg-emerald-500/15 text-emerald-500">{t('workforce.active')}</Badge>}
+                          {co ? <Badge variant="secondary">{t('workforce.completed')}</Badge> : <Badge className="bg-success/15 text-success">{t('workforce.active')}</Badge>}
                         </td>
                       </tr>
                     );

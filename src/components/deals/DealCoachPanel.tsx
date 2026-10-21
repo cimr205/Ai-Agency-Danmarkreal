@@ -44,15 +44,15 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
   };
 
   const riskColors = {
-    low: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    medium: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30',
+    low: 'bg-success/15 text-success border-success/30',
+    medium: 'bg-warning/15 text-warning border-warning/30',
     high: 'bg-destructive/15 text-destructive border-destructive/30',
   };
 
   const riskLabels = { low: t('dealCoach.riskLow'), medium: t('dealCoach.riskMedium'), high: t('dealCoach.riskHigh') };
 
   const probColor = (p: number) =>
-    p >= 70 ? 'text-emerald-500' : p >= 40 ? 'text-yellow-500' : 'text-destructive';
+    p >= 70 ? 'text-success' : p >= 40 ? 'text-warning' : 'text-destructive';
 
   if (!analysis && !loading) {
     return (
@@ -120,7 +120,7 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
             <div className="h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  analysis.win_probability >= 70 ? 'bg-emerald-500' : analysis.win_probability >= 40 ? 'bg-yellow-500' : 'bg-destructive'
+                  analysis.win_probability >= 70 ? 'bg-success' : analysis.win_probability >= 40 ? 'bg-warning' : 'bg-destructive'
                 }`}
                 style={{ width: `${analysis.win_probability}%` }}
               />

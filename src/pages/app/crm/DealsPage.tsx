@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useDeals, useCreateDeal, useUpdateDeal, type DealWithCustomer } from '@/hooks/api/useDeals';
+import { useDeals, useCreateDeal, useUpdateDeal, useUpdateDealStage, useBulkUpdateDealStage, type DealWithCustomer } from '@/hooks/api/useDeals';
 import { usePipelineStages } from '@/hooks/api/usePipelineStages';
 import { useCustomers } from '@/hooks/api/useFinance';
 import PipelineStageEditor from '@/components/pipeline/PipelineStageEditor';
@@ -9,13 +9,13 @@ import { DealBoardView } from '@/components/deals/DealBoardView';
 import { DealListView } from '@/components/deals/DealListView';
 import { DealCalendarView } from '@/components/deals/DealCalendarView';
 import { DealDetailSheet } from '@/components/deals/DealDetailSheet';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Search, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
@@ -23,6 +23,9 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { buildStages, getStageLabelFor, normalizeStageKey, type StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { reportError } from '@/lib/sentry';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from '@/components/shared/ErrorState';
 
 type DealStage = string;
 
@@ -34,6 +37,8 @@ export default function DealsPage() {
   const [selectedDeal, setSelectedDeal] = useState<DealWithCustomer | null>(null);
   const [newDeal, setNewDeal] = useState({ title: '', value: '', stage: 'discovery' as DealStage, customer_id: '', expected_close_date: '', notes: '' });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const bulkUpdateDealStage = useBulkUpdateDealStage();
 
   const view = (searchParams.get('view') as DealView) || 'board';
   const setView = (next: DealView) => {
@@ -55,6 +60,10 @@ export default function DealsPage() {
   const deals = data ?? [];
   const filteredDeals = deals.filter(deal => deal.title.toLowerCase().includes(search.toLowerCase()));
   const isEmpty = !isLoading && deals.length === 0;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search]);
 
   const totalValue = deals.reduce((sum, d) => sum + Number(d.value || 0), 0);
   const totalDeals = deals.length;
@@ -83,6 +92,18 @@ export default function DealsPage() {
     setSearchParams(nextParams, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Open a specific deal's detail sheet if navigated with ?dealId=... (e.g. from the command palette)
+  useEffect(() => {
+    const dealId = searchParams.get('dealId');
+    if (!dealId || deals.length === 0) return;
+    const target = deals.find((deal) => deal.id === dealId);
+    if (target) setSelectedDeal(target);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('dealId');
+    setSearchParams(nextParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, deals]);
 
   const handleCreate = async () => {
     const errors: Record<string, string> = {};
@@ -147,17 +168,51 @@ export default function DealsPage() {
     } catch { toast.error(t('common.error')); }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => {
+    setSelectedIds((prev) => prev.size === filteredDeals.length ? new Set() : new Set(filteredDeals.map((d) => d.id)));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkStageChange = async (stage: DealStage) => {
+    let ids = Array.from(selectedIds);
+    if (normalizeStageKey(stage) === 'won') {
+      const selected = deals.filter((deal) => ids.includes(deal.id));
+      const ineligible = selected.filter((deal) => !canMarkDealWon(deal));
+      ids = selected.filter((deal) => canMarkDealWon(deal)).map((deal) => deal.id);
+      if (ineligible.length > 0) toast.error(getWonValidationMessage(locale));
+      if (ids.length === 0) return;
+    }
+    try {
+      await bulkUpdateDealStage.mutateAsync({ ids, stage });
+      toast.success(t('pages.deals.bulkStageUpdated'));
+      clearSelection();
+    } catch { toast.error(t('common.error')); }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('pages.deals.title')}</h1>
-          <p className="text-muted-foreground">{t('pages.deals.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <PipelineStageEditor />
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+      <PageHeader
+        eyebrow={locale === 'da' ? 'Sales · Pipeline' : 'Sales · Pipeline'}
+        title={t('pages.deals.title')}
+        description={t('pages.deals.subtitle')}
+        stats={!isEmpty ? [
+          { value: totalDeals, label: t('pages.deals.totalDeals') },
+          { value: formatCurrency(totalValue), label: t('pages.deals.pipelineValue') },
+          { value: formatCurrency(wonValue), label: t('pages.deals.wonValue'), tone: 'default' },
+        ] : undefined}
+        actions={
+          <>
+            <PipelineStageEditor />
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('pages.deals.newDeal')}</Button></DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>{t('pages.deals.createTitle')}</DialogTitle><DialogDescription>{t('pages.deals.createSubtitle')}</DialogDescription></DialogHeader>
@@ -205,40 +260,64 @@ export default function DealsPage() {
                 <Button onClick={handleCreate} disabled={createDeal.isPending} className="w-full">{createDeal.isPending ? t('pages.deals.creating') : t('pages.deals.createCta')}</Button>
               </div>
             </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+            </Dialog>
+          </>
+        }
+      />
 
       {/* Empty state onboarding */}
       {isEmpty && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Briefcase className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('pages.deals.emptyTitle')}</h3>
-            <p className="text-muted-foreground mb-4 max-w-md">{t('pages.deals.emptyDesc')}</p>
-            <Button onClick={() => setIsCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('pages.deals.createFirst')}</Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Briefcase}
+          title={t('pages.deals.emptyTitle')}
+          hint={t('pages.deals.emptyDesc')}
+          action={{ label: t('pages.deals.createFirst'), onClick: () => setIsCreateOpen(true), icon: Plus }}
+        />
       )}
 
-      {!isEmpty && (
-        <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.totalDeals')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalDeals}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.pipelineValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.wonValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(wonValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.avgDealValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalDeals ? totalValue / totalDeals : 0)}</div></CardContent></Card>
-          </div>
+      {!isEmpty && error && (
+        <ErrorState title={t('common.error')} onRetry={() => window.location.reload()} />
+      )}
 
+      {!isEmpty && !error && (
+        <>
           {/* Toolbar */}
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder={t('pages.deals.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
-            <DealViewSwitcher view={view} onChange={setView} />
+            <DealViewSwitcher view={view} onChange={(next) => { setView(next); clearSelection(); }} />
           </div>
+
+          {view === 'list' && filteredDeals.length > 0 && (
+            <div className="flex items-center gap-3">
+              <Checkbox
+                checked={selectedIds.size > 0 && selectedIds.size === filteredDeals.length}
+                onCheckedChange={selectAllVisible}
+                aria-label={t('common.selectAllVisible').replace('{count}', String(filteredDeals.length))}
+              />
+              <span className="text-xs text-muted-foreground">
+                {t('common.selectAllVisible').replace('{count}', String(filteredDeals.length))}
+              </span>
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-xs text-muted-foreground">
+                    {t('common.selected').replace('{count}', String(selectedIds.size))}
+                  </span>
+                  <Select onValueChange={(v) => handleBulkStageChange(v as DealStage)}>
+                    <SelectTrigger className="h-8 w-[180px] text-xs">
+                      <SelectValue placeholder={t('pages.deals.moveToStage')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>{t('common.cancel')}</Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {isLoading ? (
             <div className="flex gap-3">
@@ -269,6 +348,8 @@ export default function DealsPage() {
               onMarkWon={id => handleStageChange(id, 'won')}
               onMarkLost={id => handleStageChange(id, 'lost')}
               onCreate={() => setIsCreateOpen(true)}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
             />
           )}
         </>

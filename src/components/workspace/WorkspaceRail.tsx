@@ -1,287 +1,304 @@
-import { useState } from "react";
-import { NavLink as RouterNavLink, useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { NavLink as RouterNavLink, useNavigate, useParams, useLocation } from "react-router-dom";
 import { isLocale, useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  LogOut, User, Settings, Menu, type LucideIcon,
-  LayoutDashboard, Building2, Calendar, CheckSquare, Inbox,
-  Target, Briefcase, Search, UserSearch,
-  Send, Phone, Megaphone, Mic,
-  FileText, CreditCard,
-  UserCheck, Clock, CalendarDays, CalendarClock, Wallet, UserPlus, BarChart3, ClipboardList,
-  Workflow, Plug, Brain, Zap, Bot, BookOpen, ChevronRight, MessagesSquare, Webhook,
-  Sparkles, MessageCircle, ShieldCheck,
-} from "lucide-react";
+  type Icon,
+  SquaresFour, Buildings, CalendarBlank, ListChecks, Tray, ChatCircle,
+  Crosshair, Briefcase, Funnel, UserFocus,
+  PhoneCall, PaperPlaneTilt, Megaphone, Microphone, Sparkle,
+  Receipt, FileText, CreditCard,
+  UsersThree, Clock, CalendarCheck, CalendarDots, AirplaneTilt, Money, UserPlus, ChartBar, ChartPieSlice,
+  TreeStructure, ChatCenteredDots, ShieldCheck, PlugsConnected, Brain, Lightning, Robot, LinkSimple, Lifebuoy, GearSix,
+  Plus, List, CaretDown, SidebarSimple, User, SignOut,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
 import { useMyBlockedModules, type ModuleKey } from "@/hooks/api/useModuleAccess";
 
-interface NavItem {
-  label: string;
-  path: string;
-  icon: LucideIcon;
-  dataTour?: string;
-}
+/* Reference-styled dark liquid-glass rail — floats over the app background,
+   the same premium look regardless of the active app theme. Phosphor duotone
+   icons, tinted per section. */
+const PANEL = "border border-white/10 bg-[#15181f]/85 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]";
+const ACTIVE_GREEN = "#37D67A";
 
-interface NavGroup {
-  label: string | null;
-  eyebrow?: string;
-  module: ModuleKey | null;
-  items: NavItem[];
-}
+interface NavItem { label: string; path: string; icon: Icon; dataTour?: string; }
+interface NavGroup { label: string | null; module: ModuleKey | null; accent: string; items: NavItem[]; }
 
 function useNavGroups(): NavGroup[] {
   const { t } = useI18n();
-  const params = useParams();
-  const locale = isLocale(params.locale) ? params.locale : "en";
   return [
     {
-      label: null,
-      eyebrow: "Start",
-      module: null,
+      label: t("nav.menu") || "Menu", module: null, accent: "#C7CDD6",
       items: [
-        { label: t("nav.dashboard") || "Dashboard", path: "dashboard", icon: LayoutDashboard, dataTour: "dashboard" },
-        { label: t("nav.clients"), path: "clients", icon: Building2 },
-        { label: t("nav.calendar") || "Kalender", path: "work/calendar", icon: Calendar },
-        { label: t("nav.tasks") || "Opgaver", path: "work/tasks", icon: CheckSquare },
-        { label: t("nav.smartInbox") || "Indbakke", path: "email/emails", icon: Inbox },
-        { label: t("nav.messages") || "Beskeder", path: "work/inbox", icon: MessagesSquare },
+        { label: t("nav.dashboard") || "Dashboard", path: "dashboard", icon: SquaresFour, dataTour: "dashboard" },
+        { label: t("nav.clients"), path: "clients", icon: Buildings },
+        { label: t("nav.calendar") || "Kalender", path: "work/calendar", icon: CalendarBlank },
+        { label: t("nav.tasks") || "Opgaver", path: "work/tasks", icon: ListChecks },
+        { label: t("nav.smartInbox") || "Indbakke", path: "email/emails", icon: Tray },
+        { label: t("nav.messages") || "Beskeder", path: "work/inbox", icon: ChatCircle },
       ],
     },
     {
-      label: t("nav.crm") || "CRM",
-      eyebrow: "Pipeline",
-      module: "crm",
+      label: t("nav.crm") || "CRM", module: "crm", accent: "#5B8DEF",
       items: [
-        { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Target, dataTour: "leads" },
+        { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Crosshair, dataTour: "leads" },
         { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase, dataTour: "pipeline" },
-        { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Search },
-        { label: t("nav.icp") || "ICP", path: "crm/icp", icon: UserSearch },
+        { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Funnel },
+        { label: t("nav.icp") || "ICP", path: "crm/icp", icon: UserFocus },
       ],
     },
     {
-      label: t("nav.marketing") || "Marketing",
-      eyebrow: "Outbound",
-      module: "marketing",
+      label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
       items: [
-        { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: Phone },
-        { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: Send },
+        { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: PhoneCall },
+        { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: PaperPlaneTilt },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },
-        { label: t("nav.voiceAgent") || "Voice Agent", path: "marketing/voice-agent", icon: Mic },
-        { label: t("nav.aiMedia") || "AI Medier", path: "ai/media", icon: Sparkles },
+        { label: t("nav.voiceAgent") || "Voice Agent", path: "marketing/voice-agent", icon: Microphone },
+        { label: t("nav.aiMedia") || "AI Medier", path: "ai/media", icon: Sparkle },
       ],
     },
     {
-      label: t("nav.finance") || "Finance",
-      eyebrow: "Cashflow",
-      module: "finance",
+      label: t("nav.finance") || "Finance", module: "finance", accent: "#34D399",
       items: [
-        { label: t("nav.invoices") || "Fakturaer", path: "finance/invoices", icon: FileText },
+        { label: t("nav.invoices") || "Fakturaer", path: "finance/invoices", icon: Receipt },
         { label: t("nav.quotes") || "Tilbud", path: "finance/quotes", icon: FileText },
         { label: t("nav.payments") || "Betalinger", path: "finance/payments", icon: CreditCard },
       ],
     },
     {
-      label: t("nav.hr") || "HR",
-      eyebrow: "People",
-      module: "hr",
+      label: t("nav.hr") || "HR", module: "hr", accent: "#F6B44D",
       items: [
-        { label: t("nav.employees") || "Medarbejdere", path: "hr/employees", icon: UserCheck },
+        { label: t("nav.employees") || "Medarbejdere", path: "hr/employees", icon: UsersThree },
         { label: t("nav.timeTracking") || "Tidsregistrering", path: "hr/time-tracking", icon: Clock },
-        { label: t("nav.attendance") || "Fremmøde", path: "hr/attendance", icon: CalendarDays },
-        { label: t("nav.workSchedule") || "Vagtplan", path: "hr/work-schedule", icon: CalendarDays },
-        { label: t("nav.leave") || "Fravær", path: "hr/leave", icon: CalendarClock },
-        { label: t("nav.payroll") || "Løn", path: "hr/payroll", icon: Wallet },
+        { label: t("nav.attendance") || "Fremmøde", path: "hr/attendance", icon: CalendarCheck },
+        { label: t("nav.workSchedule") || "Vagtplan", path: "hr/work-schedule", icon: CalendarDots },
+        { label: t("nav.leave") || "Fravær", path: "hr/leave", icon: AirplaneTilt },
+        { label: t("nav.payroll") || "Løn", path: "hr/payroll", icon: Money },
         { label: t("nav.recruitment") || "Rekruttering", path: "hr/recruitment", icon: UserPlus },
-        { label: t("nav.workforceDashboard") || "Workforce", path: "hr/workforce", icon: BarChart3 },
-        { label: t("nav.workforceReports") || "Rapporter", path: "hr/reports", icon: ClipboardList },
+        { label: t("nav.workforceDashboard") || "Workforce", path: "hr/workforce", icon: ChartBar },
+        { label: t("nav.workforceReports") || "Rapporter", path: "hr/reports", icon: ChartPieSlice },
       ],
     },
     {
-      label: locale === "da" ? "Kontrolrum" : "Control room",
-      eyebrow: "Workspace",
-      module: "system",
+      label: t("nav.controlRoom"), module: "system", accent: "#22D3EE",
       items: [
-        { label: t("nav.studio"), path: "workspace/studio", icon: Workflow },
-        { label: t("nav.workflowChat") || "Workflow-chat", path: "workspace/workflow-chat", icon: MessageCircle },
-        { label: t("nav.operatingManager") || "Operating Manager", path: "workspace/operating-manager", icon: ShieldCheck },
-        { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: Plug },
-        { label: locale === "da" ? "Indsigter" : "Insights", path: "workspace/intelligence", icon: Brain },
-        { label: locale === "da" ? "Automatisering" : "Automation", path: "autopilot", icon: Zap },
-        { label: locale === "da" ? "Assistent" : "Assistant", path: "pa", icon: Bot, dataTour: "pa" },
-        { label: t("nav.webhooks") || "Webhooks", path: "settings/webhooks", icon: Webhook },
-        { label: t("nav.help"), path: "help", icon: BookOpen },
-        { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: Settings, dataTour: "settings" },
+        { label: t("nav.studio"), path: "workspace/studio", icon: TreeStructure },
+        { label: t("nav.workflowChat"), path: "workspace/workflow-chat", icon: ChatCenteredDots },
+        { label: t("nav.operatingManager"), path: "workspace/operating-manager", icon: ShieldCheck },
+        { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: PlugsConnected },
+        { label: t("nav.insights"), path: "workspace/intelligence", icon: Brain },
+        { label: t("nav.automation"), path: "autopilot", icon: Lightning },
+        { label: t("nav.assistant"), path: "pa", icon: Robot, dataTour: "pa" },
+        { label: t("nav.webhooks") || "Webhooks", path: "settings/webhooks", icon: LinkSimple },
+        { label: t("nav.help"), path: "help", icon: Lifebuoy },
+        { label: t("nav.settings") || "Indstillinger", path: "settings/company", icon: GearSix, dataTour: "settings" },
       ],
     },
   ];
 }
 
-interface Props {
-  onOpenPalette: () => void;
+interface Props { onOpenPalette: () => void; }
+
+function RailItem({ item, base, collapsed, accent, onNavigate }: { item: NavItem; base: string; collapsed: boolean; accent: string; onNavigate?: () => void }) {
+  const link = (
+    <RouterNavLink
+      to={`${base}/${item.path}`}
+      onClick={onNavigate}
+      data-tour={item.dataTour}
+      end
+      className={({ isActive }) => cn(
+        "group relative flex items-center rounded-xl text-[13.5px] transition-colors",
+        collapsed ? "h-11 w-11 justify-center" : "gap-3 px-3 py-2.5",
+        isActive ? "bg-white/[0.08] text-white" : "text-white/65 hover:bg-white/[0.05] hover:text-white",
+      )}
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full" style={{ background: ACTIVE_GREEN }} aria-hidden="true" />}
+          <item.icon size={20} weight="duotone" className={cn("shrink-0 transition-opacity", isActive ? "opacity-100" : "opacity-90 group-hover:opacity-100")} style={{ color: accent }} aria-hidden="true" />
+          {!collapsed && <span className="truncate font-medium">{item.label}</span>}
+        </>
+      )}
+    </RouterNavLink>
+  );
+  if (!collapsed) return <li>{link}</li>;
+  return (
+    <li>
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>{link}</TooltipTrigger>
+        <TooltipContent side="right">{item.label}</TooltipContent>
+      </Tooltip>
+    </li>
+  );
 }
 
-function RailContent({ onNavigate }: { onNavigate?: () => void }) {
+function RailContent({ onNavigate, collapsed, onToggleCollapse }: { onNavigate?: () => void; collapsed: boolean; onToggleCollapse?: () => void }) {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${locale}/app`;
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, logout } = useAuth();
   const { t } = useI18n();
   const allGroups = useNavGroups();
   const blockedModules = useMyBlockedModules();
   const groups = allGroups.filter(g => !g.module || !blockedModules.has(g.module));
 
-  const initials = (profile?.full_name || profile?.email || "?")
-    .split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+  const name = profile?.full_name || profile?.email || "";
+  const initials = (name || "?").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+  const hour = new Date().getHours();
+  const greeting = t(hour < 12 ? "dashboard.greetingMorning" : hour < 18 ? "dashboard.greetingAfternoon" : "dashboard.greetingEvening");
 
-  const jumpLabels = [
-    { label: t("nav.crm"), module: "crm" as const, code: "CRM" },
-    { label: t("nav.marketing"), module: "marketing" as const, code: "MKT" },
-    { label: t("nav.finance"), module: "finance" as const, code: "FIN" },
-    { label: t("nav.hr"), module: "hr" as const, code: "HR" },
-  ].filter(item => !blockedModules.has(item.module));
+  const activeGroupLabel = useMemo(() => {
+    for (const g of groups) {
+      if (g.module && g.items.some(it => location.pathname.startsWith(`${base}/${it.path}`))) return g.label;
+    }
+    return null;
+  }, [groups, location.pathname, base]);
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupLabel ? [activeGroupLabel] : []));
+  useEffect(() => {
+    if (activeGroupLabel) setOpenGroups(prev => (prev.has(activeGroupLabel) ? prev : new Set(prev).add(activeGroupLabel)));
+  }, [activeGroupLabel]);
+
+  const toggleGroup = (label: string) =>
+    setOpenGroups(prev => { const next = new Set(prev); if (next.has(label)) next.delete(label); else next.add(label); return next; });
+
+  const tools: { icon: Icon; label: string; path: string }[] = [
+    { icon: GearSix, label: t("nav.settings") || "Indstillinger", path: "settings/company" },
+    { icon: PlugsConnected, label: t("nav.connectedApps"), path: "workspace/connected-apps" },
+    { icon: LinkSimple, label: t("nav.webhooks") || "Webhooks", path: "settings/webhooks" },
+    { icon: Lifebuoy, label: t("nav.help"), path: "help" },
+  ];
 
   return (
-    <div className="flex h-full w-full flex-col bg-sidebar-background text-sidebar-foreground">
-      <div className="shrink-0 border-b border-sidebar-border/80 px-4 pb-4 pt-4">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-sidebar-border bg-white shadow-[0_1px_0_rgba(15,23,42,0.06)] dark:bg-sidebar-accent">
-            <img src={logo} alt="AI Agency Danmark" className="h-7 w-7 object-contain" />
-          </div>
-          <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold leading-tight text-sidebar-foreground">
-              Agency Danmark
-            </div>
-            <div className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">
-              Operating Suite
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-4 gap-1 rounded-md border border-sidebar-border/70 bg-white/60 p-1 dark:bg-sidebar-accent/40">
-          {jumpLabels.map((item) => (
-            <button
-              key={item.code}
-              type="button"
-              onClick={() => {
-                const targetGroup = groups.find(group => group.label === item.label);
-                const firstItem = targetGroup?.items[0];
-                if (firstItem) { navigate(`${base}/${firstItem.path}`); onNavigate?.(); }
-              }}
-              className="h-8 rounded-[5px] text-[10px] font-semibold text-sidebar-muted transition-colors hover:bg-sidebar-background hover:text-sidebar-foreground"
-              title={item.label}
-            >
-              {item.code}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-4">
-        {groups.map((group, gi) => (
-          <div key={group.label ?? `group-${gi}`} className="space-y-1">
-            {(group.label || group.eyebrow) && (
-              <div className="flex items-center justify-between px-2">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-muted">
-                  {group.label ?? group.eyebrow}
-                </span>
-                {group.eyebrow && group.label && (
-                  <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-sidebar-muted/70">
-                    {group.eyebrow}
-                  </span>
-                )}
-              </div>
-            )}
-            <ul className="space-y-0.5">
-              {group.items.map(item => (
-                <li key={item.path}>
-                  <RouterNavLink
-                    to={`${base}/${item.path}`}
-                    onClick={onNavigate}
-                    data-tour={item.dataTour}
-                    end
-                    className={({ isActive }) => cn(
-                      "group relative flex min-h-10 items-center gap-3 rounded-md px-2.5 py-2 text-[13px] transition-colors",
-                      isActive
-                        ? "bg-white text-sidebar-foreground shadow-[0_1px_0_rgba(15,23,42,0.06)] ring-1 ring-sidebar-border dark:bg-sidebar-accent"
-                        : "text-sidebar-foreground/68 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    )}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-[5px] transition-colors", isActive ? "bg-stamp text-stamp-foreground" : "bg-sidebar-accent text-sidebar-muted group-hover:text-sidebar-foreground")}>
-                          <item.icon className="h-[15px] w-[15px]" strokeWidth={2} aria-hidden="true" />
-                        </span>
-                        <span className="truncate font-medium">{item.label}</span>
-                        {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-sidebar-muted" />}
-                      </>
-                    )}
-                  </RouterNavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer: user + account menu */}
-      <div className="shrink-0 border-t border-sidebar-border/80 bg-sidebar-background p-3">
+    <div className={cn("flex h-full w-full flex-col rounded-2xl text-white", PANEL, collapsed ? "p-2" : "p-3")}>
+      {/* Profile */}
+      <div className={cn("flex items-center gap-2.5", collapsed ? "flex-col" : "")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-sidebar-accent" aria-label={t("nav.accountMenu")}>
-              <Avatar className="h-8 w-8 shrink-0 rounded-md">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="rounded-md bg-stamp text-[11px] font-semibold text-stamp-foreground">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-[13px] font-medium truncate leading-tight">{profile?.full_name || profile?.email}</p>
-                <p className="text-[10.5px] text-sidebar-foreground/45 truncate leading-tight mt-px">{profile?.email}</p>
-              </div>
+            <button className={cn("flex min-w-0 items-center gap-2.5 rounded-xl p-1 transition-colors hover:bg-white/5", collapsed ? "justify-center" : "flex-1")} aria-label={t("nav.accountMenu")}>
+              <Avatar className="h-9 w-9 shrink-0 ring-2 ring-white/10"><AvatarImage src={profile?.avatar_url || undefined} /><AvatarFallback className="bg-white/10 text-[11px] font-semibold text-white">{initials}</AvatarFallback></Avatar>
+              {!collapsed && (
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="truncate text-[10.5px] text-white/45">{greeting} 👋</p>
+                  <p className="truncate text-[13.5px] font-semibold leading-tight text-white">{name}</p>
+                </div>
+              )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-56">
+          <DropdownMenuContent side={collapsed ? "right" : "bottom"} align="start" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <div className="truncate text-sm">{profile?.full_name || profile?.email}</div>
+              <div className="truncate text-sm">{name}</div>
               {profile?.full_name && <div className="truncate text-xs text-muted-foreground">{profile.email}</div>}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(`${base}/settings/profile`)}>
-              <User className="h-4 w-4 mr-2" /> {t("nav.profile") || "Profil"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`${base}/settings/company`)}>
-              <Settings className="h-4 w-4 mr-2" /> {t("nav.settings") || "Indstillinger"}
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`${base}/settings/profile`)}><User className="mr-2" size={16} /> {t("nav.profile") || "Profil"}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`${base}/settings/company`)}><GearSix className="mr-2" size={16} /> {t("nav.settings") || "Indstillinger"}</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={async () => {
-                try { await logout(); } finally { navigate(`/${locale}/auth/login`, { replace: true }); }
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <LogOut className="h-4 w-4 mr-2" /> {t("common.signOut") || "Log ud"}
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => { try { await logout(); } finally { navigate(`/${locale}/auth/login`, { replace: true }); } }} className="text-destructive focus:text-destructive"><SignOut className="mr-2" size={16} /> {t("common.signOut") || "Log ud"}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {onToggleCollapse && (
+          <button onClick={onToggleCollapse} className="hidden shrink-0 rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white md:block" aria-label={collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar")}>
+            <SidebarSimple size={18} weight="duotone" />
+          </button>
+        )}
       </div>
+
+      <div className="my-3 h-px bg-white/[0.07]" />
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden pr-0.5">
+        {groups.map((group, gi) => {
+          if (!group.module) {
+            return (
+              <div key={`group-${gi}`} className="pb-1">
+                {!collapsed && <div className="px-3 pb-1 text-[11px] font-medium text-white/35">{group.label}: {group.items.length}</div>}
+                <ul className="space-y-0.5">
+                  {group.items.map(item => <RailItem key={item.path} item={item} base={base} collapsed={collapsed} accent={group.accent} onNavigate={onNavigate} />)}
+                </ul>
+              </div>
+            );
+          }
+          const open = collapsed || openGroups.has(group.label as string);
+          return (
+            <div key={group.label} className="pt-1.5">
+              {!collapsed && (
+                <button type="button" onClick={() => toggleGroup(group.label as string)} aria-expanded={open}
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[11px] font-medium text-white/35 transition-colors hover:text-white/70">
+                  <span>{group.label}: {group.items.length}</span>
+                  <CaretDown size={13} weight="bold" className={cn("shrink-0 transition-transform duration-200", open && "rotate-180")} aria-hidden="true" />
+                </button>
+              )}
+              {open && (
+                <ul className="space-y-0.5">
+                  {group.items.map(item => <RailItem key={item.path} item={item} base={base} collapsed={collapsed} accent={group.accent} onNavigate={onNavigate} />)}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* Tools row */}
+      {!collapsed && (
+        <div className="mt-3">
+          <div className="px-1 pb-1.5 text-[11px] font-medium text-white/35">{t("nav.tools")}: {tools.length}</div>
+          <div className="flex items-center gap-1 rounded-xl border border-white/[0.07] bg-white/[0.04] p-1.5">
+            {tools.map(tool => (
+              <Tooltip key={tool.path} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <button onClick={() => { navigate(`${base}/${tool.path}`); onNavigate?.(); }} className="grid h-8 flex-1 place-items-center rounded-lg text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white" aria-label={tool.label}>
+                    <tool.icon size={17} weight="duotone" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{tool.label}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Create CTA */}
+      <button
+        onClick={() => { navigate(`${base}/work/tasks?create=true`); onNavigate?.(); }}
+        className={cn("mt-3 flex items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.04] transition-colors hover:bg-white/[0.07]", collapsed ? "h-12 w-12 mx-auto" : "flex-col gap-2 p-4")}
+        aria-label={t("nav.createNew")}
+      >
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#3B82F6] text-white shadow-[0_8px_24px_-6px_rgba(59,130,246,0.7)]"><Plus size={22} weight="bold" /></span>
+        {!collapsed && <span className="text-[13px] font-medium text-white">{t("nav.createNew")}</span>}
+      </button>
     </div>
   );
 }
 
 export function WorkspaceRail(_props: Props) {
   const { t } = useI18n();
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebar_collapsed_v1") === "1"; } catch { return false; }
+  });
+  const toggle = () => setCollapsed(prev => {
+    const next = !prev;
+    try { localStorage.setItem("sidebar_collapsed_v1", next ? "1" : "0"); } catch { /* ignore */ }
+    return next;
+  });
+
   return (
-    // Desktop: permanently expanded, normal flex sibling — never overlaps content, always legible
     <aside
-      className="hidden md:flex md:flex-col w-64 shrink-0 h-screen sticky top-0 border-r border-sidebar-border/60"
+      className={cn("hidden shrink-0 p-3 md:block", collapsed ? "w-[88px]" : "w-[280px]")}
       aria-label={t("nav.workspaceNavigation")}
     >
-      <RailContent />
+      <div className="sticky top-3 h-[calc(100vh-1.5rem)]">
+        <RailContent collapsed={collapsed} onToggleCollapse={toggle} />
+      </div>
     </aside>
   );
 }
@@ -293,16 +310,15 @@ export function WorkspaceRailMobileTrigger() {
   return (
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
       <SheetTrigger asChild>
-        <button
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/70 bg-card text-muted-foreground hover:text-foreground md:hidden"
-          aria-label={t("nav.openMenu")}
-        >
-          <Menu className="h-4 w-4" />
+        <button className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/70 bg-card text-muted-foreground hover:text-foreground md:hidden" aria-label={t("nav.openMenu")}>
+          <List size={18} weight="bold" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-72">
+      <SheetContent side="left" className="w-[300px] border-0 bg-transparent p-2">
         <SheetTitle className="sr-only">{t("nav.workspaceNavigation")}</SheetTitle>
-        <RailContent onNavigate={() => setMobileOpen(false)} />
+        <div className="h-full">
+          <RailContent collapsed={false} onNavigate={() => setMobileOpen(false)} />
+        </div>
       </SheetContent>
     </Sheet>
   );

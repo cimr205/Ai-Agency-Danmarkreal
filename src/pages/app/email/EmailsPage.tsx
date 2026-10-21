@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import DOMPurify from 'dompurify';
-import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter } from 'lucide-react';
+import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter, Sparkles } from 'lucide-react';
+import { openAmbientAI } from '@/components/workspace/AmbientAIBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,9 @@ import { useGmailAccount, useConnectGmail, useDisconnectGmail, useSyncEmails, us
 import { useI18n } from '@/lib/i18n';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
+import { RelationshipChip } from '@/components/shared/RelationshipChip';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Email = Tables<'emails'> & {
   contact?: { id: string; name: string; email: string } | null;
@@ -53,10 +56,10 @@ export default function EmailsPage() {
   const [searchDateTo, setSearchDateTo] = useState('');
 
   const priorityConfig = useMemo(() => ({
-    meeting: { icon: CalendarDays, label: t('pages.email.meeting'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
-    deadline: { icon: Clock, label: t('pages.email.deadline'), color: 'text-orange-600 bg-orange-500/10 border-orange-500/20' },
-    invoice: { icon: FileText, label: t('pages.email.invoice'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
-    contract: { icon: AlertTriangle, label: t('pages.email.contract'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
+    meeting: { icon: CalendarDays, label: t('pages.email.meeting'), color: 'text-warning bg-warning/10 border-warning/20' },
+    deadline: { icon: Clock, label: t('pages.email.deadline'), color: 'text-destructive bg-destructive/10 border-destructive/20' },
+    invoice: { icon: FileText, label: t('pages.email.invoice'), color: 'text-warning bg-warning/10 border-warning/20' },
+    contract: { icon: AlertTriangle, label: t('pages.email.contract'), color: 'text-destructive bg-destructive/10 border-destructive/20' },
   }), [t]);
 
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
@@ -317,7 +320,7 @@ export default function EmailsPage() {
         <Card className="border-yellow-500/30 bg-yellow-500/5">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />{t('pages.email.todayPriorities')}
+              <Star className="h-5 w-5 text-warning fill-warning" />{t('pages.email.todayPriorities')}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -356,12 +359,12 @@ export default function EmailsPage() {
         <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><Mail className="h-5 w-5 text-primary" /><div><p className="text-sm text-muted-foreground">{t('pages.email.total')}</p><p className="text-2xl font-bold">{emails.length}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><Badge className="bg-primary/10 text-primary px-2 py-1">{unreadCount}</Badge><div><p className="text-sm text-muted-foreground">{t('pages.email.unread')}</p></div></div></CardContent></Card>
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setPriorityDialogOpen(true)}>
-          <CardContent className="pt-6"><div className="flex items-center gap-3"><Star className="h-5 w-5 text-yellow-500" /><div><p className="text-sm text-muted-foreground">{t('pages.email.prioritized')}</p><p className="text-2xl font-bold">{priorityCount}</p></div><ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" /></div></CardContent>
+          <CardContent className="pt-6"><div className="flex items-center gap-3"><Star className="h-5 w-5 text-warning" /><div><p className="text-sm text-muted-foreground">{t('pages.email.prioritized')}</p><p className="text-2xl font-bold">{priorityCount}</p></div><ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" /></div></CardContent>
         </Card>
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setTodoDialogOpen(true)}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-accent" />
+              <CheckCircle2 className="h-5 w-5 text-stamp" />
               <div>
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   {t('pages.email.todoSuggestions')}
@@ -437,18 +440,24 @@ export default function EmailsPage() {
       <Card>
         <CardContent className="p-0">
           {emailsLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-2" />
-              <p className="text-muted-foreground">{t('pages.email.fetchingEmails')}</p>
+            <div className="divide-y divide-border">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-4">
+                  <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-1/3" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : pagedEmails.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Mail className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>{emails.length === 0 ? t('pages.email.noEmailsSynced') : t('pages.email.noEmailsMatch')}</p>
-              {activeTab === 'starred' && starredCount === 0 && (
-                <p className="text-xs mt-2">{t('pages.email.starredHint')}</p>
-              )}
-            </div>
+            <EmptyState
+              icon={Mail}
+              title={emails.length === 0 ? t('pages.email.noEmailsSynced') : t('pages.email.noEmailsMatch')}
+              hint={activeTab === 'starred' && starredCount === 0 ? t('pages.email.starredHint') : undefined}
+              bare
+            />
           ) : (
             <div className="divide-y divide-border">
               {pagedEmails.map((email) => {
@@ -460,7 +469,7 @@ export default function EmailsPage() {
                     className={`flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/50 ${!email.is_read ? 'bg-primary/5' : ''} ${email.ai_priority && !email.is_read ? 'border-l-4 border-l-yellow-500' : ''}`}
                   >
                     <button onClick={e => toggleStar(email, e)} className="mt-1 shrink-0" aria-label={t('pages.email.starred')}>
-                      <Star className={`h-4 w-4 ${email.is_starred ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30 hover:text-yellow-500'}`} />
+                      <Star className={`h-4 w-4 ${email.is_starred ? 'text-warning fill-warning' : 'text-muted-foreground/30 hover:text-warning'}`} />
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -469,6 +478,11 @@ export default function EmailsPage() {
                         </span>
                         {cfg && <Badge variant="outline" className={`text-xs shrink-0 ${cfg.color}`}>{cfg.label}</Badge>}
                         {!email.is_read && <Badge className="bg-primary text-primary-foreground text-xs shrink-0">{t('pages.email.new')}</Badge>}
+                        {email.contact && <Badge variant="secondary" className="text-xs shrink-0">{email.contact.name}</Badge>}
+                        {email.deal && <Badge variant="outline" className="text-xs shrink-0">{email.deal.title}</Badge>}
+                        {!email.contact && !email.deal && (
+                          <RelationshipChip muted value={locale === 'da' ? 'Ukendt afsender' : 'Unmatched sender'} className="shrink-0" />
+                        )}
                       </div>
                       <p className={`text-sm truncate ${!email.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{email.snippet}</p>
@@ -515,9 +529,9 @@ export default function EmailsPage() {
                   <span className="ml-auto">{new Date(selectedEmail.received_at).toLocaleString(dateLocale)}</span>
                 </div>
                 {selectedEmail.ai_suggested_todo && (
-                  <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                    <p className="text-xs font-medium text-accent">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
+                  <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-stamp/10 border border-stamp/20">
+                    <CheckCircle2 className="h-4 w-4 text-stamp shrink-0" />
+                    <p className="text-xs font-medium text-stamp">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
@@ -528,10 +542,16 @@ export default function EmailsPage() {
               </DialogHeader>
               <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
                 {selectedEmail.body_html ? (
-                  <div
-                    className="[&_*]:!max-width-full [&_img]:max-w-full [&_a]:text-primary [&_a]:underline"
-                    style={{ colorScheme: 'auto' }}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.body_html, { ADD_ATTR: ['target'] }) }}
+                  // SECURITY: email body is attacker-controlled (synced from Gmail), so it must
+                  // never be injected via dangerouslySetInnerHTML. A sandboxed iframe with no
+                  // allow-scripts token neutralises <script> and inline handlers (e.g. <img onerror>),
+                  // preventing stored-XSS / session-token theft, while still rendering the HTML + images.
+                  <iframe
+                    title="email-body"
+                    sandbox=""
+                    referrerPolicy="no-referrer"
+                    className="w-full h-[55vh] rounded-md border border-border bg-white"
+                    srcDoc={selectedEmail.body_html}
                   />
                 ) : (
                   <pre className="whitespace-pre-wrap font-sans text-sm">{selectedEmail.body_text || selectedEmail.snippet}</pre>
@@ -569,6 +589,22 @@ export default function EmailsPage() {
                 </div>
               ) : (
                 <div className="mt-4 flex gap-2 justify-end border-t border-border pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const body = (selectedEmail.body_text || selectedEmail.snippet || '').slice(0, 3000);
+                      const ask = locale === 'da'
+                        ? `Opsummer denne email og forslå et svar:\n\nEmne: ${selectedEmail.subject}\nFra: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                        : locale === 'de'
+                          ? `Fasse diese E-Mail zusammen und schlage eine Antwort vor:\n\nBetreff: ${selectedEmail.subject}\nVon: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                          : `Summarize this email and suggest a reply:\n\nSubject: ${selectedEmail.subject}\nFrom: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`;
+                      openAmbientAI(ask);
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {t('pages.email.askAi')}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => toggleRead(selectedEmail)}>
                     {selectedEmail.is_read ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
                     {selectedEmail.is_read ? t('pages.email.markUnread') : t('pages.email.markRead')}
@@ -652,7 +688,7 @@ export default function EmailsPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-accent" />
+              <CheckCircle2 className="h-5 w-5 text-stamp" />
               {t('pages.email.todoSuggestions')} ({todoCount})
             </DialogTitle>
             <DialogDescription>{t('pages.email.todoExplanation')}</DialogDescription>
@@ -671,9 +707,9 @@ export default function EmailsPage() {
                   onClick={() => { setTodoDialogOpen(false); setSelectedEmail(email); }}
                 >
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-stamp mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-accent">{email.ai_suggested_todo}</p>
+                      <p className="font-medium text-sm text-stamp">{email.ai_suggested_todo}</p>
                       <p className="text-sm font-medium text-foreground mt-1 truncate">{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {email.from_name || email.from_address} · {new Date(email.received_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -695,7 +731,7 @@ export default function EmailsPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+              <Star className="h-5 w-5 text-warning fill-warning" />
               {t('pages.email.prioritizedEmails')} ({priorityCount})
             </DialogTitle>
             <DialogDescription>{t('pages.email.priorityExplanation')}</DialogDescription>

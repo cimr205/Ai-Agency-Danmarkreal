@@ -883,7 +883,7 @@ export default function BulkEmailPage() {
           </DialogHeader>
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-2">
-              <CheckCircle2 className={`h-4 w-4 mt-0.5 shrink-0 ${includeUnsubscribe ? 'text-accent' : 'text-destructive'}`} />
+              <CheckCircle2 className={`h-4 w-4 mt-0.5 shrink-0 ${includeUnsubscribe ? 'text-success' : 'text-destructive'}`} />
               <p>{t('bulkEmail.unsubscribeLinkIncluded')}: <strong>{includeUnsubscribe ? t('common.yes') : t('common.no')}</strong></p>
             </div>
             <div className="flex items-start gap-2">

@@ -52,6 +52,9 @@ export function ClientQuickWorkflow({ customer }: Props) {
         due_date: dueDate(due),
         priority: kind === "action" ? "high" : priority,
         description: `Klient: ${customer.name}`,
+        // Structurally link the task to the customer (tasks.lead_id references
+        // customers(id)) so it is traceable on the customer timeline and in Tasks.
+        lead_id: customer.id,
       });
       toast({ title: kind === "action" ? "Næste skridt gemt" : "Opgave oprettet", description: `${t} · ${DUE_LABELS[due]}` });
       setTitle("");

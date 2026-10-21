@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,11 +10,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Target, Plus, Trash2, Star, Loader2, Search, Eye, Zap,
-  BarChart3, Users, MapPin, Building2, ChevronRight,
+  Target, Plus, Trash2, Star, Loader2, Eye, Zap,
+  BarChart3, Users, MapPin, Building2, ChevronRight, ChevronLeft,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import {
   useIcpProfiles, useDeleteIcpProfile, useSetDefaultIcp,
   useLeadIcpScores, useScoreLeadsAgainstIcp,
@@ -23,12 +22,14 @@ import {
 import IcpWizard from "@/components/icp/IcpWizard";
 import IcpScoreBreakdown from "@/components/icp/IcpScoreBreakdown";
 import { useI18n } from "@/lib/i18n";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 function scoreTierBadge(score: number) {
-  if (score >= 80) return <Badge variant="outline" className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-xs">Hot</Badge>;
-  if (score >= 60) return <Badge variant="outline" className="bg-blue-500/15 text-blue-400 border-blue-500/20 text-xs">Good</Badge>;
-  if (score >= 40) return <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs">Maybe</Badge>;
-  return <Badge variant="outline" className="bg-red-500/15 text-red-400 border-red-500/20 text-xs">Poor</Badge>;
+  if (score >= 80) return <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs">Hot</Badge>;
+  if (score >= 60) return <Badge variant="outline" className="bg-primary/15 text-primary border-primary/20 text-xs">Good</Badge>;
+  if (score >= 40) return <Badge variant="outline" className="bg-warning/15 text-warning border-warning/20 text-xs">Maybe</Badge>;
+  return <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/20 text-xs">Poor</Badge>;
 }
 
 export default function IcpPage() {
@@ -68,14 +69,19 @@ export default function IcpPage() {
   // ─── WIZARD VIEW ──────────────────────────────────────────
   if (view === "wizard") {
     return (
-      <div className="relative -m-4 min-h-[calc(100vh-76px)] overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/68 p-5 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl sm:p-8">
-          <IcpWizard
-            existing={editingIcp}
-            onClose={() => { setView("list"); setEditingIcp(null); }}
-            onSaved={() => { setView("list"); setEditingIcp(null); }}
-          />
-        </div>
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => { setView("list"); setEditingIcp(null); }}>
+          <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
+        </Button>
+        <Card className="mx-auto max-w-3xl">
+          <CardContent className="p-5 sm:p-8">
+            <IcpWizard
+              existing={editingIcp}
+              onClose={() => { setView("list"); setEditingIcp(null); }}
+              onSaved={() => { setView("list"); setEditingIcp(null); }}
+            />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -83,29 +89,27 @@ export default function IcpPage() {
   // ─── MATCHES VIEW ─────────────────────────────────────────
   if (view === "matches" && selectedIcpId) {
     return (
-      <div className="relative -m-4 min-h-[calc(100vh-76px)] space-y-6 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
-        <div className="mx-auto flex max-w-[1500px] flex-col justify-between gap-5 rounded-[2.25rem] border border-white/70 bg-white/62 p-6 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl sm:flex-row sm:items-end sm:p-8">
-          <div>
-            <Button variant="ghost" size="sm" onClick={() => setView("list")} className="mb-4 rounded-full border border-white/70 bg-white/70 text-slate-500">
-              {t('icp.backToIcps')}
-            </Button>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">ICP · Match intelligence</p>
-            <h1 className="mt-3 flex items-center gap-3 text-[34px] font-semibold tracking-[-0.045em] text-slate-950 sm:text-[46px]">
-              <BarChart3 className="h-7 w-7 text-blue-600" />
-              {t('icp.leadMatches').replace('{name}', selectedIcp?.name || '')}
-            </h1>
-            <p className="mt-2 text-sm text-slate-500">
-              {t('icp.leadsScored').replace('{count}', String(scores.length))} • {t('icp.sortedByBestMatch')}
-            </p>
-          </div>
-          <Button
-            onClick={() => handleScore(selectedIcpId)}
-            disabled={scoreLeads.isPending}
-            className="h-11 gap-1.5 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800"
-          >
-            {scoreLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-            {t('icp.reScoreLeads')}
+      <div className="space-y-6">
+        <div>
+          <Button variant="ghost" size="sm" className="gap-1.5 mb-3" onClick={() => setView("list")}>
+            <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
           </Button>
+          <PageHeader
+            eyebrow={t('nav.crm')}
+            title={
+              <span className="flex items-center gap-3">
+                <BarChart3 className="h-6 w-6 text-primary" />
+                {t('icp.leadMatches').replace('{name}', selectedIcp?.name || '')}
+              </span>
+            }
+            description={`${t('icp.leadsScored').replace('{count}', String(scores.length))} · ${t('icp.sortedByBestMatch')}`}
+            actions={
+              <Button onClick={() => handleScore(selectedIcpId)} disabled={scoreLeads.isPending} className="gap-1.5">
+                {scoreLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {t('icp.reScoreLeads')}
+              </Button>
+            }
+          />
         </div>
 
         {scoresLoading ? (
@@ -113,15 +117,9 @@ export default function IcpPage() {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : scores.length === 0 ? (
-          <Card className="mx-auto max-w-[1500px] rounded-[2rem] border-white/70 bg-white/68 p-12 text-center shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl">
-            <Target className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-foreground mb-1">{t('icp.noScoresYet')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('icp.noScoresDesc')}
-            </p>
-          </Card>
+          <EmptyState icon={Target} title={t('icp.noScoresYet')} hint={t('icp.noScoresDesc')} />
         ) : (
-          <Card className="mx-auto max-w-[1500px] overflow-hidden rounded-[2rem] border-white/70 bg-white/68 p-0 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl">
+          <Card className="overflow-hidden p-0">
             <ScrollArea className="max-h-[600px]">
               <Table>
                 <TableHeader>
@@ -136,7 +134,7 @@ export default function IcpPage() {
                 </TableHeader>
                 <TableBody>
                   {scores.map((s) => (
-                    <TableRow key={s.id} className="cursor-pointer border-white/80 transition-colors hover:bg-blue-50/70" onClick={() => setScoreDetailId(s.id)}>
+                    <TableRow key={s.id} className="cursor-pointer transition-colors hover:bg-muted/50" onClick={() => setScoreDetailId(s.id)}>
                       <TableCell>
                         <div>
                           <p className="text-sm font-medium text-foreground">{s.leads?.name || "—"}</p>
@@ -182,56 +180,23 @@ export default function IcpPage() {
 
   // ─── LIST VIEW (default) ──────────────────────────────────
   return (
-    <div className="relative -m-4 min-h-[calc(100vh-76px)] space-y-6 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
-      {/* ICP cockpit — mirrors the dashboard composition */}
-      <section className="mx-auto max-w-[1500px] overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl">
-        <div className="grid lg:grid-cols-[minmax(0,1.45fr)_380px]">
-          <div className="p-6 sm:p-8 lg:p-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">CRM · ICP cockpit</p>
-            <h1 className="mt-4 text-[40px] font-semibold leading-[0.96] tracking-[-0.055em] text-slate-950 sm:text-[54px]">
-              Find kunder, der passer.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">{t('icp.subtitle')}</p>
-            <Button onClick={() => { setEditingIcp(null); setView("wizard"); }} className="mt-7 h-11 gap-1.5 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800">
-              <Plus className="h-4 w-4" /> {t('icp.createIcp')}
-            </Button>
-          </div>
-          <div className="relative border-t border-white/60 bg-slate-950/92 p-6 text-white lg:border-l lg:border-t-0 lg:p-8">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_5%,rgba(92,124,255,0.52),transparent_34%),radial-gradient(circle_at_100%_30%,rgba(244,114,255,0.28),transparent_38%)]" />
-            <div className="relative">
-              <div className="flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Live targeting signal</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">Match engine</h2></div><span className="grid h-12 w-12 place-items-center rounded-full bg-white/10"><Target className="h-5 w-5 text-cyan-200" /></span></div>
-              <div className="mt-7 grid grid-cols-2 gap-3">
-                <IcpSignal label={t('icp.totalIcps')} value={profiles.length} />
-                <IcpSignal label={t('icp.defaultLabel')} value={profiles.filter(p => p.is_default).length} />
-                <IcpSignal label={t('icp.industriesTargeted')} value={profiles.reduce((a, p) => a + p.industry.length, 0)} />
-                <IcpSignal label={t('icp.countries')} value={profiles.reduce((a, p) => a + p.target_countries.length, 0)} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      {profiles.length > 0 && (
-        <div className="mx-auto grid max-w-[1500px] grid-cols-2 gap-3 md:grid-cols-4">
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/68 p-5 text-center shadow-[0_18px_55px_rgba(45,77,150,0.11)] backdrop-blur-xl">
-            <p className="text-2xl font-bold text-foreground">{profiles.length}</p>
-            <p className="text-xs text-muted-foreground">{t('icp.totalIcps')}</p>
-          </Card>
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/68 p-5 text-center shadow-[0_18px_55px_rgba(45,77,150,0.11)] backdrop-blur-xl">
-            <p className="text-2xl font-bold text-foreground">{profiles.filter(p => p.is_default).length}</p>
-            <p className="text-xs text-muted-foreground">{t('icp.defaultLabel')}</p>
-          </Card>
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/68 p-5 text-center shadow-[0_18px_55px_rgba(45,77,150,0.11)] backdrop-blur-xl">
-            <p className="text-2xl font-bold text-foreground">{profiles.reduce((a, p) => a + p.industry.length, 0)}</p>
-            <p className="text-xs text-muted-foreground">{t('icp.industriesTargeted')}</p>
-          </Card>
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/68 p-5 text-center shadow-[0_18px_55px_rgba(45,77,150,0.11)] backdrop-blur-xl">
-            <p className="text-2xl font-bold text-foreground">{profiles.reduce((a, p) => a + p.target_countries.length, 0)}</p>
-            <p className="text-xs text-muted-foreground">{t('icp.countries')}</p>
-          </Card>
-        </div>
-      )}
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={t('nav.crm')}
+        title={t('icp.title')}
+        description={t('icp.subtitle')}
+        stats={profiles.length > 0 ? [
+          { value: profiles.length, label: t('icp.totalIcps') },
+          { value: profiles.filter(p => p.is_default).length, label: t('icp.defaultLabel') },
+          { value: profiles.reduce((a, p) => a + p.industry.length, 0), label: t('icp.industriesTargeted') },
+          { value: profiles.reduce((a, p) => a + p.target_countries.length, 0), label: t('icp.countries') },
+        ] : undefined}
+        actions={
+          <Button onClick={() => { setEditingIcp(null); setView("wizard"); }} className="gap-1.5">
+            <Plus className="h-4 w-4" /> {t('icp.createIcp')}
+          </Button>
+        }
+      />
 
       {/* ICP Cards */}
       {isLoading ? (
@@ -239,21 +204,16 @@ export default function IcpPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : profiles.length === 0 ? (
-        <Card className="mx-auto w-full max-w-[1500px] overflow-hidden rounded-[2rem] border-white/70 bg-white/68 p-12 text-center shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl">
-          <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-fuchsia-500 text-white shadow-[0_18px_40px_rgba(82,113,255,0.28)]"><Target className="h-7 w-7" /></span>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600">Start targeting</p>
-          <h3 className="mb-2 mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{t('icp.noIcpsYet')}</h3>
-          <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-slate-500">
-            {t('icp.noIcpsDesc')}
-          </p>
-          <Button onClick={() => { setEditingIcp(null); setView("wizard"); }} className="h-11 gap-1.5 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800">
-            <Plus className="h-4 w-4" /> {t('icp.createFirstIcp')}
-          </Button>
-        </Card>
+        <EmptyState
+          icon={Target}
+          title={t('icp.noIcpsYet')}
+          hint={t('icp.noIcpsDesc')}
+          action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
+        />
       ) : (
-        <div className="mx-auto grid w-full max-w-[1500px] gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {profiles.map((icp) => (
-            <Card key={icp.id} className="space-y-4 rounded-[2rem] border-white/70 bg-white/68 p-6 shadow-[0_24px_80px_rgba(45,77,150,0.11)] backdrop-blur-2xl transition-all hover:-translate-y-1 hover:bg-white/85">
+            <Card key={icp.id} className="space-y-4 p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -337,15 +297,6 @@ export default function IcpPage() {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function IcpSignal({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl">
-      <p className="truncate text-[9px] font-bold uppercase tracking-[0.15em] text-white/42">{label}</p>
-      <p className="mt-4 text-[30px] font-semibold leading-none tracking-[-0.04em] tabular-nums">{value}</p>
     </div>
   );
 }

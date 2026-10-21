@@ -62,7 +62,11 @@ export default function WorkflowsPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showWorkflows, setShowWorkflows] = useState(false);
+  // Defaults open: this sidebar is the only place that shows workflow status,
+  // run counts and errors in structured (non-chat) form — hiding it by
+  // default left users with no visible way to see whether an automation
+  // they asked the assistant to build is actually active or failing.
+  const [showWorkflows, setShowWorkflows] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

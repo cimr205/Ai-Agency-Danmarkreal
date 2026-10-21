@@ -5,18 +5,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Calendar, Check, X, Clock } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
-
-const statusColors: Record<string, string> = { pending: 'bg-warning/15 text-warning', approved: 'bg-success/15 text-success', rejected: 'bg-destructive/15 text-destructive' };
 
 export default function LeavePage() {
   const { t, locale } = useI18n();
@@ -115,7 +113,7 @@ export default function LeavePage() {
                 <TableCell>{typeLabels[leave.type]}</TableCell>
                 <TableCell>{new Date(leave.start_date).toLocaleDateString(dateLocale)}</TableCell>
                 <TableCell>{new Date(leave.end_date).toLocaleDateString(dateLocale)}</TableCell>
-                <TableCell><Badge className={statusColors[leave.status]}>{statusLabels[leave.status]}</Badge></TableCell>
+                <TableCell><StatusBadge status={leave.status} label={statusLabels[leave.status]} /></TableCell>
                 {isAdmin && <TableCell>{leave.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" className="text-success" onClick={() => approveLeave.mutateAsync(leave.id)}><Check className="h-4 w-4" /></Button>

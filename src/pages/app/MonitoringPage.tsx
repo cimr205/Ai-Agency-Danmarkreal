@@ -45,7 +45,7 @@ export default function MonitoringPage() {
   const cards = [
     { title: 'Aktive brugere', value: metrics?.totalUsers ?? '-', icon: Users, color: 'text-primary' },
     { title: 'Total leads', value: metrics?.totalLeads ?? '-', icon: Database, color: 'text-success' },
-    { title: 'Aktiviteter (24t)', value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-accent' },
+    { title: 'Aktiviteter (24t)', value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-chart-cyan' },
     { title: 'Emails sendt (24t)', value: metrics?.emailsSent24h ?? '-', icon: Mail, color: 'text-primary' },
   ];
 

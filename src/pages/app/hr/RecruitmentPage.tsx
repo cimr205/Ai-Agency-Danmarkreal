@@ -3,29 +3,23 @@ import { useRecruitment, useCreateRecruitment, useUpdateRecruitmentStatus } from
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, UserPlus, Briefcase, Users, CheckCircle } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-
-const statusColors: Record<string, string> = {
-  open: 'bg-success/15 text-success',
-  interviewing: 'bg-primary/15 text-primary',
-  closed: 'bg-muted text-muted-foreground',
-  filled: 'bg-accent/15 text-accent-foreground',
-};
 
 export default function RecruitmentPage() {
   const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newPosition, setNewPosition] = useState({ position: '' });
+  const [newPosition, setNewPosition] = useState({ position: '', department: '', description: '', requirements: '', salary_range: '' });
 
   const statusLabels: Record<string, string> = {
     open: t('hr.statusOpen'), interviewing: t('hr.statusInterviewing'),
@@ -39,9 +33,15 @@ export default function RecruitmentPage() {
   const handleCreate = async () => {
     if (!newPosition.position) { toast.error(t('hr.positionRequired')); return; }
     try {
-      await createRecruitment.mutateAsync(newPosition);
+      await createRecruitment.mutateAsync({
+        position: newPosition.position,
+        department: newPosition.department || undefined,
+        description: newPosition.description || undefined,
+        requirements: newPosition.requirements || undefined,
+        salary_range: newPosition.salary_range || undefined,
+      });
       toast.success(t('hr.positionCreated'));
-      setNewPosition({ position: '' });
+      setNewPosition({ position: '', department: '', description: '', requirements: '', salary_range: '' });
       setIsCreateOpen(false);
     } catch { toast.error(t('hr.positionCreateError')); }
   };
@@ -71,7 +71,13 @@ export default function RecruitmentPage() {
           <DialogContent>
             <DialogHeader><DialogTitle>{t('hr.createPosition')}</DialogTitle><DialogDescription>{t('hr.createPositionDesc')}</DialogDescription></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newPosition.position} onChange={(e) => setNewPosition({ position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
+              <div className="space-y-2"><Label>{t('hr.positionLabel')} *</Label><Input value={newPosition.position} onChange={(e) => setNewPosition({ ...newPosition, position: e.target.value })} placeholder={t('hr.positionPlaceholder')} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>{t('hr.department')}</Label><Input value={newPosition.department} onChange={(e) => setNewPosition({ ...newPosition, department: e.target.value })} placeholder="Sales" /></div>
+                <div className="space-y-2"><Label>{t('hr.salaryRange')}</Label><Input value={newPosition.salary_range} onChange={(e) => setNewPosition({ ...newPosition, salary_range: e.target.value })} placeholder="40.000–55.000 kr." /></div>
+              </div>
+              <div className="space-y-2"><Label>{t('hr.description')}</Label><Textarea value={newPosition.description} onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })} rows={3} /></div>
+              <div className="space-y-2"><Label>{t('hr.requirements')}</Label><Textarea value={newPosition.requirements} onChange={(e) => setNewPosition({ ...newPosition, requirements: e.target.value })} rows={3} /></div>
               <Button onClick={handleCreate} disabled={createRecruitment.isPending} className="w-full">{createRecruitment.isPending ? t('hr.creating') : t('hr.createPosition')}</Button>
             </div>
           </DialogContent>
@@ -81,7 +87,7 @@ export default function RecruitmentPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><Briefcase className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.openPositions')}</p><p className="text-2xl font-bold text-success">{openPositions}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.interviewing')}</p><p className="text-2xl font-bold">{interviewingPositions}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-accent-foreground" /></div><div><p className="text-sm text-muted-foreground">{t('hr.filled')}</p><p className="text-2xl font-bold">{filledPositions}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.filled')}</p><p className="text-2xl font-bold">{filledPositions}</p></div></div></CardContent></Card>
         <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><UserPlus className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.total')}</p><p className="text-2xl font-bold">{recs.length}</p></div></div></CardContent></Card>
       </div>
 
@@ -103,7 +109,7 @@ export default function RecruitmentPage() {
             : filteredRecruitment.map((rec) => (
               <TableRow key={rec.id}>
                 <TableCell className="font-medium">{rec.position}</TableCell>
-                <TableCell><Badge className={statusColors[rec.status]}>{statusLabels[rec.status]}</Badge></TableCell>
+                <TableCell><StatusBadge status={rec.status} label={statusLabels[rec.status]} /></TableCell>
                 <TableCell>
                   <Select value={rec.status} onValueChange={(value) => handleStatusChange(rec.id, value)}>
                     <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
