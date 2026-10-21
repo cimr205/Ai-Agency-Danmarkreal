@@ -16,9 +16,11 @@ create table if not exists public.ai_conversations (
   foreign key (company_id) references public.companies(id) on delete cascade
 );
 alter table public.ai_conversations enable row level security;
-create policy "Company members access ai_conversations" on public.ai_conversations for all
-  using (company_id = public.get_user_company_id(auth.uid()))
-  with check (company_id = public.get_user_company_id(auth.uid()));
+-- Named to match 20261014000004_scope_ai_conversations_to_owner.sql, which DROPs this
+-- and replaces it with an owner-scoped (user_id = auth.uid()) SELECT policy. Keep this
+-- name so that later migration's security tightening applies cleanly.
+create policy "Members view own company conversations" on public.ai_conversations for select
+  using (company_id = public.get_user_company_id(auth.uid()));
 
 create table if not exists public.ai_messages (
   company_id uuid not null,
@@ -32,9 +34,9 @@ create table if not exists public.ai_messages (
   foreign key (conversation_id) references public.ai_conversations(id)
 );
 alter table public.ai_messages enable row level security;
-create policy "Company members access ai_messages" on public.ai_messages for all
-  using (company_id = public.get_user_company_id(auth.uid()))
-  with check (company_id = public.get_user_company_id(auth.uid()));
+-- Named to match 20261014000004_scope_ai_conversations_to_owner.sql (DROP + owner-scoped replace).
+create policy "Members view own company messages" on public.ai_messages for select
+  using (company_id = public.get_user_company_id(auth.uid()));
 
 create table if not exists public.ai_execution_runs (
   company_id uuid not null,

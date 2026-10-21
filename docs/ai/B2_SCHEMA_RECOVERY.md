@@ -31,7 +31,7 @@
 These 15 tables exist in production (they appear in the generated `types.ts`) but have **no `create table` in any of the 66 migrations**, and are **not referenced by any committed app hook, page, component, or edge function** — only by the generated `types.ts`. Root cause: they were created in production **outside migration history** (dashboard/manual or an uncommitted/in-progress feature branch), producing drift between production and the version-controlled schema. (Earlier "AI chat breaks on fresh deploy" claim was **overstated** — the committed app does not query these tables.)
 
 ## New migration
-- `supabase/migrations/20261021000001_reconstruct_orphaned_production_tables.sql` (278 lines, forward-only). The 66 existing migrations and their history are **unchanged**. Dependency-safe order (parents before children: `ai_conversations` → `ai_messages`/`ai_execution_runs` → `ai_execution_steps`, etc.).
+- `supabase/migrations/20261014000000_reconstruct_orphaned_production_tables.sql` (278 lines, forward-only). The 66 existing migrations and their history are **unchanged**. Dependency-safe order (parents before children: `ai_conversations` → `ai_messages`/`ai_execution_runs` → `ai_execution_steps`, etc.).
 - Reconstruction method: parsed each table's `Row` (columns + nullability), `Insert` (optional ⇒ has default) and `Relationships` (FKs) from `types.ts`; mapped TS→SQL types heuristically (`string`→text / uuid for `*_id` / timestamptz for `*_at`; `number`→numeric; `Json`→jsonb; `string[]`→text[]); `id uuid primary key default gen_random_uuid()`; `created_at`/`updated_at default now()`; company_id FK → `companies(id) on delete cascade`; tenant RLS using the app's standard `get_user_company_id(auth.uid())`.
 - Also fixed earlier (B2-adjacent): `20260912000001` apostrophe (B2 forensics) and removed the stale `user_roles.company_id` from `types.ts` (B3 — verified no app code uses it; both AuthContext and AdminUsers select only `role`/`user_id`).
 
@@ -62,3 +62,9 @@ These 15 tables exist in production (they appear in the generated `types.ts`) bu
 - Reset + apply: `apply-migrations-mgmt.mts` → `67/67 applied`.
 - Comparison: `comm -23 types_tables_only.txt fresh_tables.txt` → empty.
 - RLS metadata + live checks as above. All against the **test** project only; production never written.
+
+## Addendum (2026-10-21, post-merge to main)
+Merging `main` brought its newer migrations, surfacing two fresh-build ordering/idempotency issues that are now fixed so a clean `supabase start` reproduces the whole schema:
+- **Reconstruction re-ordered** `20261021000001` → **`20261014000000`** so it runs **before** main's `20261014000004_scope_ai_conversations_to_owner.sql` (which `DROP/CREATE`s policies on `ai_conversations`/`ai_messages`). The reconstruction's `ai_conversations`/`ai_messages` policies are named `"Members view own company conversations"`/`"...messages"` so `000004` cleanly drops them and installs the owner-scoped (`user_id = auth.uid()`) versions — verified owner-scoped after a full apply.
+- **`20260913081611_global_workflow_templates.sql`** made idempotent (`create table if not exists` + column-guarded seed) because `20260913000001_close_production_gaps.sql` (earlier) already creates a different-schema `workflow_templates`; the plain `create table` crashed fresh builds. `workflow_templates` is DB-trigger-only (no app references), so this is app-safe. Editing the file is safe for production (already recorded in `schema_migrations`, so it does not re-run there).
+- **Strict fresh apply now passes end-to-end: 92/92 migrations, zero tolerated errors.**

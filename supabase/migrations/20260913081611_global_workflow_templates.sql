@@ -3,7 +3,15 @@
 -- git history until this audit found it via `supabase migration list --linked`.
 -- Content is verbatim from the live `statements` column; not authored here.
 
-create table public.workflow_templates (
+-- NOTE: 20260913000001_close_production_gaps.sql (earlier timestamp) also creates
+-- public.workflow_templates with a DIFFERENT, incompatible schema (template_key/steps).
+-- On a fresh `supabase start` that one runs first, so this file is made idempotent:
+-- `if not exists` + a column-guarded INSERT so it cleanly no-ops instead of crashing
+-- with "relation already exists". This file is already applied on production
+-- (schema_migrations), so editing it does not re-run there — it only fixes fresh builds.
+-- workflow_templates is not referenced by any application code (DB-trigger only), so the
+-- resulting schema choice is app-safe.
+create table if not exists public.workflow_templates (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
   name text not null,
@@ -20,43 +28,56 @@ comment on table public.workflow_templates is
 
 alter table public.workflow_templates enable row level security;
 
+drop policy if exists "Any authenticated user can read workflow templates" on public.workflow_templates;
 create policy "Any authenticated user can read workflow templates" on public.workflow_templates
   for select to authenticated
   using (true);
 
-insert into public.workflow_templates (key, name, description, trigger_event, action_type, payload_fields) values
-  (
-    'meta_lead_followup',
-    'Meta lead follow-up',
-    'Fires on every new lead (lead.created). Note: workflows has no payload-filter concept, so this is not limited to Meta-sourced leads specifically — check payload.lead_source = "meta_ads" on your receiving end if you only want to react to Meta leads. Set a webhook_url after instantiating.',
-    'lead.created',
-    'webhook',
-    array['name', 'email', 'lead_source', 'company']
-  ),
-  (
-    'reply_stops_followup',
-    'Reply stops/changes follow-up',
-    'Fires when a deterministic reply is detected in an existing email thread (email.replied — see trg_resolve_inbound_email). The matched contact''s pending follow-up reminder is already cleared automatically; this template is for notifying a human or pausing an external sequencing tool. Set a webhook_url after instantiating.',
-    'email.replied',
-    'webhook',
-    array['from_address', 'customer_id', 'deal_id', 'had_pending_followup']
-  ),
-  (
-    'deal_won_onboarding_notify',
-    'Deal won -> onboarding notify',
-    'Fires when the automatic onboarding pipeline creates an onboarding run for a newly won deal (onboarding.started — see handle_deal_won_event). The onboarding tasks themselves are already created automatically; this template is for notifying a human/Slack/etc. Set a webhook_url after instantiating.',
-    'onboarding.started',
-    'webhook',
-    array['onboarding_run_id', 'customer_id']
-  ),
-  (
-    'payment_success_followup',
-    'Payment success follow-up',
-    'Fires when an invoice is fully paid (invoice.paid). There is no separate "payment.received" event distinct from this in the current schema. Set a webhook_url after instantiating.',
-    'invoice.paid',
-    'webhook',
-    array['number', 'amount', 'from', 'to']
-  );
+-- Column-guarded: only seed when this file actually created the table (its `key`
+-- column exists). On a fresh build where 000001 created a different-schema
+-- workflow_templates first, this no-ops instead of failing on missing columns.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'workflow_templates' and column_name = 'key'
+  ) then
+    insert into public.workflow_templates (key, name, description, trigger_event, action_type, payload_fields) values
+      (
+        'meta_lead_followup',
+        'Meta lead follow-up',
+        'Fires on every new lead (lead.created). Note: workflows has no payload-filter concept, so this is not limited to Meta-sourced leads specifically — check payload.lead_source = "meta_ads" on your receiving end if you only want to react to Meta leads. Set a webhook_url after instantiating.',
+        'lead.created',
+        'webhook',
+        array['name', 'email', 'lead_source', 'company']
+      ),
+      (
+        'reply_stops_followup',
+        'Reply stops/changes follow-up',
+        'Fires when a deterministic reply is detected in an existing email thread (email.replied — see trg_resolve_inbound_email). The matched contact''s pending follow-up reminder is already cleared automatically; this template is for notifying a human or pausing an external sequencing tool. Set a webhook_url after instantiating.',
+        'email.replied',
+        'webhook',
+        array['from_address', 'customer_id', 'deal_id', 'had_pending_followup']
+      ),
+      (
+        'deal_won_onboarding_notify',
+        'Deal won -> onboarding notify',
+        'Fires when the automatic onboarding pipeline creates an onboarding run for a newly won deal (onboarding.started — see handle_deal_won_event). The onboarding tasks themselves are already created automatically; this template is for notifying a human/Slack/etc. Set a webhook_url after instantiating.',
+        'onboarding.started',
+        'webhook',
+        array['onboarding_run_id', 'customer_id']
+      ),
+      (
+        'payment_success_followup',
+        'Payment success follow-up',
+        'Fires when an invoice is fully paid (invoice.paid). There is no separate "payment.received" event distinct from this in the current schema. Set a webhook_url after instantiating.',
+        'invoice.paid',
+        'webhook',
+        array['number', 'amount', 'from', 'to']
+      )
+    on conflict (key) do nothing;
+  end if;
+end $$;
 
 create or replace function public.instantiate_workflow_template(p_template_key text)
 returns table (id uuid, trigger_event text, action_type text, description text)

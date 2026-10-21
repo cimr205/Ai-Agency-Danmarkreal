@@ -56,6 +56,12 @@ for (const f of files) {
   const sql = patch(f, readFileSync(join(dir, f), "utf8"));
   const r = await runSql(sql);
   if (!r.ok) {
+    // Strict mode (E2E_MIGRATE_STRICT=1): fail on ANY error, including "already
+    // exists" — used to verify a clean fresh build with no tolerated errors.
+    if (process.env.E2E_MIGRATE_STRICT === "1") {
+      console.error(`  ✗ ${f}\n    ${r.error}`);
+      die(`migration failed at ${f} (strict)`, 1);
+    }
     // Idempotent re-runs: tolerate "already exists" so re-applying is safe.
     if (/already exists|already a member|duplicate/i.test(r.error ?? "")) {
       console.log(`  ~ ${f} (already applied)`);
