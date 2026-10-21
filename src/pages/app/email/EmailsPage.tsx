@@ -537,10 +537,16 @@ export default function EmailsPage() {
               </DialogHeader>
               <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
                 {selectedEmail.body_html ? (
-                  <div
-                    className="[&_*]:!max-width-full [&_img]:max-w-full [&_a]:text-primary [&_a]:underline"
-                    style={{ colorScheme: 'auto' }}
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.body_html }}
+                  // SECURITY: email body is attacker-controlled (synced from Gmail), so it must
+                  // never be injected via dangerouslySetInnerHTML. A sandboxed iframe with no
+                  // allow-scripts token neutralises <script> and inline handlers (e.g. <img onerror>),
+                  // preventing stored-XSS / session-token theft, while still rendering the HTML + images.
+                  <iframe
+                    title="email-body"
+                    sandbox=""
+                    referrerPolicy="no-referrer"
+                    className="w-full h-[55vh] rounded-md border border-border bg-white"
+                    srcDoc={selectedEmail.body_html}
                   />
                 ) : (
                   <pre className="whitespace-pre-wrap font-sans text-sm">{selectedEmail.body_text || selectedEmail.snippet}</pre>

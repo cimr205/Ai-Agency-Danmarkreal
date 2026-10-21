@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCurrency, type Currency } from "@/contexts/CurrencyContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { WorkspaceRailMobileTrigger } from "./WorkspaceRail";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import NotificationDropdown from "@/components/NotificationDropdown";
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
@@ -66,6 +67,8 @@ export function ContextBar({ onOpenPalette }: Props) {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ThemeSwitcher />
 
         <button
           onClick={() => navigate(`${base}/settings/company`)}

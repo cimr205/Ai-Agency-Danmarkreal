@@ -15,7 +15,7 @@ export default function LanguagePicker() {
 
   return (
     <Select value={locale} onValueChange={handleChange}>
-      <SelectTrigger className="w-32 border-none bg-transparent text-muted-foreground text-[13px] hover:text-foreground shadow-none h-8">
+      <SelectTrigger aria-label={t('language.label')} className="w-32 border-none bg-transparent text-muted-foreground text-[13px] hover:text-foreground shadow-none h-8">
         <SelectValue placeholder={t('language.label')} />
       </SelectTrigger>
       <SelectContent>
