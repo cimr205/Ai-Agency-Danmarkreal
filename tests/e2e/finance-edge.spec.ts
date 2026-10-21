@@ -1,4 +1,5 @@
 import { test, expect, type Page, type APIResponse } from "@playwright/test";
+import fs from "node:fs";
 import { LOCALE } from "./registry";
 import { expectAppMounted } from "./helpers";
 
@@ -299,4 +300,44 @@ test("invoice VAT/total are correct and a paid invoice cannot be deleted", async
   const after = await restGet(page, `invoices?select=status&id=eq.${invoiceId}`, creds);
   expect(after.length).toBe(1);
   expect(after[0].status).toBe("paid");
+});
+
+test("an overdue invoice is visible/actionable and its PDF carries the correct fields", async ({ page }) => {
+  const stamp = Date.now();
+  const cust = `QA Overdue ${stamp}`;
+  const creds = await supaCreds(page);
+  await createCustomer(page, cust, `qa.overdue.${stamp}@example.com`);
+  await createInvoiceFor(page, cust); // draft, total 10 000
+
+  const inv = (await restGet(page, `invoices?select=id,invoice_number,amount,status&order=created_at.desc&limit=1`, creds))[0];
+  // Make it a sent, unpaid invoice whose due date is in the past.
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const patch = await page.request.patch(`${SUPABASE_URL}/rest/v1/invoices?id=eq.${inv.id}`, {
+    headers: { apikey: creds.apikey, Authorization: `Bearer ${creds.token}`, "Content-Type": "application/json", Prefer: "return=representation" },
+    data: { status: "sent", due_date: yesterday },
+  });
+  expect(patch.ok(), `patch -> ${patch.status()}`).toBeTruthy();
+
+  await page.goto(`/${LOCALE}/app/finance/invoices`, { waitUntil: "domcontentloaded" });
+  await expectAppMounted(page);
+  await page.getByPlaceholder(/search invoice no, customer/i).fill(cust);
+  const row = page.getByRole("row").filter({ hasText: cust });
+
+  await test.step("the past-due invoice is surfaced as Overdue (not Sent)", async () => {
+    await expect(row).toContainText(/overdue|forfalden/i, { timeout: 10_000 });
+  });
+
+  await test.step("its PDF contains the invoice number, company and customer", async () => {
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      row.locator('button[title*="PDF"]').first().click(),
+    ]);
+    const file = await download.path();
+    const bytes = fs.readFileSync(file!);
+    expect(bytes.length, "PDF should be non-trivial").toBeGreaterThan(2000);
+    const text = bytes.toString("latin1");
+    expect(text).toContain(inv.invoice_number);
+    expect(text).toContain("QA Tenant A ApS");
+    expect(text).toMatch(/QA Overdue/);
+  });
 });

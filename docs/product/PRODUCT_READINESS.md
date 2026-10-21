@@ -31,7 +31,8 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 | Finance — Invoices | **VERIFIED** | Direct + quote-derived; status, search (`sales-flow`, `finance-edge`) |
 | Finance — Payments | **VERIFIED** | Full/partial/overpayment/concurrency (`finance-edge`) |
 | Finance — Integrity (VAT, protection) | **VERIFIED** | VAT math exact (8000+25%=10000, amount=subtotal+vat); a **paid invoice cannot be deleted** (`delete_draft_invoice` draft-only) (`finance-edge.spec.ts`) |
-| Finance — Invoice PDF | **NOT TESTED** | Client-side jspdf; content vs persisted totals not yet verified |
+| Finance — Invoice PDF | **VERIFIED** | PDF downloads and carries invoice number + company + customer (`finance-edge.spec.ts`, jspdf text extracted from the download) |
+| Finance — Overdue | **VERIFIED** (bug fixed) | Past-due unpaid invoices now surface as **Overdue** (badge/stat/tab) — previously invisible because the DB never sets `status='overdue'`; now derived from `due_date` at display time, matching the dashboard (`finance-edge.spec.ts`) |
 | Work — Tasks | **VERIFIED** | `service-ops.spec.ts` — CRUD, assign, status, customer/lead/deal link, traceability |
 | Work — Calendar | **NOT TESTED** | — |
 | Email — viewer (XSS) | **VERIFIED** | `email-xss.spec.ts` — sandboxed iframe blocks script/parent/session theft |
