@@ -30,6 +30,7 @@ export const ACTION_RISK: Readonly<Record<string, ActionRisk>> = Object.freeze({
   "crm.customer.create": "medium",
   "crm.customer.update": "medium",
   "crm.lead.create": "medium",
+  "crm.lead.update": "medium",
   "crm.lead.move_stage": "medium",
   "crm.deal.create": "medium",
   "crm.deal.move_stage": "high",

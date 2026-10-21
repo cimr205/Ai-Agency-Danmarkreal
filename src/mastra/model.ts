@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { MockLanguageModelV3 } from "ai/test";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModel } from "ai";
 
 /**
@@ -47,4 +48,62 @@ export function liveModelConfig(): LiveModelConfig | null {
   const model = process.env.LOCAL_LLM_MODEL;
   if (!baseURL || !model) return null;
   return { baseURL, model, apiKey: process.env.LOCAL_LLM_API_KEY ?? "" };
+}
+
+/**
+ * Builds a LIVE language model from an OpenAI-compatible endpoint (e.g. a local
+ * Ollama server at http://localhost:11434/v1). Returns null when no config is
+ * present, so callers fall back to {@link mockModel}. This is the only place a
+ * real provider is constructed; it still holds no hardcoded key or URL — all of
+ * it comes from env via {@link liveModelConfig}.
+ */
+export interface LiveModelOptions {
+  /**
+   * Value sent as the request's `reasoning_effort`. Pass "none" to disable a
+   * thinking model's reasoning channel (required for Qwen3.x on Ollama).
+   * Pass "" (empty) to leave the request body untouched (for models that
+   * reject the field). When undefined, falls back to LOCAL_LLM_REASONING_EFFORT
+   * and finally to "none".
+   */
+  reasoningEffort?: string | null;
+}
+
+export function liveModel(cfg?: LiveModelConfig | null, opts: LiveModelOptions = {}): LanguageModel | null {
+  const c = cfg === undefined ? liveModelConfig() : cfg;
+  if (!c) return null;
+
+  // Thinking ("reasoning") models such as Qwen3.x on Ollama otherwise emit an
+  // EMPTY `content` with every token routed to a separate reasoning channel,
+  // so the agent sees no text. Ollama's OpenAI-compatible endpoint honours
+  // `reasoning_effort: "none"` to disable this. Configurable per model (router
+  // passes a per-slot value) and via env; default "none" because it is
+  // required for correct text output on these models and because thinking is
+  // prohibitively slow on CPU-only hardware. A falsy value leaves the request
+  // body untouched.
+  const reasoningEffort = opts.reasoningEffort !== undefined
+    ? opts.reasoningEffort
+    : (process.env.LOCAL_LLM_REASONING_EFFORT ?? "none");
+  const patchedFetch: typeof fetch = async (input, init) => {
+    if (reasoningEffort && init?.body && typeof init.body === "string") {
+      try {
+        const body = JSON.parse(init.body) as Record<string, unknown>;
+        if (body && typeof body === "object" && body.reasoning_effort === undefined) {
+          body.reasoning_effort = reasoningEffort;
+          init = { ...init, body: JSON.stringify(body) };
+        }
+      } catch {
+        /* non-JSON body: leave unchanged */
+      }
+    }
+    return fetch(input as Parameters<typeof fetch>[0], init);
+  };
+
+  const provider = createOpenAICompatible({
+    name: "local-openai-compatible",
+    baseURL: c.baseURL,
+    // Ollama ignores the key but the SDK requires a non-empty string.
+    apiKey: c.apiKey || "ollama",
+    fetch: patchedFetch,
+  });
+  return provider(c.model) as unknown as LanguageModel;
 }

@@ -108,7 +108,7 @@ insert into public.onboarding_templates (company_id, name, is_default, tasks) va
     {"title": "Send welcome email", "description": "Introduce the team and outline next steps.", "due_offset_days": 0},
     {"title": "Schedule kickoff call", "description": "Book an onboarding kickoff call with the customer.", "due_offset_days": 2},
     {"title": "Confirm billing details", "description": "Confirm invoicing details and send the first invoice.", "due_offset_days": 3},
-    {"title": "Provision access", "description": "Set up the customer's accounts/access to deliverables.", "due_offset_days": 5}
+    {"title": "Provision access", "description": "Set up the customer''s accounts/access to deliverables.", "due_offset_days": 5}
   ]'::jsonb
 );
 

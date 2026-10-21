@@ -1,6 +1,7 @@
 import { Mastra } from "@mastra/core";
 import { createDiagnosticAgent } from "./agents/diagnostic-agent.ts";
-import { mockModel, liveModelConfig } from "./model.ts";
+import { mockModel, liveModel, liveModelConfig } from "./model.ts";
+import { resolveModel, resolveModelForTask } from "./model-router.ts";
 
 /**
  * Minimal Mastra registry for AI Agency Danmark.
@@ -10,16 +11,29 @@ import { mockModel, liveModelConfig } from "./model.ts";
  * HR, …) are mapped in docs/ai/MASTRA_AGENT_MAP.md and are intentionally NOT
  * implemented here.
  *
- * The registry constructs with a deterministic mock model so that importing it
- * never requires credentials or network access. To go live, swap `mockModel()`
- * for a provider built from `liveModelConfig()` (needs an OpenAI-compatible
- * provider package — a documented remaining dependency). This file is server-
- * side only and must never be imported into the Vite client bundle.
+ * The diagnostic agent resolves its model through the shared {@link resolveModel}
+ * router at `diagnostic` complexity. With no env configured this yields a
+ * deterministic mock (so importing the registry never needs credentials or
+ * network), and with `MASTRA_ENABLE_LOCAL_SMALL=1` + `LOCAL_LLM_*` it uses the
+ * flagged local small model. The local 2B is therefore NEVER a silent global
+ * default. Department agents should likewise resolve via {@link resolveModelForTask}
+ * and honor a `blocked` result rather than downgrading. This file is server-side
+ * only and must never be imported into the Vite client bundle.
  */
-const diagnostic = createDiagnosticAgent(mockModel());
+const diagResolution = resolveModel("diagnostic");
+const diagnostic = createDiagnosticAgent(
+  diagResolution.status === "ok" ? diagResolution.model : mockModel(),
+);
 
 export const mastra = new Mastra({
   agents: { diagnostic },
 });
 
-export { createDiagnosticAgent, mockModel, liveModelConfig };
+export {
+  createDiagnosticAgent,
+  mockModel,
+  liveModel,
+  liveModelConfig,
+  resolveModel,
+  resolveModelForTask,
+};

@@ -1,5 +1,7 @@
 # Owner Decisions (questions that must not block independent work)
 
+Update 2026-10-21: decision #10 below is resolved for the B4 registry implementation and test-project deployment. See `B4_LEAD_UPDATE_VERIFICATION.md`. Wiring existing reply-sync/follow-up consumers still requires reconciling their `leads` IDs with the registry's `customers` lead records.
+
 | # | Question | Why it matters | Blocks | Raised |
 |---|---|---|---|---|
 | 1 | Which OpenAI-compatible model endpoint and credentials may be used for a real inference test (`LOCAL_LLM_BASE_URL`, `LOCAL_LLM_MODEL`, `LOCAL_LLM_API_KEY`)? Is there a genuinely free tier you want used? | Without it, live inference stays BLOCKED and only the mock is verified. | Live-inference PASS only | 2026-10-18 |
