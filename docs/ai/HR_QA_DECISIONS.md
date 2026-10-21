@@ -1,0 +1,9 @@
+# HR & QA — Owner Decisions (local; coordinator folds into shared OWNER_DECISIONS.md later)
+
+| # | Question | Why it matters | Blocks | Raised |
+|---|---|---|---|---|
+| QA-1 | Provide safe authenticated test accounts (2 confirmed non-production tenants, email+password), OR briefly disable "Confirm email", OR authorize a local Dockerized Supabase with seeded tenants. | "Confirm email" is ON and the app points at production Supabase, so synthetic signups get no session. Blocks all authenticated + cross-tenant Playwright (`authed-smoke`, `crm-crud`, `cross-tenant`, `sales-flow`) and the agent→approval→DB→UI chain. | Authenticated QA + end-to-end agent verification | 2026-10-18 |
+| HR-1 | Confirm payroll stays **prep-only** (verified against `attendance`) with no automatic payout, and who approves payroll runs. | Payroll is critical; must never auto-execute. | Payroll prep automation | 2026-10-18 |
+| HR-2 | Which aggregated, privacy-preserving workforce metrics are approved for reporting (and the minimum group size to avoid re-identification)? | Rule: no individual wellbeing/health/burnout inference. | Workforce analytics scope | 2026-10-18 |
+| HR-3 | Are employee skills/contract hours stored anywhere today (no `skills`/`contracts` table found)? If not, staffing suggestions can only use availability + planned hours until a schema decision. | Competence-based staffing needs skills + contract hours. | Skills/contract-based staffing | 2026-10-18 |
+| HR-4 | There is **no actual-time table** (no `attendance`/`time_entries`) in the schema — only planned `shifts`. The HR rule requires work hours from actual registration. May an attendance/time-entries table be added (new migration), and who owns it? | Without it, overtime/actual-hours and payroll prep from actual data are impossible; planned hours are not worked hours. | Actual-hours analytics + payroll prep | 2026-10-18 |
