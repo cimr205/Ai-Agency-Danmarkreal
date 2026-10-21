@@ -35,3 +35,10 @@ docs/qa/results.json
 docs/qa/results-summary.json
 test-results/
 playwright-report/
+e2e/.tenants.local.json
+e2e/e2e-results.json
+e2e-results.json
+test-results/
+playwright-report/
+!.env.e2e.example
+.env.e2e.local

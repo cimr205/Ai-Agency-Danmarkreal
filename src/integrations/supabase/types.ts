@@ -6753,7 +6753,6 @@ export type Database = {
       user_roles: {
         Row: {
           can_grant_permissions: boolean
-          company_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -6761,7 +6760,6 @@ export type Database = {
         }
         Insert: {
           can_grant_permissions?: boolean
-          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -6769,21 +6767,12 @@ export type Database = {
         }
         Update: {
           can_grant_permissions?: boolean
-          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_sessions: {
         Row: {

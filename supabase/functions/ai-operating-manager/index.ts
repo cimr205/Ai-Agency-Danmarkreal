@@ -2,6 +2,7 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { validateLeadUpdate } from "../_shared/leadUpdate.ts";
 import { checkModelHealth, generateStructured, generateText, resolveModel } from "../_shared/operatingModelRouter.ts";
 
 type JsonObject = Record<string, unknown>;
@@ -50,6 +51,13 @@ const ACTIONS: Record<string, ActionDefinition> = {
     requiredFields: { name: "string", email: "email" },
     optionalFields: { phone: "string", company_name: "string", value: "number" },
     risk: "medium", connector: "internal", rollback: "Leadet kan arkiveres.",
+  },
+  "crm.lead.update": {
+    name: "crm.lead.update", description: "Opdatér et lead", requiredRoles: MEMBER_ROLES,
+    requiredFields: { lead_id: "uuid" },
+    optionalFields: { last_touched_at: "datetime", next_followup_at: "datetime", notes: "string", status: "string", phone: "string" },
+    risk: "medium", connector: "internal",
+    rollback: "Tidligere og nye feltværdier fremgår af handlingsloggen til manuel gendannelse.",
   },
   "crm.lead.move_stage": {
     name: "crm.lead.move_stage", description: "Flyt et lead til en ny status", requiredRoles: MEMBER_ROLES,
@@ -168,6 +176,7 @@ function validateInput(definition: ActionDefinition, input: unknown): JsonObject
       if (issue) throw new Error(issue);
     }
   }
+  if (definition.name === "crm.lead.update") validateLeadUpdate(input);
   return input;
 }
 
@@ -505,6 +514,23 @@ async function executeRegisteredAction(db: any, authHeader: string, companyId: s
       .eq("id", customerId).eq("company_id", companyId).eq("record_type", "customer")
       .select("id,name,email,phone,company_name,status").maybeSingle();
     if (error) throw new Error(error.message); if (!data) throw new Error("Kunden blev ikke fundet"); return data;
+  }
+  if (name === "crm.lead.update") {
+    const { lead_id: leadId, ...changes } = validateInput(ACTIONS[name], input);
+    const columns = ["id", ...Object.keys(changes)].join(",");
+    const { data: before, error: readError } = await db.from("customers").select(columns)
+      .eq("id", leadId).eq("company_id", companyId).eq("record_type", "lead").maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!before) throw new Error("Lead blev ikke fundet");
+    let update = db.from("customers").update(changes)
+      .eq("id", leadId).eq("company_id", companyId).eq("record_type", "lead");
+    for (const field of Object.keys(changes)) {
+      update = before[field] === null ? update.is(field, null) : update.eq(field, before[field]);
+    }
+    const { data: after, error } = await update.select(columns).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!after) throw new Error("Leadet er ændret siden læsning; gennemgå handlingen igen");
+    return { id: after.id, before, after };
   }
   if (name === "crm.lead.move_stage") {
     const leadId = input.lead_id as string;
