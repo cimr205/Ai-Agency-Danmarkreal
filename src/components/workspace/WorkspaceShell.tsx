@@ -22,7 +22,7 @@ export default function WorkspaceShell({ children }: { basePath?: string; childr
       <div className="relative flex h-screen min-w-0 flex-1 flex-col">
         <ContextBar onOpenPalette={() => setPaletteOpen(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--muted)/0.45)_100%)]">
-          <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-[1400px] mx-auto w-full">
+          <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-[1920px] mx-auto w-full">
             {children}
           </div>
         </main>

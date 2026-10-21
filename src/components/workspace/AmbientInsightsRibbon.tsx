@@ -49,7 +49,7 @@ export function AmbientInsightsRibbon() {
   if (insight.kind === "info") return null;
 
   return (
-    <div className="px-4 sm:px-8 max-w-[1400px] mx-auto w-full h-7 flex items-center overflow-hidden">
+    <div className="px-4 sm:px-8 max-w-[1920px] mx-auto w-full h-7 flex items-center overflow-hidden">
       <button
         onClick={handleClick}
         disabled={!insight.href}
