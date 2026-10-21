@@ -30,7 +30,8 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 | Finance — Quotes | **VERIFIED** | Lifecycle + illegal-transition guard (`sales-flow`, `finance-edge`) |
 | Finance — Invoices | **VERIFIED** | Direct + quote-derived; status, search (`sales-flow`, `finance-edge`) |
 | Finance — Payments | **VERIFIED** | Full/partial/overpayment/concurrency (`finance-edge`) |
-| Finance — Invoice PDF | **NOT TESTED** | PDF content vs persisted totals not yet verified |
+| Finance — Integrity (VAT, protection) | **VERIFIED** | VAT math exact (8000+25%=10000, amount=subtotal+vat); a **paid invoice cannot be deleted** (`delete_draft_invoice` draft-only) (`finance-edge.spec.ts`) |
+| Finance — Invoice PDF | **NOT TESTED** | Client-side jspdf; content vs persisted totals not yet verified |
 | Work — Tasks | **VERIFIED** | `service-ops.spec.ts` — CRUD, assign, status, customer/lead/deal link, traceability |
 | Work — Calendar | **NOT TESTED** | — |
 | Email — viewer (XSS) | **VERIFIED** | `email-xss.spec.ts` — sandboxed iframe blocks script/parent/session theft |

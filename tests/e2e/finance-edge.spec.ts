@@ -269,3 +269,34 @@ test("converting the same lead twice is idempotent — no duplicate customer or 
   const deals = await restGet(page, `deals?select=id&customer_id=eq.${r1.customer_id}`, creds);
   expect(deals.length).toBe(1);
 });
+
+test("invoice VAT/total are correct and a paid invoice cannot be deleted", async ({ page }) => {
+  const stamp = Date.now();
+  const cust = `QA Integrity ${stamp}`;
+  const creds = await supaCreds(page);
+  await createCustomer(page, cust, `qa.integrity.${stamp}@example.com`);
+  await createInvoiceFor(page, cust); // 1 line, unit price 8000, 25% VAT
+
+  const inv = await restGet(page, `invoices?select=id,subtotal,vat_amount,amount,status&order=created_at.desc&limit=1`, creds);
+  const invoiceId = inv[0].id as string;
+
+  // VAT math: 8000 + 25% = 10 000, computed consistently (no rounding drift).
+  expect(Number(inv[0].subtotal)).toBe(8000);
+  expect(Number(inv[0].vat_amount)).toBe(2000);
+  expect(Number(inv[0].amount)).toBe(10000);
+  expect(Number(inv[0].amount)).toBe(Number(inv[0].subtotal) + Number(inv[0].vat_amount));
+
+  // Settle it fully.
+  const pay = await rpc(page, "register_invoice_payment", { p_invoice_id: invoiceId, p_amount: 10000, p_payment_method: "bank_transfer", p_idempotency_key: `integ-${stamp}` }, creds);
+  expect(pay.ok()).toBeTruthy();
+
+  // A paid (non-draft) invoice must not be deletable — financial-record integrity.
+  const del = await rpc(page, "delete_draft_invoice", { p_invoice_id: invoiceId }, creds);
+  expect(del.ok(), "deleting a paid invoice must be rejected").toBeFalsy();
+  expect((await del.text()).toLowerCase()).toMatch(/draft|kladde|only/);
+
+  // The invoice still exists and is paid.
+  const after = await restGet(page, `invoices?select=status&id=eq.${invoiceId}`, creds);
+  expect(after.length).toBe(1);
+  expect(after[0].status).toBe("paid");
+});
