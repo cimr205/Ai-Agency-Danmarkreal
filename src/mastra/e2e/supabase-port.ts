@@ -52,12 +52,12 @@ export function supabasePort(client: SupabaseClient): ProvisionPort {
     async selectWhere(table, column, value, cols = "id") {
       const { data, error } = await client.from(table).select(cols).eq(column, value);
       if (error) throw new Error(`select ${table} failed: ${error.message}`);
-      return (data ?? []) as Array<Record<string, unknown>>;
+      return (data ?? []) as unknown as Array<Record<string, unknown>>;
     },
     async selectAll(table, cols = "id") {
       const { data, error } = await client.from(table).select(cols);
       if (error) throw new Error(`selectAll ${table} failed: ${error.message}`);
-      return (data ?? []) as Array<Record<string, unknown>>;
+      return (data ?? []) as unknown as Array<Record<string, unknown>>;
     },
     async deleteWhere(table, column, value) {
       const { data, error } = await client.from(table).delete().eq(column, value).select("id");

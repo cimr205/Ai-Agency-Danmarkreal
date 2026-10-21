@@ -50,24 +50,23 @@ export async function signIn(email: string, password: string): Promise<string> {
 }
 
 /** Invoke the ai-operating-manager edge function as an authenticated user. */
-export async function callOperatingManager(jwt: string, body: unknown): Promise<{ status: number; json: any }> {
+export async function callOperatingManager(jwt: string, body: unknown) {
   const { url, anonKey } = testConfig();
   const res = await fetch(`${url}/functions/v1/ai-operating-manager`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: anonKey, Authorization: `Bearer ${jwt}` },
     body: JSON.stringify(body),
   });
-  let json: any = null;
-  try { json = await res.json(); } catch { /* non-json */ }
+  const json = await res.json().catch(() => null);
   return { status: res.status, json };
 }
 
 /** Service-role REST read (for asserting persistence / cross-tenant checks). */
-export async function serviceSelect(table: string, query: string): Promise<any[]> {
+export async function serviceSelect(table: string, query: string) {
   const { url, serviceRoleKey } = testConfig();
   const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
     headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
   });
   if (!res.ok) throw new Error(`serviceSelect ${table} failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as any[];
+  return await res.json();
 }

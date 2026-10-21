@@ -46,4 +46,11 @@ describe("B2 reconstruction migration", () => {
       expect(hasPolicy, `${t} should have NO policy (deny-all) pending metadata review`).toBe(false);
     }
   });
+
+  it("preserves existing production tables and their policies", () => {
+    for (const table of ALL15) {
+      expect(sql).toContain(`if to_regclass('public.${table}') is null then`);
+    }
+    expect(sql.match(/and user_id = auth.uid\(\)/g)).toHaveLength(4);
+  });
 });

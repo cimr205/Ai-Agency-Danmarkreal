@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Mail, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, Mail, XCircle, Clock, CheckCircle2, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getErrorMessage } from '@/lib/errors';

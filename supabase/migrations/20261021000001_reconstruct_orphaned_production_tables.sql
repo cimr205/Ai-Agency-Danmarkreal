@@ -6,6 +6,9 @@
 -- These 15 tables are not referenced by committed app code or edge functions (orphaned
 -- production tables). Review against a production schema dump before trusting for prod.
 
+do $$
+begin
+  if to_regclass('public.ai_conversations') is null then
 create table if not exists public.ai_conversations (
   company_id uuid not null,
   created_at timestamptz default now() not null,
@@ -17,9 +20,15 @@ create table if not exists public.ai_conversations (
 );
 alter table public.ai_conversations enable row level security;
 create policy "Company members access ai_conversations" on public.ai_conversations for all
-  using (company_id = public.get_user_company_id(auth.uid()))
-  with check (company_id = public.get_user_company_id(auth.uid()));
+  using (company_id = public.get_user_company_id(auth.uid()) and user_id = auth.uid())
+  with check (company_id = public.get_user_company_id(auth.uid()) and user_id = auth.uid());
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.ai_messages') is null then
 create table if not exists public.ai_messages (
   company_id uuid not null,
   content text not null,
@@ -33,9 +42,15 @@ create table if not exists public.ai_messages (
 );
 alter table public.ai_messages enable row level security;
 create policy "Company members access ai_messages" on public.ai_messages for all
-  using (company_id = public.get_user_company_id(auth.uid()))
-  with check (company_id = public.get_user_company_id(auth.uid()));
+  using (company_id = public.get_user_company_id(auth.uid()) and user_id = auth.uid())
+  with check (company_id = public.get_user_company_id(auth.uid()) and user_id = auth.uid());
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.ai_execution_runs') is null then
 create table if not exists public.ai_execution_runs (
   company_id uuid not null,
   completed_at timestamptz,
@@ -53,7 +68,13 @@ alter table public.ai_execution_runs enable row level security;
 create policy "Company members access ai_execution_runs" on public.ai_execution_runs for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.ai_execution_steps') is null then
 create table if not exists public.ai_execution_steps (
   capability text not null,
   created_at timestamptz default now() not null,
@@ -69,7 +90,13 @@ create table if not exists public.ai_execution_steps (
 );
 alter table public.ai_execution_steps enable row level security;
 -- NOTE: ai_execution_steps has no company_id column → tenant scoping UNVERIFIED (needs production RLS). RLS enabled with NO policy (deny-all) until reviewed.
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.capability_usage') is null then
 create table if not exists public.capability_usage (
   capability_id uuid not null,
   company_id uuid not null,
@@ -86,7 +113,13 @@ alter table public.capability_usage enable row level security;
 create policy "Company members access capability_usage" on public.capability_usage for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.integration_dna') is null then
 create table if not exists public.integration_dna (
   broken_chain_count numeric not null,
   capability_count numeric not null,
@@ -104,7 +137,13 @@ alter table public.integration_dna enable row level security;
 create policy "Company members access integration_dna" on public.integration_dna for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.integration_opportunities') is null then
 create table if not exists public.integration_opportunities (
   activated_at timestamptz,
   activated_by uuid,
@@ -131,7 +170,13 @@ alter table public.integration_opportunities enable row level security;
 create policy "Company members access integration_opportunities" on public.integration_opportunities for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.phone_identities') is null then
 create table if not exists public.phone_identities (
   company_id uuid not null,
   created_at timestamptz default now() not null,
@@ -154,7 +199,13 @@ alter table public.phone_identities enable row level security;
 create policy "Company members access phone_identities" on public.phone_identities for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.telephony_connections') is null then
 create table if not exists public.telephony_connections (
   capabilities jsonb not null,
   company_id uuid not null,
@@ -176,7 +227,13 @@ alter table public.telephony_connections enable row level security;
 create policy "Company members access telephony_connections" on public.telephony_connections for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.telnyx_config') is null then
 create table if not exists public.telnyx_config (
   company_id uuid not null,
   connection_id uuid not null,
@@ -190,7 +247,13 @@ alter table public.telnyx_config enable row level security;
 create policy "Company members access telnyx_config" on public.telnyx_config for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.telnyx_credentials') is null then
 create table if not exists public.telnyx_credentials (
   company_id uuid not null,
   created_at timestamptz default now() not null,
@@ -204,14 +267,26 @@ alter table public.telnyx_credentials enable row level security;
 create policy "Company members access telnyx_credentials" on public.telnyx_credentials for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.telnyx_webhook_events') is null then
 create table if not exists public.telnyx_webhook_events (
   event_id uuid not null,
   received_at timestamptz not null
 );
 alter table public.telnyx_webhook_events enable row level security;
 -- NOTE: telnyx_webhook_events has no company_id column → tenant scoping UNVERIFIED (needs production RLS). RLS enabled with NO policy (deny-all) until reviewed.
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.workspace_ai_preferences') is null then
 create table if not exists public.workspace_ai_preferences (
   company_id uuid not null,
   default_email_provider text,
@@ -223,7 +298,13 @@ alter table public.workspace_ai_preferences enable row level security;
 create policy "Company members access workspace_ai_preferences" on public.workspace_ai_preferences for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.workspace_capabilities') is null then
 create table if not exists public.workspace_capabilities (
   capability_id uuid not null,
   company_id uuid not null,
@@ -240,7 +321,13 @@ alter table public.workspace_capabilities enable row level security;
 create policy "Company members access workspace_capabilities" on public.workspace_capabilities for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
 
+do $$
+begin
+  if to_regclass('public.call_sessions') is null then
 create table if not exists public.call_sessions (
   answered_at timestamptz,
   billable_seconds numeric,
@@ -276,3 +363,6 @@ alter table public.call_sessions enable row level security;
 create policy "Company members access call_sessions" on public.call_sessions for all
   using (company_id = public.get_user_company_id(auth.uid()))
   with check (company_id = public.get_user_company_id(auth.uid()));
+  end if;
+end;
+$$;
