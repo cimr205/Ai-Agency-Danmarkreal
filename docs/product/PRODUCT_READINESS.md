@@ -25,7 +25,8 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 |---|---|---|
 | CRM — Leads | **VERIFIED** | `crm-crud.spec.ts` (create+persist), conversion in `manual-sales-flow` |
 | CRM — Customers / Clients | **VERIFIED** | Customer detail timeline + ledger (`manual-sales-flow` history step), now incl. service tasks |
-| CRM — Deals / Pipeline | **VERIFIED** | Deal linked to customer, stage transitions (`sales-flow`) |
+| CRM — Deals / Pipeline | **VERIFIED** | Deal linked to customer (`sales-flow`); **stage progression** discovery→proposal persists after refresh via `update_deal_stage` (`deal-pipeline.spec.ts`); "mark won" has a server/client business guard (`canMarkDealWon`) |
+| CRM — Contacts | **N/A** | No separate contacts entity — contacts are `customers`/leads (shared table). The `/contacts` route is admin contact-form submissions, not a CRM entity |
 | Finance — Quotes | **VERIFIED** | Lifecycle + illegal-transition guard (`sales-flow`, `finance-edge`) |
 | Finance — Invoices | **VERIFIED** | Direct + quote-derived; status, search (`sales-flow`, `finance-edge`) |
 | Finance — Payments | **VERIFIED** | Full/partial/overpayment/concurrency (`finance-edge`) |
