@@ -1,4 +1,5 @@
 /// <reference types="node" />
+/* eslint-disable @typescript-eslint/no-explicit-any -- dynamic API/JSON responses in test helpers */
 /**
  * Shared helpers for the authenticated E2E specs. All network goes to the
  * DEDICATED test project (guarded) — never production.

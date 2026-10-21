@@ -46,7 +46,7 @@ export function planHandoff(deal: Deal & { customer_id?: string | null }, ctx: H
   if (!isWon(deal, won)) return [];
 
   const steps: HandoffStep[] = [];
-  let customerKnown = Boolean(deal.customer_id);
+  const customerKnown = Boolean(deal.customer_id);
 
   // 1. Customer: only if the deal has none. Never fabricate name/email.
   if (!deal.customer_id) {

@@ -71,7 +71,7 @@ function fakePort() {
     async rpc() {},
     async selectWhere(table, col, value) {
       if (table === "profiles" && col === "company_id") {
-        return updates.filter((u) => u.table === "profiles" && (u.row as any).company_id === value).map((u) => ({ user_id: u.matchValue }));
+        return updates.filter((u) => u.table === "profiles" && (u.row as Record<string, unknown>).company_id === value).map((u) => ({ user_id: u.matchValue }));
       }
       return [];
     },
