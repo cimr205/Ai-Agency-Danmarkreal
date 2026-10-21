@@ -34,7 +34,7 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 | Finance — Invoice PDF | **VERIFIED** | PDF downloads and carries invoice number + company + customer (`finance-edge.spec.ts`, jspdf text extracted from the download) |
 | Finance — Overdue | **VERIFIED** (bug fixed) | Past-due unpaid invoices now surface as **Overdue** (badge/stat/tab) — previously invisible because the DB never sets `status='overdue'`; now derived from `due_date` at display time, matching the dashboard (`finance-edge.spec.ts`) |
 | Work — Tasks | **VERIFIED** | `service-ops.spec.ts` — CRUD, assign, status, customer/lead/deal link, traceability |
-| Work — Calendar | **NOT TESTED** | — |
+| Work — Calendar | **VERIFIED** | Event create + persist; a scheduled task (due date) surfaces on the calendar — Customer→Task→Calendar link (`calendar.spec.ts`) |
 | Email — viewer (XSS) | **VERIFIED** | `email-xss.spec.ts` — sandboxed iframe blocks script/parent/session theft |
 | Email — inbox/threads/send | **BLOCKED** | Needs connected sandbox mailbox; no real sends in QA |
 | AI-assisted action (follow-up) | **VERIFIED** | `ai-assist-pipeline.spec.ts`, `lead-ai-assist.spec.ts` — propose→approve→execute-once→audit, tenant-isolated. Live-model *analysis* **BLOCKED** (BLOCKER-AI-001) |
@@ -53,8 +53,12 @@ Test tenants: **QA Tenant A** / **QA Tenant B** (isolated, synthetic data, no re
 - **BLOCKED-signup**: Supabase "Confirm email" is ON → automated signup yields no session, so multi-user role tests and first-run signup can't be driven end-to-end without an already-confirmed fixture.
 - **BLOCKER-AI-001**: external AI provider returns 404 "configured model not found" → live-model *analysis text* unavailable (action pipeline unaffected). Out of scope for traditional-SaaS phase.
 
+## Done since first draft (now VERIFIED)
+- Invoice PDF content, overdue surface (bug fixed), paid-invoice delete protection, VAT math.
+- Deal/pipeline stage progression; service-ops customer↔task traceability; calendar + task-on-calendar.
+- Responsive smoke on **mobile (390×844)** and **tablet (768×1024)** for the core pages (`responsive-smoke.spec.ts`).
+
 ## Next priorities
-1. Invoice PDF correctness (content vs persisted totals, VAT/currency).
-2. Overdue-invoice surface + "paid invoices can't be edited/voided" guard (verify).
-3. Responsive (tablet/mobile) passes for the verified workflows.
-4. HR schedule/attendance/time workflow (Workflow C continuation).
+1. **BLOCKED-signup** (owner decision pending creds): drop a `SUPABASE_SERVICE_ROLE_KEY` into the gitignored `.env.local` for a test-only admin-provisioning script → unblocks HR multi-role (Workflow B) + new-company first-run (Workflow E).
+2. HR schedule/attendance/time single-user surfaces (what's testable without a 2nd account).
+3. Full-flow mobile (not just smoke); Settings/Company UI edit; email inbox with a sandbox mailbox.
