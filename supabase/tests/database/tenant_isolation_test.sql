@@ -85,9 +85,11 @@ select throws_ok(
 -- Sanity check: User A CAN still read/write within their own company (a
 -- suite that blocks everything, including same-tenant access, would be
 -- useless as a regression guard).
-insert into public.leads (id, company_id, name, email, status, created_by) values
-  ('c0000000-0000-0000-0000-000000000011', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Lead', 'alead@test.local', 'new', '11111111-1111-1111-1111-111111111111');
-select is((select count(*)::int from public.leads where id = 'c0000000-0000-0000-0000-000000000011'), 1, 'leads: User A can read/write their own company row');
+-- public.leads is frozen read-only (20260918000002); leads now live in
+-- public.customers with record_type='lead', so same-tenant writes go there.
+insert into public.customers (id, company_id, name, email, record_type, created_by) values
+  ('c0000000-0000-0000-0000-000000000011', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Lead', 'alead@test.local', 'lead', '11111111-1111-1111-1111-111111111111');
+select is((select count(*)::int from public.customers where id = 'c0000000-0000-0000-0000-000000000011'), 1, 'customers (leads): User A can read/write their own company row');
 
 insert into public.deals (id, company_id, title, stage, value, created_by) values
   ('c0000000-0000-0000-0000-000000000012', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'A Deal', 'discovery', 1, '11111111-1111-1111-1111-111111111111');
