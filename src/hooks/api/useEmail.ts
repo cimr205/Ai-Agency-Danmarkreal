@@ -80,26 +80,27 @@ export function useSyncEmails() {
   });
 }
 
-// Get synced emails from database
-export function useEmails(filter?: { unread?: boolean; priority?: boolean; starred?: boolean }) {
+// Get synced emails from database — both inbound (received) and outbound
+// (sent via gmail-send) rows, so the inbox can derive Inbox/Sent/Important/
+// Starred folders client-side from a single source of truth. `contact` is
+// embedded with an explicit FK name because `emails` has two FKs to
+// `customers` (customer_id and contact_id) — an unqualified `customers(...)`
+// embed is ambiguous and PostgREST 300s on it; contact_id is the one the
+// resolver trigger actually writes to.
+export function useEmails() {
   return useQuery({
-    queryKey: ['synced-emails', filter],
+    queryKey: ['synced-emails'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('emails')
         .select('*, contact:customers!emails_contact_id_fkey(id, name, email), deal:deals(id, title)')
         .eq('user_id', user.id)
         .order('received_at', { ascending: false })
         .limit(500);
 
-      if (filter?.unread) query = query.eq('is_read', false);
-      if (filter?.starred) query = query.eq('is_starred', true);
-      if (filter?.priority) query = query.not('ai_priority', 'is', null);
-
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -125,7 +126,7 @@ export function useSendEmail() {
 export function useUpdateEmail() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { is_read?: boolean; is_starred?: boolean } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { is_read?: boolean; is_starred?: boolean; is_important?: boolean } }) => {
       const { error } = await supabase
         .from('emails')
         .update(updates)

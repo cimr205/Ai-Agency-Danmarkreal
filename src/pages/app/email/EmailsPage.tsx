@@ -1,62 +1,52 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import DOMPurify from 'dompurify';
-import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, Send, LogOut, Loader2, X, Plus, ArrowRight, Reply, Archive, Eye, EyeOff, Info, Search as SearchIcon, Filter } from 'lucide-react';
+import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, LogOut, Loader2, Info, ArrowRight, Reply } from 'lucide-react';
+import { openAmbientAI } from '@/components/workspace/AmbientAIBar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { useGmailAccount, useConnectGmail, useDisconnectGmail, useSyncEmails, useEmails, useSendEmail, useUpdateEmail } from '@/hooks/api/useEmail';
 import { useI18n } from '@/lib/i18n';
-import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
-
-type Email = Tables<'emails'> & {
-  contact?: { id: string; name: string; email: string } | null;
-  deal?: { id: string; title: string } | null;
-};
-
-const PAGE_SIZE = 50;
+import { useCompactLayout } from '@/hooks/useCompactLayout';
+import { useEmailFolders, matchesFolderKeyword } from '@/hooks/useEmailFolders';
+import { extractEmailAddress, buildReplyAllCc } from '@/lib/emailAddress';
+import { MailSidebar, type FolderId } from '@/components/email/MailSidebar';
+import { EmailListPane, type Email, type ReadFilter } from '@/components/email/EmailListPane';
+import { EmailReaderPane } from '@/components/email/EmailReaderPane';
+import { ComposeDialog, type ComposeMode, type ComposePayload, parseRecipients } from '@/components/email/ComposeDialog';
 
 export default function EmailsPage() {
   const { t, locale } = useI18n();
   const [searchParams] = useSearchParams();
+  const isMobile = useCompactLayout();
+
+  const [activeFolder, setActiveFolder] = useState<FolderId>('inbox');
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [readFilter, setReadFilter] = useState<ReadFilter>('all');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'list' | 'reader'>('list');
+  const [mobileFoldersOpen, setMobileFoldersOpen] = useState(false);
+
   const [composeOpen, setComposeOpen] = useState(false);
-  const [composeRecipients, setComposeRecipients] = useState<string[]>(['']);
-  const [composeSubject, setComposeSubject] = useState('');
-  const [composeBody, setComposeBody] = useState('');
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-  const [page, setPage] = useState(0);
-  const [sendingEmails, setSendingEmails] = useState(false);
-  const [replyOpen, setReplyOpen] = useState(false);
-  const [replyBody, setReplyBody] = useState('');
-  const [sendingReply, setSendingReply] = useState(false);
+  const [composeMode, setComposeMode] = useState<ComposeMode>('new');
+  const [composeInitial, setComposeInitial] = useState<ComposePayload>({ to: '', cc: '', subject: '', body: '' });
+  const [composeKey, setComposeKey] = useState(0);
+  const [sendingCompose, setSendingCompose] = useState(false);
+
   const [todoDialogOpen, setTodoDialogOpen] = useState(false);
   const [priorityDialogOpen, setPriorityDialogOpen] = useState(false);
   const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
-  const [priorityInfoOpen, setPriorityInfoOpen] = useState(false);
-  const [todoInfoOpen, setTodoInfoOpen] = useState(false);
-
-  // Advanced search
-  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
-  const [searchSender, setSearchSender] = useState('');
-  const [searchDateFrom, setSearchDateFrom] = useState('');
-  const [searchDateTo, setSearchDateTo] = useState('');
 
   const priorityConfig = useMemo(() => ({
-    meeting: { icon: CalendarDays, label: t('pages.email.meeting'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
-    deadline: { icon: Clock, label: t('pages.email.deadline'), color: 'text-orange-600 bg-orange-500/10 border-orange-500/20' },
-    invoice: { icon: FileText, label: t('pages.email.invoice'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
-    contract: { icon: AlertTriangle, label: t('pages.email.contract'), color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20' },
+    meeting: { icon: CalendarDays, label: t('pages.email.meeting'), color: 'text-warning bg-warning/10 border-warning/20' },
+    deadline: { icon: Clock, label: t('pages.email.deadline'), color: 'text-destructive bg-destructive/10 border-destructive/20' },
+    invoice: { icon: FileText, label: t('pages.email.invoice'), color: 'text-warning bg-warning/10 border-warning/20' },
+    contract: { icon: AlertTriangle, label: t('pages.email.contract'), color: 'text-destructive bg-destructive/10 border-destructive/20' },
   }), [t]);
 
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
@@ -67,22 +57,13 @@ export default function EmailsPage() {
   const syncEmails = useSyncEmails();
   const sendEmail = useSendEmail();
   const updateEmail = useUpdateEmail();
+  const { folders: customFolders, addFolder, removeFolder } = useEmailFolders();
 
   const isConnected = !!gmailAccount.data;
   const lastSynced = gmailAccount.data?.last_synced_at;
+  const ownAddress = gmailAccount.data?.email_address;
 
-  const emailFilter = useMemo(() => {
-    if (activeTab === 'unread') return { unread: true };
-    if (activeTab === 'priority') return { priority: true };
-    if (activeTab === 'starred') return { starred: true };
-    return undefined;
-  }, [activeTab]);
-
-  const { data: emailRows = [], isLoading: emailsLoading } = useEmails(emailFilter);
-  // Rows are plain `emails` records; `contact`/`deal` are optional joins the
-  // list below renders when present. Typing the list as Email[] keeps that
-  // optional access type-safe without changing what is fetched.
-  const emails: Email[] = emailRows;
+  const { data: emails = [], isLoading: emailsLoading } = useEmails();
 
   useEffect(() => {
     if (searchParams.get('gmail_connected') === 'true') {
@@ -92,6 +73,7 @@ export default function EmailsPage() {
     if (searchParams.get('gmail_error')) {
       toast.error(`${t('pages.email.gmailError')}: ${searchParams.get('gmail_error')}`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -99,52 +81,69 @@ export default function EmailsPage() {
       toast.info(t('pages.email.syncing'));
       syncEmails.mutate(500);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, emailsLoading, emails.length]);
 
-  useEffect(() => { setPage(0); }, [activeTab, search]);
+  const inboxEmails = useMemo(() => emails.filter((e) => e.direction !== 'outbound'), [emails]);
+  const priorityEmails = useMemo(() => inboxEmails.filter((e) => e.ai_priority && !e.is_read), [inboxEmails]);
+  const allPriorityEmails = useMemo(() => inboxEmails.filter((e) => e.ai_priority), [inboxEmails]);
+  const todoEmails = useMemo(() => inboxEmails.filter((e) => e.ai_suggested_todo), [inboxEmails]);
+  const priorityCount = allPriorityEmails.length;
+  const todoCount = todoEmails.length;
 
-  const filteredEmails = useMemo(() => {
-    let result = emails;
+  const counts = useMemo(() => ({
+    inbox: inboxEmails.length,
+    unreadInbox: inboxEmails.filter((e) => !e.is_read).length,
+    important: inboxEmails.filter((e) => e.is_important).length,
+    starred: emails.filter((e) => e.is_starred).length,
+    sent: emails.filter((e) => e.direction === 'outbound').length,
+  }), [emails, inboxEmails]);
+
+  const folderEmails = useMemo(() => {
+    if (activeFolder === 'inbox') return inboxEmails;
+    if (activeFolder === 'important') return inboxEmails.filter((e) => e.is_important);
+    if (activeFolder === 'starred') return emails.filter((e) => e.is_starred);
+    if (activeFolder === 'sent') return emails.filter((e) => e.direction === 'outbound');
+    if (activeFolder.startsWith('custom:')) {
+      const folder = customFolders.find((f) => f.id === activeFolder.slice(7));
+      return folder ? inboxEmails.filter((e) => matchesFolderKeyword(e, folder.keyword)) : [];
+    }
+    return inboxEmails;
+  }, [activeFolder, inboxEmails, emails, customFolders]);
+
+  const visibleEmails = useMemo(() => {
+    let result = folderEmails;
+    if (readFilter === 'read') result = result.filter((e) => e.is_read);
+    if (readFilter === 'unread') result = result.filter((e) => !e.is_read);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((e) =>
         (e.subject || '').toLowerCase().includes(q) ||
         (e.from_name || '').toLowerCase().includes(q) ||
+        (e.from_address || '').toLowerCase().includes(q) ||
         (e.snippet || '').toLowerCase().includes(q)
       );
     }
-    if (searchSender) {
-      const s = searchSender.toLowerCase();
-      result = result.filter((e) =>
-        (e.from_name || '').toLowerCase().includes(s) ||
-        (e.from_address || '').toLowerCase().includes(s)
-      );
-    }
-    if (searchDateFrom) {
-      const from = new Date(searchDateFrom);
-      result = result.filter((e) => new Date(e.received_at) >= from);
-    }
-    if (searchDateTo) {
-      const to = new Date(searchDateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((e) => new Date(e.received_at) <= to);
-    }
     return result;
-  }, [emails, search, searchSender, searchDateFrom, searchDateTo]);
+  }, [folderEmails, readFilter, search]);
 
-  const totalPages = Math.ceil(filteredEmails.length / PAGE_SIZE);
-  const pagedEmails = useMemo(() =>
-    filteredEmails.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-    [filteredEmails, page]
-  );
+  const selectedEmail = useMemo(() => emails.find((e) => e.id === selectedId) || null, [emails, selectedId]);
 
-  const unreadCount = useMemo(() => emails.filter((e) => !e.is_read).length, [emails]);
-  const priorityEmails = useMemo(() => emails.filter((e) => e.ai_priority && !e.is_read), [emails]);
-  const priorityCount = useMemo(() => emails.filter((e) => e.ai_priority).length, [emails]);
-  const todoCount = useMemo(() => emails.filter((e) => e.ai_suggested_todo).length, [emails]);
-  const todoEmails = useMemo(() => emails.filter((e) => e.ai_suggested_todo), [emails]);
-  const allPriorityEmails = useMemo(() => emails.filter((e) => e.ai_priority), [emails]);
-  const starredCount = useMemo(() => emails.filter((e) => e.is_starred).length, [emails]);
+  const folderTitle = useMemo(() => {
+    switch (activeFolder) {
+      case 'inbox': return t('pages.email.inbox');
+      case 'important': return t('pages.email.important');
+      case 'starred': return t('pages.email.starred');
+      case 'sent': return t('pages.email.sent');
+      default: {
+        if (activeFolder.startsWith('custom:')) {
+          const folder = customFolders.find((f) => f.id === activeFolder.slice(7));
+          return folder?.name || t('pages.email.folders');
+        }
+        return t('pages.email.inbox');
+      }
+    }
+  }, [activeFolder, customFolders, t]);
 
   const handleConnect = useCallback(async () => {
     try {
@@ -174,71 +173,128 @@ export default function EmailsPage() {
     }
   }, [syncEmails, t]);
 
-  const handleSend = useCallback(async () => {
-    const validRecipients = composeRecipients.filter(r => r.trim() && r.includes('@'));
-    if (!validRecipients.length || !composeSubject || !composeBody) {
-      toast.error(t('pages.email.fillAllFields'));
-      return;
-    }
-    if (validRecipients.length > 10) {
-      toast.error(t('pages.email.maxRecipients'));
-      return;
-    }
-    setSendingEmails(true);
-    let sent = 0;
-    let errors = 0;
-    for (const to of validRecipients) {
-      try {
-        await sendEmail.mutateAsync({ to: to.trim(), subject: composeSubject, message: composeBody });
-        sent++;
-      } catch {
-        errors++;
-      }
-    }
-    setSendingEmails(false);
-    if (errors === 0) {
-      toast.success(sent === 1 ? t('pages.email.emailSent') : t('pages.email.emailsSent').replace('{count}', String(sent)));
-    } else {
-      toast.warning(t('pages.email.sentWithErrors').replace('{sent}', String(sent)).replace('{errors}', String(errors)));
-    }
-    setComposeOpen(false);
-    setComposeRecipients(['']);
-    setComposeSubject('');
-    setComposeBody('');
-  }, [composeRecipients, composeSubject, composeBody, sendEmail, t]);
-
-  const addRecipient = useCallback(() => {
-    if (composeRecipients.length < 10) {
-      setComposeRecipients(prev => [...prev, '']);
-    }
-  }, [composeRecipients.length]);
-
-  const updateRecipient = useCallback((idx: number, val: string) => {
-    setComposeRecipients(prev => prev.map((r, i) => i === idx ? val : r));
+  const handleSelectFolder = useCallback((id: FolderId) => {
+    setActiveFolder(id);
+    setSelectedId(null);
+    setSearch('');
+    setReadFilter('all');
+    setMobileFoldersOpen(false);
+    setMobileView('list');
   }, []);
 
-  const removeRecipient = useCallback((idx: number) => {
-    if (composeRecipients.length > 1) {
-      setComposeRecipients(prev => prev.filter((_, i) => i !== idx));
-    }
-  }, [composeRecipients.length]);
+  const handleSelectEmail = useCallback((email: Email) => {
+    setSelectedId(email.id);
+    if (!email.is_read) updateEmail.mutate({ id: email.id, updates: { is_read: true } });
+    if (isMobile) setMobileView('reader');
+  }, [updateEmail, isMobile]);
 
   const toggleStar = useCallback((email: Email, e?: React.MouseEvent) => {
     e?.stopPropagation();
     updateEmail.mutate({ id: email.id, updates: { is_starred: !email.is_starred } });
   }, [updateEmail]);
 
-  const toggleRead = useCallback((email) => {
+  const toggleRead = useCallback((email: Email) => {
     updateEmail.mutate({ id: email.id, updates: { is_read: !email.is_read } });
   }, [updateEmail]);
 
-  // Bulk actions
+  const toggleImportant = useCallback((email: Email) => {
+    updateEmail.mutate({ id: email.id, updates: { is_important: !email.is_important } });
+  }, [updateEmail]);
+
   const handleMarkAllRead = useCallback(() => {
-    const unread = filteredEmails.filter((e) => !e.is_read);
+    const unread = visibleEmails.filter((e) => !e.is_read);
     if (unread.length === 0) { toast.info(t('pages.email.allAlreadyRead')); return; }
     unread.forEach((email) => updateEmail.mutate({ id: email.id, updates: { is_read: true } }));
     toast.success(t('pages.email.markedAllRead').replace('{count}', String(unread.length)));
-  }, [filteredEmails, updateEmail, t]);
+  }, [visibleEmails, updateEmail, t]);
+
+  const openCompose = useCallback(() => {
+    setComposeMode('new');
+    setComposeInitial({ to: '', cc: '', subject: '', body: '' });
+    setComposeKey((k) => k + 1);
+    setComposeOpen(true);
+  }, []);
+
+  const openReply = useCallback((email: Email) => {
+    setComposeMode('reply');
+    setComposeInitial({
+      to: email.from_address,
+      cc: '',
+      subject: email.subject?.startsWith('Re:') ? email.subject : `Re: ${email.subject || ''}`,
+      body: '',
+    });
+    setComposeKey((k) => k + 1);
+    setComposeOpen(true);
+  }, []);
+
+  const openReplyAll = useCallback((email: Email) => {
+    const toList = Array.isArray(email.to_addresses) ? (email.to_addresses as string[]) : [];
+    const ccList = Array.isArray(email.cc_addresses) ? (email.cc_addresses as string[]) : [];
+    setComposeMode('replyAll');
+    setComposeInitial({
+      to: email.from_address,
+      cc: buildReplyAllCc(toList, ccList, email.from_address, ownAddress),
+      subject: email.subject?.startsWith('Re:') ? email.subject : `Re: ${email.subject || ''}`,
+      body: '',
+    });
+    setComposeKey((k) => k + 1);
+    setComposeOpen(true);
+  }, [ownAddress]);
+
+  const openForward = useCallback((email: Email) => {
+    const fromLabel = locale === 'da' ? 'Fra' : locale === 'de' ? 'Von' : 'From';
+    const quoted = `\n\n---------- ${locale === 'da' ? 'Videresendt besked' : locale === 'de' ? 'Weitergeleitete Nachricht' : 'Forwarded message'} ----------\n` +
+      `${fromLabel}: ${email.from_name || email.from_address} <${email.from_address}>\n` +
+      `${new Date(email.received_at).toLocaleString(dateLocale)}\n` +
+      `${t('pages.email.subject')}: ${email.subject || ''}\n\n` +
+      `${email.body_text || email.snippet || ''}`;
+    setComposeMode('forward');
+    setComposeInitial({
+      to: '',
+      cc: '',
+      subject: email.subject?.startsWith('Fwd:') ? email.subject : `Fwd: ${email.subject || ''}`,
+      body: quoted,
+    });
+    setComposeKey((k) => k + 1);
+    setComposeOpen(true);
+  }, [dateLocale, locale, t]);
+
+  const handleComposeSend = useCallback(async (payload: ComposePayload) => {
+    const recipients = parseRecipients(payload.to);
+    if (!recipients.length || !payload.subject.trim() || !payload.body.trim()) {
+      toast.error(t('pages.email.fillAllFields'));
+      return;
+    }
+    const replyContext = (composeMode === 'reply' || composeMode === 'replyAll') ? selectedEmail : null;
+    setSendingCompose(true);
+    let sent = 0;
+    let errors = 0;
+    for (const to of recipients) {
+      try {
+        await sendEmail.mutateAsync({
+          to,
+          subject: payload.subject,
+          message: payload.body,
+          cc: payload.cc.trim() || undefined,
+          reply_to_message_id: replyContext ? (replyContext.thread_id || replyContext.gmail_id) : undefined,
+        });
+        sent++;
+      } catch {
+        errors++;
+      }
+    }
+    setSendingCompose(false);
+    if (errors === 0) {
+      toast.success(
+        composeMode === 'new'
+          ? (sent === 1 ? t('pages.email.emailSent') : t('pages.email.emailsSent').replace('{count}', String(sent)))
+          : t('pages.email.replySent')
+      );
+    } else {
+      toast.warning(t('pages.email.sentWithErrors').replace('{sent}', String(sent)).replace('{errors}', String(errors)));
+    }
+    setComposeOpen(false);
+  }, [composeMode, selectedEmail, sendEmail, t]);
 
   // Still checking whether Gmail is connected — avoid flashing the full
   // inbox UI before we actually know the connection state.
@@ -281,10 +337,21 @@ export default function EmailsPage() {
     );
   }
 
+  const sidebar = (
+    <MailSidebar
+      activeFolder={activeFolder}
+      onSelectFolder={handleSelectFolder}
+      counts={counts}
+      customFolders={customFolders}
+      onAddFolder={addFolder}
+      onRemoveFolder={removeFolder}
+    />
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
           {gmailAccount.data?.email_address && (
@@ -298,337 +365,107 @@ export default function EmailsPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
+          {priorityCount > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setPriorityDialogOpen(true)}>
+              <Star className="h-4 w-4 mr-1.5 text-warning" />{t('pages.email.prioritized')}
+              <Badge variant="secondary" className="ml-1.5">{priorityCount}</Badge>
+            </Button>
+          )}
+          {todoCount > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setTodoDialogOpen(true)}>
+              <CheckCircle2 className="h-4 w-4 mr-1.5 text-stamp" />{t('pages.email.todoSuggestions')}
+              <Badge variant="secondary" className="ml-1.5">{todoCount}</Badge>
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setDisconnectConfirmOpen(true)} disabled={disconnectGmail.isPending}>
             <LogOut className="h-4 w-4 mr-1" />{t('pages.email.disconnect')}
           </Button>
-          <Button variant="outline" onClick={() => { setComposeRecipients(['']); setComposeOpen(true); }}>
-            <Send className="h-4 w-4 mr-2" />{t('pages.email.compose')}
-          </Button>
-          <Button onClick={handleSync} disabled={syncEmails.isPending}>
+          <Button onClick={handleSync} disabled={syncEmails.isPending} size="sm">
             <RefreshCw className={`h-4 w-4 mr-2 ${syncEmails.isPending ? 'animate-spin' : ''}`} />
             {t('pages.email.sync')}
           </Button>
         </div>
       </div>
 
-      {/* Priority emails */}
-      {priorityEmails.length > 0 && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />{t('pages.email.todayPriorities')}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button onClick={() => setPriorityInfoOpen(true)} className="ml-1">
-                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent><p className="max-w-xs text-xs">{t('pages.email.priorityExplanation')}</p></TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Badge variant="secondary" className="ml-auto">{priorityEmails.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {priorityEmails.slice(0, 3).map((email) => {
-                const cfg = email.ai_priority ? priorityConfig[email.ai_priority as keyof typeof priorityConfig] : null;
-                const Icon = cfg?.icon || Mail;
-                return (
-                  <div key={email.id} onClick={() => setSelectedEmail(email)} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${cfg?.color || 'border-border'}`}>
-                    <Icon className="h-5 w-5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{email.subject}</p>
-                      <p className="text-xs text-muted-foreground">{email.from_name || email.from_address}</p>
-                    </div>
-                  </div>
-                );
-              })}
+      {/* Three-pane inbox */}
+      <Card className="flex-1 overflow-hidden p-0">
+        <div className="flex h-[calc(100vh-14rem)] min-h-[560px] w-full">
+          {!isMobile && (
+            <div className="w-60 shrink-0 border-r border-border">
+              {sidebar}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><Mail className="h-5 w-5 text-primary" /><div><p className="text-sm text-muted-foreground">{t('pages.email.total')}</p><p className="text-2xl font-bold">{emails.length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><Badge className="bg-primary/10 text-primary px-2 py-1">{unreadCount}</Badge><div><p className="text-sm text-muted-foreground">{t('pages.email.unread')}</p></div></div></CardContent></Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setPriorityDialogOpen(true)}>
-          <CardContent className="pt-6"><div className="flex items-center gap-3"><Star className="h-5 w-5 text-yellow-500" /><div><p className="text-sm text-muted-foreground">{t('pages.email.prioritized')}</p><p className="text-2xl font-bold">{priorityCount}</p></div><ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" /></div></CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setTodoDialogOpen(true)}>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-accent" />
-              <div>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  {t('pages.email.todoSuggestions')}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
-                      </TooltipTrigger>
-                      <TooltipContent><p className="max-w-xs text-xs">{t('pages.email.todoExplanation')}</p></TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </p>
-                <p className="text-2xl font-bold">{todoCount}</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
+          {(!isMobile || mobileView === 'list') && (
+            <div className={`${isMobile ? 'w-full' : 'w-[360px] shrink-0 border-r border-border'}`}>
+              <EmailListPane
+                title={folderTitle}
+                emails={visibleEmails}
+                loading={emailsLoading}
+                selectedId={selectedId}
+                onSelect={handleSelectEmail}
+                onToggleStar={toggleStar}
+                onCompose={openCompose}
+                search={search}
+                onSearchChange={setSearch}
+                readFilter={readFilter}
+                onReadFilterChange={setReadFilter}
+                dateLocale={dateLocale}
+                totalInFolder={folderEmails.length}
+                onOpenFolders={isMobile ? () => setMobileFoldersOpen(true) : undefined}
+                unreadCount={folderEmails.filter((e) => !e.is_read).length}
+                onMarkAllRead={handleMarkAllRead}
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
 
-      {/* Search, tabs and bulk actions */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 max-w-sm">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder={t('pages.email.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setAdvancedSearchOpen(!advancedSearchOpen)}>
-            <Filter className="h-4 w-4 mr-1" />{t('pages.email.advancedSearch')}
-          </Button>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-              <Eye className="h-4 w-4 mr-1" />{t('pages.email.markAllRead')}
-            </Button>
-          </div>
+          {(!isMobile || mobileView === 'reader') && (
+            <div className="min-w-0 flex-1">
+              <EmailReaderPane
+                email={selectedEmail}
+                dateLocale={dateLocale}
+                locale={locale}
+                onReply={() => selectedEmail && openReply(selectedEmail)}
+                onReplyAll={() => selectedEmail && openReplyAll(selectedEmail)}
+                onForward={() => selectedEmail && openForward(selectedEmail)}
+                onToggleStar={() => selectedEmail && toggleStar(selectedEmail)}
+                onToggleImportant={() => selectedEmail && toggleImportant(selectedEmail)}
+                onToggleRead={() => selectedEmail && toggleRead(selectedEmail)}
+                onAskAi={() => {
+                  if (!selectedEmail) return;
+                  const body = (selectedEmail.body_text || selectedEmail.snippet || '').slice(0, 3000);
+                  const ask = locale === 'da'
+                    ? `Opsummer denne email og forslå et svar:\n\nEmne: ${selectedEmail.subject}\nFra: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                    : locale === 'de'
+                      ? `Fasse diese E-Mail zusammen und schlage eine Antwort vor:\n\nBetreff: ${selectedEmail.subject}\nVon: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`
+                      : `Summarize this email and suggest a reply:\n\nSubject: ${selectedEmail.subject}\nFrom: ${selectedEmail.from_name || selectedEmail.from_address}\n\n${body}`;
+                  openAmbientAI(ask);
+                }}
+                onBack={isMobile ? () => setMobileView('list') : undefined}
+              />
+            </div>
+          )}
         </div>
-
-        {advancedSearchOpen && (
-          <Card className="p-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('pages.email.filterSender')}</label>
-                <Input value={searchSender} onChange={e => setSearchSender(e.target.value)} placeholder={t('pages.email.senderPlaceholder')} className="mt-1" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('pages.email.filterDateFrom')}</label>
-                <Input type="date" value={searchDateFrom} onChange={e => setSearchDateFrom(e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">{t('pages.email.filterDateTo')}</label>
-                <Input type="date" value={searchDateTo} onChange={e => setSearchDateTo(e.target.value)} className="mt-1" />
-              </div>
-            </div>
-            {(searchSender || searchDateFrom || searchDateTo) && (
-              <Button variant="ghost" size="sm" className="mt-2" onClick={() => { setSearchSender(''); setSearchDateFrom(''); setSearchDateTo(''); }}>
-                <X className="h-3 w-3 mr-1" />{t('pages.email.clearFilters')}
-              </Button>
-            )}
-          </Card>
-        )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="all">{t('pages.email.all')}</TabsTrigger>
-            <TabsTrigger value="unread">{t('pages.email.unread')} ({unreadCount})</TabsTrigger>
-            <TabsTrigger value="priority">{t('pages.email.prioritized')}</TabsTrigger>
-            <TabsTrigger value="starred">{t('pages.email.starred')} {starredCount > 0 ? `(${starredCount})` : ''}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* Email list */}
-      <Card>
-        <CardContent className="p-0">
-          {emailsLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-2" />
-              <p className="text-muted-foreground">{t('pages.email.fetchingEmails')}</p>
-            </div>
-          ) : pagedEmails.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Mail className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>{emails.length === 0 ? t('pages.email.noEmailsSynced') : t('pages.email.noEmailsMatch')}</p>
-              {activeTab === 'starred' && starredCount === 0 && (
-                <p className="text-xs mt-2">{t('pages.email.starredHint')}</p>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {pagedEmails.map((email) => {
-                const cfg = email.ai_priority ? priorityConfig[email.ai_priority as keyof typeof priorityConfig] : null;
-                return (
-                  <div
-                    key={email.id}
-                    onClick={() => { setSelectedEmail(email); if (!email.is_read) toggleRead(email); }}
-                    className={`flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-muted/50 ${!email.is_read ? 'bg-primary/5' : ''} ${email.ai_priority && !email.is_read ? 'border-l-4 border-l-yellow-500' : ''}`}
-                  >
-                    <button onClick={e => toggleStar(email, e)} className="mt-1 shrink-0" aria-label={t('pages.email.starred')}>
-                      <Star className={`h-4 w-4 ${email.is_starred ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30 hover:text-yellow-500'}`} />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm truncate ${!email.is_read ? 'font-semibold' : 'font-medium text-muted-foreground'}`}>
-                          {email.from_name || email.from_address}
-                        </span>
-                        {cfg && <Badge variant="outline" className={`text-xs shrink-0 ${cfg.color}`}>{cfg.label}</Badge>}
-                        {!email.is_read && <Badge className="bg-primary text-primary-foreground text-xs shrink-0">{t('pages.email.new')}</Badge>}
-                      </div>
-                      <p className={`text-sm truncate ${!email.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>{email.subject}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{email.snippet}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <Badge variant="outline" className="text-[10px]">
-                          {email.routing_status === 'matched' ? 'Matched' : email.routing_status === 'ambiguous' ? 'Ambiguous' : 'Unresolved'}
-                        </Badge>
-                        {email.contact && <span className="text-[10px] text-muted-foreground">{email.contact.name}</span>}
-                        {email.deal && <span className="text-[10px] text-muted-foreground">· {email.deal.title}</span>}
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                      {new Date(email.received_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-              <p className="text-sm text-muted-foreground">
-                {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredEmails.length)} {t('pages.email.of')} {filteredEmails.length}
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>{t('pages.email.prev')}</Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>{t('pages.email.next')}</Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
       </Card>
 
-      {/* Email detail dialog */}
-      <Dialog open={!!selectedEmail} onOpenChange={() => { setSelectedEmail(null); setReplyOpen(false); setReplyBody(''); }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          {selectedEmail && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="pr-8">{selectedEmail.subject}</DialogTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{selectedEmail.from_name || selectedEmail.from_address}</span>
-                  <span>&lt;{selectedEmail.from_address}&gt;</span>
-                  <span className="ml-auto">{new Date(selectedEmail.received_at).toLocaleString(dateLocale)}</span>
-                </div>
-                {selectedEmail.ai_suggested_todo && (
-                  <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-accent/10 border border-accent/20">
-                    <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                    <p className="text-xs font-medium text-accent">{t('pages.email.suggestedTodo')}: {selectedEmail.ai_suggested_todo}</p>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Badge variant="outline">{selectedEmail.routing_status === 'matched' ? 'Matched' : selectedEmail.routing_status === 'ambiguous' ? 'Ambiguous' : 'Unresolved'}</Badge>
-                  {selectedEmail.contact && <Badge variant="secondary">Contact: {selectedEmail.contact.name}</Badge>}
-                  {selectedEmail.deal && <Badge variant="secondary">Deal: {selectedEmail.deal.title}</Badge>}
-                </div>
-              </DialogHeader>
-              <div className="mt-4 prose prose-sm max-w-none dark:prose-invert">
-                {selectedEmail.body_html ? (
-                  <div
-                    className="[&_*]:!max-width-full [&_img]:max-w-full [&_a]:text-primary [&_a]:underline"
-                    style={{ colorScheme: 'auto' }}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.body_html, { ADD_ATTR: ['target'] }) }}
-                  />
-                ) : (
-                  <pre className="whitespace-pre-wrap font-sans text-sm">{selectedEmail.body_text || selectedEmail.snippet}</pre>
-                )}
-              </div>
+      {/* Mobile folder navigation */}
+      <Sheet open={mobileFoldersOpen} onOpenChange={setMobileFoldersOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          {sidebar}
+        </SheetContent>
+      </Sheet>
 
-              {replyOpen ? (
-                <div className="mt-4 space-y-3 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">{t('pages.email.replyTo')}: <span className="font-medium text-foreground">{selectedEmail.from_address}</span></p>
-                  <Textarea value={replyBody} onChange={e => setReplyBody(e.target.value)} placeholder={t('pages.email.writeReply')} rows={6} autoFocus />
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" size="sm" onClick={() => { setReplyOpen(false); setReplyBody(''); }}>{t('pages.email.cancel')}</Button>
-                    <Button size="sm" disabled={sendingReply || !replyBody.trim()} onClick={async () => {
-                      setSendingReply(true);
-                      try {
-                        await sendEmail.mutateAsync({
-                          to: selectedEmail.from_address,
-                          subject: selectedEmail.subject?.startsWith('Re:') ? selectedEmail.subject : `Re: ${selectedEmail.subject}`,
-                          message: replyBody,
-                          reply_to_message_id: selectedEmail.id,
-                        });
-                        toast.success(t('pages.email.replySent'));
-                        setReplyOpen(false);
-                        setReplyBody('');
-                      } catch (err) {
-                        toast.error(getErrorMessage(err) || t('pages.email.replyError'));
-                      } finally {
-                        setSendingReply(false);
-                      }
-                    }}>
-                      {sendingReply ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                      {t('pages.email.sendReply')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 flex gap-2 justify-end border-t border-border pt-4">
-                  <Button variant="outline" size="sm" onClick={() => toggleRead(selectedEmail)}>
-                    {selectedEmail.is_read ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-                    {selectedEmail.is_read ? t('pages.email.markUnread') : t('pages.email.markRead')}
-                  </Button>
-                  <Button variant="outline" onClick={() => setSelectedEmail(null)}>{t('pages.email.close')}</Button>
-                  <Button onClick={() => setReplyOpen(true)}>
-                    <Reply className="h-4 w-4 mr-2" />{t('pages.email.reply')}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Compose dialog */}
-      <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t('pages.email.composeTitle')}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('pages.email.toLabel')}</label>
-              {composeRecipients.map((r, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <Input value={r} onChange={e => updateRecipient(idx, e.target.value)} placeholder={t('pages.email.recipientPlaceholder')} type="email" />
-                  {composeRecipients.length > 1 && (
-                    <Button variant="ghost" size="icon" onClick={() => removeRecipient(idx)} className="shrink-0" aria-label="Remove recipient">
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              {composeRecipients.length < 10 && (
-                <Button variant="outline" size="sm" onClick={addRecipient}>
-                  <Plus className="h-4 w-4 mr-1" />{t('pages.email.addRecipient')}
-                </Button>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium">{t('pages.email.subject')}</label>
-              <Input value={composeSubject} onChange={e => setComposeSubject(e.target.value)} placeholder={t('pages.email.subject')} />
-            </div>
-            <div>
-              <label className="text-sm font-medium">{t('pages.email.message')}</label>
-              <Textarea value={composeBody} onChange={e => setComposeBody(e.target.value)} placeholder={t('pages.email.writeMessage')} rows={8} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setComposeOpen(false)}>{t('pages.email.cancel')}</Button>
-            <Button onClick={handleSend} disabled={sendingEmails}>
-              {sendingEmails ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-              {composeRecipients.filter(r => r.includes('@')).length > 1
-                ? t('pages.email.sendToMultiple').replace('{count}', String(composeRecipients.filter(r => r.includes('@')).length))
-                : t('pages.email.send')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Compose / reply / reply-all / forward dialog */}
+      <ComposeDialog
+        key={composeKey}
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        mode={composeMode}
+        initial={composeInitial}
+        sending={sendingCompose}
+        onSend={handleComposeSend}
+      />
 
       {/* Disconnect confirmation */}
       <Dialog open={disconnectConfirmOpen} onOpenChange={setDisconnectConfirmOpen}>
@@ -652,7 +489,7 @@ export default function EmailsPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-accent" />
+              <CheckCircle2 className="h-5 w-5 text-stamp" />
               {t('pages.email.todoSuggestions')} ({todoCount})
             </DialogTitle>
             <DialogDescription>{t('pages.email.todoExplanation')}</DialogDescription>
@@ -668,18 +505,18 @@ export default function EmailsPage() {
                 <div
                   key={email.id}
                   className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => { setTodoDialogOpen(false); setSelectedEmail(email); }}
+                  onClick={() => { setTodoDialogOpen(false); setActiveFolder('inbox'); handleSelectEmail(email); }}
                 >
                   <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-stamp mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-accent">{email.ai_suggested_todo}</p>
+                      <p className="font-medium text-sm text-stamp">{email.ai_suggested_todo}</p>
                       <p className="text-sm font-medium text-foreground mt-1 truncate">{email.subject}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {email.from_name || email.from_address} · {new Date(email.received_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => { e.stopPropagation(); setTodoDialogOpen(false); setSelectedEmail(email); }}>
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => { e.stopPropagation(); setTodoDialogOpen(false); setActiveFolder('inbox'); handleSelectEmail(email); }}>
                       <Reply className="h-3 w-3 mr-1" />{t('pages.email.open')}
                     </Button>
                   </div>
@@ -695,8 +532,16 @@ export default function EmailsPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+              <Star className="h-5 w-5 text-warning fill-warning" />
               {t('pages.email.prioritizedEmails')} ({priorityCount})
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent><p className="max-w-xs text-xs">{t('pages.email.priorityExplanation')}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </DialogTitle>
             <DialogDescription>{t('pages.email.priorityExplanation')}</DialogDescription>
           </DialogHeader>
@@ -714,7 +559,7 @@ export default function EmailsPage() {
                   <div
                     key={email.id}
                     className="p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => { setPriorityDialogOpen(false); setSelectedEmail(email); }}
+                    onClick={() => { setPriorityDialogOpen(false); setActiveFolder('inbox'); handleSelectEmail(email); }}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg shrink-0 ${cfg?.color || 'bg-muted'}`}>
@@ -730,7 +575,7 @@ export default function EmailsPage() {
                           {email.from_name || email.from_address} · {new Date(email.received_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => { e.stopPropagation(); setPriorityDialogOpen(false); setSelectedEmail(email); }}>
+                      <Button variant="outline" size="sm" className="shrink-0" onClick={(e) => { e.stopPropagation(); setPriorityDialogOpen(false); setActiveFolder('inbox'); handleSelectEmail(email); }}>
                         <Reply className="h-3 w-3 mr-1" />{t('pages.email.open')}
                       </Button>
                     </div>
