@@ -26,7 +26,7 @@ import {
   Search, Loader2, Sparkles, X, Check, ChevronDown, History,
   Trash2, BookmarkPlus, Play, Eye, Ban, Download, FolderPlus, FolderOpen,
   ExternalLink, Globe, ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion,
-  Link2,
+  Link2, Linkedin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
@@ -42,6 +42,7 @@ import {
   type LeadGenResult,
 } from "@/hooks/api/useLeadGen";
 import { useLeadFolders, useCreateLeadFolder } from "@/hooks/api/useLeads";
+import { useQueueLinkedInOutreach } from "@/hooks/api/useLinkedInOutreach";
 import type { Tables } from "@/integrations/supabase/types";
 
 type LeadFolder = Tables<'lead_folders'>;
@@ -119,6 +120,7 @@ export default function LeadGenerationPage() {
   // Active session
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const queueLinkedIn = useQueueLinkedInOutreach();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -424,6 +426,17 @@ export default function LeadGenerationPage() {
                 disabled={importResults.isPending || results.filter(r => !r.imported).length === 0} className="gap-1.5">
                 {importResults.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                 {t("leadGen.importAll") || "Import all"} ({results.filter(r => !r.imported).length})
+              </Button>
+              <Button size="sm" variant="outline" disabled={selectedIds.size === 0 || queueLinkedIn.isPending} className="gap-1.5"
+                onClick={() => queueLinkedIn.mutate(Array.from(selectedIds), {
+                  onSuccess: (r) => {
+                    if (r.queued) toast.success(t("linkedinOutreach.queued").replace("{count}", String(r.queued)));
+                    else toast.info(t("linkedinOutreach.nothingQueued"));
+                    if (r.noProfile) toast.info(t("linkedinOutreach.noProfile").replace("{count}", String(r.noProfile)));
+                  },
+                })}>
+                {queueLinkedIn.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Linkedin className="h-3.5 w-3.5" />}
+                {t("linkedinOutreach.queueSelected")}
               </Button>
               <Button size="sm" onClick={handleImport} disabled={selectedIds.size === 0 || importResults.isPending} className="gap-1.5">
                 {importResults.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}

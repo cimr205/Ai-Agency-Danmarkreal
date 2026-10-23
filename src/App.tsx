@@ -36,6 +36,7 @@ const PhoneCompanionPage = lazy(() => import("@/pages/PhoneCompanionPage"));
 const VoiceAgentPage = lazy(() => import("@/pages/app/marketing/VoiceAgentPage"));
 const LeadGenerationPage = lazy(() => import("@/pages/app/crm/LeadGenerationPage"));
 const IcpPage = lazy(() => import("@/pages/app/crm/IcpPage"));
+const LinkedInOutreachPage = lazy(() => import("@/pages/app/crm/LinkedInOutreachPage"));
 const EmployeesPage = lazy(() => import("@/pages/app/hr/EmployeesPage"));
 const AttendancePage = lazy(() => import("@/pages/app/hr/AttendancePage"));
 const TimeTrackingPage = lazy(() => import("@/pages/app/hr/TimeTrackingPage"));
@@ -284,6 +285,7 @@ const App = () => (
                   <Route path="crm/deals" element={<ErrorBoundary><DealsPage /></ErrorBoundary>} />
                   <Route path="crm/lead-generation" element={<ErrorBoundary><LeadGenerationPage /></ErrorBoundary>} />
                   <Route path="crm/icp" element={<ErrorBoundary><IcpPage /></ErrorBoundary>} />
+                  <Route path="crm/linkedin-outreach" element={<ErrorBoundary><LinkedInOutreachPage /></ErrorBoundary>} />
                   <Route path="clients" element={<ErrorBoundary><ClientsListPage /></ErrorBoundary>} />
                   <Route path="clients/:id" element={<ErrorBoundary><ClientView /></ErrorBoundary>} />
 

@@ -143,3 +143,6 @@ verify_jwt = false
 
 [functions.accounting-disconnect]
 verify_jwt = false
+
+[functions.linkedin-outreach]
+verify_jwt = false

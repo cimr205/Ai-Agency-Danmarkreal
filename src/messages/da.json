@@ -351,7 +351,8 @@
     "automation": "Automatisering",
     "assistant": "Assistent",
     "documents": "Dokumenter",
-    "aiProvider": "AI-udbyder"
+    "aiProvider": "AI-udbyder",
+    "linkedinOutreach": "LinkedIn Outreach"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -2618,5 +2619,42 @@
     "title": "Hjælpecenter",
     "subtitle": "Find svar på dine spørgsmål",
     "noResults": "Ingen artikler fundet. Prøv et andet søgeord."
+  },
+  "linkedinOutreach": {
+    "eyebrow": "Outreach",
+    "title": "LinkedIn Outreach",
+    "description": "AI-skrevne forbindelsesnoter og opfølgninger til dine leads. Du sender dem fra LinkedIn og følger status her.",
+    "generateMissing": "Skriv udkast",
+    "regenerate": "Skriv valgte om",
+    "all": "Alle",
+    "connectedAs": "LinkedIn er forbundet via Composio som {name}",
+    "notConnected": "LinkedIn er ikke forbundet.",
+    "connectLink": "Forbind under Forbundne apps",
+    "manualNotice": "LinkedIn tillader ikke forbindelsesanmodninger eller beskeder via API, så du sender hver besked selv: åbn profilen, indsæt noten og opdater status her.",
+    "connectionNote": "Forbindelsesnote",
+    "followup": "Opfølgning (efter accept)",
+    "copyNote": "Kopiér note",
+    "copyFollowup": "Kopiér opfølgning",
+    "copied": "Kopieret",
+    "openProfile": "Åbn profil",
+    "save": "Gem",
+    "remove": "Fjern",
+    "generated": "{count} udkast oprettet",
+    "generateFailed": "{count} udkast fejlede",
+    "queueSelected": "Sæt i kø til LinkedIn",
+    "queued": "{count} leads sat i kø til LinkedIn-outreach",
+    "nothingQueued": "Intet nyt at sætte i kø",
+    "noProfile": "{count} leads har ingen LinkedIn-profil og blev sprunget over",
+    "emptyTitle": "Ingen LinkedIn-outreach endnu",
+    "emptyHint": "Vælg leads med en LinkedIn-profil under Lead Generering og vælg Sæt i kø til LinkedIn.",
+    "status": {
+      "draft": "Udkast",
+      "ready": "Klar til afsendelse",
+      "connection_sent": "Anmodning sendt",
+      "connected": "Forbundet",
+      "messaged": "Besked sendt",
+      "replied": "Svaret",
+      "skipped": "Sprunget over"
+    }
   }
 }
