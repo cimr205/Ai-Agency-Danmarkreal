@@ -280,6 +280,7 @@
     "customers": "Kunden",
     "pipeline": "Pipeline",
     "campaigns": "Kampagnen",
+    "videoStudio": "Video Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finanzen",
@@ -2564,5 +2565,36 @@
     "title": "Hilfecenter",
     "subtitle": "Finde Antworten auf deine Fragen",
     "noResults": "Keine Artikel gefunden. Versuche einen anderen Suchbegriff."
+  },
+  "videoStudio": {
+    "pageDescription": "Produziere Videos und Anzeigen, ohne die Plattform zu verlassen.",
+    "newVideo": "Neues Video",
+    "untitled": "Unbenanntes Video",
+    "emptyTitle": "Noch keine Videos",
+    "emptyHint": "Erstelle dein erstes Videoprojekt.",
+    "upload": "Medien hochladen",
+    "uploadError": "Upload fehlgeschlagen",
+    "noMedia": "Noch keine Medien hochgeladen.",
+    "addToTimeline": "Zur Zeitleiste hinzufügen",
+    "addToTimelineError": "Konnte nicht zur Zeitleiste hinzugefügt werden",
+    "save": "Speichern",
+    "saved": "Projekt gespeichert",
+    "saveError": "Projekt konnte nicht gespeichert werden",
+    "export": "MP4 exportieren",
+    "exporting": "Exportiert",
+    "exported": "Video exportiert",
+    "exportError": "Export fehlgeschlagen",
+    "loadError": "Projekt konnte nicht geladen werden",
+    "createError": "Projekt konnte nicht erstellt werden",
+    "deleted": "Video gelöscht",
+    "unsupportedTitle": "Dein Browser unterstützt Video Studio nicht",
+    "unsupportedBody": "Video Studio benötigt WebCodecs, WebGL2 und OffscreenCanvas. Verwende die neueste Version von Chrome oder Edge (Chromium 108+).",
+    "unsupportedMissing": "Fehlt",
+    "status": {
+      "draft": "Entwurf",
+      "exporting": "Exportiert",
+      "exported": "Exportiert",
+      "failed": "Fehlgeschlagen"
+    }
   }
 }

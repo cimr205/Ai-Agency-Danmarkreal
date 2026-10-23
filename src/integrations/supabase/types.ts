@@ -6818,6 +6818,59 @@ export type Database = {
           },
         ]
       }
+      video_projects: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          duration_frames: number | null
+          exported_at: string | null
+          exported_video_path: string | null
+          id: string
+          name: string
+          project_json: Json
+          status: string
+          thumbnail_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          duration_frames?: number | null
+          exported_at?: string | null
+          exported_video_path?: string | null
+          id?: string
+          name?: string
+          project_json?: Json
+          status?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          duration_frames?: number | null
+          exported_at?: string | null
+          exported_video_path?: string | null
+          id?: string
+          name?: string
+          project_json?: Json
+          status?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_agents: {
         Row: {
           company_id: string

@@ -109,12 +109,13 @@ describe("provisionTwoTenants", () => {
     const companyRows = inserts.filter((i) => i.table === "companies");
     expect(companyRows).toHaveLength(2);
     expect(companyRows.every((i) => isTestCompanyName(i.row.name as string))).toBe(true);
-    // profiles + user_roles are UPDATEd (trigger pre-creates them), not inserted
+    // profiles is UPDATEd (trigger pre-creates it); user_roles has no default row
+    // anymore (handle_new_user only seeds profiles), so it's INSERTed directly.
     expect(updates.filter((u) => u.table === "profiles")).toHaveLength(4);
-    expect(updates.filter((u) => u.table === "user_roles")).toHaveLength(4);
-    // user_roles has no company_id in the real schema → role set, company_id absent
-    expect(updates.filter((u) => u.table === "user_roles").every((u) => "role" in u.row && !("company_id" in u.row))).toBe(true);
     expect(updates.filter((u) => u.table === "profiles").every((u) => "company_id" in u.row)).toBe(true);
+    const roleInserts = inserts.filter((i) => i.table === "user_roles");
+    expect(roleInserts).toHaveLength(4);
+    expect(roleInserts.every((i) => "role" in i.row && "company_id" in i.row && "user_id" in i.row)).toBe(true);
     expect(inserts.filter((i) => i.table === "leads")).toHaveLength(4);
     // records are tagged to their company
     expect(a.recordIds.leads).toHaveLength(2);

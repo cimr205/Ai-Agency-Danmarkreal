@@ -76,6 +76,7 @@ const OperatingManagerPanel = lazy(() =>
 const WebhooksPage = lazy(() => import("@/pages/app/settings/WebhooksPage"));
 const AIConnectionPage = lazy(() => import("@/pages/app/settings/AIConnectionPage"));
 const MetaAdsManagePage = lazy(() => import("@/pages/app/marketing/MetaAdsManagePage"));
+const VideoStudioPage = lazy(() => import("@/pages/app/marketing/VideoStudioPage"));
 const MonitoringPage = lazy(() => import("@/pages/app/MonitoringPage"));
 const HelpCenterPage = lazy(() => import("@/pages/app/HelpCenterPage"));
 const SubscriptionPage = lazy(() => import("@/pages/app/SubscriptionPage"));
@@ -308,6 +309,7 @@ const App = () => (
                   <Route path="tasks" element={<Navigate to="../work/tasks" replace />} />
                   <Route path="settings" element={<Navigate to="../settings/company" replace />} />
                   <Route path="marketing/meta-ads" element={<ErrorBoundary><MetaAdsManagePage /></ErrorBoundary>} />
+                  <Route path="marketing/video-studio" element={<ErrorBoundary><VideoStudioPage /></ErrorBoundary>} />
                   <Route path="marketing/cold-caller" element={<ErrorBoundary><ColdCallerPage /></ErrorBoundary>} />
                   <Route path="marketing/voice-agent" element={<ErrorBoundary><VoiceAgentPage /></ErrorBoundary>} />
                   <Route path="ai/media" element={<ErrorBoundary><AiMediaPage /></ErrorBoundary>} />
