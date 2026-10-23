@@ -4094,6 +4094,91 @@ export type Database = {
           },
         ]
       }
+      linkedin_outreach: {
+        Row: {
+          company_id: string
+          company_name: string | null
+          connected_at: string | null
+          connection_note: string | null
+          contact_name: string | null
+          contact_role: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          followup_message: string | null
+          id: string
+          lead_gen_result_id: string | null
+          linkedin_url: string
+          notes: string | null
+          replied_at: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          company_name?: string | null
+          connected_at?: string | null
+          connection_note?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          followup_message?: string | null
+          id?: string
+          lead_gen_result_id?: string | null
+          linkedin_url: string
+          notes?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          company_name?: string | null
+          connected_at?: string | null
+          connection_note?: string | null
+          contact_name?: string | null
+          contact_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          followup_message?: string | null
+          id?: string
+          lead_gen_result_id?: string | null
+          linkedin_url?: string
+          notes?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_outreach_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linkedin_outreach_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "linkedin_outreach_lead_gen_result_id_fkey"
+            columns: ["lead_gen_result_id"]
+            isOneToOne: false
+            referencedRelation: "lead_gen_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_requests: {
         Row: {
           approved_at: string | null

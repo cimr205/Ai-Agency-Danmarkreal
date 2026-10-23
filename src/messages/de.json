@@ -351,7 +351,8 @@
     "automation": "Automatisierung",
     "assistant": "Assistent",
     "documents": "Dokumente",
-    "aiProvider": "KI-Anbieter"
+    "aiProvider": "KI-Anbieter",
+    "linkedinOutreach": "LinkedIn-Outreach"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -2595,5 +2596,43 @@
     "title": "Hilfecenter",
     "subtitle": "Finde Antworten auf deine Fragen",
     "noResults": "Keine Artikel gefunden. Versuche einen anderen Suchbegriff."
+  },
+  "linkedinOutreach": {
+    "eyebrow": "Outreach",
+    "title": "LinkedIn-Outreach",
+    "description": "KI-Entwürfe für Kontaktanfragen und Follow-ups zu Ihren Leads. Sie senden sie auf LinkedIn und verfolgen den Status hier.",
+    "generateMissing": "Entwürfe erstellen",
+    "regenerate": "Auswahl neu schreiben",
+    "all": "Alle",
+    "connectedAs": "LinkedIn über Composio verbunden als {name}",
+    "notConnected": "LinkedIn ist nicht verbunden.",
+    "connectLink": "Unter Verbundene Apps verbinden",
+    "manualNotice": "LinkedIn erlaubt keine Kontaktanfragen oder Nachrichten über die API. Sie senden jede Nachricht selbst: Profil öffnen, Notiz einfügen und den Status hier aktualisieren.",
+    "connectionNote": "Kontaktnotiz",
+    "followup": "Follow-up (nach Annahme)",
+    "copyNote": "Notiz kopieren",
+    "copyFollowup": "Follow-up kopieren",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
+    "copied": "Kopiert",
+    "openProfile": "Profil öffnen",
+    "save": "Speichern",
+    "remove": "Entfernen",
+    "generated": "{count} Entwürfe erstellt",
+    "generateFailed": "{count} Entwürfe fehlgeschlagen",
+    "queueSelected": "Für LinkedIn vormerken",
+    "queued": "{count} Leads für LinkedIn-Outreach vorgemerkt",
+    "nothingQueued": "Nichts Neues vorzumerken",
+    "noProfile": "{count} Leads ohne LinkedIn-Profil wurden übersprungen",
+    "emptyTitle": "Noch kein LinkedIn-Outreach",
+    "emptyHint": "Wählen Sie unter Lead-Generierung Leads mit LinkedIn-Profil und klicken Sie auf Für LinkedIn vormerken.",
+    "status": {
+      "draft": "Entwurf",
+      "ready": "Bereit zum Senden",
+      "connection_sent": "Anfrage gesendet",
+      "connected": "Verbunden",
+      "messaged": "Nachricht gesendet",
+      "replied": "Geantwortet",
+      "skipped": "Übersprungen"
+    }
   }
 }
