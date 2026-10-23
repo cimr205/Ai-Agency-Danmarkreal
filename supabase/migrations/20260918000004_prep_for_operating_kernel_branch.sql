@@ -37,5 +37,27 @@ DROP FUNCTION IF EXISTS public.instantiate_workflow_template(text);
 DROP FUNCTION IF EXISTS public.create_invoice_payment_reference(uuid);
 DROP FUNCTION IF EXISTS public.resolve_invoice_payment_reference(uuid);
 
-DROP TABLE IF EXISTS public.workflow_templates;
-DROP TABLE IF EXISTS public.invoice_payment_references;
+-- Only drop the tables while they still have the incompatible pre-branch
+-- shape. In production this migration ran BEFORE the branch migrations, so
+-- the drop happened there. In a fresh/sequential build it runs AFTER them
+-- (later timestamp), when the tables already have the branch's schema — an
+-- unconditional drop then deleted them and nothing recreated them
+-- (workflow_templates / invoice_payment_references "does not exist" in CI).
+-- Already recorded in production schema_migrations, so this edit only
+-- affects fresh builds.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'workflow_templates' AND column_name = 'key'
+  ) THEN
+    DROP TABLE public.workflow_templates;
+  END IF;
+
+  IF to_regclass('public.invoice_payment_references') IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'invoice_payment_references' AND column_name = 'token_hash'
+  ) THEN
+    DROP TABLE public.invoice_payment_references;
+  END IF;
+END $$;
