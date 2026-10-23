@@ -927,7 +927,7 @@ export default function InvoicesPage() {
                   <p className="text-sm text-muted-foreground mt-1">{t('pages.invoices.noEmailConnectedDesc')}</p>
                 </div>
               </div>
-              <Button className="w-full" onClick={() => { setEmailDialogInvoice(null); window.location.href = `/${window.location.pathname.split('/')[1]}/app/email`; }}>
+              <Button className="w-full" onClick={() => { setEmailDialogInvoice(null); window.location.href = `/${window.location.pathname.split('/')[1]}/app/email/emails`; }}>
                 <ExternalLink className="h-4 w-4 mr-2" />{t('pages.invoices.goToEmail')}
               </Button>
             </div>

@@ -1,4 +1,5 @@
 import { withSentry } from "../_shared/sentry.ts";
+import { sanitizeAppReturnUrl } from "../_shared/appReturnUrl.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
@@ -52,6 +53,11 @@ Deno.serve(withSentry("gmail-auth", async (req) => {
     // Server-issued, single-use, expiring state row — same pattern as the
     // Dinero/e-conomic OAuth flows — rather than an unsigned client-decodable
     // blob the callback would otherwise have to trust as-is.
+    // Page to land on after Google consent (keeps the user's locale and app
+    // host). Validated against an allow-list; the callback falls back to production.
+    const body = await req.json().catch(() => ({}));
+    const returnUrl = sanitizeAppReturnUrl(body?.return_url);
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const { data: stateRow, error: stateErr } = await supabase
       .from("oauth_states")
@@ -60,7 +66,7 @@ Deno.serve(withSentry("gmail-auth", async (req) => {
         provider: "gmail",
         created_by: userId,
         expires_at: expiresAt,
-        metadata: { user_id: userId },
+        metadata: { user_id: userId, return_url: returnUrl },
       })
       .select("id")
       .single();

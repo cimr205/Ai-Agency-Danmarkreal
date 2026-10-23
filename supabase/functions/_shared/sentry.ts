@@ -330,6 +330,50 @@ if (sentryEnabled && storage) {
   };
 }
 
+// ── Process-level capture ───────────────────────────────────────────────────
+
+// Each edge function runs in its own isolate, so the name passed to
+// withSentry() identifies which function an orphaned error belongs to.
+let currentFunction = "unknown";
+
+/**
+ * Errors that never reach the handler's try/catch: promise rejections nobody
+ * awaited (fire-and-forget work) and uncaught exceptions from timers/callbacks.
+ * Reported against the in-flight request when one is known. The runtime's
+ * default behaviour is left untouched (no preventDefault).
+ */
+function captureGlobal(kind: "unhandledrejection" | "error", value: unknown): void {
+  try {
+    const pending: PendingEvent = { kind: "unhandled", ...describeThrown(value), level: "fatal" };
+    const state = storage?.getStore();
+    if (state) {
+      record(state, pending);
+      return;
+    }
+    const orphan: RequestState = {
+      fn: currentFunction,
+      method: kind,
+      path: "/",
+      events: [],
+      recorded: 0,
+      dropped: 0,
+      finished: true,
+    };
+    background(send(buildEvent(orphan, pending)));
+  } catch {
+    // never let monitoring break the function
+  }
+}
+
+if (sentryEnabled && typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    captureGlobal("unhandledrejection", (event as PromiseRejectionEvent).reason);
+  });
+  globalThis.addEventListener("error", (event) => {
+    captureGlobal("error", (event as ErrorEvent).error ?? (event as ErrorEvent).message);
+  });
+}
+
 // ── Public API ──────────────────────────────────────────────────────────────
 
 type Handler<A extends unknown[]> = (req: Request, ...rest: A) => Response | Promise<Response>;
@@ -340,6 +384,7 @@ type Handler<A extends unknown[]> = (req: Request, ...rest: A) => Response | Pro
  */
 export function withSentry<A extends unknown[]>(fn: string, handler: Handler<A>): Handler<A> {
   if (!sentryEnabled) return handler;
+  currentFunction = fn;
 
   return async (req: Request, ...rest: A): Promise<Response> => {
     let path = "/";
