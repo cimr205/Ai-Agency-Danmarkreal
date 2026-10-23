@@ -13,7 +13,7 @@ import {
   type Icon,
   SquaresFour, Buildings, CalendarBlank, ListChecks, Tray, ChatCircle,
   Crosshair, Briefcase, Funnel, UserFocus,
-  PhoneCall, PaperPlaneTilt, Megaphone, Microphone, Sparkle,
+  PhoneCall, PaperPlaneTilt, Megaphone, Microphone, Sparkle, FilmSlate,
   Receipt, FileText, CreditCard,
   UsersThree, Clock, CalendarCheck, CalendarDots, AirplaneTilt, Money, UserPlus, ChartBar, ChartPieSlice,
   TreeStructure, ChatCenteredDots, ShieldCheck, PlugsConnected, Brain, Lightning, Robot, LinkSimple, Lifebuoy, GearSix,
@@ -57,6 +57,7 @@ function useNavGroups(): NavGroup[] {
     {
       label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
       items: [
+        { label: t("nav.videoStudio") || "Video Studio", path: "marketing/video-studio", icon: FilmSlate },
         { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: PhoneCall },
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: PaperPlaneTilt },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },

@@ -280,6 +280,7 @@
     "customers": "Kunder",
     "pipeline": "Pipeline",
     "campaigns": "Kampagner",
+    "videoStudio": "Video Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finans",
@@ -2587,5 +2588,36 @@
     "title": "Hjælpecenter",
     "subtitle": "Find svar på dine spørgsmål",
     "noResults": "Ingen artikler fundet. Prøv et andet søgeord."
+  },
+  "videoStudio": {
+    "pageDescription": "Producér videoer og annoncer uden at forlade platformen.",
+    "newVideo": "Ny video",
+    "untitled": "Unavngiven video",
+    "emptyTitle": "Ingen videoer endnu",
+    "emptyHint": "Opret dit første videoprojekt.",
+    "upload": "Upload medie",
+    "uploadError": "Upload mislykkedes",
+    "noMedia": "Ingen medier uploadet endnu.",
+    "addToTimeline": "Tilføj til tidslinje",
+    "addToTimelineError": "Kunne ikke tilføje til tidslinje",
+    "save": "Gem",
+    "saved": "Projekt gemt",
+    "saveError": "Kunne ikke gemme projekt",
+    "export": "Eksportér MP4",
+    "exporting": "Eksporterer",
+    "exported": "Video eksporteret",
+    "exportError": "Eksport mislykkedes",
+    "loadError": "Kunne ikke indlæse projekt",
+    "createError": "Kunne ikke oprette projekt",
+    "deleted": "Video slettet",
+    "unsupportedTitle": "Din browser understøtter ikke Video Studio",
+    "unsupportedBody": "Video Studio kræver WebCodecs, WebGL2 og OffscreenCanvas. Brug den nyeste version af Chrome eller Edge (Chromium 108+).",
+    "unsupportedMissing": "Mangler",
+    "status": {
+      "draft": "Kladde",
+      "exporting": "Eksporterer",
+      "exported": "Eksporteret",
+      "failed": "Fejlet"
+    }
   }
 }

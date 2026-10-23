@@ -263,6 +263,7 @@
     "customers": "Customers",
     "pipeline": "Pipeline",
     "campaigns": "Campaigns",
+    "videoStudio": "Video Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finance",
@@ -2624,5 +2625,36 @@
     "title": "Help Center",
     "subtitle": "Find answers to your questions",
     "noResults": "No articles found. Try a different search term."
+  },
+  "videoStudio": {
+    "pageDescription": "Produce videos and ads without leaving the platform.",
+    "newVideo": "New video",
+    "untitled": "Untitled video",
+    "emptyTitle": "No videos yet",
+    "emptyHint": "Create your first video project.",
+    "upload": "Upload media",
+    "uploadError": "Upload failed",
+    "noMedia": "No media uploaded yet.",
+    "addToTimeline": "Add to timeline",
+    "addToTimelineError": "Could not add to timeline",
+    "save": "Save",
+    "saved": "Project saved",
+    "saveError": "Could not save project",
+    "export": "Export MP4",
+    "exporting": "Exporting",
+    "exported": "Video exported",
+    "exportError": "Export failed",
+    "loadError": "Could not load project",
+    "createError": "Could not create project",
+    "deleted": "Video deleted",
+    "unsupportedTitle": "Your browser doesn't support Video Studio",
+    "unsupportedBody": "Video Studio requires WebCodecs, WebGL2 and OffscreenCanvas. Use the latest Chrome or Edge (Chromium 108+).",
+    "unsupportedMissing": "Missing",
+    "status": {
+      "draft": "Draft",
+      "exporting": "Exporting",
+      "exported": "Exported",
+      "failed": "Failed"
+    }
   }
 }
