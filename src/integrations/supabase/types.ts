@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -3439,7 +3434,7 @@ export type Database = {
           invited_by: string
           role: Database["public"]["Enums"]["app_role"]
           status: string
-          token: string
+          token_hash: string
         }
         Insert: {
           accepted_at?: string | null
@@ -3451,7 +3446,7 @@ export type Database = {
           invited_by: string
           role?: Database["public"]["Enums"]["app_role"]
           status?: string
-          token: string
+          token_hash: string
         }
         Update: {
           accepted_at?: string | null
@@ -3463,7 +3458,7 @@ export type Database = {
           invited_by?: string
           role?: Database["public"]["Enums"]["app_role"]
           status?: string
-          token?: string
+          token_hash?: string
         }
         Relationships: [
           {
