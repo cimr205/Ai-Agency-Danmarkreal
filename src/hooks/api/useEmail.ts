@@ -27,7 +27,11 @@ export function useGmailAccount() {
 export function useConnectGmail() {
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('gmail-auth');
+      // Come back to Smart Inbox on this host, in the user's current locale.
+      const locale = window.location.pathname.split('/')[1] || 'en';
+      const { data, error } = await supabase.functions.invoke('gmail-auth', {
+        body: { return_url: `${window.location.origin}/${locale}/app/email/emails` },
+      });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data as { auth_url: string };

@@ -1,4 +1,5 @@
 import { withSentry } from "../_shared/sentry.ts";
+import { DEFAULT_APP_ORIGIN, sanitizeAppReturnUrl } from "../_shared/appReturnUrl.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 
 const corsHeaders = {
@@ -11,19 +12,15 @@ Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Falls back to production English until the state row tells us better.
+  let returnUrl = FALLBACK_RETURN_URL;
+  const redirectWithError = (error: string) => redirectTo(returnUrl, "gmail_error", error);
+
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
     const stateParam = url.searchParams.get("state");
     const errorParam = url.searchParams.get("error");
-
-    if (errorParam) {
-      return redirectWithError(errorParam);
-    }
-
-    if (!code || !stateParam) {
-      return redirectWithError("Missing code or state");
-    }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const supabaseAdmin = createClient(
@@ -35,13 +32,26 @@ Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
     // Resolve the server-issued state row rather than trusting a
     // client-decodable blob — same single-use, expiring pattern as the
     // Dinero/e-conomic OAuth callbacks.
-    const { data: stateRow } = await supabaseAdmin
-      .from("oauth_states")
-      .select("*")
-      .eq("id", stateParam)
-      .eq("provider", "gmail")
-      .is("consumed_at", null)
-      .single();
+    const { data: stateRow } = stateParam
+      ? await supabaseAdmin
+        .from("oauth_states")
+        .select("*")
+        .eq("id", stateParam)
+        .eq("provider", "gmail")
+        .is("consumed_at", null)
+        .maybeSingle()
+      : { data: null };
+
+    // Re-validated here so a row written before the allow-list existed can't redirect off-site.
+    returnUrl = sanitizeAppReturnUrl((stateRow?.metadata as Record<string, unknown> | null)?.return_url) ?? FALLBACK_RETURN_URL;
+
+    if (errorParam) {
+      return redirectWithError(errorParam);
+    }
+
+    if (!code || !stateParam) {
+      return redirectWithError("Missing code or state");
+    }
 
     if (!stateRow) return redirectWithError("Invalid or already-used state");
     if (new Date(stateRow.expires_at) < new Date()) return redirectWithError("Expired state");
@@ -127,27 +137,17 @@ Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
       _description: `Gmail forbundet: ${userInfo.email}`,
     });
 
-    // Redirect back to app - use the Referer or fallback to known URLs
-    const appUrl = getAppRedirectUrl();
-
-    return new Response(null, {
-      status: 302,
-      headers: { Location: `${appUrl}/en/app/email/emails?gmail_connected=true` },
-    });
+    return redirectTo(returnUrl, "gmail_connected", "true");
   } catch (err) {
     console.error("gmail-oauth-callback error:", err);
     return redirectWithError(err.message);
   }
 }));
 
-function getAppRedirectUrl(): string {
-  return "https://www.aiagencydanmark.dk";
-}
+const FALLBACK_RETURN_URL = `${DEFAULT_APP_ORIGIN}/en/app/email/emails`;
 
-function redirectWithError(error: string) {
-  const appUrl = getAppRedirectUrl();
-  return new Response(null, {
-    status: 302,
-    headers: { Location: `${appUrl}/en/app/email/emails?gmail_error=${encodeURIComponent(error)}` },
-  });
+function redirectTo(returnUrl: string, param: string, value: string): Response {
+  const location = new URL(returnUrl);
+  location.searchParams.set(param, value);
+  return new Response(null, { status: 302, headers: { Location: location.toString() } });
 }
