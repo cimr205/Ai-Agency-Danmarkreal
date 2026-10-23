@@ -2672,6 +2672,7 @@
     "followup": "Follow-up (after accepted)",
     "copyNote": "Copy note",
     "copyFollowup": "Copy follow-up",
+    "copyFailed": "Could not copy to clipboard",
     "copied": "Copied",
     "openProfile": "Open profile",
     "save": "Save",

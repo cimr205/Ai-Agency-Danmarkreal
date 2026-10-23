@@ -25,10 +25,7 @@ export interface LinkedInOutreachRow {
   created_at: string;
 }
 
-// The table is new and not yet in the generated Database types, so go through
-// an untyped handle until types are regenerated.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const outreachTable = () => (supabase as any).from("linkedin_outreach");
+const outreachTable = () => supabase.from("linkedin_outreach");
 
 async function invokeOutreach<T>(body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke("linkedin-outreach", { body });

@@ -2612,6 +2612,7 @@
     "followup": "Follow-up (nach Annahme)",
     "copyNote": "Notiz kopieren",
     "copyFollowup": "Follow-up kopieren",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
     "copied": "Kopiert",
     "openProfile": "Profil öffnen",
     "save": "Speichern",

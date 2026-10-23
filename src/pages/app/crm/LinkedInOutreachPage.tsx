@@ -21,12 +21,12 @@ import {
 const STATUSES: OutreachStatus[] = ["draft", "ready", "connection_sent", "connected", "messaged", "replied", "skipped"];
 const NOTE_MAX = 300;
 
-async function copy(text: string, okMsg: string) {
+async function copy(text: string, okMsg: string, failMsg: string) {
   try {
     await navigator.clipboard.writeText(text);
     toast.success(okMsg);
   } catch {
-    toast.error("Copy failed");
+    toast.error(failMsg);
   }
 }
 
@@ -88,11 +88,11 @@ function OutreachCard({ row }: { row: LinkedInOutreachRow }) {
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="gap-1.5" disabled={!note}
-          onClick={() => copy(note, t("linkedinOutreach.copied"))}>
+          onClick={() => copy(note, t("linkedinOutreach.copied"), t("linkedinOutreach.copyFailed"))}>
           <Copy className="h-3.5 w-3.5" /> {t("linkedinOutreach.copyNote")}
         </Button>
         <Button size="sm" variant="outline" className="gap-1.5" disabled={!followup}
-          onClick={() => copy(followup, t("linkedinOutreach.copied"))}>
+          onClick={() => copy(followup, t("linkedinOutreach.copied"), t("linkedinOutreach.copyFailed"))}>
           <Copy className="h-3.5 w-3.5" /> {t("linkedinOutreach.copyFollowup")}
         </Button>
         <Button size="sm" asChild className="gap-1.5">

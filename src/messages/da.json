@@ -2635,6 +2635,7 @@
     "followup": "Opfølgning (efter accept)",
     "copyNote": "Kopiér note",
     "copyFollowup": "Kopiér opfølgning",
+    "copyFailed": "Kunne ikke kopiere til udklipsholder",
     "copied": "Kopieret",
     "openProfile": "Åbn profil",
     "save": "Gem",

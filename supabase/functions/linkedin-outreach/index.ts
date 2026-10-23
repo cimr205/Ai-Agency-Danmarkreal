@@ -2,6 +2,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
+import { buildOutreachRows, clampNote } from "../_shared/linkedinOutreach.ts";
 
 // LinkedIn outreach (semi-automatic). Composio's LinkedIn toolkit has no
 // connection-request or messaging tools, so this function only:
@@ -19,23 +20,11 @@ function jsonResponse(data: unknown) {
   return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
-function normalizeProfileUrl(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const m = raw.trim().match(/^https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([a-zA-Z0-9_%-]+)/i);
-  return m ? `https://www.linkedin.com/in/${m[1].toLowerCase()}` : null;
-}
-
 function parseJson(raw: string): { connection_note?: string; followup_message?: string } {
   const clean = raw.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
   const start = clean.indexOf("{");
   const end = clean.lastIndexOf("}");
   return JSON.parse(start >= 0 && end > start ? clean.slice(start, end + 1) : clean);
-}
-
-function clampNote(note: string): string {
-  const t = note.trim();
-  if (t.length <= NOTE_MAX) return t;
-  return t.slice(0, NOTE_MAX - 1).replace(/\s+\S*$/, "") + "…";
 }
 
 Deno.serve(withSentry("linkedin-outreach", async (req) => {
@@ -68,11 +57,22 @@ Deno.serve(withSentry("linkedin-outreach", async (req) => {
         headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: companyId, connected_account_id: row.composio_connection_id, arguments: {} }),
       });
-      const parsed = await res.json().catch(() => null) as { data?: Record<string, unknown>; successful?: boolean } | null;
-      const d = (parsed?.data?.response_dict ?? parsed?.data ?? {}) as Record<string, unknown>;
+      const parsed = await res.json().catch(() => null) as { data?: Record<string, unknown>; successful?: boolean; error?: string | null } | null;
+      // HTTP 200 does not mean the tool call succeeded — Composio signals
+      // per-call failure (revoked token, missing scope, provider error) via
+      // `successful: false` in the body, not via HTTP status. `response_data`
+      // is the wrapper key Composio actually uses for the raw provider
+      // response elsewhere in this codebase (see composio-integration's
+      // Notion/HubSpot/Stripe tool calls); `response_dict` is kept only as a
+      // defensive fallback in case this specific tool differs.
+      const connected = res.ok && parsed?.successful === true;
+      if (!connected) {
+        console.error("linkedin-outreach account check failed", res.status, parsed?.error ?? parsed);
+      }
+      const d = (parsed?.data?.response_data ?? parsed?.data?.response_dict ?? parsed?.data ?? {}) as Record<string, unknown>;
       const name = [d.localizedFirstName ?? d.given_name, d.localizedLastName ?? d.family_name].filter(Boolean).join(" ")
         || (d.name as string | undefined) || null;
-      return jsonResponse({ connected: res.ok, name });
+      return jsonResponse({ connected, name: connected ? name : null });
     }
 
     // Queue lead_gen_results that have a LinkedIn profile URL.
@@ -87,25 +87,7 @@ Deno.serve(withSentry("linkedin-outreach", async (req) => {
         .in("id", ids);
       if (error) throw new Error(error.message);
 
-      const seen = new Set<string>();
-      const rows = [];
-      let noProfile = 0;
-      for (const r of results ?? []) {
-        const url = normalizeProfileUrl(r.linkedin_url);
-        if (!url) { noProfile++; continue; }
-        if (seen.has(url)) continue;
-        seen.add(url);
-        rows.push({
-          company_id: companyId,
-          lead_gen_result_id: r.id,
-          customer_id: r.imported_lead_id ?? null,
-          contact_name: r.contact_person_name,
-          contact_role: r.contact_role,
-          company_name: r.company_name,
-          linkedin_url: url,
-          created_by: user.id,
-        });
-      }
+      const { rows, noProfile } = buildOutreachRows(results ?? [], companyId, user.id);
 
       let queued = 0;
       if (rows.length) {
