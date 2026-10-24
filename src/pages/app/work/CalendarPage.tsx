@@ -108,6 +108,8 @@ export default function CalendarPage() {
   const [demoEdits, setDemoEdits] = useState<Record<string, Partial<CalendarItem>>>({});
   const [demoAdded, setDemoAdded] = useState<CalendarItem[]>([]);
   const [pendingJoin, setPendingJoin] = useState<string | null>(null);
+  // A draft being saved stays on the grid until the refetch includes it.
+  const [saving, setSaving] = useState<CalendarItem | null>(null);
   const gridRef = useRef<TimeGridHandle>(null);
   const gridScroll = useRef<number | null>(null);
 
@@ -133,6 +135,11 @@ export default function CalendarPage() {
   const { data: availability } = useModuleAvailability();
   const hasExternal = !!availability?.modules.find(m => m.module === 'calendar')?.available;
   const { data: external } = useExternalCalendarEvents(range.start.toISOString(), range.end.toISOString(), hasExternal);
+  // Join always looks at today, whatever range is on screen.
+  const todayStart = startOfDay(today);
+  const todayEnd = addDays(todayStart, 1);
+  const { data: todayRows } = useMyCalendar({ start: todayStart.toISOString(), end: todayEnd.toISOString() });
+  const { data: todayExternal } = useExternalCalendarEvents(todayStart.toISOString(), todayEnd.toISOString(), hasExternal);
   const { data: memberList = [] } = useCompanyMembers();
   const createEvent = useCreateCalendarEvent();
   const updateEvent = useUpdateCalendarEvent();
@@ -203,11 +210,14 @@ export default function CalendarPage() {
         setPopover(p => (p ? { ...p, item: created } : p));
         return;
       }
+      setSaving({ ...next, id: `${DRAFT_ID}-saving` });
       createEvent.mutate(
         { title: next.title, start_time: next.start.toISOString(), end_time: next.end.toISOString(), event_type: next.kind, color: next.color, attendee_ids: next.attendeeIds },
         {
           onSuccess: row => setPopover(p => (p && p.item.id === DRAFT_ID ? { ...p, item: fromEventRow(row, profile?.user_id) } : p)),
           onError: () => toast.error(t('pages.calendar.saveError')),
+          // The hook's onSuccess awaits the calendar refetch, so by now the row is in `items`.
+          onSettled: () => setSaving(null),
         },
       );
       return;
@@ -241,34 +251,55 @@ export default function CalendarPage() {
     setPopover({ item: draft, anchor: new DOMRect(rect?.left ?? 0, top, rect?.width ?? 0, 38) });
   };
 
-  // Show the draft in the grid while its popover is open.
-  const gridItems = popover?.item.id === DRAFT_ID ? [...items, popover.item] : items;
+  // Show the draft while its popover is open, and while it is being saved.
+  const gridItems = [
+    ...items,
+    ...(popover?.item.id === DRAFT_ID ? [popover.item] : []),
+    ...(saving && popover?.item.id !== DRAFT_ID ? [saving] : []),
+  ];
 
   // ── Join: open the event in progress, or the next one today ────────────
   const joinTarget = useMemo(() => {
     const now = Date.now();
-    return items
+    const todays: CalendarItem[] = demo
+      ? [...demoEvents(startOfDay(today)), ...demoAdded].map(i => ({ ...i, ...demoEdits[i.id] }))
+      : [...(todayRows ?? []).map(r => fromEventRow(r, profile?.user_id)), ...(todayExternal?.events ?? []).map(fromExternal)];
+    return todays
+      .filter(i => sources.has(i.source) && (!i.category || categories.has(i.category)))
       .filter(i => !i.allDay && isSameDay(i.start, today) && i.end.getTime() > now)
       .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
-  }, [items, today]);
+  }, [demo, demoAdded, demoEdits, todayRows, todayExternal, profile?.user_id, sources, categories, today]);
 
   const join = () => {
     if (!joinTarget) return;
-    if (view !== 'week' && view !== 'day') setView('week');
-    if (!days.some(d => isSameDay(d, today))) goTo(today);
-    gridRef.current?.scrollToMinutes(joinTarget.start.getHours() * 60 + joinTarget.start.getMinutes());
+    if (view === 'month') setView('week');
+    if (view === 'month' || !days.some(d => isSameDay(d, today))) goTo(today);
     setPendingJoin(joinTarget.id);
   };
+  // The target may only mount after a view/week transition (AnimatePresence
+  // waits for the exit), so look for it each frame for up to ~1s, scroll the
+  // grid to it, then open its popover once it has settled in place.
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   useEffect(() => {
     if (!pendingJoin) return;
-    const raf = requestAnimationFrame(() => {
+    let raf = 0;
+    let frames = 0;
+    const tick = () => {
       const el = document.querySelector<HTMLElement>(`[data-event-id="${pendingJoin}"]`);
-      const item = items.find(i => i.id === pendingJoin);
-      if (el && item) openItem(item, el);
-      setPendingJoin(null);
-    });
+      const item = itemsRef.current.find(i => i.id === pendingJoin);
+      if (el && item) {
+        const scroller = el.closest<HTMLElement>('.overflow-y-auto');
+        if (scroller) scroller.scrollTop += el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 60;
+        raf = requestAnimationFrame(() => { openItem(item, el); setPendingJoin(null); });
+        return;
+      }
+      if (++frames > 60) { setPendingJoin(null); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [pendingJoin, items, openItem]);
+  }, [pendingJoin, openItem]);
 
   // ── Geometry ───────────────────────────────────────────────────────────
   const available = Math.max(0, area.width);

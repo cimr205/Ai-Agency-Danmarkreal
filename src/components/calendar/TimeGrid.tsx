@@ -59,7 +59,8 @@ export const TimeGrid = forwardRef<TimeGridHandle, Props>(function TimeGrid(
   }, []);
 
   const timed = useMemo(() => items.filter(i => !i.allDay), [items]);
-  const allDay = useMemo(() => items.filter(i => i.allDay), [items]);
+  // Only lane-worthy if a date-only item falls on a visible day.
+  const allDay = useMemo(() => items.filter(i => i.allDay && days.some(d => isSameDay(i.start, d))), [items, days]);
   const width = columnLeft(days.length, colWidth) - COL_GAP;
   let cardIndex = 0;
 
