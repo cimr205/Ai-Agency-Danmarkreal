@@ -29,6 +29,11 @@ const SignupPage = lazy(() => import("@/pages/auth/Signup"));
 const OAuthCallbackPage = lazy(() => import("@/pages/auth/OAuthCallback"));
 const MetaOAuthCallbackPage = lazy(() => import("@/pages/auth/MetaOAuthCallback"));
 const DashboardPage = lazy(() => import("@/pages/app/Dashboard"));
+const CrmDashboardPage = lazy(() => import("@/pages/app/crm/CrmDashboard"));
+const MarketingDashboardPage = lazy(() => import("@/pages/app/marketing/MarketingDashboard"));
+const FinanceDashboardPage = lazy(() => import("@/pages/app/finance/FinanceDashboard"));
+const HrDashboardPage = lazy(() => import("@/pages/app/hr/HrDashboard"));
+const ControlRoomDashboardPage = lazy(() => import("@/pages/app/workspace/ControlRoomDashboard"));
 const LeadsPage = lazy(() => import("@/pages/app/crm/LeadsPage"));
 const DealsPage = lazy(() => import("@/pages/app/crm/DealsPage"));
 const ColdCallerPage = lazy(() => import("@/pages/app/marketing/ColdCallerPage"));
@@ -280,6 +285,11 @@ const App = () => (
                 >
                   <Route path="dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
                   <Route path="onboarding" element={<OnboardingPage />} />
+                  <Route path="crm/dashboard" element={<ErrorBoundary><CrmDashboardPage /></ErrorBoundary>} />
+                  <Route path="marketing/dashboard" element={<ErrorBoundary><MarketingDashboardPage /></ErrorBoundary>} />
+                  <Route path="finance/dashboard" element={<ErrorBoundary><FinanceDashboardPage /></ErrorBoundary>} />
+                  <Route path="hr/dashboard" element={<ErrorBoundary><HrDashboardPage /></ErrorBoundary>} />
+                  <Route path="workspace/control-room" element={<ErrorBoundary><ControlRoomDashboardPage /></ErrorBoundary>} />
                   <Route path="crm/leads" element={<ErrorBoundary><LeadsPage /></ErrorBoundary>} />
                   <Route path="crm/pipeline" element={<Navigate to="../crm/deals?view=board" replace />} />
                   <Route path="crm/deals" element={<ErrorBoundary><DealsPage /></ErrorBoundary>} />
