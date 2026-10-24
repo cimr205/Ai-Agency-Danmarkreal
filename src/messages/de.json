@@ -1330,7 +1330,47 @@
         "fri": "Fr",
         "sat": "Sa",
         "sun": "So"
-      }
+      },
+      "today": "Heute",
+      "join": "Beitreten",
+      "joinNone": "Kein Termin läuft oder folgt heute",
+      "views": {
+        "month": "Monat",
+        "week": "woche",
+        "day": "Tag"
+      },
+      "myCalendars": "Meine Kalender",
+      "favorites": "Favoriten",
+      "categories": "Kategorien",
+      "sources": {
+        "events": "Termine",
+        "tasks": "Aufgaben",
+        "external": "Google / Outlook"
+      },
+      "categoryNames": {
+        "work": "Arbeit",
+        "personal": "Privat",
+        "education": "Bildung"
+      },
+      "kinds": {
+        "project": "Projekte",
+        "appointment": "Termine",
+        "reminder": "Erinnerungen",
+        "personal": "Privat"
+      },
+      "addTeammates": "Kollegen hinzufügen",
+      "noTitle": "(Kein Titel)",
+      "titleField": "Titel des Termins",
+      "close": "Schließen",
+      "removeTeammate": "{name} entfernen",
+      "previousWeek": "Zurück",
+      "nextWeek": "Weiter",
+      "previousMonthShort": "Vorheriger Monat",
+      "nextMonthShort": "Nächster Monat",
+      "toggleSidebar": "Kalender anzeigen",
+      "saveError": "Termin konnte nicht gespeichert werden",
+      "readOnly": "Schreibgeschützt",
+      "openExternal": "Im Kalender öffnen"
     },
     "inbox": {
       "title": "Nachrichten",

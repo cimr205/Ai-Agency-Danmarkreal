@@ -1335,7 +1335,47 @@
         "fri": "Fre",
         "sat": "Lør",
         "sun": "Søn"
-      }
+      },
+      "today": "I dag",
+      "join": "Deltag",
+      "joinNone": "Ingen begivenhed i gang eller senere i dag",
+      "views": {
+        "month": "Måned",
+        "week": "uge",
+        "day": "Dag"
+      },
+      "myCalendars": "Mine kalendere",
+      "favorites": "Favoritter",
+      "categories": "Kategorier",
+      "sources": {
+        "events": "Begivenheder",
+        "tasks": "Opgaver",
+        "external": "Google / Outlook"
+      },
+      "categoryNames": {
+        "work": "Arbejde",
+        "personal": "Personligt",
+        "education": "Uddannelse"
+      },
+      "kinds": {
+        "project": "Projekter",
+        "appointment": "Aftaler",
+        "reminder": "Påmindelser",
+        "personal": "Personligt"
+      },
+      "addTeammates": "Tilføj kolleger",
+      "noTitle": "(Ingen titel)",
+      "titleField": "Titel på begivenhed",
+      "close": "Luk",
+      "removeTeammate": "Fjern {name}",
+      "previousWeek": "Forrige",
+      "nextWeek": "Næste",
+      "previousMonthShort": "Forrige måned",
+      "nextMonthShort": "Næste måned",
+      "toggleSidebar": "Vis kalendere",
+      "saveError": "Begivenheden kunne ikke gemmes",
+      "readOnly": "Skrivebeskyttet",
+      "openExternal": "Åbn i kalender"
     },
     "inbox": {
       "title": "Beskeder",
