@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { motion, useReducedMotion, type Transition } from 'framer-motion';
 import { isLocale, useI18n } from '@/lib/i18n';
@@ -6,7 +6,8 @@ import { useMyBlockedModules } from '@/hooks/api/useModuleAccess';
 import { SECTIONS, sectionFromPath } from '@/lib/sections';
 import { cn } from '@/lib/utils';
 
-const SLIDE: Transition = { type: 'spring', duration: 0.3, bounce: 0.15 };
+// No bounce: an overshoot reads as the indicator sliding past the tab.
+const SLIDE: Transition = { type: 'spring', duration: 0.3, bounce: 0 };
 const INSTANT: Transition = { duration: 0 };
 
 /**
@@ -28,6 +29,11 @@ export function SectionTabs({ className }: { className?: string }) {
   const active = sectionFromPath(pathname);
   const visible = SECTIONS.filter(s => !s.module || !blocked.has(s.module));
   const transition = reduceMotion ? INSTANT : SLIDE;
+  const activeAccent = visible.find(s => s.id === active)?.accent;
+  // The underline remounts in the new tab, so start it from the previous
+  // section's accent and blend, instead of snapping colour at the old position.
+  const prevAccent = useRef(activeAccent);
+  useEffect(() => { prevAccent.current = activeAccent; }, [activeAccent]);
 
   return (
     <nav aria-label={t('nav.sections')} className={cn('flex items-center gap-1', className)}>
@@ -48,7 +54,10 @@ export function SectionTabs({ className }: { className?: string }) {
               <motion.span
                 layoutId={`${scope}-section-tab-bg`}
                 transition={transition}
-                className="absolute inset-0 rounded-md bg-foreground/[0.07]"
+                // Radius as a style (not a class) so Framer Motion corrects it
+                // while the element is scaled during the slide.
+                style={{ borderRadius: 6 }}
+                className="absolute inset-0 bg-foreground/[0.07]"
                 aria-hidden="true"
               />
             )}
@@ -58,9 +67,10 @@ export function SectionTabs({ className }: { className?: string }) {
               <motion.span
                 layoutId={`${scope}-section-tab-underline`}
                 transition={transition}
-                initial={false}
+                initial={{ backgroundColor: prevAccent.current ?? section.accent }}
                 animate={{ backgroundColor: section.accent }}
-                className="absolute inset-x-3 -bottom-[13px] hidden h-0.5 2xl:block rounded-full"
+                style={{ borderRadius: 9999 }}
+                className="absolute inset-x-3 -bottom-[13px] hidden h-0.5 2xl:block"
                 aria-hidden="true"
               />
             )}
