@@ -22,6 +22,23 @@ export default {
     },
     extend: {
       colors: {
+        cal: {
+          "app-bg": "var(--cal-app-bg)",
+          "sidebar-card": "var(--cal-sidebar-card)",
+          "sidebar-card-row": "var(--cal-sidebar-card-row)",
+          "sidebar-text": "var(--cal-sidebar-text)",
+          "sidebar-muted": "var(--cal-sidebar-muted)",
+          "sidebar-label": "var(--cal-sidebar-label)",
+          lime: "var(--cal-accent-lime)",
+          purple: "var(--cal-accent-purple)",
+          "day-past": "var(--cal-day-past)",
+          "day-active": "var(--cal-day-active)",
+          "day-future": "var(--cal-day-future)",
+          "gmt-cell": "var(--cal-gmt-cell)",
+          "grid-bg": "var(--cal-grid-bg)",
+          "grid-line": "var(--cal-grid-line)",
+          "hour-label": "var(--cal-hour-label)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -104,6 +121,7 @@ export default {
         display: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
         serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        cal: ["Inter", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

@@ -335,3 +335,25 @@
     color: hsl(var(--foreground));
   }
 }
+
+/* Calendar module design tokens. Fixed palette (the calendar has its own
+   dark/gradient look regardless of the app theme); prefixed to avoid clashing
+   with the app's theme variables. */
+:root {
+  --cal-app-bg: #0B0B0C;
+  --cal-sidebar-card: #1A1A1C;
+  --cal-sidebar-card-row: #2A2A2D;
+  --cal-sidebar-text: #FFFFFF;
+  --cal-sidebar-muted: #5C5C61;
+  --cal-sidebar-label: #D4D4D8;
+  --cal-accent-lime: #E5F160;
+  --cal-accent-purple: #8B7CF6;
+  --cal-panel-gradient: linear-gradient(110deg, #E4F17A 0%, #D9EBA0 30%, #CFDCE6 65%, #CBC9F0 100%);
+  --cal-day-past: rgba(214, 228, 120, 0.85);
+  --cal-day-active: #FFFFFF;
+  --cal-day-future: rgba(155, 170, 185, 0.45);
+  --cal-gmt-cell: rgba(214, 228, 120, 0.85);
+  --cal-grid-bg: #FFFFFF;
+  --cal-grid-line: #ECECEF;
+  --cal-hour-label: #6B6B70;
+}

@@ -1318,7 +1318,47 @@
         "fri": "Fri",
         "sat": "Sat",
         "sun": "Sun"
-      }
+      },
+      "today": "Today",
+      "join": "Join",
+      "joinNone": "No event in progress or later today",
+      "views": {
+        "month": "Month",
+        "week": "week",
+        "day": "Day"
+      },
+      "myCalendars": "My Calendars",
+      "favorites": "Favorites",
+      "categories": "Categories",
+      "sources": {
+        "events": "Events",
+        "tasks": "Tasks",
+        "external": "Google / Outlook"
+      },
+      "categoryNames": {
+        "work": "Work",
+        "personal": "Personal",
+        "education": "Education"
+      },
+      "kinds": {
+        "project": "Projects",
+        "appointment": "Appointments",
+        "reminder": "Reminders",
+        "personal": "Personal"
+      },
+      "addTeammates": "Add teammates",
+      "noTitle": "(No Title)",
+      "titleField": "Event title",
+      "close": "Close",
+      "removeTeammate": "Remove {name}",
+      "previousWeek": "Previous",
+      "nextWeek": "Next",
+      "previousMonthShort": "Previous month",
+      "nextMonthShort": "Next month",
+      "toggleSidebar": "Show calendars",
+      "saveError": "Could not save the event",
+      "readOnly": "Read only",
+      "openExternal": "Open in calendar"
     },
     "inbox": {
       "title": "Messages",

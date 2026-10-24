@@ -908,6 +908,9 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          attendee_ids: string[]
+          category: string | null
+          color: string
           company_id: string
           created_at: string
           created_by: string
@@ -925,6 +928,9 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          attendee_ids?: string[]
+          category?: string | null
+          color?: string
           company_id: string
           created_at?: string
           created_by: string
@@ -942,6 +948,9 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          attendee_ids?: string[]
+          category?: string | null
+          color?: string
           company_id?: string
           created_at?: string
           created_by?: string
