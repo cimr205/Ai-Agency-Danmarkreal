@@ -341,7 +341,8 @@
     "marketingDashboard": "Marketing Dashboard",
     "financeDashboard": "Finance Dashboard",
     "hrDashboard": "HR Dashboard",
-    "controlRoomDashboard": "Control room Dashboard"
+    "controlRoomDashboard": "Control room Dashboard",
+    "linkedinOutreach": "LinkedIn Outreach"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -2934,6 +2935,44 @@
         "pending": "Pending",
         "error": "Error"
       }
+    }
+  },
+  "linkedinOutreach": {
+    "eyebrow": "Outreach",
+    "title": "LinkedIn Outreach",
+    "description": "AI-drafted connection notes and follow-ups for your leads. You send them from LinkedIn and track status here.",
+    "generateMissing": "Draft messages",
+    "regenerate": "Redraft selected",
+    "all": "All",
+    "connectedAs": "LinkedIn connected via Composio as {name}",
+    "notConnected": "LinkedIn is not connected.",
+    "connectLink": "Connect it in Connected apps",
+    "manualNotice": "LinkedIn does not allow sending connection requests or messages through its API, so you send each message yourself: open the profile, paste the note, then update the status here.",
+    "connectionNote": "Connection note",
+    "followup": "Follow-up (after accepted)",
+    "copyNote": "Copy note",
+    "copyFollowup": "Copy follow-up",
+    "copyFailed": "Could not copy to clipboard",
+    "copied": "Copied",
+    "openProfile": "Open profile",
+    "save": "Save",
+    "remove": "Remove",
+    "generated": "{count} drafts created",
+    "generateFailed": "{count} drafts failed",
+    "queueSelected": "Queue for LinkedIn",
+    "queued": "{count} leads queued for LinkedIn outreach",
+    "nothingQueued": "Nothing new to queue",
+    "noProfile": "{count} leads have no LinkedIn profile and were skipped",
+    "emptyTitle": "No LinkedIn outreach yet",
+    "emptyHint": "Select leads with a LinkedIn profile in Lead Generation and choose Queue for LinkedIn.",
+    "status": {
+      "draft": "Draft",
+      "ready": "Ready to send",
+      "connection_sent": "Request sent",
+      "connected": "Connected",
+      "messaged": "Messaged",
+      "replied": "Replied",
+      "skipped": "Skipped"
     }
   }
 }
