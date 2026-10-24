@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { NavLink as RouterNavLink, useNavigate, useParams, useLocation } from "react-router-dom";
 import { isLocale, useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,10 +17,11 @@ import {
   Receipt, FileText, CreditCard,
   UsersThree, Clock, CalendarCheck, CalendarDots, AirplaneTilt, Money, UserPlus, ChartBar, ChartPieSlice,
   TreeStructure, ChatCenteredDots, ShieldCheck, PlugsConnected, Brain, Lightning, Robot, LinkSimple, Lifebuoy, GearSix,
-  Plus, List, CaretDown, SidebarSimple, User, SignOut,
+  Plus, List, SidebarSimple, User, SignOut,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useMyBlockedModules, type ModuleKey } from "@/hooks/api/useModuleAccess";
+import { sectionFromPath, type SectionId } from "@/lib/sections";
 
 /* Reference-styled dark liquid-glass rail — floats over the app background,
    the same premium look regardless of the active app theme. Phosphor duotone
@@ -29,13 +30,13 @@ const PANEL = "border border-white/10 bg-[#15181f]/85 backdrop-blur-2xl shadow-[
 const ACTIVE_GREEN = "#37D67A";
 
 interface NavItem { label: string; path: string; icon: Icon; dataTour?: string; }
-interface NavGroup { label: string | null; module: ModuleKey | null; accent: string; items: NavItem[]; }
+interface NavGroup { section: SectionId; label: string; module: ModuleKey | null; accent: string; items: NavItem[]; }
 
 function useNavGroups(): NavGroup[] {
   const { t } = useI18n();
   return [
     {
-      label: t("nav.menu") || "Menu", module: null, accent: "#C7CDD6",
+      section: "home", label: t("nav.menu") || "Menu", module: null, accent: "#C7CDD6",
       items: [
         { label: t("nav.dashboard") || "Dashboard", path: "dashboard", icon: SquaresFour, dataTour: "dashboard" },
         { label: t("nav.clients"), path: "clients", icon: Buildings },
@@ -46,8 +47,9 @@ function useNavGroups(): NavGroup[] {
       ],
     },
     {
-      label: t("nav.crm") || "CRM", module: "crm", accent: "#5B8DEF",
+      section: "crm", label: t("nav.crm") || "CRM", module: "crm", accent: "#5B8DEF",
       items: [
+        { label: t("nav.crmDashboard"), path: "crm/dashboard", icon: SquaresFour },
         { label: t("nav.leads") || "Leads", path: "crm/leads", icon: Crosshair, dataTour: "leads" },
         { label: t("nav.deals") || "Deals", path: "crm/deals", icon: Briefcase, dataTour: "pipeline" },
         { label: t("nav.leadGeneration") || "Lead Gen", path: "crm/lead-generation", icon: Funnel },
@@ -55,8 +57,9 @@ function useNavGroups(): NavGroup[] {
       ],
     },
     {
-      label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
+      section: "marketing", label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
       items: [
+        { label: t("nav.marketingDashboard"), path: "marketing/dashboard", icon: SquaresFour },
         { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: PhoneCall },
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: PaperPlaneTilt },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },
@@ -65,16 +68,18 @@ function useNavGroups(): NavGroup[] {
       ],
     },
     {
-      label: t("nav.finance") || "Finance", module: "finance", accent: "#34D399",
+      section: "finance", label: t("nav.finance") || "Finance", module: "finance", accent: "#34D399",
       items: [
+        { label: t("nav.financeDashboard"), path: "finance/dashboard", icon: SquaresFour },
         { label: t("nav.invoices") || "Fakturaer", path: "finance/invoices", icon: Receipt },
         { label: t("nav.quotes") || "Tilbud", path: "finance/quotes", icon: FileText },
         { label: t("nav.payments") || "Betalinger", path: "finance/payments", icon: CreditCard },
       ],
     },
     {
-      label: t("nav.hr") || "HR", module: "hr", accent: "#F6B44D",
+      section: "hr", label: t("nav.hr") || "HR", module: "hr", accent: "#F6B44D",
       items: [
+        { label: t("nav.hrDashboard"), path: "hr/dashboard", icon: SquaresFour },
         { label: t("nav.employees") || "Medarbejdere", path: "hr/employees", icon: UsersThree },
         { label: t("nav.timeTracking") || "Tidsregistrering", path: "hr/time-tracking", icon: Clock },
         { label: t("nav.attendance") || "Fremmøde", path: "hr/attendance", icon: CalendarCheck },
@@ -87,8 +92,9 @@ function useNavGroups(): NavGroup[] {
       ],
     },
     {
-      label: t("nav.controlRoom"), module: "system", accent: "#22D3EE",
+      section: "control", label: t("nav.controlRoom"), module: "system", accent: "#22D3EE",
       items: [
+        { label: t("nav.controlRoomDashboard"), path: "workspace/control-room", icon: SquaresFour },
         { label: t("nav.studio"), path: "workspace/studio", icon: TreeStructure },
         { label: t("nav.workflowChat"), path: "workspace/workflow-chat", icon: ChatCenteredDots },
         { label: t("nav.operatingManager"), path: "workspace/operating-manager", icon: ShieldCheck },
@@ -149,27 +155,14 @@ function RailContent({ onNavigate, collapsed, onToggleCollapse }: { onNavigate?:
   const { t } = useI18n();
   const allGroups = useNavGroups();
   const blockedModules = useMyBlockedModules();
-  const groups = allGroups.filter(g => !g.module || !blockedModules.has(g.module));
+  // Only the section picked in the top bar is shown. The section comes from the URL.
+  const activeSection = sectionFromPath(location.pathname);
+  const groups = allGroups.filter(g => g.section === activeSection && (!g.module || !blockedModules.has(g.module)));
 
   const name = profile?.full_name || profile?.email || "";
   const initials = (name || "?").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
   const hour = new Date().getHours();
   const greeting = t(hour < 12 ? "dashboard.greetingMorning" : hour < 18 ? "dashboard.greetingAfternoon" : "dashboard.greetingEvening");
-
-  const activeGroupLabel = useMemo(() => {
-    for (const g of groups) {
-      if (g.module && g.items.some(it => location.pathname.startsWith(`${base}/${it.path}`))) return g.label;
-    }
-    return null;
-  }, [groups, location.pathname, base]);
-
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupLabel ? [activeGroupLabel] : []));
-  useEffect(() => {
-    if (activeGroupLabel) setOpenGroups(prev => (prev.has(activeGroupLabel) ? prev : new Set(prev).add(activeGroupLabel)));
-  }, [activeGroupLabel]);
-
-  const toggleGroup = (label: string) =>
-    setOpenGroups(prev => { const next = new Set(prev); if (next.has(label)) next.delete(label); else next.add(label); return next; });
 
   const tools: { icon: Icon; label: string; path: string }[] = [
     { icon: GearSix, label: t("nav.settings") || "Indstillinger", path: "settings/company" },
@@ -217,35 +210,14 @@ function RailContent({ onNavigate, collapsed, onToggleCollapse }: { onNavigate?:
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden pr-0.5">
-        {groups.map((group, gi) => {
-          if (!group.module) {
-            return (
-              <div key={`group-${gi}`} className="pb-1">
-                {!collapsed && <div className="px-3 pb-1 text-[11px] font-medium text-white/35">{group.label}: {group.items.length}</div>}
-                <ul className="space-y-0.5">
-                  {group.items.map(item => <RailItem key={item.path} item={item} base={base} collapsed={collapsed} accent={group.accent} onNavigate={onNavigate} />)}
-                </ul>
-              </div>
-            );
-          }
-          const open = collapsed || openGroups.has(group.label as string);
-          return (
-            <div key={group.label} className="pt-1.5">
-              {!collapsed && (
-                <button type="button" onClick={() => toggleGroup(group.label as string)} aria-expanded={open}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[11px] font-medium text-white/35 transition-colors hover:text-white/70">
-                  <span>{group.label}: {group.items.length}</span>
-                  <CaretDown size={13} weight="bold" className={cn("shrink-0 transition-transform duration-200", open && "rotate-180")} aria-hidden="true" />
-                </button>
-              )}
-              {open && (
-                <ul className="space-y-0.5">
-                  {group.items.map(item => <RailItem key={item.path} item={item} base={base} collapsed={collapsed} accent={group.accent} onNavigate={onNavigate} />)}
-                </ul>
-              )}
-            </div>
-          );
-        })}
+        {groups.map(group => (
+          <div key={group.section} className="pb-1">
+            {!collapsed && <div className="px-3 pb-1.5 pt-0.5 text-[11px] font-medium text-white/35">{group.label}</div>}
+            <ul className="space-y-0.5">
+              {group.items.map(item => <RailItem key={item.path} item={item} base={base} collapsed={collapsed} accent={group.accent} onNavigate={onNavigate} />)}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* Tools row */}
