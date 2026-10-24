@@ -52,8 +52,10 @@ export function useUploadVideoAsset() {
     mutationFn: async (file: File): Promise<{ path: string; url: string; file: File }> => {
       assertValidMediaFile(file);
       const companyId = await getCompanyId();
-      const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-      const path = `${companyId}/${crypto.randomUUID()}.${ext}`;
+      // Keep the original filename (sanitized) after a UUID prefix so the media
+      // library can display something meaningful instead of a bare UUID.
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-120) || 'upload.bin';
+      const path = `${companyId}/${crypto.randomUUID()}-${safeName}`;
       const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, {
         contentType: file.type,
         cacheControl: '3600',
@@ -78,6 +80,13 @@ export interface VideoAssetListEntry {
   mimeType: string | null;
 }
 
+const UUID_PREFIX_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i;
+
+/** Strips the `<uuid>-` storage-path prefix so the UI shows the original filename. */
+function displayNameFor(storageObjectName: string): string {
+  return storageObjectName.replace(UUID_PREFIX_RE, '');
+}
+
 /** Lists previously uploaded media for the current company (excludes the exports/ subfolder). */
 export function useVideoAssetList() {
   return useQuery({
@@ -93,7 +102,7 @@ export function useVideoAssetList() {
         .filter((f) => f.id) // storage.list() also returns the "exports" pseudo-folder as an entry with id=null
         .map((f) => ({
           path: `${companyId}/${f.name}`,
-          name: f.name,
+          name: displayNameFor(f.name),
           sizeBytes: (f.metadata as { size?: number } | null)?.size ?? null,
           createdAt: f.created_at,
           mimeType: (f.metadata as { mimetype?: string } | null)?.mimetype ?? null,

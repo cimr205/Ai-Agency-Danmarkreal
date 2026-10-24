@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useMediaLibrary } from '@elah/editor';
+import { useMediaLibrary, useTimelineEngine, insertMediaAsset } from '@elah/editor';
 import { Button } from '@/components/ui/button';
 import { Upload, Film, Music, Image as ImageIcon, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ export function MediaLibraryPanel() {
   const { data: assets = [], isLoading } = useVideoAssetList();
   const uploadMutation = useUploadVideoAsset();
   const { importUrl } = useMediaLibrary();
+  const engine = useTimelineEngine();
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -49,7 +50,16 @@ export function MediaLibraryPanel() {
     setAddingPath(path);
     try {
       const url = await signVideoAssetUrl(path);
-      await importUrl(url, { name });
+      // importUrl() only registers the asset in elah's in-memory media library —
+      // it does NOT place a clip on a track. insertMediaAsset() does that; without
+      // it, the project has no clips and exportVideo() fails with
+      // "ExportWorker: project has no clips" (found via live E2E testing).
+      const asset = await importUrl(url, { name });
+      const result = await insertMediaAsset(engine, asset.id);
+      if (!result.ok) {
+        const reason = "reason" in result ? result.reason : "unknown";
+        throw new Error(`Could not place on timeline: ${reason}`);
+      }
     } catch (err) {
       toast.error(getErrorMessage(err) || t('videoStudio.addToTimelineError') || 'Could not add to timeline');
     } finally {
