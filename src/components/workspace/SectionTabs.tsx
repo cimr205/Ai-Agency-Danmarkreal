@@ -32,7 +32,7 @@ export function SectionTabs({ className }: { className?: string }) {
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: section.accent, opacity: isActive ? 1 : 0.55 }} aria-hidden="true" />
             {t(section.labelKey)}
-            {isActive && <span className="absolute inset-x-3 -bottom-[13px] hidden h-0.5 lg:block rounded-full" style={{ background: section.accent }} aria-hidden="true" />}
+            {isActive && <span className="absolute inset-x-3 -bottom-[13px] hidden h-0.5 2xl:block rounded-full" style={{ background: section.accent }} aria-hidden="true" />}
           </Link>
         );
       })}
