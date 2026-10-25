@@ -2600,6 +2600,12 @@
       "exporting": "Exportiert",
       "exported": "Exportiert",
       "failed": "Fehlgeschlagen"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (quadratisch)",
+      "4:5": "4:5 — Feed (Hochformat)",
+      "16:9": "16:9 — YouTube / Querformat"
     }
   }
 }

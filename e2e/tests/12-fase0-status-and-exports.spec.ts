@@ -24,6 +24,7 @@ async function loginAndOpenNewProject(page: import("@playwright/test").Page) {
   }
   await page.getByRole("link", { name: /video studio/i }).click();
   await page.getByRole("button", { name: /new video/i }).first().click();
+  await page.getByRole("menuitem", { name: /9:16/ }).click();
   await expect(page.locator(".elah-root canvas").first()).toBeVisible({ timeout: 20_000 });
 }
 

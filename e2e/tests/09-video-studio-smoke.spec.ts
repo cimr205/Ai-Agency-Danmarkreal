@@ -34,6 +34,7 @@ test.describe("Video Studio — live", () => {
     await expect(page.getByText(/video studio/i).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/doesn't support video studio/i)).toHaveCount(0);
     await page.getByRole("button", { name: /new video/i }).first().click();
+    await page.getByRole("menuitem", { name: /9:16/ }).click();
     await expect(page.locator(".elah-root")).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".elah-root canvas").first()).toBeVisible({ timeout: 20_000 });
   }

@@ -2623,6 +2623,12 @@
       "exporting": "Eksporterer",
       "exported": "Eksporteret",
       "failed": "Fejlet"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (kvadrat)",
+      "4:5": "4:5 — Feed (portræt)",
+      "16:9": "16:9 — YouTube / landskab"
     }
   }
 }

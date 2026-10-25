@@ -5,7 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clapperboard, Plus, Trash2, Download } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Clapperboard, Plus, Trash2, Download, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useI18n } from '@/lib/i18n';
@@ -21,10 +27,28 @@ const STATUS_TONE: Record<string, 'default' | 'secondary' | 'destructive'> = {
   failed: 'destructive',
 };
 
+interface PlatformPreset {
+  id: '9:16' | '1:1' | '16:9' | '4:5';
+  label: string;
+  width: number;
+  height: number;
+}
+
+const PLATFORM_PRESETS: PlatformPreset[] = [
+  { id: '9:16', label: '9:16 — Reels / TikTok / Stories', width: 1080, height: 1920 },
+  { id: '1:1', label: '1:1 — Feed (square)', width: 1080, height: 1080 },
+  { id: '4:5', label: '4:5 — Feed (portrait)', width: 1080, height: 1350 },
+  { id: '16:9', label: '16:9 — YouTube / landscape', width: 1920, height: 1080 },
+];
+
 export default function VideoStudioPage() {
   const { t } = useI18n();
   const support = useMemo(() => detectVideoStudioSupport(), []);
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+  // Only set right after creating a brand-new project, so EditorProvider seeds the right
+  // stage size before the first save bakes it into project_json. Reopening an existing
+  // project must NOT reuse a stale preset — its own saved stage takes over on load.
+  const [pendingStage, setPendingStage] = useState<{ width: number; height: number } | undefined>();
 
   const { data: projects = [], isLoading } = useVideoProjects();
   const createMutation = useCreateVideoProject();
@@ -40,19 +64,31 @@ export default function VideoStudioPage() {
   }
 
   if (openProjectId) {
-    return <VideoEditorWorkspace projectId={openProjectId} onBack={() => setOpenProjectId(null)} />;
+    return (
+      <VideoEditorWorkspace
+        projectId={openProjectId}
+        initialStage={pendingStage}
+        onBack={() => setOpenProjectId(null)}
+      />
+    );
   }
 
-  const handleCreate = async () => {
+  const handleCreate = async (preset: PlatformPreset) => {
     try {
       const project = await createMutation.mutateAsync({
         name: t('videoStudio.untitled') || 'Untitled video',
         project_json: {},
       });
+      setPendingStage({ width: preset.width, height: preset.height });
       setOpenProjectId(project.id);
     } catch (err) {
       toast.error(getErrorMessage(err) || t('videoStudio.createError') || 'Could not create project');
     }
+  };
+
+  const handleOpenExisting = (id: string) => {
+    setPendingStage(undefined);
+    setOpenProjectId(id);
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -84,10 +120,22 @@ export default function VideoStudioPage() {
         title={t('nav.videoStudio') || 'Video Studio'}
         description={t('videoStudio.pageDescription') || 'Produce videos and ads without leaving the platform.'}
         actions={
-          <Button className="gap-1.5" onClick={handleCreate} disabled={createMutation.isPending}>
-            <Plus className="h-4 w-4" />
-            {t('videoStudio.newVideo') || 'New video'}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="gap-1.5" disabled={createMutation.isPending}>
+                <Plus className="h-4 w-4" />
+                {t('videoStudio.newVideo') || 'New video'}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {PLATFORM_PRESETS.map((preset) => (
+                <DropdownMenuItem key={preset.id} onClick={() => handleCreate(preset)}>
+                  {t(`videoStudio.preset.${preset.id}`) || preset.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
       />
 
@@ -104,7 +152,7 @@ export default function VideoStudioPage() {
           icon={Clapperboard}
           title={t('videoStudio.emptyTitle') || 'No videos yet'}
           hint={t('videoStudio.emptyHint') || 'Create your first video project.'}
-          action={{ label: t('videoStudio.newVideo') || 'New video', onClick: handleCreate, icon: Plus }}
+          action={{ label: t('videoStudio.newVideo') || 'New video', onClick: () => handleCreate(PLATFORM_PRESETS[0]), icon: Plus }}
         />
       )}
 
@@ -114,7 +162,7 @@ export default function VideoStudioPage() {
             <Card
               key={p.id}
               className="cursor-pointer transition-shadow hover:shadow-md"
-              onClick={() => setOpenProjectId(p.id)}
+              onClick={() => handleOpenExisting(p.id)}
             >
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-2">

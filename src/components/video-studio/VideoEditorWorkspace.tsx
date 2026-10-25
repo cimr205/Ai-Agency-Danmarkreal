@@ -41,6 +41,9 @@ type SaveState = 'saved' | 'unsaved' | 'saving';
 interface Props {
   projectId: string;
   onBack: () => void;
+  /** Platform-preset stage size for a brand-new project (ignored once a project has its own
+   * saved stage — deserializeProject() overrides it on load). */
+  initialStage?: { width: number; height: number };
 }
 
 /** Inner component — mounted inside EditorProvider so it can reach the timeline engine. */
@@ -161,6 +164,11 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
     try {
       await setStatusMutation.mutateAsync({ id: project.id, status: 'exporting' });
       const snapshot = engine.getProject();
+      // Despite the name, elah's `outputHeight` is the target SHORT edge — it scales both
+      // stage dimensions uniformly (computeExportDimensions: scale = outputHeight /
+      // min(stageWidth, stageHeight)). Every platform preset already has a 1080px short
+      // edge natively, so 1080 here means "native resolution" for all of them — 1920x1080,
+      // 1080x1080, 1080x1350, and 1080x1920 all fall out of this one constant correctly.
       const blob = await exportVideo(snapshot, {
         videoCodec: 'avc',
         audioCodec: 'aac',
@@ -243,7 +251,7 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   );
 }
 
-export function VideoEditorWorkspace({ projectId, onBack }: Props) {
+export function VideoEditorWorkspace({ projectId, onBack, initialStage }: Props) {
   const { data: project, isLoading, error } = useVideoProject(projectId);
   const { t } = useI18n();
 
@@ -255,7 +263,7 @@ export function VideoEditorWorkspace({ projectId, onBack }: Props) {
   }
 
   return (
-    <EditorProvider fps={30} initialTracks={INITIAL_TRACKS}>
+    <EditorProvider fps={30} stage={initialStage} initialTracks={INITIAL_TRACKS}>
       <EditorInner project={project} onBack={onBack} />
     </EditorProvider>
   );

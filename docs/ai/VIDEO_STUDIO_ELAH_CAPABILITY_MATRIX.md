@@ -95,6 +95,24 @@ Status-koder: ✅ Findes i elah · 🟡 Findes delvist · ❌ Skal bygges selv
 - **Fase 5**: kun `@elah/cli` (server-side rendering) har en bekræftet eksisterende pakke at bygge på;
   resten er fuldt eksternt arbejde.
 
+## Fundet defekt i elah selv (opdaget under Fase 0f-test, bekræftet live)
+
+Da platform-presets (Fase 0f) for første gang lod en test oprette et **bredt** (16:9) projekt,
+fejlede "vælg hvordan medie skal tilføjes"-dialogen konsekvent ved klik på "Video + Audio".
+Diagnosticeret med `document.elementFromPoint` + computed style (ikke antaget): elahs egen
+interaktive crop/transform-håndtag-boks omkring det nyligt importerede klip i `Preview`
+(`cursor: move`-boksen, vist når et klip er valgt) renderes med **`z-index: 2000`**, mens
+`AudioDropDialog` (fra `@elah/timeline/dist/AudioDropDialog.js`) selv kun har **`z-index: 1000`**.
+For et bredt stage er håndtag-boksen bred nok til at dække dialogens knapper og stjæler klikket —
+for 9:16/1:1 (smallere/kvadratisk) sker dette ikke, hvilket er hvorfor det aldrig er set før.
+
+Dette er kompileret kode i `node_modules/@elah/*` — ikke noget vi retter der. E2E-testen
+(`13-fase0f-platform-presets.spec.ts`) bruger `click({force:true})` som dokumenteret workaround.
+**Relevant for Fase 1 punkt 4** (crop/position/scale/rotation i preview): vi skal selv bygge UI
+oven på denne samme transform-håndtag-mekanik, så dette z-index-hul bør afklares/rettes (evt.
+via en CSS `!important`-override i vores `elah-theme.css`, eller ved at rapportere opstrøms til
+elah) før Fase 1 regner håndtag-interaktion for færdig.
+
 **Ikke endnu verificeret** (skal følges op før de respektive punkter påbegyndes):
 - `@elah/timeline/dist/Timeline.d.ts`'s faktiske props (zoom-kontrol, punkt 9) er ikke læst i denne
   omgang — kun pakkens top-level re-eksporter.

@@ -2660,6 +2660,12 @@
       "exporting": "Exporting",
       "exported": "Exported",
       "failed": "Failed"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (square)",
+      "4:5": "4:5 — Feed (portrait)",
+      "16:9": "16:9 — YouTube / landscape"
     }
   }
 }
