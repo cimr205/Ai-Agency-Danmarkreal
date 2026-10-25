@@ -22,6 +22,7 @@ import {
   useVideoProject,
   useSaveVideoProject,
   useUploadExportedVideo,
+  resignProjectMedia,
   type VideoProject,
 } from '@/hooks/api/useVideoStudio';
 import './elah-theme.css';
@@ -53,14 +54,19 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   useEffect(() => {
     if (loadedProjectId === project.id) return;
     const raw = project.project_json;
-    if (raw && typeof raw === 'object' && Object.keys(raw as object).length > 0) {
-      try {
-        deserializeProject(engine, JSON.stringify(raw));
-      } catch (err) {
-        toast.error(getErrorMessage(err) || t('videoStudio.loadError') || 'Could not load project');
-      }
-    }
     setLoadedProjectId(project.id);
+    if (raw && typeof raw === 'object' && Object.keys(raw as object).length > 0) {
+      (async () => {
+        try {
+          // Clip.src holds a signed URL that expires after 24h — re-sign before loading
+          // so a project opened more than a day after it was saved doesn't lose its media.
+          const { project: resigned } = await resignProjectMedia(raw);
+          deserializeProject(engine, JSON.stringify(resigned));
+        } catch (err) {
+          toast.error(getErrorMessage(err) || t('videoStudio.loadError') || 'Could not load project');
+        }
+      })();
+    }
     // engine is a stable ref from EditorProvider's context for this mount; project.id is the real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id]);

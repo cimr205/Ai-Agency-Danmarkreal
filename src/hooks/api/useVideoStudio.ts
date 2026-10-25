@@ -118,6 +118,59 @@ export async function signVideoAssetUrl(path: string, expiresInSeconds = 60 * 60
   return data.signedUrl;
 }
 
+const SIGNED_URL_PREFIX = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/`;
+
+function extractStoragePath(src: unknown): string | null {
+  if (typeof src !== 'string' || !src.startsWith(SIGNED_URL_PREFIX)) return null;
+  const path = src.slice(SIGNED_URL_PREFIX.length).split('?')[0];
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
+/**
+ * elah's `Clip.src` stores the raw signed URL we handed it at `importUrl()` time, and
+ * `serializeProject` dumps that verbatim into `project_json` (confirmed by reading
+ * `@elah/core`'s serialization + insertAsset source) — so a saved project's media URLs
+ * expire after 24h. elah's own `relinkProjectMedia` can't fix this: it only rewrites
+ * `assetId` on an exact `src` string match, and a freshly re-signed URL never matches an
+ * expired one (different token). Instead, re-sign every clip directly: the storage path is
+ * recoverable from the signed URL's own path segment (only the query-string token expires).
+ */
+export async function resignProjectMedia(projectJson: unknown): Promise<{ project: unknown; resigned: number }> {
+  if (!projectJson || typeof projectJson !== 'object') return { project: projectJson, resigned: 0 };
+  const project = projectJson as { clips?: unknown };
+  if (!project.clips || typeof project.clips !== 'object') return { project: projectJson, resigned: 0 };
+
+  let resigned = 0;
+  const cache = new Map<string, string>();
+  const nextClips: Record<string, unknown[]> = {};
+
+  for (const [trackId, bucket] of Object.entries(project.clips as Record<string, unknown>)) {
+    if (!Array.isArray(bucket)) {
+      nextClips[trackId] = bucket as unknown[];
+      continue;
+    }
+    nextClips[trackId] = await Promise.all(
+      bucket.map(async (clip) => {
+        const path = extractStoragePath((clip as { src?: unknown }).src);
+        if (!path) return clip;
+        let fresh = cache.get(path);
+        if (!fresh) {
+          fresh = await signVideoAssetUrl(path);
+          cache.set(path, fresh);
+        }
+        resigned++;
+        return { ...(clip as object), src: fresh };
+      }),
+    );
+  }
+
+  return { project: { ...project, clips: nextClips }, resigned };
+}
+
 export function useVideoProjects() {
   return useQuery({
     queryKey: ['video-projects'],
