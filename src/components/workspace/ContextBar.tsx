@@ -38,7 +38,7 @@ export function ContextBar({ onOpenPalette }: Props) {
   return (
     <div className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur">
     <header className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 shrink items-center gap-3 overflow-x-auto">
         <WorkspaceRailMobileTrigger />
         <SectionTabs className="hidden lg:flex" />
       </div>
