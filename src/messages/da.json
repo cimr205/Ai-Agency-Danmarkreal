@@ -2614,6 +2614,7 @@
     "loadError": "Kunne ikke indlæse projekt",
     "createError": "Kunne ikke oprette projekt",
     "deleted": "Video slettet",
+    "downloadExport": "Download sidste eksport",
     "unsupportedTitle": "Din browser understøtter ikke Video Studio",
     "unsupportedBody": "Video Studio kræver WebCodecs, WebGL2 og OffscreenCanvas. Brug den nyeste version af Chrome eller Edge (Chromium 108+).",
     "unsupportedMissing": "Mangler",

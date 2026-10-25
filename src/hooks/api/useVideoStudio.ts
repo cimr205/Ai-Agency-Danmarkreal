@@ -234,6 +234,23 @@ export function useSaveVideoProject() {
   });
 }
 
+/** Transitions project status without touching project_json — used to mark a project
+ * 'exporting' right before rendering starts and 'failed' if export/upload throws, so
+ * status always reflects what actually happened instead of staying 'draft' forever. */
+export function useSetVideoProjectStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: VideoProject['status'] }) => {
+      const { error } = await supabase.from('video_projects').update({ status }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['video-projects'] });
+      qc.invalidateQueries({ queryKey: ['video-project', id] });
+    },
+  });
+}
+
 export function useDeleteVideoProject() {
   const qc = useQueryClient();
   return useMutation({

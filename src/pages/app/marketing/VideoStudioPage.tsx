@@ -5,12 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clapperboard, Plus, Trash2 } from 'lucide-react';
+import { Clapperboard, Plus, Trash2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useI18n } from '@/lib/i18n';
 import { getErrorMessage } from '@/lib/errors';
-import { useVideoProjects, useCreateVideoProject, useDeleteVideoProject } from '@/hooks/api/useVideoStudio';
+import { useVideoProjects, useCreateVideoProject, useDeleteVideoProject, signVideoAssetUrl } from '@/hooks/api/useVideoStudio';
 import { BrowserSupportBanner, detectVideoStudioSupport } from '@/components/video-studio/BrowserSupportBanner';
 import { VideoEditorWorkspace } from '@/components/video-studio/VideoEditorWorkspace';
 
@@ -65,6 +65,18 @@ export default function VideoStudioPage() {
     }
   };
 
+  // Exported videos were previously unreachable after the fact — re-sign the stored
+  // export and open it, same recovery path as resignProjectMedia uses for timeline media.
+  const handleDownloadExport = async (path: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const url = await signVideoAssetUrl(path);
+      window.open(url, '_blank', 'noopener');
+    } catch (err) {
+      toast.error(getErrorMessage(err) || t('common.error') || 'Something went wrong');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -112,14 +124,27 @@ export default function VideoStudioPage() {
                       {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}
                     </p>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => handleDelete(p.id, e)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {p.status === 'exported' && p.exported_video_path && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground"
+                        title={t('videoStudio.downloadExport') || 'Download last export'}
+                        onClick={(e) => handleDownloadExport(p.exported_video_path!, e)}
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => handleDelete(p.id, e)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 <Badge variant={STATUS_TONE[p.status] ?? 'secondary'} className="text-[10px] uppercase">
                   {t(`videoStudio.status.${p.status}`) || p.status}

@@ -22,6 +22,7 @@ import {
   useVideoProject,
   useSaveVideoProject,
   useUploadExportedVideo,
+  useSetVideoProjectStatus,
   resignProjectMedia,
   type VideoProject,
 } from '@/hooks/api/useVideoStudio';
@@ -52,6 +53,7 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const saveMutation = useSaveVideoProject();
   const uploadExportMutation = useUploadExportedVideo();
+  const setStatusMutation = useSetVideoProjectStatus();
 
   const nameRef = useRef(name);
   nameRef.current = name;
@@ -122,7 +124,6 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
       engine.off('change', scheduleAutosave);
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine]);
 
   // Renaming the project is also a change worth saving, but doesn't go through the engine.
@@ -158,6 +159,7 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   const handleExport = async () => {
     setExportProgress({ frame: 0, totalFrames: engine.getTotalFrames() || 1 });
     try {
+      await setStatusMutation.mutateAsync({ id: project.id, status: 'exporting' });
       const snapshot = engine.getProject();
       const blob = await exportVideo(snapshot, {
         videoCodec: 'avc',
@@ -167,7 +169,7 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
         outputHeight: 1080,
         onProgress: setExportProgress,
       });
-      await uploadExportMutation.mutateAsync({ projectId: project.id, blob });
+      await uploadExportMutation.mutateAsync({ projectId: project.id, blob }); // sets status 'exported'
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -177,6 +179,7 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
       toast.success(t('videoStudio.exported') || 'Video exported');
     } catch (err) {
       toast.error(getErrorMessage(err) || t('videoStudio.exportError') || 'Export failed');
+      await setStatusMutation.mutateAsync({ id: project.id, status: 'failed' }).catch(() => {});
     } finally {
       setExportProgress(null);
     }

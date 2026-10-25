@@ -2591,6 +2591,7 @@
     "loadError": "Projekt konnte nicht geladen werden",
     "createError": "Projekt konnte nicht erstellt werden",
     "deleted": "Video gelöscht",
+    "downloadExport": "Letzten Export herunterladen",
     "unsupportedTitle": "Dein Browser unterstützt Video Studio nicht",
     "unsupportedBody": "Video Studio benötigt WebCodecs, WebGL2 und OffscreenCanvas. Verwende die neueste Version von Chrome oder Edge (Chromium 108+).",
     "unsupportedMissing": "Fehlt",

@@ -2651,6 +2651,7 @@
     "loadError": "Could not load project",
     "createError": "Could not create project",
     "deleted": "Video deleted",
+    "downloadExport": "Download last export",
     "unsupportedTitle": "Your browser doesn't support Video Studio",
     "unsupportedBody": "Video Studio requires WebCodecs, WebGL2 and OffscreenCanvas. Use the latest Chrome or Edge (Chromium 108+).",
     "unsupportedMissing": "Missing",
