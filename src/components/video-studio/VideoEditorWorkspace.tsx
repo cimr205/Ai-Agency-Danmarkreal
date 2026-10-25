@@ -13,7 +13,7 @@ import {
 import type { Json } from '@/integrations/supabase/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Download, Loader2, Check, CloudUpload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { getErrorMessage } from '@/lib/errors';
@@ -33,6 +33,9 @@ const INITIAL_TRACKS = [
   { kind: 'audio' as const, name: 'Lyd' },
   { kind: 'elements' as const, name: 'Tekst' },
 ];
+const AUTOSAVE_DEBOUNCE_MS = 3_000;
+
+type SaveState = 'saved' | 'unsaved' | 'saving';
 
 interface Props {
   projectId: string;
@@ -46,8 +49,43 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   const [name, setName] = useState(project.name);
   const [loadedProjectId, setLoadedProjectId] = useState<string | null>(null);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('saved');
   const saveMutation = useSaveVideoProject();
   const uploadExportMutation = useUploadExportedVideo();
+
+  const nameRef = useRef(name);
+  nameRef.current = name;
+  const isLoadedRef = useRef(false);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const performSaveRef = useRef<() => Promise<boolean>>(async () => false);
+  performSaveRef.current = async () => {
+    setSaveState('saving');
+    try {
+      const json = JSON.parse(serializeProject(engine)) as Json;
+      await saveMutation.mutateAsync({
+        id: project.id,
+        project_json: json,
+        name: nameRef.current,
+        duration_frames: engine.getTotalFrames(),
+      });
+      setSaveState('saved');
+      return true;
+    } catch (err) {
+      setSaveState('unsaved');
+      toast.error(getErrorMessage(err) || t('videoStudio.saveError') || 'Could not save project');
+      return false;
+    }
+  };
+
+  const scheduleAutosave = () => {
+    if (!isLoadedRef.current) return; // ignore the load effect's own engine mutations
+    setSaveState('unsaved');
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      void performSaveRef.current();
+    }, AUTOSAVE_DEBOUNCE_MS);
+  };
 
   // Load the saved project JSON into the engine once per project id (not on every render —
   // deserializeProject mutates the engine, calling it again would wipe in-progress edits).
@@ -55,8 +93,9 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
     if (loadedProjectId === project.id) return;
     const raw = project.project_json;
     setLoadedProjectId(project.id);
-    if (raw && typeof raw === 'object' && Object.keys(raw as object).length > 0) {
-      (async () => {
+    isLoadedRef.current = false;
+    (async () => {
+      if (raw && typeof raw === 'object' && Object.keys(raw as object).length > 0) {
         try {
           // Clip.src holds a signed URL that expires after 24h — re-sign before loading
           // so a project opened more than a day after it was saved doesn't lose its media.
@@ -65,20 +104,55 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
         } catch (err) {
           toast.error(getErrorMessage(err) || t('videoStudio.loadError') || 'Could not load project');
         }
-      })();
-    }
+      }
+      // Only start reacting to engine changes once the load itself (which also mutates
+      // the engine) has finished — otherwise loading a project would immediately flag it
+      // as having unsaved changes.
+      isLoadedRef.current = true;
+    })();
     // engine is a stable ref from EditorProvider's context for this mount; project.id is the real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id]);
 
-  const handleSave = async () => {
-    try {
-      const json = JSON.parse(serializeProject(engine)) as Json;
-      await saveMutation.mutateAsync({ id: project.id, project_json: json, name, duration_frames: engine.getTotalFrames() });
-      toast.success(t('videoStudio.saved') || 'Project saved');
-    } catch (err) {
-      toast.error(getErrorMessage(err) || t('videoStudio.saveError') || 'Could not save project');
+  // Any timeline mutation (clip added/moved/trimmed, transition changed, etc.) marks the
+  // project dirty and (re)schedules a debounced autosave.
+  useEffect(() => {
+    engine.on('change', scheduleAutosave);
+    return () => {
+      engine.off('change', scheduleAutosave);
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine]);
+
+  // Renaming the project is also a change worth saving, but doesn't go through the engine.
+  const handleNameChange = (value: string) => {
+    setName(value);
+    scheduleAutosave();
+  };
+
+  // Warn on a hard page close/reload with unsaved changes still pending.
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (saveState === 'saved') return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [saveState]);
+
+  const handleBack = () => {
+    if (saveState !== 'saved' && !window.confirm(t('videoStudio.leaveConfirm') || 'You have unsaved changes. Leave anyway?')) {
+      return;
     }
+    onBack();
+  };
+
+  const handleSave = async () => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    const ok = await performSaveRef.current();
+    if (ok) toast.success(t('videoStudio.saved') || 'Project saved');
   };
 
   const handleExport = async () => {
@@ -115,18 +189,38 @@ function EditorInner({ project, onBack }: { project: VideoProject; onBack: () =>
   return (
     <div className="elah-root flex h-[calc(100vh-4rem)] flex-col">
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-4 py-2.5">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+        <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => handleNameChange(e.target.value)}
           className="h-8 max-w-xs text-sm font-medium"
           placeholder={t('videoStudio.untitled') || 'Untitled video'}
         />
         <div className="flex-1" />
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={saveMutation.isPending}>
-          {saveMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="video-studio-save-state">
+          {saveState === 'saving' && (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {t('videoStudio.autosaving') || 'Saving…'}
+            </>
+          )}
+          {saveState === 'unsaved' && (
+            <>
+              <CloudUpload className="h-3 w-3" />
+              {t('videoStudio.unsavedChanges') || 'Unsaved changes'}
+            </>
+          )}
+          {saveState === 'saved' && (
+            <>
+              <Check className="h-3 w-3" />
+              {t('videoStudio.autosaved') || 'All changes saved'}
+            </>
+          )}
+        </span>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={saveState === 'saving'}>
+          {saveState === 'saving' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           {t('videoStudio.save') || 'Save'}
         </Button>
         <Button size="sm" className="gap-1.5" onClick={handleExport} disabled={!!exportProgress}>

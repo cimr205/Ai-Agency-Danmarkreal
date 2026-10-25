@@ -36,11 +36,15 @@ test.describe("Fase 0c — project survives expired media URLs", () => {
     test.setTimeout(120_000);
     const { tenants } = loadTenants();
     const companyId = tenants.a.companyId;
+    // Other spec files (09, 10) run concurrently against the same tenant and create their
+    // own video projects — a unique name is required so this test can find ITS row/card
+    // instead of accidentally grabbing whichever project is newest/first at that instant.
+    const uniqueName = `e2e-fase0c-${Date.now()}`;
 
     await loginAndOpenNewProject(page);
 
-    // 1) Upload and place a real video clip, then save — persists project_json with a
-    //    (currently valid, 24h) signed URL in clip.src.
+    // 1) Upload and place a real video clip, name the project uniquely, then save —
+    //    persists project_json with a (currently valid, 24h) signed URL in clip.src.
     await page.locator('input[type="file"]').setInputFiles(TEST_VIDEO);
     await expect(page.getByText(/\.webm$/i).first()).toBeVisible({ timeout: 20_000 });
     await page.getByText(/\.webm$/i).first().locator("xpath=..").getByRole("button").click();
@@ -50,16 +54,16 @@ test.describe("Fase 0c — project survives expired media URLs", () => {
     await expect(audioDialog).toHaveCount(0, { timeout: 5_000 });
     await expect(page.locator(".elah-root [class*='bg-clip-video']").first()).toBeVisible({ timeout: 10_000 });
 
+    await page.getByPlaceholder(/untitled video/i).fill(uniqueName);
     await page.getByRole("button", { name: /^save$/i }).click();
     await expect(page.getByText(/project saved/i)).toBeVisible({ timeout: 10_000 });
 
-    const projectIdMatch = page.url().match(/[0-9a-f-]{36}/);
     const [row] = await serviceSelect(
       "video_projects",
-      `company_id=eq.${companyId}&select=id,project_json&order=updated_at.desc&limit=1`,
+      `company_id=eq.${companyId}&name=eq.${uniqueName}&select=id,project_json`,
     );
     expect(row, "saved project row must exist").toBeTruthy();
-    const projectId = projectIdMatch?.[0] ?? row.id;
+    const projectId = row.id;
 
     // 2) Find the stored clip's storage path from its (still-valid) signed URL, then mint an
     //    ALREADY-EXPIRED signed URL for that same path and overwrite the row directly — this
@@ -105,8 +109,8 @@ test.describe("Fase 0c — project survives expired media URLs", () => {
     await page.goto("/en/app/marketing/video-studio");
     await page.getByText(/video studio/i).first().waitFor({ state: "visible", timeout: 15_000 });
     await page.reload();
-    await page.getByText(/video studio/i).first().waitFor({ state: "visible", timeout: 15_000 });
-    await page.locator("div.cursor-pointer").first().click();
+    await page.getByText(uniqueName).waitFor({ state: "visible", timeout: 15_000 });
+    await page.getByText(uniqueName).click();
     await expect(page.locator(".elah-root canvas").first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page.getByText(/could not load project/i)).toHaveCount(0, { timeout: 5_000 });
