@@ -80,14 +80,14 @@ export default function MarketingDashboard() {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader eyebrow={tr('sec.mkt.panelCampEyebrow')} title={tr('sec.mkt.panelCamp')} action={tr('sec.open')} href={`${base}/marketing/meta-ads`} />
-          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-3 sm:p-4">
+          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-3 dark:border-white/10 dark:bg-white/5 sm:p-4">
             {top.length === 0 ? (
               <EmptyLane title={tr('sec.mkt.noCampTitle')} text={tr('sec.mkt.noCampText')} href={`${base}/marketing/meta-ads`} action={tr('sec.cta.openMetaAds')} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-left text-[12.5px]">
                   <thead>
-                    <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-white/40">
                       <th className="px-3 py-2 font-bold">{tr('sec.mkt.colCampaign')}</th>
                       <th className="px-3 py-2 text-right font-bold">{tr('sec.mkt.colSpend')}</th>
                       <th className="px-3 py-2 text-right font-bold">{tr('sec.mkt.colConv')}</th>
@@ -97,18 +97,18 @@ export default function MarketingDashboard() {
                   </thead>
                   <tbody>
                     {top.map(c => (
-                      <tr key={c.id} className="border-t border-slate-200/60">
+                      <tr key={c.id} className="border-t border-slate-200/60 dark:border-white/10">
                         <td className="max-w-[220px] px-3 py-3">
                           <div className="flex items-center gap-2">
-                            <span className={cn('h-2 w-2 shrink-0 rounded-full', isActiveCampaign(c) ? 'bg-emerald-500' : 'bg-slate-300')} />
-                            <span className="truncate font-medium text-slate-900">{c.name}</span>
+                            <span className={cn('h-2 w-2 shrink-0 rounded-full', isActiveCampaign(c) ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-white/20')} />
+                            <span className="truncate font-medium text-slate-900 dark:text-white">{c.name}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3 text-right tabular-nums text-slate-700">{format(c.spend)}</td>
-                        <td className={cn('px-3 py-3 text-right tabular-nums', isActiveCampaign(c) && c.spend > 0 && c.conversions === 0 ? 'font-semibold text-rose-600' : 'text-slate-700')}>{c.conversions}</td>
-                        <td className="px-3 py-3 text-right tabular-nums text-slate-700">{c.ctr.toFixed(1)}%</td>
+                        <td className="px-3 py-3 text-right tabular-nums text-slate-700 dark:text-white/70">{format(c.spend)}</td>
+                        <td className={cn('px-3 py-3 text-right tabular-nums', isActiveCampaign(c) && c.spend > 0 && c.conversions === 0 ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-white/70')}>{c.conversions}</td>
+                        <td className="px-3 py-3 text-right tabular-nums text-slate-700 dark:text-white/70">{c.ctr.toFixed(1)}%</td>
                         <td className="px-3 py-3 text-right">
-                          {c.trend === 'up' ? <TrendingUp className="ml-auto h-4 w-4 text-emerald-600" /> : c.trend === 'down' ? <TrendingDown className="ml-auto h-4 w-4 text-rose-600" /> : <Minus className="ml-auto h-4 w-4 text-slate-400" />}
+                          {c.trend === 'up' ? <TrendingUp className="ml-auto h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : c.trend === 'down' ? <TrendingDown className="ml-auto h-4 w-4 text-rose-600 dark:text-rose-400" /> : <Minus className="ml-auto h-4 w-4 text-slate-400 dark:text-white/40" />}
                         </td>
                       </tr>
                     ))}
@@ -123,11 +123,11 @@ export default function MarketingDashboard() {
           <PanelHeader eyebrow={tr('sec.mkt.panelChEyebrow')} title={tr('sec.mkt.panelCh')} />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {channels.map(ch => (
-              <Link key={ch.href} to={ch.href} className="group rounded-[1.4rem] border border-white/70 bg-white/70 p-4 transition-all hover:-translate-y-0.5 hover:bg-white">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-950 text-white"><ch.icon className="h-4 w-4" /></span>
-                <p className="mt-3 text-[14px] font-semibold text-slate-950">{ch.label}</p>
-                <p className="mt-1 text-[12px] leading-5 text-slate-500">{ch.text}</p>
-                <p className="mt-3 flex items-center gap-1 text-[12px] font-semibold text-blue-600">{tr('sec.open')} <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></p>
+              <Link key={ch.href} to={ch.href} className="group rounded-[1.4rem] border border-white/70 bg-white/70 p-4 transition-all hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950"><ch.icon className="h-4 w-4" /></span>
+                <p className="mt-3 text-[14px] font-semibold text-slate-950 dark:text-white">{ch.label}</p>
+                <p className="mt-1 text-[12px] leading-5 text-slate-500 dark:text-white/50">{ch.text}</p>
+                <p className="mt-3 flex items-center gap-1 text-[12px] font-semibold text-blue-600 dark:text-blue-400">{tr('sec.open')} <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></p>
               </Link>
             ))}
           </div>

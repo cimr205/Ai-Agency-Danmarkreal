@@ -94,7 +94,7 @@ export default function FinanceDashboard() {
                 <EmptyLane dark title={tr('sec.fin.noRevTitle')} text={tr('sec.fin.noRevText')} href={`${base}/finance/invoices?create=true`} action={tr('sec.cta.createInvoice')} />
               )}
             </div>
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/72 p-5">
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/72 p-5 dark:border-white/10 dark:bg-white/5">
               <MicroStack items={[
                 { label: tr('sec.fin.invoiced'), value: format(monthValue) },
                 { label: tr('sec.fin.pulseOutstanding'), value: format(outstanding) },
@@ -108,7 +108,7 @@ export default function FinanceDashboard() {
         <div className="grid gap-6">
           <Panel>
             <PanelHeader eyebrow={tr('sec.fin.panelAgingEyebrow')} title={tr('sec.fin.panelAging')} />
-            <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5">
+            <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
               <BarRows rows={buckets.map(b => ({
                 label: tr(`sec.fin.aging.${b.key}`),
                 value: b.value,
