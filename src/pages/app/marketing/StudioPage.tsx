@@ -1,10 +1,25 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Clapperboard, Wand2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
-import VideoStudioPage from './VideoStudioPage';
-import AiMediaPage from '@/pages/app/ai/AiMediaPage';
+
+// Lazy per-tab: the video editor and the AI generator are each substantial
+// (canvas/video-processing deps) — bundling both into StudioPage directly
+// pushed a single chunk over 900kB. Code-splitting them means visiting one
+// tab doesn't pull in the other's dependencies until it's actually opened.
+const VideoStudioPage = lazy(() => import('./VideoStudioPage'));
+const AiMediaPage = lazy(() => import('@/pages/app/ai/AiMediaPage'));
+
+const TAB_LOADER = (
+  <div className="space-y-4">
+    <Skeleton className="h-10 w-48" />
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-2xl" />)}
+    </div>
+  </div>
+);
 
 type StudioTab = 'editor' | 'generate';
 
@@ -19,7 +34,11 @@ export default function StudioPage() {
   const [editorOpen, setEditorOpen] = useState(false);
 
   if (editorOpen) {
-    return <VideoStudioPage showHeader={false} onEditorOpenChange={setEditorOpen} />;
+    return (
+      <Suspense fallback={TAB_LOADER}>
+        <VideoStudioPage showHeader={false} onEditorOpenChange={setEditorOpen} />
+      </Suspense>
+    );
   }
 
   return (
@@ -43,11 +62,15 @@ export default function StudioPage() {
         </TabsList>
 
         <TabsContent value="editor" className="mt-6">
-          <VideoStudioPage showHeader={false} onEditorOpenChange={setEditorOpen} />
+          <Suspense fallback={TAB_LOADER}>
+            <VideoStudioPage showHeader={false} onEditorOpenChange={setEditorOpen} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="generate" className="mt-6">
-          <AiMediaPage showHeader={false} />
+          <Suspense fallback={TAB_LOADER}>
+            <AiMediaPage showHeader={false} />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
