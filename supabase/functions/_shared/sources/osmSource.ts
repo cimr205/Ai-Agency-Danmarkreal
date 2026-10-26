@@ -19,7 +19,10 @@
 import type { LeadSource, RawLead } from "../leadSource.ts";
 import { politeFetch } from "./fetchPolite.ts";
 
-const DAWA_BASE_URL = "https://api.dataforsyningen.dk";
+// Geocoding: DAWA (api.dataforsyningen.dk) was decommissioned (returns HTTP 410 Gone), so we use
+// OSM's own Nominatim — free, no token, and consistent with the Overpass data source below.
+// Nominatim policy: <=1 req/s + a real User-Agent (both enforced by politeFetch).
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 const DEFAULT_RADIUS_M = 8000; // ~8km — a reasonable "in <city>" radius for mid-size DK towns
 
@@ -67,35 +70,30 @@ interface GeoPoint {
   lng: number;
 }
 
-interface DawaAddressResult {
-  adgangsadresse?: { adgangspunkt?: { koordinater?: [number, number] } };
-  adgangspunkt?: { koordinater?: [number, number] };
-  x?: number;
-  y?: number;
+interface NominatimResult {
+  lat?: string;
+  lon?: string;
+  display_name?: string;
 }
 
 async function geocodeLocation(location: string): Promise<GeoPoint | null> {
   if (!location) return null;
   try {
-    // srid=4326 asks DAWA to return coordinates as [lon, lat] (WGS84) instead of its default
-    // UTM32/EPSG:25832 x/y pair.
-    const res = await politeFetch(
-      `${DAWA_BASE_URL}/adresser?q=${encodeURIComponent(location)}&per_side=1&srid=4326`,
-      { timeoutMs: 6000, ratePerSec: 5, bucketSize: 5 },
-    );
+    // Restrict to Denmark; jsonv2; one best match. Append ", Danmark" so a bare city name
+    // resolves to the town centre rather than a same-named feature elsewhere.
+    const url = `${NOMINATIM_URL}?q=${encodeURIComponent(`${location}, Danmark`)}` +
+      `&countrycodes=dk&format=jsonv2&limit=1`;
+    // Nominatim's robots.txt blocks /search for generic crawlers, but its Usage Policy explicitly
+    // permits automated /search at <=1 req/s with an identifiable User-Agent (both enforced here).
+    // The robots.txt check is therefore skipped in favour of the authoritative API policy.
+    const res = await politeFetch(url, { timeoutMs: 6000, ratePerSec: 1, bucketSize: 1, skipRobotsCheck: true });
     if (!res.ok) return null;
-    const data: DawaAddressResult[] = await res.json();
+    const data: NominatimResult[] = await res.json();
     const first = Array.isArray(data) ? data[0] : null;
-    if (!first) return null;
-
-    const coords = first.adgangsadresse?.adgangspunkt?.koordinater ?? first.adgangspunkt?.koordinater;
-    if (coords && coords.length === 2) {
-      return { lat: coords[1], lng: coords[0] };
-    }
-    if (typeof first.x === "number" && typeof first.y === "number") {
-      return { lat: first.y, lng: first.x };
-    }
-    return null;
+    if (!first?.lat || !first?.lon) return null;
+    const lat = parseFloat(first.lat), lng = parseFloat(first.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
   } catch (e) {
     console.error("osmSource geocode error:", e);
     return null;
@@ -184,7 +182,7 @@ export const osmSource: LeadSource = {
   async search(params, onProgress) {
     const { queries, location, maxResults, signal } = params;
 
-    onProgress?.(`Geokoder "${location}" via DAWA...`, 0);
+    onProgress?.(`Geokoder "${location}" via OSM Nominatim...`, 0);
     const center = await geocodeLocation(location);
     if (!center) {
       onProgress?.(`OSM: kunne ikke geokode "${location}" — springer OSM-kilde over.`, 0);
@@ -206,6 +204,10 @@ export const osmSource: LeadSource = {
         ratePerSec: 1,
         bucketSize: 2,
         maxConcurrency: 1,
+        // The Overpass API is a documented programmatic endpoint governed by its fair-use policy,
+        // not a crawl target; its robots.txt blanket-blocks bots, so skip that check here (we still
+        // honour the stricter self-throttle + identifiable User-Agent above).
+        skipRobotsCheck: true,
       });
       if (!res.ok) {
         console.error("osmSource: Overpass request failed:", res.status);

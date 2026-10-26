@@ -189,3 +189,22 @@ The `a17c9e52` worktree had nothing new; `a46fb731` is stale (behind HEAD) — n
 environment** (no Deno CLI, no Docker for gosom/SearXNG, no edge-function deploy access). Frontend
 compiles. Remaining before push: deploy + Deno check the functions, run the gosom/SearXNG services,
 and an end-to-end chat→search→confirm→save pass against the SSE contract (§6/§6b).
+
+## 9. Live QA of the OSM source (real network, no Docker) — 2 real bugs fixed
+
+Ran `osmSource.search({queries:["tømrer"], location:"Randers"})` against real network via Deno.
+Two bugs that would have made the OSM source always return 0 leads:
+
+1. **Dead geocoder.** It geocoded via DAWA (`api.dataforsyningen.dk/adresser`), which now returns
+   **HTTP 410 Gone** (decommissioned). → Replaced with OSM **Nominatim** (`/search?q=<loc>, Danmark
+   &countrycodes=dk`), live-verified: "Randers" → 56.4618, 10.0371.
+2. **robots.txt blocked the APIs.** `politeFetch` applied a robots.txt check to Nominatim `/search`
+   and the Overpass `/api/interpreter` — both documented programmatic APIs that blanket-disallow
+   crawlers in robots.txt but permit automated use under their own fair-use policies. → Passed
+   `skipRobotsCheck: true` for both (self-throttle + identifiable User-Agent still enforced).
+
+After both fixes, the chain runs: Nominatim geocode ✓ → Overpass query (well-formed). **Remaining
+blocker is external**: the public Overpass instance returns **502 "at capacity"** for automated use
+and explicitly says to self-host for automation — so OSM needs a self-hosted Overpass alongside the
+gosom/SearXNG Docker services. gosom + SearXNG themselves remain untested (no Docker daemon here).
+`deno check` clean on the edited source.
