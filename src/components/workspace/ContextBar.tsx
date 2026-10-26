@@ -8,6 +8,7 @@ import { useCurrency, type Currency } from "@/contexts/CurrencyContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { WorkspaceRailMobileTrigger } from "./WorkspaceRail";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { SectionTabs } from "./SectionTabs";
 import NotificationDropdown from "@/components/NotificationDropdown";
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
@@ -35,19 +36,23 @@ export function ContextBar({ onOpenPalette }: Props) {
     .split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-border/60 bg-background/95 px-5 backdrop-blur sm:px-8">
-      <div className="flex items-center gap-2 w-full max-w-[320px]">
+    <div className="sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur">
+    <header className="flex h-16 items-center justify-between gap-4 px-5 sm:px-8">
+      <div className="flex min-w-0 items-center gap-3">
         <WorkspaceRailMobileTrigger />
-        <button
-          onClick={onOpenPalette}
-          className="flex h-10 w-full items-center gap-2.5 rounded-md border border-border/70 bg-card px-3 text-[13px] text-muted-foreground shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-colors hover:border-border hover:text-foreground"
-        >
-          <Search className="h-4 w-4 shrink-0" />
-          <span className="truncate">{t('common.search')}</span>
-        </button>
+        <SectionTabs className="hidden 2xl:flex" />
       </div>
 
-      <div className="hidden shrink-0 items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2 text-[12px] font-medium text-muted-foreground md:flex">
+      <button
+        onClick={onOpenPalette}
+        aria-label={t('common.search')}
+        className="flex h-10 w-full min-w-0 max-w-[260px] items-center gap-2.5 rounded-md border border-border/70 bg-card px-3 text-[13px] text-muted-foreground shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-colors hover:border-border hover:text-foreground 2xl:w-10 2xl:shrink-0 2xl:justify-center 2xl:px-0 min-[1800px]:w-full min-[1800px]:shrink min-[1800px]:justify-start min-[1800px]:px-3"
+      >
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="truncate 2xl:hidden min-[1800px]:inline">{t('common.search')}</span>
+      </button>
+
+      <div className="hidden shrink-0 items-center gap-2 rounded-md border border-border/60 bg-card px-3 py-2 text-[12px] font-medium text-muted-foreground 2xl:flex">
         <span className="h-1.5 w-1.5 rounded-full bg-stamp" aria-hidden="true" />
         <span className="text-foreground/90">{today}</span>
       </div>
@@ -92,5 +97,9 @@ export function ContextBar({ onOpenPalette }: Props) {
         </button>
       </div>
     </header>
+    <div className="overflow-x-auto border-t border-border/40 px-4 py-1.5 2xl:hidden">
+      <SectionTabs className="w-max" />
+    </div>
+    </div>
   );
 }

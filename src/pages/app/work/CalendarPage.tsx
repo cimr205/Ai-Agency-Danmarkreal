@@ -1,217 +1,475 @@
-import { useState } from 'react';
-import { useMyCalendar, useCreateCalendarEvent } from '@/hooks/api/useCalendar';
-import { useTasks } from '@/hooks/api/useTasks';
-import { useModuleAvailability, useExternalCalendarEvents } from '@/hooks/api/useIntegrations';
-import { Link } from 'react-router-dom';
-import { Plug } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Calendar, Clock, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { ErrorState } from '@/components/shared/ErrorState';
-import { toast } from 'sonner';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
-import { da, de, enUS } from 'date-fns/locale';
-import { useI18n, isLocale } from '@/lib/i18n';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, PanelLeft } from 'lucide-react';
+import { addDays, addMonths, endOfMonth, format, isSameDay, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
+import { da, de, enUS } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useI18n, isLocale } from '@/lib/i18n';
+import { useAuth } from '@/hooks/useAuth';
+import { useTasks } from '@/hooks/api/useTasks';
+import { useExternalCalendarEvents, useModuleAvailability } from '@/hooks/api/useIntegrations';
+import {
+  useCompanyMembers,
+  useCreateCalendarEvent,
+  useMyCalendar,
+  useUpdateCalendarEvent,
+  type CompanyMember,
+} from '@/hooks/api/useCalendar';
+import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
+import { ViewSwitcher } from '@/components/calendar/ViewSwitcher';
+import { DayHeaderStrip } from '@/components/calendar/DayHeaderStrip';
+import { TimeGrid, type TimeGridHandle } from '@/components/calendar/TimeGrid';
+import { MonthGrid } from '@/components/calendar/MonthGrid';
+import { EventPopover } from '@/components/calendar/EventPopover';
+import { GUTTER, weekColumnWidth } from '@/components/calendar/geometry';
+import { DEMO_AVATAR_IDS, demoEvents, isDemoMode } from '@/components/calendar/demoEvents';
+import {
+  CATEGORIES,
+  SOURCES,
+  fromEventRow,
+  fromExternal,
+  fromTask,
+  type CalendarItem,
+  type CalendarSource,
+  type CalendarView,
+  type EventCategory,
+  type EventColor,
+  type EventKind,
+} from '@/components/calendar/model';
+import { cn } from '@/lib/utils';
 
-const localeMap = { da, de, en: enUS };
+const LOCALES = { da, de, en: enUS };
+const KIND_COLOR: Record<EventKind, EventColor> = { project: 'blue', appointment: 'lilac', reminder: 'grey', personal: 'lavender' };
+const PANEL_PAD_LEFT = 18;
+const PANEL_PAD_RIGHT = 18;
+const DRAFT_ID = 'draft';
+
+/** Height from this element's top to the bottom of the viewport. */
+function useFillViewport<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [height, setHeight] = useState<number>();
+  useLayoutEffect(() => {
+    const update = () => {
+      if (ref.current) setHeight(Math.max(480, window.innerHeight - ref.current.getBoundingClientRect().top));
+    };
+    update();
+    window.addEventListener('resize', update);
+    const ro = new ResizeObserver(update);
+    if (ref.current?.parentElement) ro.observe(ref.current.parentElement);
+    return () => { window.removeEventListener('resize', update); ro.disconnect(); };
+  }, []);
+  return { ref, height };
+}
+
+/** The sidebar is mounted inline from 1024px, otherwise only inside the drawer. */
+function useIsDesktop() {
+  const query = '(min-width: 1024px)';
+  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return matches;
+}
+
+function useWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  return { ref, width };
+}
 
 export default function CalendarPage() {
   const { t } = useI18n();
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
-  const dateFnsLocale = localeMap[locale] || enUS;
+  const dfLocale = LOCALES[locale] ?? enUS;
+  const reduce = useReducedMotion();
+  const { profile } = useAuth();
+  const demo = isDemoMode();
+  const isDesktop = useIsDesktop();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', description: '', start_time: '', end_time: '' });
+  const [today] = useState(() => new Date());
+  const [view, setView] = useState<CalendarView>('week');
+  const [selected, setSelected] = useState(() => startOfDay(new Date()));
+  const [direction, setDirection] = useState(0);
+  const [sources, setSources] = useState<Set<CalendarSource>>(() => new Set(SOURCES));
+  const [categories, setCategories] = useState<Set<EventCategory>>(() => new Set(CATEGORIES));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [popover, setPopover] = useState<{ item: CalendarItem; anchor: DOMRect } | null>(null);
+  const [demoEdits, setDemoEdits] = useState<Record<string, Partial<CalendarItem>>>({});
+  const [demoAdded, setDemoAdded] = useState<CalendarItem[]>([]);
+  const [pendingJoin, setPendingJoin] = useState<string | null>(null);
+  // A draft being saved stays on the grid until the refetch includes it.
+  const [saving, setSaving] = useState<CalendarItem | null>(null);
+  const gridRef = useRef<TimeGridHandle>(null);
+  const gridScroll = useRef<number | null>(null);
 
-  const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-  const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+  const fill = useFillViewport<HTMLDivElement>();
+  const area = useWidth<HTMLDivElement>();
 
-  const { data: events, isLoading, error, refetch } = useMyCalendar({ start, end });
-  const { data: tasks } = useTasks();
-  const createEvent = useCreateCalendarEvent();
-
-  // Real events from a connected external calendar (Google Calendar /
-  // Outlook), surfaced straight into the same grid — the Capability Engine
-  // in action: this page never checks "is Google Calendar connected?", it
-  // just asks "is calendar.read available?" via useModuleAvailability.
-  const { data: availability } = useModuleAvailability();
-  const calendarModule = availability?.modules.find((m) => m.module === 'calendar');
-  const hasExternalCalendar = !!calendarModule?.available;
-  const { data: externalData } = useExternalCalendarEvents(
-    startOfMonth(currentMonth).toISOString(),
-    endOfMonth(currentMonth).toISOString(),
-    hasExternalCalendar,
+  // ── Visible range ──────────────────────────────────────────────────────
+  const days = useMemo(
+    () => (view === 'day' ? [selected] : Array.from({ length: 8 }, (_, i) => addDays(selected, i))),
+    [view, selected],
   );
-  const externalEvents = (externalData?.events ?? []).map(e => ({
-    id: `ext-${e.id}`, title: e.title, start_time: e.startTime, isExternal: true, isTask: false,
-  }));
+  const range = useMemo(() => {
+    if (view === 'month') {
+      const first = startOfWeek(startOfMonth(selected), { weekStartsOn: 1 });
+      return { start: first, end: addDays(first, 42) };
+    }
+    return { start: days[0], end: addDays(days[days.length - 1], 1) };
+  }, [view, selected, days]);
 
-  // Tasks with due dates as calendar items
-  const taskEvents = (tasks || [])
-    .filter(t => t.due_date && t.status !== 'completed')
-    .map(t => ({ id: `task-${t.id}`, title: `📋 ${t.title}`, start_time: t.due_date!, isTask: true, isExternal: false, priority: t.priority }));
+  // ── Data ───────────────────────────────────────────────────────────────
+  const { data: rows } = useMyCalendar({ start: range.start.toISOString(), end: range.end.toISOString() });
+  const { data: tasks } = useTasks();
+  const { data: availability } = useModuleAvailability();
+  const hasExternal = !!availability?.modules.find(m => m.module === 'calendar')?.available;
+  const { data: external } = useExternalCalendarEvents(range.start.toISOString(), range.end.toISOString(), hasExternal);
+  // Join always looks at today, whatever range is on screen.
+  const todayStart = startOfDay(today);
+  const todayEnd = addDays(todayStart, 1);
+  const { data: todayRows } = useMyCalendar({ start: todayStart.toISOString(), end: todayEnd.toISOString() });
+  const { data: todayExternal } = useExternalCalendarEvents(todayStart.toISOString(), todayEnd.toISOString(), hasExternal);
+  const { data: memberList = [] } = useCompanyMembers();
+  const createEvent = useCreateCalendarEvent();
+  const updateEvent = useUpdateCalendarEvent();
 
-  const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  const members = useMemo(() => {
+    const map = new Map<string, CompanyMember>(memberList.map(m => [m.user_id, m]));
+    if (demo) DEMO_AVATAR_IDS.forEach((id, i) => map.set(id, { user_id: id, full_name: ['Ana Holm', 'Mikkel Berg', 'Sara Lind'][i], email: '', avatar_url: null }));
+    return map;
+  }, [memberList, demo]);
 
-  const dayNames = [
-    t('pages.calendar.days.mon'), t('pages.calendar.days.tue'), t('pages.calendar.days.wed'),
-    t('pages.calendar.days.thu'), t('pages.calendar.days.fri'), t('pages.calendar.days.sat'), t('pages.calendar.days.sun'),
+  const allItems = useMemo<CalendarItem[]>(() => {
+    if (demo) {
+      const anchor = view === 'month' ? startOfWeek(selected, { weekStartsOn: 1 }) : selected;
+      return [...demoEvents(anchor), ...demoAdded].map(i => ({ ...i, ...demoEdits[i.id] }));
+    }
+    return [
+      ...(rows ?? []).map(r => fromEventRow(r, profile?.user_id)),
+      ...(tasks ?? []).filter(x => x.status !== 'completed').map(fromTask).filter((x): x is CalendarItem => !!x),
+      ...(external?.events ?? []).map(fromExternal),
+    ];
+  }, [demo, demoAdded, demoEdits, rows, tasks, external, profile?.user_id, selected, view]);
+
+  const items = useMemo(
+    () => allItems.filter(i => sources.has(i.source) && (!i.category || categories.has(i.category))),
+    [allItems, sources, categories],
+  );
+
+  // ── Formatting ─────────────────────────────────────────────────────────
+  const en = locale === 'en';
+  const hourLabel = useCallback((h: number) => {
+    const d = new Date(2000, 0, 1, h);
+    return en ? format(d, 'h a').toLowerCase() : format(d, 'HH:mm');
+  }, [en]);
+  const timeRange = useCallback((s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm')}` : `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`), [en]);
+  const popoverTime = (s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm a').toLowerCase()}` : timeRange(s, e));
+  const popoverDate = (d: Date) => format(d, en ? 'MMM d, yyyy' : 'd. MMM yyyy', { locale: dfLocale });
+
+  // ── Navigation ─────────────────────────────────────────────────────────
+  const go = (step: number) => {
+    setDirection(step);
+    setPopover(null);
+    setSelected(s => (view === 'month' ? startOfMonth(addMonths(s, step)) : addDays(s, step * (view === 'week' ? 7 : 1))));
+  };
+  const goTo = (d: Date) => {
+    const target = startOfDay(d);
+    setDirection(target > selected ? 1 : target < selected ? -1 : 0);
+    setPopover(null);
+    setSelected(target);
+  };
+
+  // ── Popover / editing ──────────────────────────────────────────────────
+  const openItem = useCallback((item: CalendarItem, el: HTMLElement) => {
+    setPopover({ item, anchor: el.getBoundingClientRect() });
+  }, []);
+
+  const closePopover = useCallback(() => setPopover(null), []);
+
+  const patchItem = (item: CalendarItem, patch: Partial<CalendarItem>) => {
+    const next = { ...item, ...patch };
+    setPopover(p => (p && p.item.id === item.id ? { ...p, item: next } : p));
+    if (item.id === DRAFT_ID) {
+      // A draft is created on the first real title; until then it is local.
+      if (patch.title === undefined) return;
+      if (!patch.title) return;
+      if (demo) {
+        const created = { ...next, id: `demo-new-${Date.now()}` };
+        setDemoAdded(a => [...a, created]);
+        setPopover(p => (p ? { ...p, item: created } : p));
+        return;
+      }
+      setSaving({ ...next, id: `${DRAFT_ID}-saving` });
+      createEvent.mutate(
+        { title: next.title, start_time: next.start.toISOString(), end_time: next.end.toISOString(), event_type: next.kind, color: next.color, attendee_ids: next.attendeeIds },
+        {
+          onSuccess: row => setPopover(p => (p && p.item.id === DRAFT_ID ? { ...p, item: fromEventRow(row, profile?.user_id) } : p)),
+          onError: () => toast.error(t('pages.calendar.saveError')),
+          // The hook's onSuccess awaits the calendar refetch, so by now the row is in `items`.
+          onSettled: () => setSaving(null),
+        },
+      );
+      return;
+    }
+    if (demo) {
+      setDemoEdits(e => ({ ...e, [item.id]: { ...e[item.id], ...patch } }));
+      setDemoAdded(a => a.map(x => (x.id === item.id ? next : x)));
+      return;
+    }
+    updateEvent.mutate(
+      {
+        id: item.id,
+        ...(patch.title !== undefined && { title: patch.title || t('pages.calendar.noTitle') }),
+        ...(patch.kind !== undefined && { event_type: patch.kind, color: patch.color }),
+        ...(patch.attendeeIds !== undefined && { attendee_ids: patch.attendeeIds }),
+      },
+      { onError: () => toast.error(t('pages.calendar.saveError')) },
+    );
+  };
+
+  const onSlotClick = (day: Date, minutes: number) => {
+    const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
+    const draft: CalendarItem = {
+      id: DRAFT_ID, title: '', start, end: new Date(start.getTime() + 60 * 60000), color: KIND_COLOR.appointment,
+      source: 'events', kind: 'appointment', category: null, attendeeIds: [], allDay: false, editable: true,
+    };
+    // Anchor the popover to the slot that was clicked.
+    const col = document.querySelector<HTMLElement>(`[data-day="${day.toDateString()}"]`);
+    const rect = col?.getBoundingClientRect();
+    const top = rect ? rect.top + (minutes / 60) * 76 : window.innerHeight / 3;
+    setPopover({ item: draft, anchor: new DOMRect(rect?.left ?? 0, top, rect?.width ?? 0, 38) });
+  };
+
+  // Show the draft while its popover is open, and while it is being saved.
+  const gridItems = [
+    ...items,
+    ...(popover?.item.id === DRAFT_ID ? [popover.item] : []),
+    ...(saving && popover?.item.id !== DRAFT_ID ? [saving] : []),
   ];
 
-  const handleCreate = async () => {
-    if (!newEvent.title || !newEvent.start_time || !newEvent.end_time) {
-      toast.error(t('pages.calendar.required')); return;
-    }
-    try {
-      await createEvent.mutateAsync(newEvent);
-      toast.success(t('pages.calendar.created_success'));
-      setNewEvent({ title: '', description: '', start_time: '', end_time: '' });
-      setIsCreateOpen(false);
-    } catch { toast.error(t('pages.calendar.created_error')); }
+  // ── Join: open the event in progress, or the next one today ────────────
+  const joinTarget = useMemo(() => {
+    const now = Date.now();
+    const todays: CalendarItem[] = demo
+      ? [...demoEvents(startOfDay(today)), ...demoAdded].map(i => ({ ...i, ...demoEdits[i.id] }))
+      : [...(todayRows ?? []).map(r => fromEventRow(r, profile?.user_id)), ...(todayExternal?.events ?? []).map(fromExternal)];
+    return todays
+      .filter(i => sources.has(i.source) && (!i.category || categories.has(i.category)))
+      .filter(i => !i.allDay && isSameDay(i.start, today) && i.end.getTime() > now)
+      .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
+  }, [demo, demoAdded, demoEdits, todayRows, todayExternal, profile?.user_id, sources, categories, today]);
+
+  const join = () => {
+    if (!joinTarget) return;
+    if (view === 'month') setView('week');
+    if (view === 'month' || !days.some(d => isSameDay(d, today))) goTo(today);
+    setPendingJoin(joinTarget.id);
+  };
+  // The target may only mount after a view/week transition (AnimatePresence
+  // waits for the exit), so look for it each frame for up to ~1s, scroll the
+  // grid to it, then open its popover once it has settled in place.
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  useEffect(() => {
+    if (!pendingJoin) return;
+    let raf = 0;
+    let frames = 0;
+    const tick = () => {
+      const el = document.querySelector<HTMLElement>(`[data-event-id="${pendingJoin}"]`);
+      const item = itemsRef.current.find(i => i.id === pendingJoin);
+      if (el && item) {
+        const scroller = el.closest<HTMLElement>('.overflow-y-auto');
+        if (scroller) scroller.scrollTop += el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 60;
+        raf = requestAnimationFrame(() => { openItem(item, el); setPendingJoin(null); });
+        return;
+      }
+      if (++frames > 60) { setPendingJoin(null); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [pendingJoin, openItem]);
+
+  // ── Geometry ───────────────────────────────────────────────────────────
+  const available = Math.max(0, area.width);
+  const colWidth = view === 'day' ? Math.max(200, available - GUTTER - PANEL_PAD_RIGHT) : weekColumnWidth(available);
+  const navKey = `${view}-${view === 'month' ? format(selected, 'yyyy-MM') : selected.toDateString()}`;
+  const slide = reduce ? 0 : 40;
+
+  const toggle = <T,>(set: Set<T>, v: T) => {
+    const next = new Set(set);
+    if (next.has(v)) next.delete(v); else next.add(v);
+    return next;
   };
 
-  const getEventsForDay = (day: Date) => {
-    const calEvents = events?.filter(event => isSameDay(new Date(event.start_time), day)) ?? [];
-    const extEvents = externalEvents.filter(e => isSameDay(new Date(e.start_time), day));
-    const dayTasks = taskEvents.filter(t => isSameDay(new Date(t.start_time), day));
-    return [...calEvents.map(e => ({ ...e, isTask: false, isExternal: false })), ...extEvents, ...dayTasks];
-  };
-  const upcomingEvents = [...(events ?? []).map(e => ({ ...e, isExternal: false })), ...externalEvents]
-    .filter(event => new Date(event.start_time) >= new Date())
-    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-    .slice(0, 5);
-  const upcomingTasks = taskEvents.filter(t => new Date(t.start_time) >= new Date()).slice(0, 3);
+  const sidebar = (
+    <CalendarSidebar
+      selected={selected}
+      onSelect={d => { goTo(d); setSidebarOpen(false); }}
+      locale={dfLocale}
+      t={t}
+      sources={sources}
+      onToggleSource={s => setSources(prev => toggle(prev, s))}
+      categories={categories}
+      onToggleCategory={c => setCategories(prev => toggle(prev, c))}
+    />
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('pages.calendar.title')}</h1>
-          <p className="text-muted-foreground">{t('pages.calendar.subtitle')}</p>
+    <div
+      ref={fill.ref}
+      className="relative -mx-4 -my-6 flex gap-[10px] bg-cal-app-bg p-2 font-cal sm:-mx-8 sm:-my-8"
+      style={{ height: fill.height, fontFeatureSettings: '"tnum"' }}
+    >
+      {/* One instance at a time, so the mini calendar's shared layoutIds never span two copies. */}
+      {isDesktop && <div className="flex">{sidebar}</div>}
+
+      <AnimatePresence>
+        {!isDesktop && sidebarOpen && (
+          <>
+            <motion.button
+              type="button"
+              aria-label={t('pages.calendar.close')}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 z-30 bg-black/50 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.div
+              initial={{ x: reduce ? 0 : -24, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: reduce ? 0 : -24, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-2 left-2 top-2 z-40 flex lg:hidden"
+            >
+              {sidebar}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <motion.section
+        initial={{ opacity: 0, scale: reduce ? 1 : 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[32px] pt-[22px]"
+        style={{ background: 'var(--cal-panel-gradient)', paddingLeft: PANEL_PAD_LEFT }}
+      >
+        {/* Row 1 */}
+        <div className="flex h-11 shrink-0 items-center" style={{ paddingRight: PANEL_PAD_RIGHT }}>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            aria-label={t('pages.calendar.toggleSidebar')}
+            className="mr-3 grid h-9 w-9 place-items-center rounded-[12px] bg-[#0A0A0A] text-white lg:hidden"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+          <h1 className="text-[26px] font-bold capitalize tracking-[-0.02em] text-[#0A0A0A]">
+            {format(selected, 'MMMM yyyy', { locale: dfLocale })}
+          </h1>
+          <button type="button" onClick={() => goTo(today)} className="ml-3 rounded-full bg-[#0A0A0A] px-3 py-[5px] text-[12px] font-semibold text-white">
+            {t('pages.calendar.today')}
+          </button>
+          <div className="ml-3 flex items-center gap-[10px] text-[#0A0A0A]">
+            <button type="button" onClick={() => go(-1)} aria-label={t('pages.calendar.previousWeek')} className="hover:opacity-60">
+              <ChevronLeft className="h-[18px] w-[18px]" />
+            </button>
+            <button type="button" onClick={() => go(1)} aria-label={t('pages.calendar.nextWeek')} className="hover:opacity-60">
+              <ChevronRight className="h-[18px] w-[18px]" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={join}
+            disabled={!joinTarget}
+            title={joinTarget ? joinTarget.title : t('pages.calendar.joinNone')}
+            className="ml-auto h-10 w-[76px] rounded-[12px] bg-[#0A0A0A] text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+          >
+            {t('pages.calendar.join')}
+          </button>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('pages.calendar.newEvent')}</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('pages.calendar.createTitle')}</DialogTitle>
-              <DialogDescription>{t('pages.calendar.createSubtitle')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2"><Label htmlFor="title">{t('pages.calendar.titleLabel')} *</Label><Input id="title" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} placeholder={t('pages.calendar.titlePlaceholder')} /></div>
-              <div className="space-y-2"><Label htmlFor="description">{t('pages.calendar.descriptionLabel')}</Label><Input id="description" value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} placeholder={t('pages.calendar.descriptionPlaceholder')} /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label htmlFor="start_time">{t('pages.calendar.start')} *</Label><Input id="start_time" type="datetime-local" value={newEvent.start_time} onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })} /></div>
-                <div className="space-y-2"><Label htmlFor="end_time">{t('pages.calendar.end')} *</Label><Input id="end_time" type="datetime-local" value={newEvent.end_time} onChange={(e) => setNewEvent({ ...newEvent, end_time: e.target.value })} /></div>
-              </div>
-              <Button onClick={handleCreate} disabled={createEvent.isPending} className="w-full">{createEvent.isPending ? t('pages.calendar.creating') : t('pages.calendar.createCta')}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="capitalize">{format(currentMonth, 'MMMM yyyy', { locale: dateFnsLocale })}</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" aria-label={t('pages.calendar.previousMonth') || 'Previous month'} onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" aria-label={t('pages.calendar.nextMonth') || 'Next month'} onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {dayNames.map((day) => (<div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">{day}</div>))}
-            </div>
-            <div className={`grid grid-cols-7 gap-1 transition-opacity ${isLoading ? 'opacity-50' : ''}`}>
-              {Array.from({ length: (days[0].getDay() + 6) % 7 }).map((_, i) => (<div key={`empty-${i}`} className="aspect-square" />))}
-              {days.map((day) => {
-                const dayEvents = getEventsForDay(day);
-                return (
-                  <div key={day.toISOString()} className={`aspect-square p-1 border rounded-md ${isToday(day) ? 'bg-primary/10 border-primary' : 'border-transparent hover:bg-muted'}`}>
-                    <div className={`text-sm ${isToday(day) ? 'font-bold text-primary' : ''}`}>{format(day, 'd')}</div>
-                    {dayEvents.length > 0 && (
-                      <div className="mt-1">
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <div
-                            key={event.id}
-                            className={`text-xs rounded px-1 truncate mb-0.5 ${
-                              event.isTask ? 'bg-warning/20 text-warning'
-                              : event.isExternal ? 'bg-sky-500/20 text-sky-600'
-                              : 'bg-primary/20 text-primary'
-                            }`}
-                          >
-                            {event.title}
-                          </div>
-                        ))}
-                        {dayEvents.length > 2 && <div className="text-xs text-muted-foreground">+{dayEvents.length - 2} {t('pages.calendar.more')}</div>}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Row 2 */}
+        <div className="mt-2 flex shrink-0 justify-end" style={{ paddingRight: PANEL_PAD_RIGHT }}>
+          <ViewSwitcher view={view} onChange={v => { setPopover(null); setView(v); }} t={t} />
+        </div>
 
-        <Card>
-          <CardHeader><CardTitle className="text-lg">{t('pages.calendar.upcoming')}</CardTitle></CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => (<div key={i} className="space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-24" /></div>))}</div>
-            ) : error ? (
-              <ErrorState title={t('pages.calendar.fetchError')} onRetry={() => refetch()} bare />
-            ) : upcomingEvents.length === 0 ? (
-              <EmptyState bare icon={Calendar} title={t('pages.calendar.empty')} action={{ label: t('pages.calendar.newEvent'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
-            ) : (
-              <div className="space-y-4">
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className={`border-l-2 pl-3 ${event.isExternal ? 'border-sky-500' : 'border-primary'}`}>
-                    <p className="font-medium">{event.title}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />{format(new Date(event.start_time), 'dd MMM', { locale: dateFnsLocale })}
-                      <Clock className="h-3 w-3 ml-2" />{format(new Date(event.start_time), 'HH:mm')}
-                      {event.isExternal && <span className="ml-2 text-sky-600">· {calendarModule?.resolvedConnections[0]?.provider}</span>}
-                    </div>
+        {/* Row 3 + grid */}
+        <div ref={area.ref} className="mt-[10px] flex min-h-0 flex-1 overflow-x-auto lg:overflow-x-hidden">
+          <AnimatePresence mode="wait" initial={false} custom={direction}>
+            <motion.div
+              key={navKey}
+              custom={direction}
+              variants={{
+                enter: (d: number) => ({ x: d * slide, opacity: 0 }),
+                center: { x: 0, opacity: 1 },
+                exit: (d: number) => ({ x: -d * slide, opacity: 0 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+              className={cn('flex min-h-0 flex-1 flex-col', view === 'month' && 'pr-[18px]')}
+            >
+              {view === 'month' ? (
+                <MonthGrid
+                  month={selected}
+                  today={today}
+                  items={items}
+                  locale={dfLocale}
+                  onDayClick={d => { goTo(d); setView('day'); }}
+                  onEventClick={openItem}
+                />
+              ) : (
+                <>
+                  <DayHeaderStrip days={days} colWidth={colWidth} locale={dfLocale} today={today} />
+                  <div className="mt-[6px] flex min-h-0 flex-1">
+                    <TimeGrid
+                      ref={gridRef}
+                      days={days}
+                      colWidth={colWidth}
+                      items={gridItems}
+                      members={members}
+                      locale={dfLocale}
+                      hourLabel={hourLabel}
+                      timeRange={timeRange}
+                      initialScrollTop={gridScroll.current}
+                      onScroll={top => { gridScroll.current = top; }}
+                      onSlotClick={onSlotClick}
+                      onEventClick={openItem}
+                    />
                   </div>
-                ))}
-              </div>
-            )}
-            {!hasExternalCalendar && (
-              <Link
-                to={`/${locale}/app/workspace/connected-apps`}
-                className="mt-4 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground border-t border-border pt-4"
-              >
-                <Plug className="h-3.5 w-3.5" /> Forbind Google Calendar eller Outlook for at se eksterne møder her
-              </Link>
-            )}
-            {/* Upcoming tasks */}
-            {upcomingTasks.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-                  <CheckSquare className="h-3 w-3" /> {t('pages.tasks.title')}
-                </p>
-                {upcomingTasks.map((task) => (
-                  <div key={task.id} className="border-l-2 border-warning pl-3">
-                    <p className="font-medium text-sm">{task.title.replace('📋 ', '')}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />{format(new Date(task.start_time), 'dd MMM', { locale: dateFnsLocale })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.section>
+
+      {popover && (
+        <EventPopover
+          item={popover.item}
+          anchor={popover.anchor}
+          members={memberList}
+          memberMap={members}
+          dateLabel={popoverDate(popover.item.start)}
+          timeLabel={popover.item.allDay ? '' : popoverTime(popover.item.start, popover.item.end)}
+          t={t}
+          onClose={closePopover}
+          onTitleCommit={title => patchItem(popover.item, { title })}
+          onKindChange={kind => patchItem(popover.item, { kind, color: KIND_COLOR[kind] })}
+          onAttendeesChange={attendeeIds => patchItem(popover.item, { attendeeIds })}
+        />
+      )}
     </div>
   );
 }

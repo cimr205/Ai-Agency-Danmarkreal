@@ -18,7 +18,12 @@ import {
 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/errors';
 
-export default function AiMediaPage() {
+interface AiMediaPageProps {
+  /** false when embedded under the unified Studio page, which renders its own title. */
+  showHeader?: boolean;
+}
+
+export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
   const [prompt, setPrompt] = useState('');
   const [genType, setGenType] = useState<string>('image');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -84,15 +89,17 @@ export default function AiMediaPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2.5">
-            <Sparkles className="h-5 w-5 text-primary" />
+        {showHeader ? (
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2.5">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold">AI Media Studio</h1>
+              <p className="text-sm text-muted-foreground">Generer billeder og annoncer med AI direkte i dit workspace</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-semibold">AI Media Studio</h1>
-            <p className="text-sm text-muted-foreground">Generer billeder og annoncer med AI direkte i dit workspace</p>
-          </div>
-        </div>
+        ) : <div />}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Badge variant="outline">{completedGenerations.length} genereret</Badge>
           {pendingGenerations.length > 0 && (

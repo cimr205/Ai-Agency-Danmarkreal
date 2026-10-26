@@ -41,10 +41,21 @@ const PLATFORM_PRESETS: PlatformPreset[] = [
   { id: '16:9', label: '16:9 — YouTube / landscape', width: 1920, height: 1080 },
 ];
 
-export default function VideoStudioPage() {
+interface VideoStudioPageProps {
+  /** false when embedded under the unified Studio page, which renders its own PageHeader. */
+  showHeader?: boolean;
+  /** Lets a parent (StudioPage) know when the full-bleed editor is open, so it can drop its own chrome. */
+  onEditorOpenChange?: (open: boolean) => void;
+}
+
+export default function VideoStudioPage({ showHeader = true, onEditorOpenChange }: VideoStudioPageProps) {
   const { t } = useI18n();
   const support = useMemo(() => detectVideoStudioSupport(), []);
-  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+  const [openProjectId, setOpenProjectIdState] = useState<string | null>(null);
+  const setOpenProjectId = (id: string | null) => {
+    setOpenProjectIdState(id);
+    onEditorOpenChange?.(id !== null);
+  };
   // Only set right after creating a brand-new project, so EditorProvider seeds the right
   // stage size before the first save bakes it into project_json. Reopening an existing
   // project must NOT reuse a stale preset — its own saved stage takes over on load.
@@ -57,7 +68,7 @@ export default function VideoStudioPage() {
   if (!support.supported) {
     return (
       <div className="space-y-6">
-        <PageHeader eyebrow={t('nav.videoStudio') || 'Video Studio'} title={t('nav.videoStudio') || 'Video Studio'} />
+        {showHeader && <PageHeader eyebrow={t('nav.videoStudio') || 'Video Studio'} title={t('nav.videoStudio') || 'Video Studio'} />}
         <BrowserSupportBanner missing={support.missing} />
       </div>
     );
@@ -113,31 +124,37 @@ export default function VideoStudioPage() {
     }
   };
 
+  const newVideoAction = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className="gap-1.5" disabled={createMutation.isPending}>
+          <Plus className="h-4 w-4" />
+          {t('videoStudio.newVideo') || 'New video'}
+          <ChevronDown className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {PLATFORM_PRESETS.map((preset) => (
+          <DropdownMenuItem key={preset.id} onClick={() => handleCreate(preset)}>
+            {t(`videoStudio.preset.${preset.id}`) || preset.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow={t('nav.marketing') || 'Marketing'}
-        title={t('nav.videoStudio') || 'Video Studio'}
-        description={t('videoStudio.pageDescription') || 'Produce videos and ads without leaving the platform.'}
-        actions={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="gap-1.5" disabled={createMutation.isPending}>
-                <Plus className="h-4 w-4" />
-                {t('videoStudio.newVideo') || 'New video'}
-                <ChevronDown className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {PLATFORM_PRESETS.map((preset) => (
-                <DropdownMenuItem key={preset.id} onClick={() => handleCreate(preset)}>
-                  {t(`videoStudio.preset.${preset.id}`) || preset.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-      />
+      {showHeader ? (
+        <PageHeader
+          eyebrow={t('nav.marketing') || 'Marketing'}
+          title={t('nav.videoStudio') || 'Video Studio'}
+          description={t('videoStudio.pageDescription') || 'Produce videos and ads without leaving the platform.'}
+          actions={newVideoAction}
+        />
+      ) : (
+        <div className="flex items-center justify-end">{newVideoAction}</div>
+      )}
 
       {isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

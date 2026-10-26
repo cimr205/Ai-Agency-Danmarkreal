@@ -5,7 +5,7 @@ import {
   TrendingUp, Clock, LogOut, Target,
   Megaphone, Bot, Send, Sparkles, Phone, Zap,
   UserCheck, CalendarDays, Wallet, UserPlus, Activity, BarChart3, CalendarClock,
-  Webhook, BookOpen, Menu,
+  Webhook, BookOpen, Menu, Linkedin,
 } from "lucide-react";
 import logo from '@/assets/logo.png';
 import { NavLink } from "@/components/NavLink";
@@ -40,6 +40,7 @@ function useNavData() {
     { title: t('nav.pipeline'), url: "crm/pipeline", icon: TrendingUp },
     { title: t('nav.leadGeneration'), url: "crm/lead-generation", icon: Sparkles },
     { title: t('nav.icp') || "ICP Finder", url: "crm/icp", icon: Target },
+    { title: t('nav.linkedinOutreach'), url: "crm/linkedin-outreach", icon: Linkedin },
   ];
 
   const marketingItems: NavItem[] = [

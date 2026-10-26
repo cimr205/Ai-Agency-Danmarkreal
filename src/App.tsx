@@ -29,6 +29,11 @@ const SignupPage = lazy(() => import("@/pages/auth/Signup"));
 const OAuthCallbackPage = lazy(() => import("@/pages/auth/OAuthCallback"));
 const MetaOAuthCallbackPage = lazy(() => import("@/pages/auth/MetaOAuthCallback"));
 const DashboardPage = lazy(() => import("@/pages/app/Dashboard"));
+const CrmDashboardPage = lazy(() => import("@/pages/app/crm/CrmDashboard"));
+const MarketingDashboardPage = lazy(() => import("@/pages/app/marketing/MarketingDashboard"));
+const FinanceDashboardPage = lazy(() => import("@/pages/app/finance/FinanceDashboard"));
+const HrDashboardPage = lazy(() => import("@/pages/app/hr/HrDashboard"));
+const ControlRoomDashboardPage = lazy(() => import("@/pages/app/workspace/ControlRoomDashboard"));
 const LeadsPage = lazy(() => import("@/pages/app/crm/LeadsPage"));
 const DealsPage = lazy(() => import("@/pages/app/crm/DealsPage"));
 const ColdCallerPage = lazy(() => import("@/pages/app/marketing/ColdCallerPage"));
@@ -36,6 +41,7 @@ const PhoneCompanionPage = lazy(() => import("@/pages/PhoneCompanionPage"));
 const VoiceAgentPage = lazy(() => import("@/pages/app/marketing/VoiceAgentPage"));
 const LeadGenerationPage = lazy(() => import("@/pages/app/crm/LeadGenerationPage"));
 const IcpPage = lazy(() => import("@/pages/app/crm/IcpPage"));
+const LinkedInOutreachPage = lazy(() => import("@/pages/app/crm/LinkedInOutreachPage"));
 const EmployeesPage = lazy(() => import("@/pages/app/hr/EmployeesPage"));
 const AttendancePage = lazy(() => import("@/pages/app/hr/AttendancePage"));
 const TimeTrackingPage = lazy(() => import("@/pages/app/hr/TimeTrackingPage"));
@@ -69,14 +75,13 @@ const OnboardingPage = lazy(() => import("@/pages/app/Onboarding"));
 const QuotesPage = lazy(() => import("@/pages/app/finance/QuotesPage"));
 const EmailTemplatesPage = lazy(() => import("@/pages/app/email/EmailTemplatesPage"));
 const AutomationPage = lazy(() => import("@/pages/app/Workflows"));
-const AiMediaPage = lazy(() => import("@/pages/app/ai/AiMediaPage"));
 const OperatingManagerPanel = lazy(() =>
   import("@/components/workspace/OperatingManagerPanel").then((m) => ({ default: m.OperatingManagerPanel }))
 );
 const WebhooksPage = lazy(() => import("@/pages/app/settings/WebhooksPage"));
 const AIConnectionPage = lazy(() => import("@/pages/app/settings/AIConnectionPage"));
 const MetaAdsManagePage = lazy(() => import("@/pages/app/marketing/MetaAdsManagePage"));
-const VideoStudioPage = lazy(() => import("@/pages/app/marketing/VideoStudioPage"));
+const StudioPage = lazy(() => import("@/pages/app/marketing/StudioPage"));
 const MonitoringPage = lazy(() => import("@/pages/app/MonitoringPage"));
 const HelpCenterPage = lazy(() => import("@/pages/app/HelpCenterPage"));
 const SubscriptionPage = lazy(() => import("@/pages/app/SubscriptionPage"));
@@ -280,11 +285,17 @@ const App = () => (
                 >
                   <Route path="dashboard" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
                   <Route path="onboarding" element={<OnboardingPage />} />
+                  <Route path="crm/dashboard" element={<ErrorBoundary><CrmDashboardPage /></ErrorBoundary>} />
+                  <Route path="marketing/dashboard" element={<ErrorBoundary><MarketingDashboardPage /></ErrorBoundary>} />
+                  <Route path="finance/dashboard" element={<ErrorBoundary><FinanceDashboardPage /></ErrorBoundary>} />
+                  <Route path="hr/dashboard" element={<ErrorBoundary><HrDashboardPage /></ErrorBoundary>} />
+                  <Route path="workspace/control-room" element={<ErrorBoundary><ControlRoomDashboardPage /></ErrorBoundary>} />
                   <Route path="crm/leads" element={<ErrorBoundary><LeadsPage /></ErrorBoundary>} />
                   <Route path="crm/pipeline" element={<Navigate to="../crm/deals?view=board" replace />} />
                   <Route path="crm/deals" element={<ErrorBoundary><DealsPage /></ErrorBoundary>} />
                   <Route path="crm/lead-generation" element={<ErrorBoundary><LeadGenerationPage /></ErrorBoundary>} />
                   <Route path="crm/icp" element={<ErrorBoundary><IcpPage /></ErrorBoundary>} />
+                  <Route path="crm/linkedin-outreach" element={<ErrorBoundary><LinkedInOutreachPage /></ErrorBoundary>} />
                   <Route path="clients" element={<ErrorBoundary><ClientsListPage /></ErrorBoundary>} />
                   <Route path="clients/:id" element={<ErrorBoundary><ClientView /></ErrorBoundary>} />
 
@@ -309,10 +320,11 @@ const App = () => (
                   <Route path="tasks" element={<Navigate to="../work/tasks" replace />} />
                   <Route path="settings" element={<Navigate to="../settings/company" replace />} />
                   <Route path="marketing/meta-ads" element={<ErrorBoundary><MetaAdsManagePage /></ErrorBoundary>} />
-                  <Route path="marketing/video-studio" element={<ErrorBoundary><VideoStudioPage /></ErrorBoundary>} />
+                  <Route path="marketing/studio" element={<ErrorBoundary><StudioPage /></ErrorBoundary>} />
+                  <Route path="marketing/video-studio" element={<Navigate to="../marketing/studio" replace />} />
                   <Route path="marketing/cold-caller" element={<ErrorBoundary><ColdCallerPage /></ErrorBoundary>} />
                   <Route path="marketing/voice-agent" element={<ErrorBoundary><VoiceAgentPage /></ErrorBoundary>} />
-                  <Route path="ai/media" element={<ErrorBoundary><AiMediaPage /></ErrorBoundary>} />
+                  <Route path="ai/media" element={<Navigate to="../marketing/studio" replace />} />
                   <Route path="pa" element={<ErrorBoundary><ClowdBotPage /></ErrorBoundary>} />
                   <Route path="autopilot" element={<ErrorBoundary><AutopilotPage /></ErrorBoundary>} />
                   <Route path="clowdbot" element={<Navigate to="../pa" replace />} />
