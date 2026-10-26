@@ -60,7 +60,7 @@ function useNavGroups(): NavGroup[] {
       section: "marketing", label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
       items: [
         { label: t("nav.marketingDashboard"), path: "marketing/dashboard", icon: SquaresFour },
-        { label: t("nav.studios") || "Studios", path: "marketing/studio", icon: FilmSlate },
+        { label: t("nav.studio") || "Studio", path: "marketing/studio", icon: FilmSlate },
         { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: PhoneCall },
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: PaperPlaneTilt },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },

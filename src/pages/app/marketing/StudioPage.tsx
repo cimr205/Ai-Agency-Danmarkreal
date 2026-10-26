@@ -45,7 +45,7 @@ export default function StudioPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow={t('nav.marketing') || 'Marketing'}
-        title={t('nav.studios') || 'Studios'}
+        title={t('nav.studio') || 'Studio'}
         description={t('studio.pageDescription') || 'Edit and generate video and image content without leaving the platform.'}
       />
 
