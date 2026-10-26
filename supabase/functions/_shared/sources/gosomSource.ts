@@ -58,7 +58,10 @@ async function createJob(query: string, location: string, maxResults: number): P
     // gosom's "depth" is roughly a scroll-page count; approximate from desired result count.
     depth: Math.min(Math.max(Math.ceil(maxResults / 20), 1), 10),
     email: false,
-    max_time: "5m",
+    // gosom's API decodes max_time as a Go time.Duration, which encoding/json unmarshals from an
+    // integer number of NANOSECONDS (not a "5m" string — that returns HTTP 422). 5 min = 300e9 ns.
+    // Verified live against gosom/google-maps-scraper web mode (a "5m" string 422s; 300000000000 → 201).
+    max_time: 5 * 60 * 1_000_000_000,
   };
 
   const res = await politeFetch(`${GOSOM_BASE_URL}/api/v1/jobs`, {
@@ -97,7 +100,10 @@ async function pollJob(
     });
     if (res.ok) {
       const data = await res.json();
-      const status = String(data?.status ?? data?.data?.status ?? "").toLowerCase();
+      // gosom's GET /jobs/:id returns PascalCase keys ("Status"), unlike its lowercase create
+      // response ("id"). Reading only `status` left this permanently "" → the job never looked
+      // done and always timed out. Verified live: a finished job reports {"Status":"ok"}.
+      const status = String(data?.Status ?? data?.status ?? data?.data?.status ?? "").toLowerCase();
       onProgress?.(`Gosom job ${jobId}: ${status || "working"}...`, 0);
       if (["ok", "finished", "done", "completed", "success"].includes(status)) {
         return await downloadResults(jobId);
@@ -139,14 +145,42 @@ async function downloadResults(jobId: string): Promise<GosomJobResult[]> {
   return parseGosomCsv(await csvRes.text());
 }
 
-// Naive CSV parser — sufficient for gosom's flat, mostly-comma-free fields. Not a full RFC4180
-// implementation (doesn't handle embedded commas/newlines inside quoted fields).
+// RFC4180-aware CSV parser. gosom's Google Maps export has commas AND double-quotes embedded in
+// fields (addresses like "Vej 1, 8900 Randers", and whole JSON blobs in complete_address/about/
+// reviews columns), so a naive line/comma split mis-aligns every row after the first comma-bearing
+// field. This tokenizes properly: quoted fields may contain commas, newlines, and "" escapes.
+function parseCsvRecords(csv: string): string[][] {
+  const records: string[][] = [];
+  let field = "";
+  let record: string[] = [];
+  let inQuotes = false;
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (csv[i + 1] === '"') { field += '"'; i++; } // escaped quote
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      record.push(field); field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && csv[i + 1] === "\n") i++; // CRLF
+      record.push(field); field = "";
+      if (record.length > 1 || record[0] !== "") records.push(record);
+      record = [];
+    } else field += c;
+  }
+  if (field !== "" || record.length > 0) { record.push(field); records.push(record); }
+  return records;
+}
+
 function parseGosomCsv(csv: string): GosomJobResult[] {
-  const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-  return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+  const records = parseCsvRecords(csv);
+  if (records.length < 2) return [];
+  const headers = records[0].map((h) => h.trim());
+  return records.slice(1).map((cells) => {
     const row: Record<string, string> = {};
     headers.forEach((h, i) => (row[h] = cells[i] ?? ""));
     return {
@@ -157,7 +191,10 @@ function parseGosomCsv(csv: string): GosomJobResult[] {
       postal_code: row["postal_code"],
       website: row["website"],
       category: row["category"] || row["categories"],
-      rating: row["rating"] ? Number(row["rating"]) : undefined,
+      // gosom's CSV column is `review_rating` (not `rating`); accept both.
+      rating: row["review_rating"] || row["rating"]
+        ? Number(row["review_rating"] || row["rating"])
+        : undefined,
       review_count: row["review_count"] || row["reviews"]
         ? Number(row["review_count"] || row["reviews"])
         : undefined,

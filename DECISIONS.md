@@ -208,3 +208,30 @@ blocker is external**: the public Overpass instance returns **502 "at capacity"*
 and explicitly says to self-host for automation — so OSM needs a self-hosted Overpass alongside the
 gosom/SearXNG Docker services. gosom + SearXNG themselves remain untested (no Docker daemon here).
 `deno check` clean on the edited source.
+
+## 10. Live QA of gosom + SearXNG via Docker (colima) — 3 more real bugs fixed
+
+Installed colima + docker + docker-compose, booted a Linux VM, ran
+`docker compose -f leadgen/docker-compose.yml -f <local JSON override> up -d` — both
+`leadgen-gosom` (:8081) and `leadgen-searxng` (:8082) came up healthy.
+
+**SearXNG** — `findWebsite("Dagrofa","København")` → `https://dagrofa.dk` live. The compose
+file's JSON-format gotcha is real: the API 403s until `search.formats` includes `json`; mounting
+a settings.yml override (with a locally-generated secret) fixed it. Verified end-to-end. ✓
+
+**gosom** — the "NOT LIVE-TESTED" adapter had three bugs that made it return 0 leads:
+1. **`max_time: "5m"` (string) → HTTP 422.** gosom decodes it as a Go `time.Duration`, which
+   `encoding/json` unmarshals from an integer number of NANOSECONDS. Fixed → `5*60*1e9`.
+   (string "5m" → 422; `300000000000` → 201, verified live.)
+2. **Poll read `status`, gosom returns `Status` (PascalCase).** Its GET /jobs/:id uses PascalCase
+   keys even though the create response uses lowercase `id` — so the poll saw "" forever and every
+   job "timed out" after 120s despite finishing in ~30s. Fixed → read `Status ?? status`.
+3. **CSV parser broke on real data.** `?format=json` is ignored (gosom always returns text/csv),
+   and the naive comma-split mis-aligned every row once an address/JSON column contained a comma.
+   Replaced with an RFC4180-aware tokenizer (quoted fields may hold commas/newlines/`""`), and
+   fixed the rating column name (`review_rating`, not `rating`).
+
+After the fixes: `gosomSource.search(["tømrer"],"Randers")` returns 10 real Randers carpenters with
+correct names, comma-bearing addresses, phones, websites and ratings (e.g. "Nordbyens Tømrer og
+Snedker — Lavendelvej 8, 8930 Randers — ★5"). The full open-source scraping layer (gosom + SearXNG
++ OSM) is now live-verified. `deno check` clean. Docker services are torn down after the test.
