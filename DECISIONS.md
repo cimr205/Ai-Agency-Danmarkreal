@@ -173,3 +173,19 @@ times). `leadSource.ts` was **not modified** — `LeadSourceName` already listed
   `lead-generation-chat/index.ts`'s `CATEGORY_MAP`/`KRAK_CATEGORY_MAP`, falling back to a
   name-text Overpass query for anything unmapped. Expect to extend the map as real queries surface
   gaps — this is a known, intentional v1 limitation, not an oversight.
+
+## 8. Integration checkpoint (ready agents merged)
+
+Merged into `feature/leadgen-chat` (local, not pushed):
+- **Chat/persistence agent** → `lead-generation-chat/index.ts` now persists into
+  `lead_gen_sessions`/`lead_gen_results` + owner-validation helpers (+330 lines).
+- **Source agent** → self-hosted sources `_shared/sources/{gosomSource,osmSource,searxngSource,fetchPolite}.ts`
+  + `leadgen/docker-compose.yml` (gosom/SearXNG), Apify kept as opt-in fallback.
+
+Both merged conflict-free. `npm run type-check` → **0 errors** (frontend).
+The `a17c9e52` worktree had nothing new; `a46fb731` is stale (behind HEAD) — not merged.
+
+**QA status:** the merged logic is Deno edge-function + Docker-service code — **not verifiable in this
+environment** (no Deno CLI, no Docker for gosom/SearXNG, no edge-function deploy access). Frontend
+compiles. Remaining before push: deploy + Deno check the functions, run the gosom/SearXNG services,
+and an end-to-end chat→search→confirm→save pass against the SSE contract (§6/§6b).
