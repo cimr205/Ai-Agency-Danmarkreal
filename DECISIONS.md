@@ -99,6 +99,35 @@ New event types added, same `data: {type, ...}\n\n` shape:
 
 No cold-mail sending exists or will exist anywhere in this feature (markedsføringsloven §10) — confirmed as a hard constraint, not a suggestion.
 
+## 6b. Finalized chat API contract (binding for Chat-agent AND UI-agent — do not diverge)
+
+`POST ${VITE_SUPABASE_URL}/functions/v1/lead-generation-chat`
+Headers: `Authorization: Bearer <session.access_token>`, `apikey: <VITE_SUPABASE_PUBLISHABLE_KEY>`, `Content-Type: application/json`
+(same auth pattern as `src/lib/streamChat.ts` — direct `fetch`, not `supabase.functions.invoke`, so the raw `ReadableStream` body is accessible for manual SSE line-parsing.)
+
+Request body, one of three `mode`s:
+
+1. `{ mode: "chat", messages: ChatMsg[], session_id?: string }` — free-text chat turn. No `session_id` → create a new `lead_gen_sessions` row. Parses intent as the existing "chat-based search mode" code already does, but now persists incrementally into `lead_gen_results` as it streams, instead of only returning results to the client and discarding them.
+2. `{ mode: "structured", category, location, maxResults, filters }` — existing form-based path, same persistence change as above.
+3. `{ mode: "confirm", session_id: string, confirm: { kind: "radius_expand" | "save_confirm", accept: boolean, result_ids?: string[] } }` — resumes a session that is paused awaiting confirmation (`lead_gen_sessions.awaiting_confirmation_type` is set).
+
+Behavior:
+- When a search (`chat` or `structured`) finds fewer than the requested/minimum count, the backend does **not** silently retry broader (removing the old auto-expand behavior). Instead it sets `awaiting_confirmation_type = 'radius_expand'`, stores suggestion data in `awaiting_confirmation_payload`, emits `confirm_needed` SSE event (shape: `ConfirmNeededEvent` with `kind: "radius_expand"` from `leadSource.ts`), and closes the stream.
+- At the end of **every** successful search (shortfall or not), after results are scored/enriched, the backend emits a `confirm_needed` event with `kind: "save_confirm"` (count = current result count) and closes the stream. Nothing is ever auto-saved — "intet gemmes uden bekræftelse" applies to every search, not just the shortfall case.
+- Client resumes with `mode: "confirm"`:
+  - `radius_expand` + `accept: true` → reopens the stream, searches broader (wider queries / neighboring cities from `suggested_cities`), streams more `leads_batch`/`owner_validated`, ends with a fresh `leads_final` + a new `save_confirm` `confirm_needed`.
+  - `radius_expand` + `accept: false` → stream goes straight to `leads_final` + `save_confirm` `confirm_needed` with the results already have.
+  - `save_confirm` + `accept: true` → server maps the session's `lead_gen_results` (or just `result_ids` if provided, for partial save) into the `leads` table, deduping against existing leads via the new phone/domain/name+city indexes, sets `imported=true` + `imported_lead_id`, emits `saved` event `{ session_id, saved_count, skipped_count, skipped_reasons[] }`, then `done`.
+  - `save_confirm` + `accept: false` → clears `awaiting_confirmation_type`, emits `done`, nothing saved.
+
+SSE event type union (extends the existing `sseEvent(type, data)` wire format, one new event per line, `data: {"type": "...", ...}\n\n`):
+`status | progress | leads_batch | owner_validated | confirm_needed | leads_final | saved | done | error`
+
+Frontend quick-reply chips map directly to `confirm` calls:
+- "Udvid til Xkm" / "Nej, vis hvad du har" → `radius_expand` accept true/false
+- "Gem alle N leads i Leads" / "Annuller" → `save_confirm` accept true/false
+- "Kun med telefon" / "Kun ejer valideret" → client-side filters on already-streamed `leads_final`, no new request needed.
+
 ## 7. Agent team / branching
 
 Using git worktrees under `../worktrees/leadgen-<agent>` off `main`, merged back via PR-style local
