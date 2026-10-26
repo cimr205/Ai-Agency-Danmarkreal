@@ -1,0 +1,73 @@
+# Self-hosted, free/open-source services backing the lead-generation chat feature.
+# See DECISIONS.md section 2 for why these exist (open-source-first, Apify kept only as an
+# opt-in fallback behind APIFY_API_TOKEN).
+#
+# No docker-compose.yml convention existed anywhere else in this repo before this file — the
+# existing side-services (e.g. a scraper under a different feature) use ad-hoc start.sh scripts.
+# This file is scoped to leadgen/ on purpose, so it doesn't impose a new repo-wide convention.
+#
+# Usage:
+#   docker compose -f leadgen/docker-compose.yml up -d
+#
+# NOT LIVE-TESTED: no Docker daemon was available while writing this (sandboxed dev environment).
+# Reviewed by hand for YAML/Compose-schema correctness only. Smoke-test both services before
+# relying on them — see the SearXNG JSON-API note below for the one gotcha already known about.
+
+services:
+  gosom:
+    image: gosom/google-maps-scraper:latest
+    container_name: leadgen-gosom
+    # Run in web/job-API mode (vs. the one-shot CLI mode) so gosomSource.ts can submit jobs and
+    # poll for completion instead of needing a long-lived CLI process.
+    command: ["-web", "-data-folder", "/gmapsdata"]
+    ports:
+      # Host 8081 -> container 8080. Host port deliberately avoids 8080, which is commonly used
+      # by other local dev servers (including this repo's own `npm run dev` on 8080 for the
+      # frontend... Vite actually defaults here to 8080 per CLAUDE.md, hence the explicit remap).
+      - "8081:8080"
+    volumes:
+      - gosom_data:/gmapsdata
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: leadgen-searxng
+    ports:
+      - "8082:8080"
+    volumes:
+      - searxng_config:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8082/
+      # Generate a real secret before any non-local use: `openssl rand -hex 32`.
+      - SEARXNG_SECRET=changeme-generate-a-real-secret-before-production
+    restart: unless-stopped
+
+volumes:
+  gosom_data:
+  searxng_config:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORTANT — SearXNG JSON API is disabled by default:
+#
+# SearXNG ships with only `html` in `search.formats` out of the box (JSON is disabled by
+# default as an anti-scraping measure on public instances). `searxngSource.ts` calls
+# `GET /search?format=json`, which will 403 until this is enabled. To enable it, mount a
+# settings.yml override, e.g.:
+#
+#   searxng:
+#     volumes:
+#       - searxng_config:/etc/searxng
+#       - ./searxng-settings.yml:/etc/searxng/settings.yml:ro
+#
+# with a settings.yml containing at least:
+#
+#   search:
+#     formats:
+#       - html
+#       - json
+#
+# A settings.yml is intentionally NOT committed here, because SearXNG requires a unique,
+# locally-generated `secret_key` per deployment (committing one would be a shared-secret leak
+# risk across every environment that reuses this compose file). Generate the override file
+# locally, mount it as shown above, and never commit the generated secret.
+# ─────────────────────────────────────────────────────────────────────────────
