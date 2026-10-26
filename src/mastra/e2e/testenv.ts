@@ -116,17 +116,21 @@ export function buildCompanyRow(label: string, mode: string) {
 }
 
 // NOTE: schema facts verified against the live test DB (committed types.ts was
-// stale): user_roles has NO company_id (role is per-user; company comes from
-// profiles.company_id); leads has NO record_type; deals/tasks require created_by.
+// stale in places): user_roles DOES have company_id (confirmed by later
+// production-schema forensics, migration 20261023000001_user_roles_company_id —
+// it mirrors production; a prior pass here incorrectly believed it didn't exist).
+// handle_new_user() only inserts into `profiles` now (no longer seeds a default
+// user_roles row), so provisioning must INSERT user_roles, not UPDATE.
+// leads has NO record_type; deals/tasks require created_by.
 
 /** UPDATE payload for the trigger-created profile row (matched by user_id). */
 export function buildProfileUpdate(companyId: string, fullName: string) {
   return { company_id: companyId, full_name: fullName, onboarding_completed: true };
 }
 
-/** UPDATE payload for the trigger-created user_roles row (matched by user_id). */
-export function buildUserRoleUpdate(role: AppRole) {
-  return { role, can_grant_permissions: role === "owner" };
+/** INSERT row for a user's role in a company (no default row is trigger-created). */
+export function buildUserRoleRow(userId: string, companyId: string, role: AppRole) {
+  return { user_id: userId, company_id: companyId, role, can_grant_permissions: role === "owner" };
 }
 
 export function buildLeadRow(companyId: string, createdBy: string, i: number) {
