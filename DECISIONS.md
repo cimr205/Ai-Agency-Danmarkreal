@@ -103,3 +103,44 @@ No cold-mail sending exists or will exist anywhere in this feature (markedsføri
 
 Using git worktrees under `../worktrees/leadgen-<agent>` off `main`, merged back via PR-style local
 merges into a `feature/leadgen-chat` integration branch (not pushed to `main` until QA passes).
+
+## 8. Source-agent addendum — gosom / OSM / SearXNG implementation notes
+
+Built by the Source-agent: `leadgen/docker-compose.yml` (gosom + SearXNG services) and
+`supabase/functions/_shared/sources/{gosomSource,osmSource,searxngSource}.ts`, plus a shared
+`fetchPolite.ts` helper (User-Agent + robots.txt check + per-domain token-bucket rate limit,
+covering mission items #26 and #48 for every adapter at once rather than duplicating it three
+times). `leadSource.ts` was **not modified** — `LeadSourceName` already listed `"Gosom"`, `"OSM"`,
+`"SearXNG"`, so no shared-type change was needed.
+
+- **gosom is confirmed active**: MIT license, 337+ commits, actively maintained as of this
+  writing, with a documented web/job-API mode (`-web` flag, REST API at `/api/v1/jobs`,
+  OpenAPI docs at `/api/docs`). No substitution was needed — section 2's choice holds.
+- **Inherited risk, not solved here**: gosom scrapes Google Maps, exactly like the existing
+  Apify `compass~crawler-google-places` path it's meant to replace as the default. Swapping
+  the implementation does not change the underlying Google ToS exposure — this was already true
+  before this change and is a product/legal decision outside this agent's scope, not a new risk
+  introduced by self-hosting.
+- **Not live-tested — be aware before relying on these in production**: this environment has no
+  Docker daemon and no Deno runtime, so none of gosom's job-API, Overpass's response shape, DAWA's
+  geocoding response, or SearXNG's JSON API were exercised against real network calls. What *was*
+  verified: `leadgen/docker-compose.yml` parses as valid YAML with the expected structure
+  (checked with PyYAML in an isolated venv, not `docker compose config` — no Docker CLI present);
+  all four new/changed `.ts` files typecheck cleanly under `tsc --strict --noEmit` against a
+  minimal `Deno` global shim (no real Deno/Supabase type definitions installed either). Before
+  trusting these in production, a human/CI step should: (a) `docker compose -f
+  leadgen/docker-compose.yml up -d` and hit `gosom`'s `/api/docs` to confirm the actual job-create
+  JSON field names match `gosomSource.ts`'s `createJob()` payload (adjust if gosom's schema has
+  moved on from what its README documents); (b) confirm Overpass's response for a real DK query
+  matches the `tags`/`center` shape assumed in `osmSource.ts`; (c) mount a SearXNG `settings.yml`
+  enabling `search.formats: [html, json]` — SearXNG disables its JSON API by default, documented
+  inline in `leadgen/docker-compose.yml`, and `findWebsite()` will 403 without it.
+- **No `GOSOM_BASE_URL`/`SEARXNG_BASE_URL` env vars are required to be set for self-hosted local
+  dev** — both adapters default to `http://localhost:8081` (gosom) and `http://localhost:8082`
+  (SearXNG), matching the host ports mapped in `leadgen/docker-compose.yml`. Set the env vars only
+  to point at a non-default host (e.g. a shared staging instance instead of localhost).
+- **OSM tag mapping is a heuristic, not exhaustive**: `osmSource.ts`'s Danish-term → OSM
+  `craft`/`shop`/`office`/`amenity` tag map covers the common trades already in
+  `lead-generation-chat/index.ts`'s `CATEGORY_MAP`/`KRAK_CATEGORY_MAP`, falling back to a
+  name-text Overpass query for anything unmapped. Expect to extend the map as real queries surface
+  gaps — this is a known, intentional v1 limitation, not an oversight.
