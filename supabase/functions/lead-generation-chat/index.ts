@@ -1,6 +1,6 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import type { ConfirmNeededEvent, OwnerValidation, ComplianceFlags } from "../_shared/leadSource.ts";
 // NOTE (Chat-agent, 2026-10-26): ownerValidation.ts / complianceFilter.ts are being built by the
 // Enrichment-agent in a parallel worktree and do not exist on this branch yet. Importing them
@@ -230,7 +230,7 @@ async function searchGoogleMaps(
     const items = await runRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Google Maps: ${items.length} virksomheder`, items.length);
-    return items.map(mapGoogleItem).filter(Boolean);
+    return items.map(mapGoogleItem).filter((l): l is Lead => l !== null);
   } catch (e) {
     console.error("Google Maps error:", e);
     return await searchGoogleMapsAsync(token, searchQueries, maxResults, onProgress);
@@ -281,7 +281,7 @@ async function searchGoogleMapsAsync(
     const items = await dataRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Google Maps: ${items.length} virksomheder`, items.length);
-    return items.map(mapGoogleItem).filter(Boolean);
+    return items.map(mapGoogleItem).filter((l): l is Lead => l !== null);
   } catch { return []; }
 }
 
@@ -380,7 +380,7 @@ async function searchKrak(
     const items = await runRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Krak: ${items.length} virksomheder`, items.length);
-    return items.map(mapKrakApifyItem).filter(Boolean).slice(0, maxResults);
+    return items.map(mapKrakApifyItem).filter((l): l is Lead => l !== null).slice(0, maxResults);
   } catch (e) {
     console.error("Krak Apify error:", e);
     return await searchKrakAsync(token, keyword, maxResults, onProgress);
@@ -436,7 +436,7 @@ async function searchKrakAsync(
     const items = await dataRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Krak: ${items.length} virksomheder`, items.length);
-    return items.map(mapKrakApifyItem).filter(Boolean).slice(0, maxResults);
+    return items.map(mapKrakApifyItem).filter((l): l is Lead => l !== null).slice(0, maxResults);
   } catch { return []; }
 }
 
@@ -572,7 +572,8 @@ async function enrichLeadContacts(
 
   const results = await Promise.allSettled(
     batch.map(async lead => {
-      const url = lead.website.startsWith("http") ? lead.website : `https://${lead.website}`;
+      const site = lead.website ?? "";
+      const url = site.startsWith("http") ? site : `https://${site}`;
       const scraped = await scrapeContactFromWebsite(url);
       return { leadName: lead.name, ...scraped };
     }),
@@ -702,7 +703,9 @@ function normalizeDomain(url: string): string {
 // (same tables + columns lead-gen-api/index.ts already writes, so results
 // stay compatible with src/hooks/api/useLeadGen.ts and LeadGenerationPage.tsx)
 // ═══════════════════════════════════════════════════════════
-type SupabaseServiceClient = ReturnType<typeof createClient>;
+// Untyped schema: this function writes columns added by the leadgen migration that aren't in the
+// generated Database types yet, so a strict client would type every insert/update as `never`.
+type SupabaseServiceClient = SupabaseClient<any>;
 
 function mapActiveStatus(status?: string): "active_likely" | "uncertain" | "inactive_likely" {
   const s = (status || "").toLowerCase();
@@ -874,8 +877,7 @@ async function runOwnerValidationAndCompliance(
       let compliance: ComplianceFlags | null = null;
       try {
         owner = await validateOwner({
-          companyName: lead.name,
-          cvrNumber: lead.number || undefined,
+          name: lead.name,
           website: lead.website || undefined,
         });
       } catch (e) {
@@ -1013,11 +1015,11 @@ function areDuplicates(a: Lead, b: Lead): boolean {
   if (nameA && nameB && nameA.length > 3 && nameB.length > 3) {
     if (nameA === nameB) return true;
     if (nameA.includes(nameB) || nameB.includes(nameA)) {
-      const cityA = normalize(a.city || a.address), cityB = normalize(b.city || b.address);
+      const cityA = normalize(a.city || a.address || ""), cityB = normalize(b.city || b.address || "");
       if (cityA && cityB && (cityA.includes(cityB) || cityB.includes(cityA))) return true;
     }
   }
-  const phoneA = normalizePhone(a.phone), phoneB = normalizePhone(b.phone);
+  const phoneA = normalizePhone(a.phone || ""), phoneB = normalizePhone(b.phone || "");
   if (phoneA && phoneB && phoneA.length >= 8 && phoneA === phoneB) return true;
   if (a.website && b.website) {
     const domA = normalizeDomain(a.website), domB = normalizeDomain(b.website);
@@ -1157,12 +1159,12 @@ function scoreAndRank(leads: Lead[], intent: {
       if (lead.email_confidence === "high") score += 0.5;
 
       // Multi-source bonus
-      if (lead.sources?.length >= 2) { score += 1; match_reasons.push(`🔗 ${lead.sources.length} kilder`); }
+      if ((lead.sources?.length ?? 0) >= 2) { score += 1; match_reasons.push(`🔗 ${lead.sources?.length ?? 0} kilder`); }
       if (lead.sources?.includes("Krak")) match_reasons.push("📞 Krak");
       if (lead.sources?.includes("Google")) match_reasons.push("🗺️ Google");
 
       score = Math.max(1, Math.min(10, Math.round(score)));
-      return { ...lead, score, match_reasons, phone: normalizePhoneNumber(lead.phone) };
+      return { ...lead, score, match_reasons, phone: normalizePhoneNumber(lead.phone || "") };
     })
     .filter(lead => {
       if (intent.requireEmail && !lead.email) return false;
