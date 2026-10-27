@@ -123,7 +123,7 @@ export default function TimeTrackingPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">{t('workforce.timeTrackingTitle')}</h1>
         <p className="text-muted-foreground">{t('workforce.timeTrackingSubtitle')}</p>

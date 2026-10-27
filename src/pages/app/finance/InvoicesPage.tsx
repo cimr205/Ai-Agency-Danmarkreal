@@ -391,7 +391,7 @@ export default function InvoicesPage() {
   }), [invoices]);
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.invoices.title')}</h1>

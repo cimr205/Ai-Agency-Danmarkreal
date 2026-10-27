@@ -80,7 +80,7 @@ export default function InboxPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] min-h-[600px] flex-col space-y-4 pb-2">
+    <div className="workspace-theme flex h-[calc(100vh-7rem)] min-h-[600px] flex-col space-y-4 pb-2">
       <PageHeader
         eyebrow={t('nav.communication') || 'Communication'}
         title={t('pages.inbox.title')}

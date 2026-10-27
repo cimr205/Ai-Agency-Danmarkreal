@@ -52,7 +52,7 @@ export default function EmployeesPage() {
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.hr') || 'HR'}
         title={t('hr.employeesTitle')}

@@ -404,7 +404,7 @@ export default function ColdCallerPage() {
 
   if (leadsLoading) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center" role="status">
+      <div className="workspace-theme flex min-h-[500px] items-center justify-center" role="status">
         <Loader2 className="h-7 w-7 animate-spin text-primary" />
         <span className="sr-only">{t('devicePowerDialer.loading')}</span>
       </div>
@@ -412,7 +412,7 @@ export default function ColdCallerPage() {
   }
 
   return (
-    <WorkspaceFrame className="min-h-[720px] flex-col lg:flex-row">
+    <WorkspaceFrame className="workspace-theme min-h-[720px] flex-col lg:flex-row">
       <div className="flex w-full flex-col gap-[10px] lg:w-[260px] lg:shrink-0">
         <WorkspaceSidebarPanel
           title={t('devicePowerDialer.queue.title')}

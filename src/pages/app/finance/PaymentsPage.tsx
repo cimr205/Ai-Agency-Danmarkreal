@@ -99,7 +99,7 @@ export default function PaymentsPage() {
   }, [allPayments]);
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('payments.title')}</h1>

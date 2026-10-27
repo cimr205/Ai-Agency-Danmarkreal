@@ -52,7 +52,7 @@ export default function AttendancePage() {
   const checkedOut = filteredAttendance.filter(r => r.check_out).length;
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-foreground">{t('hr.attendanceTitle')}</h1><p className="text-muted-foreground">{format(new Date(), "EEEE, d. MMMM yyyy", { locale: dateFnsLocale })}</p></div>
       </div>

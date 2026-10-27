@@ -52,7 +52,7 @@ export default function LeavePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-foreground">{t('hr.leaveTitle')}</h1><p className="text-muted-foreground">{t('hr.leaveSubtitle')}</p></div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

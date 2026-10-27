@@ -18,10 +18,18 @@ export function WorkspaceGradientSurface({ children, className }: { children: Re
   );
 }
 
-/** The dark frame that holds the sidebar + gradient surface side by side. */
+/**
+ * The soft glass tray that holds the sidebar + gradient surface side by
+ * side — a frosted emerald/terracotta wash rather than a flat black panel,
+ * backdrop-blurred so anything that peeks through (tiles, rows) reads as
+ * glass sitting in the tray, not a hard-edged box.
+ */
 export function WorkspaceFrame({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('flex gap-[10px] rounded-[32px] bg-workspace-frame p-2', className)}>
+    <div
+      className={cn('flex gap-[10px] rounded-[32px] border p-2 backdrop-blur-xl', className)}
+      style={{ background: 'var(--workspace-frame)', borderColor: 'var(--workspace-frame-border)' }}
+    >
       {children}
     </div>
   );
@@ -42,7 +50,7 @@ export function WorkspaceSurface({ children, className }: { children: ReactNode;
   );
 }
 
-/** A black pill button — reserved for the single primary action per screen. */
+/** The emerald pill button — reserved for the single primary action per screen. */
 export function WorkspacePillButton({
   children,
   className,
@@ -52,7 +60,7 @@ export function WorkspacePillButton({
     <button
       type="button"
       className={cn(
-        'inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-workspace-ink px-5 text-sm font-semibold text-white transition-opacity disabled:opacity-40',
+        'inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-workspace-accent px-5 text-sm font-semibold text-white shadow-[0_6px_16px_-6px_rgba(22,129,90,0.55)] transition-[opacity,transform] hover:-translate-y-px disabled:translate-y-0 disabled:opacity-40',
         className,
       )}
       {...props}

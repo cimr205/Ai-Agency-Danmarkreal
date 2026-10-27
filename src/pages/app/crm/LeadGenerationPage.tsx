@@ -274,7 +274,7 @@ export default function LeadGenerationPage() {
   // ─── RENDER ───────────────────────────────────────────────
   return (
     <TooltipProvider>
-    <div className="flex flex-col gap-6 p-1 pb-8 max-w-7xl mx-auto">
+    <div className="workspace-theme flex flex-col gap-6 p-1 pb-8 max-w-7xl mx-auto">
       {/* HERO + SEARCH FORM — workspace gradient surface */}
       <WorkspaceFrame>
         <WorkspaceGradientSurface className="p-5 sm:p-7">

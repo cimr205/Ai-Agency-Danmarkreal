@@ -301,7 +301,7 @@ export default function EmailsPage() {
   // inbox UI before we actually know the connection state.
   if (gmailAccount.isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
         </div>
@@ -316,7 +316,7 @@ export default function EmailsPage() {
   // Not connected
   if (!isConnected) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
           <p className="text-muted-foreground">{t('pages.email.connectSyncDesc')}</p>

@@ -39,7 +39,7 @@ export function WorkspaceActiveRow({
         <motion.span
           layoutId={layoutId}
           transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-          className="absolute inset-0 rounded-full bg-workspace-panel-row"
+          className="absolute inset-0 rounded-full bg-workspace-panel-row-active"
         />
       )}
       <span className="relative">{children}</span>

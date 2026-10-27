@@ -528,7 +528,7 @@ export default function LeadsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="workspace-theme text-center py-12">
         <p className="text-destructive">{t('common.error')}: {error.message}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
       </div>
@@ -537,7 +537,7 @@ export default function LeadsPage() {
 
   return (
     <div
-      className="relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
+      className="workspace-theme relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(22,129,90,0.16),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(221,122,60,0.14),transparent_25%),linear-gradient(135deg,#f3faf5_0%,#f6faf2_52%,#fdf3e8_100%)] p-4 text-workspace-ink before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-emerald-400/10 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-orange-300/15 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -976,7 +976,7 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className={cellPad}>
                         <div className="flex flex-col">
-                          <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
+                          <span className="font-semibold tracking-[-0.01em] text-workspace-ink">{lead.name}</span>
                           {lead.acquisition_source && (
                             <span className="mt-1 w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
                               {lead.acquisition_source}

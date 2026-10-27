@@ -96,7 +96,7 @@ export default function ClientsListPage() {
   );
 
   return (
-    <div className="space-y-10">
+    <div className="workspace-theme space-y-10">
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -41,7 +41,7 @@ export default function StudioPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.marketing') || 'Marketing'}
         title={t('nav.studio') || 'Studio'}

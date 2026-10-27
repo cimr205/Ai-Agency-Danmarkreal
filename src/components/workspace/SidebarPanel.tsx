@@ -25,7 +25,10 @@ export function WorkspaceSidebarPanel({
 
   if (!children) {
     return (
-      <div className="flex h-14 items-center justify-between rounded-[18px] bg-workspace-panel px-[18px]">
+      <div
+        className="flex h-14 items-center justify-between rounded-[18px] px-[18px]"
+        style={{ background: 'var(--workspace-panel)' }}
+      >
         <h2 className="text-[16px] font-semibold text-workspace-ink-on-dark">{title}</h2>
         <ChevronRight className="h-[18px] w-[18px] text-workspace-ink-on-dark" aria-hidden="true" />
       </div>
@@ -33,7 +36,7 @@ export function WorkspaceSidebarPanel({
   }
 
   return (
-    <div className="rounded-[18px] bg-workspace-panel p-[18px]">
+    <div className="rounded-[18px] p-[18px]" style={{ background: 'var(--workspace-panel)' }}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between">
         <h2 className="text-[16px] font-semibold text-workspace-ink-on-dark">{title}</h2>
         <div className="flex items-center gap-2">

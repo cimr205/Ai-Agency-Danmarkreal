@@ -70,7 +70,7 @@ export default function IcpPage() {
   // ─── WIZARD VIEW ──────────────────────────────────────────
   if (view === "wizard") {
     return (
-      <div className="space-y-4">
+      <div className="workspace-theme space-y-4">
         <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => { setView("list"); setEditingIcp(null); }}>
           <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
         </Button>
@@ -90,7 +90,7 @@ export default function IcpPage() {
   // ─── MATCHES VIEW ─────────────────────────────────────────
   if (view === "matches" && selectedIcpId) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <Button variant="ghost" size="sm" className="gap-1.5 mb-3" onClick={() => setView("list")}>
             <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
@@ -181,7 +181,7 @@ export default function IcpPage() {
 
   // ─── LIST VIEW (default) ──────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.crm')}
         title={t('icp.title')}

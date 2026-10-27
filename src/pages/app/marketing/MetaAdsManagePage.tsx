@@ -33,7 +33,7 @@ export default function MetaAdsManagePage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight text-foreground">{t('pages.meta.title')}</h1>
