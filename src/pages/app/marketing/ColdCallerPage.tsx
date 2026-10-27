@@ -5,7 +5,6 @@ import {
   CalendarClock,
   CheckCircle2,
   Clock3,
-  History,
   Loader2,
   PhoneCall,
   PhoneOff,
@@ -13,16 +12,24 @@ import {
   Smartphone,
   ThumbsDown,
   ThumbsUp,
-  Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { PhoneDeviceConnection } from '@/components/power-dialer/PhoneDeviceConnection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  WorkspaceFrame,
+  WorkspaceGradientSurface,
+  WorkspacePillButton,
+  WorkspaceSurface,
+} from '@/components/workspace/WorkspacePanel';
+import { WorkspaceSidebarPanel } from '@/components/workspace/SidebarPanel';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { WorkspaceActiveRow } from '@/components/workspace/ActiveRow';
 import { useLeads, type LeadWithOwner } from '@/hooks/api/useLeads';
 import {
   useLogPowerDialerCall,
@@ -46,6 +53,24 @@ import { cn } from '@/lib/utils';
 
 const PENDING_CALL_KEY = 'crm-power-dialer-pending-v1';
 
+// TEMP — visual QA only, removed before this change ships. Lets the design
+// review take real screenshots without a login/company session, mirroring
+// calendar/demoEvents.ts's `?demo=1` convention.
+function isScreenshotDemoMode() {
+  return import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo');
+}
+const DEMO_LEADS: LeadWithOwner[] = [
+  { id: 'demo-1', name: 'Mette Holm', company_name: 'Holm Rådgivning ApS', email: 'mette@holm.dk', phone: '+45 20 11 22 33', notes: 'Spurgte ind til enterprise-planen sidste uge.' } as LeadWithOwner,
+  { id: 'demo-2', name: 'Jakob Lind', company_name: 'Lind Byg A/S', email: 'jakob@lindbyg.dk', phone: '+45 30 44 55 66', notes: null } as LeadWithOwner,
+  { id: 'demo-3', name: 'Sara Nissen', company_name: 'Nissen Consulting', email: 'sara@nissen.dk', phone: '+45 22 77 88 99', notes: null } as LeadWithOwner,
+];
+const DEMO_CALLS = [
+  { id: 'c1', lead_id: 'demo-4', phone_number: '+4512340000', outcome: 'no_answer', dialed_at: new Date().toISOString(), callback_at: null, lead: { id: 'demo-4', name: 'Peter Krogh', company_name: 'Krogh ApS', phone: '+4512340000' } },
+  { id: 'c2', lead_id: 'demo-5', phone_number: '+4512340001', outcome: 'interested', dialed_at: new Date().toISOString(), callback_at: null, lead: { id: 'demo-5', name: 'Anne Dahl', company_name: 'Dahl Partners', phone: '+4512340001' } },
+] as unknown as ReturnType<typeof usePowerDialerCalls>['data'];
+
+type DialerView = 'queue' | 'history' | 'setup';
+
 interface PendingCall {
   version: 1;
   leadId: string;
@@ -58,31 +83,36 @@ const OUTCOMES: Array<{
   value: CallOutcome;
   labelKey: string;
   icon: typeof PhoneOff;
+  dotClassName: string;
   selectedClassName: string;
 }> = [
   {
     value: 'no_answer',
     labelKey: 'devicePowerDialer.outcomes.noAnswer',
     icon: PhoneOff,
-    selectedClassName: 'border-muted-foreground bg-muted text-foreground',
+    dotClassName: 'bg-workspace-outcome-none',
+    selectedClassName: 'border-workspace-outcome-none bg-workspace-outcome-none/10 text-foreground',
   },
   {
     value: 'callback',
     labelKey: 'devicePowerDialer.outcomes.callback',
     icon: CalendarClock,
-    selectedClassName: 'border-amber-500 bg-amber-500/10 text-amber-400',
+    dotClassName: 'bg-workspace-outcome-callback',
+    selectedClassName: 'border-workspace-outcome-callback bg-workspace-outcome-callback/10 text-foreground',
   },
   {
     value: 'interested',
     labelKey: 'devicePowerDialer.outcomes.interested',
     icon: ThumbsUp,
-    selectedClassName: 'border-emerald-500 bg-emerald-500/10 text-emerald-400',
+    dotClassName: 'bg-workspace-outcome-answered',
+    selectedClassName: 'border-workspace-outcome-answered bg-workspace-outcome-answered/10 text-foreground',
   },
   {
     value: 'not_interested',
     labelKey: 'devicePowerDialer.outcomes.notInterested',
     icon: ThumbsDown,
-    selectedClassName: 'border-red-500 bg-red-500/10 text-red-400',
+    dotClassName: 'bg-workspace-outcome-negative',
+    selectedClassName: 'border-workspace-outcome-negative bg-workspace-outcome-negative/10 text-foreground',
   },
 ];
 
@@ -133,13 +163,31 @@ function getLeadSubtitle(lead: LeadWithOwner) {
 
 export default function ColdCallerPage() {
   const { locale, t } = useI18n();
-  const { data: leadsResult, isLoading: leadsLoading } = useLeads();
-  const { data: recentCalls = [], isLoading: callsLoading, error: callsError } = usePowerDialerCalls();
+  const demo = isScreenshotDemoMode();
+  const demoParams = demo && typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const demoHasLeads = demoParams?.get('leads') !== '0';
+  const demoPhoneConnected = demoParams?.get('phone') !== '0';
+
+  const { data: leadsResultReal, isLoading: leadsLoadingReal } = useLeads();
+  const { data: recentCallsReal = [], isLoading: callsLoadingReal, error: callsErrorReal } = usePowerDialerCalls();
+  const leadsResult = demo ? { data: demoHasLeads ? DEMO_LEADS : [] } : leadsResultReal;
+  const leadsLoading = demo ? false : leadsLoadingReal;
+  const recentCalls = useMemo(() => (demo ? (DEMO_CALLS ?? []) : recentCallsReal), [demo, recentCallsReal]);
+  const callsLoading = demo ? false : callsLoadingReal;
+  const callsError = demo ? null : callsErrorReal;
   const logCall = useLogPowerDialerCall();
   const createCallCommand = useCreatePhoneCallCommand();
 
+  const [view, setView] = useState<DialerView>('queue');
   const [platform] = useState<DevicePlatform>(() => getDevicePlatform());
-  const [connectedPhone, setConnectedPhone] = useState<ConnectedPhone | null>(() => loadConnectedPhone());
+  const [connectedPhone, setConnectedPhone] = useState<ConnectedPhone | null>(() => {
+    if (demo) {
+      return demoPhoneConnected
+        ? { version: 1, deviceId: 'demo', phoneNumber: '', platform: 'web', connectionMode: 'backend_relay', phonePlatform: 'android', computerPlatform: 'mac', status: 'online', lastHeartbeatAt: new Date().toISOString(), connectedAt: new Date().toISOString() }
+        : null;
+    }
+    return loadConnectedPhone();
+  });
   const [pendingCall, setPendingCall] = useState<PendingCall | null>(() => loadPendingCall());
   const [processedLeadIds, setProcessedLeadIds] = useState<Set<string>>(() => new Set());
   const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
@@ -364,96 +412,148 @@ export default function ColdCallerPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Smartphone className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">{t('devicePowerDialer.title')}</h1>
-              <p className="text-sm text-muted-foreground">{t('devicePowerDialer.subtitle')}</p>
-            </div>
-          </div>
-          <div className="max-w-3xl space-y-2">
-            <PhoneDeviceConnection
-              platform={platform}
-              connectedPhone={connectedPhone}
-              onConnectionChange={setConnectedPhone}
+    <WorkspaceFrame className="min-h-[720px] flex-col lg:flex-row">
+      <div className="flex w-full flex-col gap-[10px] lg:w-[260px] lg:shrink-0">
+        <WorkspaceSidebarPanel
+          title={t('devicePowerDialer.queue.title')}
+          badge={
+            <span className="rounded-full bg-workspace-panel-row px-2 py-0.5 text-[11px] font-semibold text-workspace-ink-on-dark">
+              {remainingQueue.length}
+            </span>
+          }
+        >
+          {remainingQueue.length === 0 ? (
+            <p className="px-1 text-[13px] text-workspace-label-on-dark">{t('devicePowerDialer.complete.title')}</p>
+          ) : (
+            <ul className="flex max-h-[360px] flex-col gap-1.5 overflow-y-auto">
+              {remainingQueue.map((lead, index) => {
+                const selected = lead.id === activeLead?.id;
+                return (
+                  <li key={lead.id}>
+                    <WorkspaceActiveRow
+                      active={selected}
+                      layoutId="dialerActiveLead"
+                      disabled={Boolean(pendingCall)}
+                      onClick={() => setCurrentLeadIndex(index)}
+                    >
+                      <div className="flex min-w-0 items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-medium text-workspace-ink-on-dark">{lead.name}</p>
+                          <p className="truncate text-[11px] text-workspace-label-on-dark">{getLeadSubtitle(lead)}</p>
+                        </div>
+                        {selected && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-workspace-ink-on-dark" />}
+                      </div>
+                    </WorkspaceActiveRow>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </WorkspaceSidebarPanel>
+
+        <WorkspaceSidebarPanel title={t('devicePowerDialer.logging.outcome')}>
+          <ul className="flex flex-col gap-3">
+            {OUTCOMES.map((option) => (
+              <li key={option.value} className="flex items-center gap-3 text-[13px] text-workspace-label-on-dark">
+                <span className={cn('h-[7px] w-[7px] shrink-0 rounded-full', option.dotClassName)} aria-hidden="true" />
+                {t(option.labelKey)}
+              </li>
+            ))}
+          </ul>
+        </WorkspaceSidebarPanel>
+      </div>
+
+      <WorkspaceGradientSurface>
+        <div className="flex flex-wrap items-center gap-3 px-5 pt-5 sm:px-7">
+          <h1 className="text-[26px] font-bold tracking-[-0.02em] text-workspace-ink">{t('devicePowerDialer.title')}</h1>
+          <button
+            type="button"
+            onClick={() => setView('setup')}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-[5px] text-[12px] font-semibold text-workspace-ink"
+          >
+            <span
+              className={cn('h-2 w-2 rounded-full', canDialFromThisDevice ? 'bg-workspace-outcome-answered' : 'bg-workspace-outcome-none')}
+              aria-hidden="true"
             />
-            <p className="px-1 text-xs text-muted-foreground">{platformMessage}</p>
-          </div>
+            {canDialFromThisDevice ? t('devicePowerDialer.status.connected') : t('devicePowerDialer.status.disconnected')}
+          </button>
+          {processedLeadIds.size > 0 ? (
+            <WorkspacePillButton onClick={handleResetQueue} className="ml-auto">
+              <RotateCcw className="h-4 w-4" />
+              {t('devicePowerDialer.resetQueue')}
+            </WorkspacePillButton>
+          ) : null}
         </div>
-        {processedLeadIds.size > 0 ? (
-          <Button variant="outline" onClick={handleResetQueue} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            {t('devicePowerDialer.resetQueue')}
-          </Button>
-        ) : null}
-      </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t('devicePowerDialer.stats.label')}>
-        <StatCard icon={Users} label={t('devicePowerDialer.stats.remaining')} value={remainingQueue.length} />
-        <StatCard icon={CheckCircle2} label={t('devicePowerDialer.stats.session')} value={processedLeadIds.size} />
-        <StatCard icon={PhoneCall} label={t('devicePowerDialer.stats.today')} value={callsToday} />
-        <StatCard icon={CalendarClock} label={t('devicePowerDialer.stats.callbacks')} value={scheduledCallbacks} />
-      </section>
+        <div className="mt-3 flex justify-end px-5 sm:px-7">
+          <SegmentedControl<DialerView>
+            layoutId="dialerViewPill"
+            value={view}
+            onChange={setView}
+            options={[
+              { value: 'queue', label: t('devicePowerDialer.views.queue') },
+              { value: 'history', label: t('devicePowerDialer.views.history') },
+              { value: 'setup', label: t('devicePowerDialer.views.setup') },
+            ]}
+          />
+        </div>
 
-      {callsError ? (
-        <Card className="border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-          <p className="font-medium">{t('devicePowerDialer.errors.historyTitle')}</p>
-          <p className="mt-1 text-xs opacity-90">{t('devicePowerDialer.errors.historyDescription')}</p>
-        </Card>
-      ) : null}
+        <div className="mt-[14px] grid grid-cols-2 gap-2 px-5 sm:grid-cols-4 sm:px-7" aria-label={t('devicePowerDialer.stats.label')}>
+          <WorkspaceTile label={t('devicePowerDialer.stats.remaining')} value={remainingQueue.length} active />
+          <WorkspaceTile label={t('devicePowerDialer.stats.session')} value={processedLeadIds.size} />
+          <WorkspaceTile label={t('devicePowerDialer.stats.today')} value={callsToday} />
+          <WorkspaceTile label={t('devicePowerDialer.stats.callbacks')} value={scheduledCallbacks} />
+        </div>
 
-      {leadsWithPhone.length === 0 ? (
-        <Card className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <PhoneOff className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h2 className="text-lg font-semibold">{t('devicePowerDialer.empty.title')}</h2>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">{t('devicePowerDialer.empty.description')}</p>
-          <Button asChild className="mt-5">
-            <Link to={`/${locale}/app/crm/leads`}>{t('devicePowerDialer.empty.action')}</Link>
-          </Button>
-        </Card>
-      ) : remainingQueue.length === 0 ? (
-        <Card className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
-            <CheckCircle2 className="h-7 w-7 text-emerald-500" />
-          </div>
-          <h2 className="text-lg font-semibold">{t('devicePowerDialer.complete.title')}</h2>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">{t('devicePowerDialer.complete.description')}</p>
-          <Button onClick={handleResetQueue} className="mt-5 gap-2">
-            <RotateCcw className="h-4 w-4" />
-            {t('devicePowerDialer.complete.action')}
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <Card className="overflow-hidden">
-            <div className="border-b border-border/60 px-5 py-4">
-              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>{t('devicePowerDialer.progress')}</span>
-                <span>{processedLeadIds.size} / {leadsWithPhone.length}</span>
+        <WorkspaceSurface className="mt-[14px] rounded-t-[24px]">
+          {/* All three views stay mounted and are only hidden with CSS — the
+              Setup view's PhoneDeviceConnection polls the backend for a
+              verified phone heartbeat, and unmounting it while another tab
+              is open would silently stop that detection. */}
+          <div className={view === 'queue' ? undefined : 'hidden'}>
+          {(
+            leadsWithPhone.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/5">
+                  <PhoneOff className="h-6 w-6 text-workspace-surface-label" />
+                </div>
+                <h2 className="text-lg font-semibold">{t('devicePowerDialer.empty.title')}</h2>
+                <p className="max-w-md text-sm text-workspace-surface-label">{t('devicePowerDialer.empty.description')}</p>
+                <Button asChild className="mt-2 rounded-full bg-workspace-ink text-white hover:bg-workspace-ink/90">
+                  <Link to={`/${locale}/app/crm/leads`}>{t('devicePowerDialer.empty.action')}</Link>
+                </Button>
               </div>
-              <Progress value={progress} className="mt-2 h-1.5" />
-            </div>
-
-            {activeLead ? (
+            ) : remainingQueue.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+                  <CheckCircle2 className="h-7 w-7 text-emerald-500" />
+                </div>
+                <h2 className="text-lg font-semibold">{t('devicePowerDialer.complete.title')}</h2>
+                <p className="max-w-md text-sm text-workspace-surface-label">{t('devicePowerDialer.complete.description')}</p>
+                <Button onClick={handleResetQueue} className="mt-2 gap-2 rounded-full bg-workspace-ink text-white hover:bg-workspace-ink/90">
+                  <RotateCcw className="h-4 w-4" />
+                  {t('devicePowerDialer.complete.action')}
+                </Button>
+              </div>
+            ) : activeLead ? (
               <div className="p-5 sm:p-7">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center justify-between gap-3 text-xs text-workspace-surface-label">
+                  <span>{t('devicePowerDialer.progress')}</span>
+                  <span>{processedLeadIds.size} / {leadsWithPhone.length}</span>
+                </div>
+                <Progress value={progress} className="mt-2 h-1.5" />
+
+                <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-workspace-accent/10 text-lg font-bold text-workspace-accent">
                       {activeLead.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <Badge variant="outline" className="mb-2 text-[10px]">
+                      <Badge variant="outline" className="mb-2 text-[10px] text-workspace-ink border-workspace-surface-line">
                         {pendingCall ? t('devicePowerDialer.current.returned') : t('devicePowerDialer.current.next')}
                       </Badge>
                       <h2 className="truncate text-2xl font-bold">{activeLead.name}</h2>
-                      <p className="truncate text-sm text-muted-foreground">{getLeadSubtitle(activeLead)}</p>
+                      <p className="truncate text-sm text-workspace-surface-label">{getLeadSubtitle(activeLead)}</p>
                       <p className="mt-1 font-mono text-sm">{activeLead.phone}</p>
                     </div>
                   </div>
@@ -466,8 +566,8 @@ export default function ColdCallerPage() {
                 </div>
 
                 {activeLead.notes ? (
-                  <div className="mt-5 rounded-xl border border-border/60 bg-muted/20 p-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <div className="mt-5 rounded-xl border border-workspace-surface-line bg-black/5 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-workspace-surface-label">
                       {t('devicePowerDialer.current.leadNotes')}
                     </p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{activeLead.notes}</p>
@@ -476,41 +576,44 @@ export default function ColdCallerPage() {
 
                 {!pendingCall && canDialFromThisDevice ? (
                   <div className="mt-7 space-y-3">
-                    <Button
-                      asChild
-                      size="xl"
-                      disabled={createCallCommand.isPending}
-                      className="h-16 w-full rounded-2xl bg-emerald-600 text-lg text-white shadow-lg shadow-emerald-950/20 hover:bg-emerald-700"
+                    <a
+                      href={getTelephoneUri(activeLead.phone ?? '')}
+                      onClick={handleCallHandoff}
+                      className={cn(
+                        'flex h-16 w-full items-center justify-center gap-2 rounded-full bg-workspace-ink text-lg font-semibold text-white transition-opacity',
+                        createCallCommand.isPending && 'pointer-events-none opacity-50',
+                      )}
                     >
-                      <a href={getTelephoneUri(activeLead.phone ?? '')} onClick={handleCallHandoff}>
-                        <PhoneCall className="h-6 w-6" />
-                        {t('devicePowerDialer.callAction')} {activeLead.name}
-                      </a>
-                    </Button>
-                    <p className="text-center text-xs text-muted-foreground">
+                      <PhoneCall className="h-6 w-6" />
+                      {t('devicePowerDialer.callAction')} {activeLead.name}
+                    </a>
+                    <p className="text-center text-xs text-workspace-surface-label">
                       {platform === 'web'
                         ? t('devicePowerDialer.relay.callConfirmation')
                         : t('devicePowerDialer.callConfirmation')}
                     </p>
                   </div>
                 ) : !pendingCall ? (
-                  <div className="mt-7 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5 text-center">
-                    <Smartphone className="mx-auto h-7 w-7 text-primary" />
+                  <div className="mt-7 rounded-2xl border border-dashed border-workspace-accent/40 bg-workspace-accent/5 p-5 text-center">
+                    <Smartphone className="mx-auto h-7 w-7 text-workspace-accent" />
                     <p className="mt-3 text-sm font-semibold">{t('devicePowerDialer.pairing.callLockedTitle')}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 text-xs text-workspace-surface-label">
                       {platform === 'web'
                         ? t('devicePowerDialer.relay.callLockedDesktop')
                         : t('devicePowerDialer.pairing.callLockedMobile')}
                     </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setView('setup')}>
+                      {t('devicePowerDialer.views.setup')}
+                    </Button>
                   </div>
                 ) : (
                   <div className="mt-7 space-y-6">
-                    <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                    <div className="flex items-center justify-between rounded-xl border border-workspace-accent/30 bg-workspace-accent/5 px-4 py-3">
                       <div>
                         <p className="text-sm font-semibold">{t('devicePowerDialer.logging.title')}</p>
-                        <p className="text-xs text-muted-foreground">{t('devicePowerDialer.logging.description')}</p>
+                        <p className="text-xs text-workspace-surface-label">{t('devicePowerDialer.logging.description')}</p>
                       </div>
-                      <Badge variant="outline" className="gap-1 font-mono">
+                      <Badge variant="outline" className="gap-1 font-mono text-workspace-ink border-workspace-surface-line">
                         <Clock3 className="h-3 w-3" />
                         {formatDuration(durationSeconds)}
                       </Badge>
@@ -529,7 +632,7 @@ export default function ColdCallerPage() {
                               aria-pressed={selected}
                               onClick={() => handleOutcomeChange(option.value)}
                               className={cn(
-                                'flex min-h-12 items-center gap-3 rounded-xl border border-border/70 px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                'flex min-h-12 items-center gap-3 rounded-xl border border-workspace-surface-line px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                 selected && option.selectedClassName,
                               )}
                             >
@@ -583,79 +686,56 @@ export default function ColdCallerPage() {
                   </div>
                 )}
               </div>
-            ) : null}
-          </Card>
+            ) : null
+          )}
+          </div>
 
-          <Card className="overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold">{t('devicePowerDialer.queue.title')}</h2>
-              </div>
-              <Badge variant="secondary">{remainingQueue.length}</Badge>
-            </div>
-            <div className="max-h-[580px] divide-y divide-border/40 overflow-y-auto">
-              {remainingQueue.map((lead, index) => {
-                const selected = lead.id === activeLead?.id;
-                return (
-                  <button
-                    key={lead.id}
-                    type="button"
-                    disabled={Boolean(pendingCall)}
-                    onClick={() => setCurrentLeadIndex(index)}
-                    className={cn(
-                      'w-full px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60',
-                      selected && 'bg-primary/5',
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-3">
+          <div className={view === 'history' ? undefined : 'hidden'}>
+            <div>
+              {callsError ? (
+                <div className="px-5 py-4 text-sm text-workspace-outcome-negative sm:px-7">
+                  <p className="font-medium">{t('devicePowerDialer.errors.historyTitle')}</p>
+                  <p className="mt-1 text-xs opacity-90">{t('devicePowerDialer.errors.historyDescription')}</p>
+                </div>
+              ) : null}
+              {callsLoading ? (
+                <div className="flex items-center justify-center p-8" role="status">
+                  <Loader2 className="h-5 w-5 animate-spin text-workspace-accent" />
+                </div>
+              ) : recentCalls.length === 0 ? (
+                <p className="p-8 text-center text-sm text-workspace-surface-label">{t('devicePowerDialer.history.empty')}</p>
+              ) : (
+                <div className="divide-y divide-workspace-surface-line">
+                  {recentCalls.slice(0, 8).map((call) => (
+                    <div key={call.id} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-7">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{lead.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{getLeadSubtitle(lead)}</p>
+                        <p className="truncate text-sm font-medium">{call.lead?.name ?? call.phone_number}</p>
+                        <p className="truncate text-xs text-workspace-surface-label">
+                          {call.lead?.company_name ?? call.phone_number}
+                        </p>
                       </div>
-                      {selected ? <ArrowRight className="h-4 w-4 shrink-0 text-primary" /> : null}
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-workspace-ink border-workspace-surface-line">{t(`devicePowerDialer.outcomes.${outcomeKey(call.outcome)}`)}</Badge>
+                        <time className="text-xs text-workspace-surface-label" dateTime={call.dialed_at}>
+                          {new Date(call.dialed_at).toLocaleString(localeCode, { dateStyle: 'short', timeStyle: 'short' })}
+                        </time>
+                      </div>
                     </div>
-                  </button>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
-          </Card>
-        </div>
-      )}
+          </div>
 
-      <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
-          <History className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold">{t('devicePowerDialer.history.title')}</h2>
-        </div>
-        {callsLoading ? (
-          <div className="flex items-center justify-center p-8" role="status">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div className={cn('p-5 sm:p-7', view === 'setup' ? undefined : 'hidden')}>
+            {/* TEMP — demo mode skips the real device-polling component so the
+                fake connected state above isn't immediately reset by it. */}
+            {!demo && <PhoneDeviceConnection platform={platform} connectedPhone={connectedPhone} onConnectionChange={setConnectedPhone} />}
+            <p className="mt-3 text-xs text-workspace-surface-label">{platformMessage}</p>
           </div>
-        ) : recentCalls.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">{t('devicePowerDialer.history.empty')}</p>
-        ) : (
-          <div className="divide-y divide-border/40">
-            {recentCalls.slice(0, 8).map((call) => (
-              <div key={call.id} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{call.lead?.name ?? call.phone_number}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {call.lead?.company_name ?? call.phone_number}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">{t(`devicePowerDialer.outcomes.${outcomeKey(call.outcome)}`)}</Badge>
-                  <time className="text-xs text-muted-foreground" dateTime={call.dialed_at}>
-                    {new Date(call.dialed_at).toLocaleString(localeCode, { dateStyle: 'short', timeStyle: 'short' })}
-                  </time>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
+        </WorkspaceSurface>
+      </WorkspaceGradientSurface>
+    </WorkspaceFrame>
   );
 }
 
@@ -664,26 +744,4 @@ function outcomeKey(outcome: string) {
   if (outcome === 'not_interested') return 'notInterested';
   if (outcome === 'callback') return 'callback';
   return 'interested';
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Users;
-  label: string;
-  value: number;
-}) {
-  return (
-    <Card className="flex items-center gap-3 p-4">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold tabular-nums">{value}</p>
-      </div>
-    </Card>
-  );
 }

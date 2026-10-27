@@ -86,6 +86,17 @@ function getCallLink(phoneNumber: string) {
   return document.querySelector<HTMLAnchorElement>(`a[href="tel:${phoneNumber}"]`);
 }
 
+// The redesign moved phone setup and call history out of the always-visible
+// queue view into their own segmented-control tabs ("Setup" / "History"), so
+// assertions on their content now switch tabs first.
+function openSetupView() {
+  fireEvent.click(screen.getByRole('tab', { name: 'Setup' }));
+}
+
+function openHistoryView() {
+  fireEvent.click(screen.getByRole('tab', { name: 'History' }));
+}
+
 beforeEach(() => {
   window.sessionStorage.clear();
   window.localStorage.clear();
@@ -117,6 +128,9 @@ describe('Device Power Dialer page', () => {
     expect(screen.queryByText('No Phone')).not.toBeInTheDocument();
     expect(screen.queryByText(/Twilio/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/keypad/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Phone ready')).toBeInTheDocument();
+
+    openSetupView();
     expect(screen.getByText('Phone connected')).toBeInTheDocument();
     expect(screen.getByText('+4511223344')).toBeInTheDocument();
   });
@@ -197,9 +211,12 @@ describe('Device Power Dialer page', () => {
 
   it('shows recent persisted call history', () => {
     renderPage();
+    openHistoryView();
 
-    expect(screen.getByText('Recent call outcomes')).toBeInTheDocument();
-    expect(screen.getByText('No answer')).toBeInTheDocument();
+    // "No answer" also labels the always-visible outcome legend in the dark
+    // sidebar, so the history row's own badge is asserted via count rather
+    // than a single getByText match.
+    expect(screen.getAllByText('No answer').length).toBeGreaterThanOrEqual(2);
   });
 
   it('connects an iPhone number locally before enabling the call action', () => {
@@ -207,14 +224,20 @@ describe('Device Power Dialer page', () => {
     renderPage();
 
     expect(getCallLink('+4512345678')).not.toBeInTheDocument();
+    openSetupView();
     fireEvent.change(screen.getByLabelText('Your own mobile number'), {
       target: { value: '+45 20 30 40 50' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Connect this phone' }));
 
-    expect(getCallLink('+4512345678')).toBeInTheDocument();
     expect(window.localStorage.getItem('crm-power-dialer-phone-v1')).toContain('+4520304050');
     expect(screen.getByText('Phone connected')).toBeInTheDocument();
+
+    // The call link lives in the Queue tab; Setup stays open until the user
+    // switches back, matching the design requirement that setup no longer
+    // occupies the main call screen.
+    fireEvent.click(screen.getByRole('tab', { name: 'Queue' }));
+    expect(getCallLink('+4512345678')).toBeInTheDocument();
   });
 
   it('starts secure desktop pairing without unlocking calls from a checklist', () => {
@@ -224,6 +247,7 @@ describe('Device Power Dialer page', () => {
       value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
     });
     renderPage();
+    openSetupView();
 
     expect(screen.getByText('Connect a nearby phone')).toBeInTheDocument();
     expect(screen.getByText('Mac + iPhone')).toBeInTheDocument();
@@ -255,6 +279,7 @@ describe('Device Power Dialer page', () => {
     renderPage();
 
     await waitFor(() => expect(getCallLink('+4512345678')).toBeInTheDocument());
+    openSetupView();
     expect(screen.getByText('Verified phone online')).toBeInTheDocument();
     expect(screen.getByText(/Sales Android/)).toBeInTheDocument();
   });

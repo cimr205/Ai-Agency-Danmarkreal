@@ -248,6 +248,11 @@ const App = () => (
             <SentryRoutes>
               <Route path="/" element={<Navigate to="/en" replace />} />
               <Route path="/auth/meta/callback" element={<Suspense fallback={<PageLoader />}><MetaOAuthCallbackPage /></Suspense>} />
+              {/* TEMP — visual QA only, removed before this change ships. Unauthenticated
+                  preview of ColdCallerPage's ?demo=1 states for screenshotting. */}
+              {import.meta.env.DEV ? (
+                <Route path="/__qa_preview/dialer" element={<I18nProvider locale="en"><Suspense fallback={<PageLoader />}><ColdCallerPage /></Suspense></I18nProvider>} />
+              ) : null}
               <Route path="/:locale" element={<LocaleLayout />}>
                 <Route path="" element={<IndexPage />} />
                 <Route path="admin">
