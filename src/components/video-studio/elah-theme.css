@@ -1,0 +1,12 @@
+/* Maps elah's --elah-* design tokens to this app's existing HSL theme
+   variables (src/index.css), so the editor follows light/dark mode
+   automatically instead of looking like a bolted-on third-party widget. */
+.elah-root {
+  --elah-bg: hsl(var(--background));
+  --elah-bg-panel: hsl(var(--card));
+  --elah-bg-card: hsl(var(--card));
+  --elah-accent: hsl(var(--primary));
+  --elah-text: hsl(var(--foreground));
+  --elah-border: hsl(var(--border));
+  --elah-playhead: hsl(var(--destructive));
+}

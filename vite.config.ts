@@ -60,6 +60,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // elah's MP4 export runs in a dedicated module Web Worker (OffscreenCanvas).
+  // Both settings below are required for that worker — omit either and export
+  // fails at runtime. See https://www.elah.dev/docs/installation
+  worker: {
+    format: "es",
+  },
+  optimizeDeps: {
+    exclude: ["@elah/editor", "@elah/core", "@elah/react", "@elah/timeline", "mediabunny"],
+    // Force react-dom's CJS->ESM interop (named exports like createPortal) to be
+    // pre-bundled consistently. Without this, elah's excluded packages import the
+    // raw un-bundled react-dom and hit "does not provide an export named ...".
+    include: ["react-dom", "react-dom/client"],
+  },
   build: {
     target: "esnext",
     // "hidden" = emit maps for the upload without a sourceMappingURL comment.

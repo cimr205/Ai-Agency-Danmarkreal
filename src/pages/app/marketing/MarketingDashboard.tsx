@@ -36,7 +36,7 @@ export default function MarketingDashboard() {
     { icon: PhoneCall, label: tr('nav.coldCaller'), text: tr('sec.mkt.chDialer'), href: `${base}/marketing/cold-caller` },
     { icon: Send, label: tr('nav.bulkEmail'), text: tr('sec.mkt.chEmail'), href: `${base}/email/bulk` },
     { icon: Mic, label: tr('nav.voiceAgent'), text: tr('sec.mkt.chVoice'), href: `${base}/marketing/voice-agent` },
-    { icon: Sparkles, label: tr('nav.aiMedia'), text: tr('sec.mkt.chMedia'), href: `${base}/ai/media` },
+    { icon: Sparkles, label: tr('nav.studio'), text: tr('sec.mkt.chMedia'), href: `${base}/marketing/studio` },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function MarketingDashboard() {
         actions={[
           { icon: Megaphone, label: tr('nav.metaAds'), href: `${base}/marketing/meta-ads` },
           { icon: Send, label: tr('nav.bulkEmail'), href: `${base}/email/bulk` },
-          { icon: Sparkles, label: tr('nav.aiMedia'), href: `${base}/ai/media` },
+          { icon: Sparkles, label: tr('nav.studio'), href: `${base}/marketing/studio` },
         ]}
         signal={{
           eyebrow: tr('sec.signalEyebrow'),
