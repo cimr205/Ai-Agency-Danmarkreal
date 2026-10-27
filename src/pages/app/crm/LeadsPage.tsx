@@ -31,7 +31,8 @@ import { CsvImportWizard } from '@/components/import/CsvImportWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import type { Tables, Enums } from '@/integrations/supabase/types';
-import { getErrorMessage } from '@/lib/errors';
+import { AppError, invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -438,13 +439,14 @@ export default function LeadsPage() {
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 60000);
-          const { data: verifyData } = await supabase.functions.invoke('verify-emails', {
+          const verifyData = await invokeFunction<{ results?: { valid: boolean; email: string }[] }>('verify-emails', {
             body: { emails: allEmails },
+            signal: controller.signal,
           });
           clearTimeout(timeout);
           if (verifyData?.results) {
             validEmails = new Set(
-              (verifyData.results as { valid: boolean; email: string }[]).filter((r) => r.valid).map((r) => r.email)
+              verifyData.results.filter((r) => r.valid).map((r) => r.email)
             );
             const invalidCount = allEmails.length - validEmails.size;
             if (invalidCount > 0) {
@@ -454,6 +456,8 @@ export default function LeadsPage() {
         } catch (verifyErr) {
           if (verifyErr instanceof Error && verifyErr.name === 'AbortError') {
             toast.warning('Email-verificering tog for lang tid — fortsætter uden', { duration: 3000 });
+          } else if (verifyErr instanceof AppError && verifyErr.kind === 'network') {
+            toast.warning('Email-verificering kunne ikke nås — fortsætter uden', { duration: 3000 });
           }
           console.warn('Email verification fejlede, fortsætter uden:', verifyErr);
         }
@@ -471,20 +475,18 @@ export default function LeadsPage() {
 
       setAutoImportProgress(`Importerer ${filteredRows.length} leads med AI-klassificering...`);
 
-      const { data, error } = await supabase.functions.invoke('csv-import-leads', {
+      const result = await invokeFunction<{ error?: string; imported: number; duplicates: number; ai_classified: boolean }>('csv-import-leads', {
         body: { rows: filteredRows, mapping: autoMap, useAi: true },
       });
 
-      if (error || data?.error) throw new Error(data?.error || error?.message);
-
-      const result = data;
+      if (result?.error) throw new Error(result.error);
       const removedCount = rows.length - filteredRows.length;
       toast.success(
         `✅ ${result.imported} leads importeret${removedCount > 0 ? ` · ${removedCount} ugyldige emails fjernet` : ''}${result.duplicates > 0 ? ` · ${result.duplicates} dubletter` : ''}${result.ai_classified ? ' · AI-klassificeret' : ''}`,
         { duration: 5000 }
       );
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Auto-import fejlede');
+      showError(err, { module: 'csv-import-leads' });
     } finally {
       setAutoImporting(false);
       setAutoImportProgress('');

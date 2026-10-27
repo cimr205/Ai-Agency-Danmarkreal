@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, Loader2, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 
 interface CvrLookupFieldProps {
   onResult: (result: { name: string; address: string; cvr: string }) => void;
@@ -29,9 +29,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       // Use the Supabase client so the function URL + auth are resolved from the
       // configured project — the previous code built the URL from an undefined
       // VITE_SUPABASE_PROJECT_ID, so every lookup hit https://undefined.supabase.co.
-      const { data, error } = await supabase.functions.invoke('cvr-search', { body: { search: term } });
-      if (error) throw error;
-      const payload = data as { error?: string; results?: Array<{ name?: string; address?: string; zipcode?: string; city?: string; cvr?: string }> };
+      const payload = await invokeFunction<{ error?: string; results?: Array<{ name?: string; address?: string; zipcode?: string; city?: string; cvr?: string }> }>('cvr-search', { body: { search: term } });
       if (payload?.error) throw new Error(payload.error);
 
       const results = payload?.results ?? [];
@@ -45,7 +43,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       onResult({ name: company.name || '', address, cvr: company.cvr || term.replace(/\D/g, '') });
       toast.success(`Fandt: ${company.name}`);
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke slå CVR op'));
+      showError(e, { action: 'slå CVR op', module: 'cvr' });
     } finally {
       setLoading(false);
     }

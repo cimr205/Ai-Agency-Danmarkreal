@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sparkles, Copy, Send, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface AIEmailWriterProps {
   open: boolean;
@@ -30,14 +30,13 @@ export function AIEmailWriter({ open, onOpenChange, leadId, leadName, leadEmail 
   const generate = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-email-writer', {
+      const data = await invokeFunction<{ subject: string; body: string; error?: string }>('ai-email-writer', {
         body: { lead_id: leadId, tone, purpose, custom_context: customContext },
       });
-      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       setResult(data);
     } catch (e) {
-      toast.error((getErrorMessage(e) || t('aiEmail.generateError')));
+      showError(e, { module: 'ai-email-writer' });
     } finally {
       setLoading(false);
     }

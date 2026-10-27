@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { getFunctionErrorMessage } from "@/lib/errors";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 
 export interface AiActionMessage {
   role: "user" | "assistant" | "system";
@@ -15,11 +14,8 @@ export interface AiActionResult {
 
 export function useAiActions() {
   return useMutation({
-    mutationFn: async (input: { messages: AiActionMessage[]; confirm?: boolean }): Promise<AiActionResult> => {
-      const { data, error } = await supabase.functions.invoke("ai-actions", { body: input });
-      if (error) throw new Error(await getFunctionErrorMessage(error));
-      return data as AiActionResult;
-    },
-    onError: (e: Error) => toast.error(e?.message ?? "AI-handling fejlede"),
+    mutationFn: async (input: { messages: AiActionMessage[]; confirm?: boolean }): Promise<AiActionResult> =>
+      invokeFunction<AiActionResult>("ai-actions", { body: input }),
+    onError: (e) => showError(e, { module: "ai-actions" }),
   });
 }

@@ -4,18 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Link2, XCircle, CheckCircle2, RefreshCw, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
-import { getErrorMessage } from '@/lib/errors';
 
 type DineroConnection = Tables<'dinero_connections'>;
 type EconomicConnection = Tables<'economic_connections'>;
 
 async function startOAuth(fn: 'dinero-oauth-start' | 'economic-oauth-start') {
-  const { data, error } = await supabase.functions.invoke(fn, {
+  const data = await invokeFunction<{ authorize_url: string; error?: string }>(fn, {
     body: { return_url: window.location.href.split('?')[0] },
   });
-  if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
   window.location.href = data.authorize_url;
 }
@@ -65,7 +65,7 @@ export function AccountingConnections() {
     try {
       await startOAuth(provider === 'dinero' ? 'dinero-oauth-start' : 'economic-oauth-start');
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Kunne ikke starte forbindelse');
+      showError(e, { module: 'accounting' });
       setBusy(null);
     }
   };
@@ -73,13 +73,12 @@ export function AccountingConnections() {
   const handleDisconnect = async (provider: 'dinero' | 'economic') => {
     setBusy(provider);
     try {
-      const { data, error } = await supabase.functions.invoke('accounting-disconnect', { body: { provider } });
-      if (error) throw new Error(error.message);
+      const data = await invokeFunction<{ error?: string }>('accounting-disconnect', { body: { provider } });
       if (data?.error) throw new Error(data.error);
       toast.success(provider === 'dinero' ? 'Dinero afbrudt' : 'e-conomic afbrudt');
       await fetchConnections();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Afbrydelse fejlede');
+      showError(e, { module: 'accounting' });
     } finally {
       setBusy(null);
     }
@@ -88,14 +87,13 @@ export function AccountingConnections() {
   const handleImport = async (provider: 'dinero' | 'economic') => {
     setBusy(`${provider}-import`);
     try {
-      const { data, error } = await supabase.functions.invoke(provider === 'dinero' ? 'dinero-sync' : 'economic-sync', {
+      const data = await invokeFunction<{ imported: number; error?: string }>(provider === 'dinero' ? 'dinero-sync' : 'economic-sync', {
         body: { action: 'pull_customers' },
       });
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       toast.success(`${data.imported} kunder importeret`);
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Import fejlede');
+      showError(e, { module: 'accounting' });
     } finally {
       setBusy(null);
     }

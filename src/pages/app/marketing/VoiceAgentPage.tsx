@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { useConnectVoiceTelephony, useVoiceTelephonyAccount } from '@/hooks/api/useVoiceTelephony';
@@ -16,7 +18,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getErrorMessage } from '@/lib/errors';
 
 interface TwilioAccount { account_sid: string; }
 interface VoiceAgent { id: string; name: string; voice: string; language: string; system_prompt: string; greeting: string; is_active: boolean; }
@@ -136,22 +137,7 @@ export default function VoiceAgentPage() {
 
   // Helper: invoke edge function and surface real error from response body
   const invokeWithError = async (fn: string, body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke(fn, { body });
-    if (error) {
-      // FunctionsHttpError -> read body for real message
-      let msg = error.message;
-      try {
-        const ctx = (error as { context?: { json?: () => Promise<{ error?: string }>; text?: () => Promise<string> } }).context;
-        if (ctx && typeof ctx.json === 'function') {
-          const parsed = await ctx.json();
-          if (parsed?.error) msg = parsed.error;
-        } else if (ctx && typeof ctx.text === 'function') {
-          const txt = await ctx.text();
-          if (txt) msg = txt;
-        }
-      } catch { /* ignore */ }
-      throw new Error(msg);
-    }
+    const data = await invokeFunction<{ error?: string } & Record<string, unknown>>(fn, { body });
     if (data?.error) throw new Error(data.error);
     return data;
   };
@@ -178,15 +164,15 @@ export default function VoiceAgentPage() {
     if (!callAgentId || !callTo) return;
     setCalling(true);
     try {
-      const { data, error } = await supabase.functions.invoke('voice-agent-call', { body: { agentId: callAgentId, toNumber: callTo } });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      const data = await invokeFunction<{ error?: string; callId?: string }>('voice-agent-call', { body: { agentId: callAgentId, toNumber: callTo } });
+      if (data?.error) throw new Error(data.error);
       toast.success(t('voiceAgent.callInitiated'));
       setCallDialog(false);
       setCallTo('');
-      setSelectedCallId(data.callId);
+      setSelectedCallId(data.callId!);
       loadAll();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Call failed');
+      showError(e, { module: 'voice-agent-call' });
     } finally {
       setCalling(false);
     }
@@ -202,7 +188,7 @@ export default function VoiceAgentPage() {
       await connectVoiceProvider.mutateAsync();
       toast.success(t('voiceAgent.connectionSaved'));
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      showError(error, { module: 'voice-telephony' });
     }
   };
 

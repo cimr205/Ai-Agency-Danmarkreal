@@ -19,7 +19,8 @@ import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 
 type Recipient = { email: string; name: string; firstName: string; lastName: string; verified?: boolean | null; verifyReason?: string };
 type Attachment = { filename: string; content_type: string; data: string; size: number };
@@ -419,11 +420,15 @@ export default function BulkEmailPage() {
     setVerifying(true);
     setVerifyStats(null);
     try {
-      const { data, error } = await supabase.functions.invoke('verify-emails', {
+      const data = await invokeFunction<{
+        error?: string;
+        results: { email: string; valid: boolean; reason: string; status?: string }[];
+        summary: { valid: number; invalid: number; unverified?: number };
+      }>('verify-emails', {
         body: { emails: recipientsToVerify.map(r => r.email) },
       });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
-      const results: { email: string; valid: boolean; reason: string; status?: string }[] = data.results;
+      if (data?.error) throw new Error(data.error);
+      const results = data.results;
       const resultMap = new Map(results.map(r => [r.email, r]));
       setRecipients(prev => prev.map(r => {
         const vr = resultMap.get(r.email);
@@ -442,7 +447,7 @@ export default function BulkEmailPage() {
         toast.success(locale === 'da' ? 'Alle emails verificeret ✓' : 'All emails verified ✓');
       }
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Verification failed');
+      showError(err, { module: 'verify-emails' });
     } finally {
       setVerifying(false);
     }
@@ -562,7 +567,7 @@ export default function BulkEmailPage() {
         ? `${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`
         : `${recipients.length} emails are queued and will continue in the background`);
     } catch (error) {
-      toast.error(getErrorMessage(error) || t('common.error'));
+      showError(error, { module: 'enqueue_email_campaign' });
     } finally {
       setSending(false);
     }
@@ -737,11 +742,11 @@ export default function BulkEmailPage() {
                       if (!authUser?.email) { toast.error(locale === 'da' ? 'Ingen email fundet' : 'No email found'); return; }
                       try {
                         const testRecipient: Recipient = { email: authUser.email, name: user?.full_name || '', firstName: user?.full_name?.split(' ')[0] || '', lastName: user?.full_name?.split(' ').slice(1).join(' ') || '' };
-                        await supabase.functions.invoke('gmail-send', {
+                        await invokeFunction('gmail-send', {
                           body: { to: authUser.email, subject: personalizeText(subject, testRecipient), message: personalizeText(body, testRecipient) },
                         });
                         toast.success(locale === 'da' ? `Test-email sendt til ${authUser.email}` : `Test email sent to ${authUser.email}`);
-                      } catch { toast.error(locale === 'da' ? 'Kunne ikke sende test-email' : 'Failed to send test email'); }
+                      } catch (e) { showError(e, { module: 'gmail-send' }); }
                     }}
                     disabled={sending || !subject.trim() || !body.trim() || !gmailAccount}
                   >

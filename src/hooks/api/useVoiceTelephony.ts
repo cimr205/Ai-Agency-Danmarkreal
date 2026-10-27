@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { AppError, invokeFunction } from "@/lib/functions";
 
 export interface VoicePhoneNumber {
   sid: string;
@@ -27,36 +27,23 @@ async function callVoiceTelephony<T>(
   action: "account-info" | "connect-default",
   options: { allowFallback?: boolean } = {},
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("voice-telephony", {
-    body: { action },
-  });
-
-  if (error) {
-    let parsedBody: { error?: string; fallback?: boolean } | null = null;
-    const context = (error as {
-      context?: { json?: () => Promise<unknown>; text?: () => Promise<string> };
-    }).context;
-
-    try {
-      if (context?.json) {
-        parsedBody = (await context.json()) as { error?: string; fallback?: boolean };
-      } else if (context?.text) {
-        const text = await context.text();
-        parsedBody = text ? JSON.parse(text) : null;
-      }
-    } catch {
-      parsedBody = null;
+  try {
+    const data = await invokeFunction<T & { error?: string; fallback?: boolean }>("voice-telephony", {
+      body: { action },
+    });
+    if (data?.error && !(options.allowFallback && data.fallback)) {
+      throw new Error(data.error);
     }
-
-    if (parsedBody?.fallback && options.allowFallback) return parsedBody as T;
-    throw new Error(parsedBody?.error || error.message);
+    return data;
+  } catch (err) {
+    // A degraded/fallback response arrives as a non-2xx body with
+    // `fallback: true` — treat it as data, not a failure, when the caller
+    // opted in.
+    if (err instanceof AppError && options.allowFallback && err.body?.fallback) {
+      return err.body as T;
+    }
+    throw err;
   }
-
-  if (data?.error && !(options.allowFallback && data.fallback)) {
-    throw new Error(data.error);
-  }
-
-  return data as T;
 }
 
 export function useVoiceTelephonyAccount() {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 
 interface AiGeneration {
   id: string;
@@ -46,12 +47,11 @@ export function useAiGenerate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { prompt: string; generation_type?: string; negative_prompt?: string; reference_image?: string }) => {
-      const { data, error } = await supabase.functions.invoke('ai-generate', {
+      const data = await invokeFunction<{ id: string; status: string; output_url: string; duration_ms: number; error?: string }>('ai-generate', {
         body: input,
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { id: string; status: string; output_url: string; duration_ms: number };
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ai-generations'] });

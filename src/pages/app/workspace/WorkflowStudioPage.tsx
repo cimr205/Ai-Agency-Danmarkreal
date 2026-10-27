@@ -6,8 +6,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useWorkflows } from "@/hooks/api/useWorkflows";
-import { supabase } from "@/integrations/supabase/client";
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 
 type StepKind = "trigger" | "filter" | "ai" | "action";
 
@@ -58,14 +58,13 @@ export default function WorkflowStudioPage() {
     setRunning(true);
     setTrace([]);
     try {
-      const { data, error } = await supabase.functions.invoke("workflow-runner", {
+      const data = await invokeFunction<{ trace?: Trace[] }>("workflow-runner", {
         body: { workflow_id: active.id, mode, ai_prompt: aiPrompt, payload: { sample: true, ts: Date.now() } },
       });
-      if (error) throw error;
-      setTrace((data as { trace?: Trace[] } | null)?.trace ?? []);
+      setTrace(data?.trace ?? []);
       toast.success(mode === "test" ? "Test-kørsel fuldført" : "Workflow kørt live");
     } catch (e) {
-      toast.error(getErrorMessage(e) || "Kørsel fejlede");
+      showError(e, { module: "workflow-runner" });
     } finally {
       setRunning(false);
     }

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
 import { useAuth } from "@/hooks/useAuth";
 
 export const WEBHOOK_EVENTS = [
@@ -102,7 +103,7 @@ export function useDeleteWebhook() {
 export function useTestWebhook() {
   return useMutation({
     mutationFn: async ({ webhookId, event, companyId }: { webhookId: string; event: string; companyId: string }) => {
-      const { data, error } = await supabase.functions.invoke("webhook-dispatch", {
+      return invokeFunction<{ results?: Array<{ status?: string }> }>("webhook-dispatch", {
         body: {
           event,
           company_id: companyId,
@@ -114,8 +115,6 @@ export function useTestWebhook() {
           },
         },
       });
-      if (error) throw error;
-      return data;
     },
   });
 }

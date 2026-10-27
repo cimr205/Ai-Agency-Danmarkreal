@@ -13,7 +13,8 @@ import {
 import { Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
 
 interface OwnerInfo {
@@ -79,10 +80,13 @@ export default function AdminOverviewPage() {
       // supabase.functions.invoke attaches the current session's JWT
       // automatically — admin-data verifies it server-side and requires the
       // system_admin role. No shared code, nothing to store client-side.
-      const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: {},
-      });
-      if (error) throw error;
+      const data = await invokeFunction<{
+        error?: string;
+        profiles?: RawProfile[];
+        employees?: RawEmployee[];
+        roles?: RawRole[];
+        companies?: RawCompany[];
+      }>('admin-data', { body: {} });
       if (data?.error) throw new Error(data.error);
 
       const profiles = data.profiles || [];
@@ -108,7 +112,7 @@ export default function AdminOverviewPage() {
 
       setCompanies(result);
     } catch (err) {
-      toast.error('Kunne ikke hente data: ' + (getErrorMessage(err) || 'Ukendt fejl'));
+      showError(err, { module: 'admin-data' });
     } finally {
       setLoading(false);
     }
@@ -124,16 +128,15 @@ export default function AdminOverviewPage() {
     if (!isSystemAdmin) return;
     setTogglingIds(prev => new Set(prev).add(companyId));
     try {
-      const { data, error } = await supabase.functions.invoke('admin-data', {
+      const data = await invokeFunction<{ error?: string }>('admin-data', {
         body: { action: 'toggle_company', companyId, disabled: !currentDisabled },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, disabled: !currentDisabled } : c));
       toast.success(!currentDisabled ? 'Virksomhed deaktiveret' : 'Virksomhed aktiveret');
     } catch (err) {
-      toast.error('Kunne ikke ændre status: ' + (getErrorMessage(err) || 'Ukendt fejl'));
+      showError(err, { module: 'admin-data' });
     }
     setTogglingIds(prev => { const s = new Set(prev); s.delete(companyId); return s; });
   };

@@ -9,9 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Upload, FileSpreadsheet, ArrowRight, CheckCircle, AlertTriangle, Sparkles, Download, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface CsvImportWizardProps {
   open: boolean;
@@ -138,18 +138,17 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
   const handleImport = async () => {
     setStep('importing');
     try {
-      const { data, error } = await supabase.functions.invoke('csv-import-leads', {
+      const data = await invokeFunction<{ imported: number; duplicates: number; total: number; ai_classified: boolean; error?: string }>('csv-import-leads', {
         body: { rows: csvRows, mapping, useAi },
       });
 
-      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       setResult(data);
       setStep('done');
       onSuccess?.();
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('csvImport.importFailed'));
+      showError(err, { module: 'csv-import-leads' });
       setStep('preview');
     }
   };
