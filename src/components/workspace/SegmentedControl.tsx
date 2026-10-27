@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 export interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;
+  disabled?: boolean;
 }
 
 /**
@@ -30,8 +31,9 @@ export function SegmentedControl<T extends string>({
           type="button"
           role="tab"
           aria-selected={value === option.value}
+          disabled={option.disabled}
           onClick={() => onChange(option.value)}
-          className="relative px-6 py-2 text-[14px] font-medium text-workspace-ink"
+          className="relative px-6 py-2 text-[14px] font-medium text-workspace-ink disabled:cursor-not-allowed disabled:opacity-40"
         >
           {value === option.value && (
             <motion.span

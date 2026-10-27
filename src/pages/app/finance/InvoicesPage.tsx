@@ -23,6 +23,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check, Plug, RefreshCw, Briefcase, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 import { useLeads } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { RelationshipChip } from '@/components/shared/RelationshipChip';
@@ -753,12 +756,16 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><FileText className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalInvoices')}</p><p className="text-2xl font-bold">{invoiceStats.total}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-success">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalAmount')}</p><p className="text-2xl font-bold">{formatCurrency(invoiceStats.totalAmount)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center"><FileText className="h-6 w-6 text-destructive" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.overdue')}</p><p className="text-2xl font-bold text-destructive">{invoiceStats.overdue}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <WorkspaceTile label={t('pages.invoices.totalInvoices')} value={invoiceStats.total} active />
+            <WorkspaceTile label={t('pages.invoices.paid')} value={formatCurrency(invoiceStats.paid)} />
+            <WorkspaceTile label={t('pages.invoices.totalAmount')} value={formatCurrency(invoiceStats.totalAmount)} />
+            <WorkspaceTile label={t('pages.invoices.overdue')} value={invoiceStats.overdue} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Search & Filter */}
       <div className="flex items-center gap-4 flex-wrap">
@@ -766,15 +773,18 @@ export default function InvoicesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder={t('pages.invoices.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList>
-            <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
-            <TabsTrigger value="draft">{t('pages.invoices.statusDraft')}</TabsTrigger>
-            <TabsTrigger value="sent">{t('pages.invoices.statusSent')}</TabsTrigger>
-            <TabsTrigger value="paid">{t('pages.invoices.statusPaid')}</TabsTrigger>
-            <TabsTrigger value="overdue">{t('pages.invoices.statusOverdue')}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <SegmentedControl
+          layoutId="invoicesStatusPill"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: 'all', label: t('common.all') },
+            { value: 'draft', label: t('pages.invoices.statusDraft') },
+            { value: 'sent', label: t('pages.invoices.statusSent') },
+            { value: 'paid', label: t('pages.invoices.statusPaid') },
+            { value: 'overdue', label: t('pages.invoices.statusOverdue') },
+          ]}
+        />
       </div>
 
       {draftIdsVisible.length > 0 && (

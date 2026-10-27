@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +38,7 @@ export default function VoiceAgentPage() {
   const [calls, setCalls] = useState<VoiceCall[]>([]);
   const [events, setEvents] = useState<VoiceCallEvent[]>([]);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'connections' | 'agents' | 'live' | 'history'>('connections');
 
   // Twilio belongs to the AI Voice Agent only. The Device Power Dialer never reads this state.
   const twilioConnected = twilioInfo?.connected === true;
@@ -251,16 +252,21 @@ export default function VoiceAgentPage() {
         )}
       </div>
 
-      <Tabs defaultValue="connections" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="connections">{t('voiceAgent.tabs.connections') || 'Connections'}</TabsTrigger>
-          <TabsTrigger value="agents" disabled={!isReady}>{t('voiceAgent.tabs.agents') || 'Agents'}</TabsTrigger>
-          <TabsTrigger value="live">{t('voiceAgent.tabs.live') || 'Live & Timeline'}</TabsTrigger>
-          <TabsTrigger value="history">{t('voiceAgent.tabs.history') || 'History'}</TabsTrigger>
-        </TabsList>
+      <div className="space-y-4">
+        <SegmentedControl<'connections' | 'agents' | 'live' | 'history'>
+          layoutId="voiceAgentTabPill"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'connections', label: t('voiceAgent.tabs.connections') || 'Connections' },
+            { value: 'agents', label: t('voiceAgent.tabs.agents') || 'Agents', disabled: !isReady },
+            { value: 'live', label: t('voiceAgent.tabs.live') || 'Live & Timeline' },
+            { value: 'history', label: t('voiceAgent.tabs.history') || 'History' },
+          ]}
+        />
 
         {/* CONNECTIONS */}
-        <TabsContent value="connections" className="space-y-4">
+        {tab === 'connections' && <div className="space-y-4">
           {loading ? <Skeleton className="h-48 w-full" /> : (
             <div className="grid gap-4 md:grid-cols-2">
               {/* Twilio card */}
@@ -321,10 +327,10 @@ export default function VoiceAgentPage() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+        </div>}
 
         {/* AGENTS */}
-        <TabsContent value="agents" className="space-y-4">
+        {tab === 'agents' && <div className="space-y-4">
           <div className="flex justify-end">
             <Button onClick={() => setAgentDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> {t('voiceAgent.newAgent')}</Button>
           </div>
@@ -348,10 +354,10 @@ export default function VoiceAgentPage() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>}
 
         {/* LIVE */}
-        <TabsContent value="live" className="space-y-4">
+        {tab === 'live' && <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="md:col-span-1">
               <CardHeader><CardTitle className="text-base">{t('voiceAgent.recentCalls')}</CardTitle></CardHeader>
@@ -396,10 +402,10 @@ export default function VoiceAgentPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </div>}
 
         {/* HISTORY */}
-        <TabsContent value="history">
+        {tab === 'history' && <div>
           <Card>
             <CardContent className="pt-6">
               {calls.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.noCallsYet')}</p> : (
@@ -418,8 +424,8 @@ export default function VoiceAgentPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>}
+      </div>
 
       {/* New Agent Dialog */}
       <Dialog open={agentDialog} onOpenChange={setAgentDialog}>

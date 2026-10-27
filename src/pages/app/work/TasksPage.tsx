@@ -11,13 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Clock, CheckCircle, AlertCircle, User, MoreHorizontal, Archive, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 
 type Task = {
   id: string; title: string; description?: string | null; status: string;
@@ -349,17 +349,22 @@ export default function TasksPage() {
         </Dialog>
       </div>
 
-      <Tabs value={view} onValueChange={(v) => { setView(v as ViewKey); clearSelection(); }}>
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="today">I dag {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
-          <TabsTrigger value="overdue">Forfaldne {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
-          <TabsTrigger value="upcoming">Kommende {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
-          <TabsTrigger value="mine">Mine {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
-          <TabsTrigger value="all">Alle aktive ({counts.all})</TabsTrigger>
-          <TabsTrigger value="completed">Fuldførte ({counts.completed})</TabsTrigger>
-          <TabsTrigger value="archived">Arkiverede</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="overflow-x-auto">
+        <SegmentedControl<ViewKey>
+          layoutId="tasksViewPill"
+          value={view}
+          onChange={(v) => { setView(v); clearSelection(); }}
+          options={[
+            { value: 'today', label: `I dag ${counts.today > 0 ? `(${counts.today})` : ''}`.trim() },
+            { value: 'overdue', label: `Forfaldne ${counts.overdue > 0 ? `(${counts.overdue})` : ''}`.trim() },
+            { value: 'upcoming', label: `Kommende ${counts.upcoming > 0 ? `(${counts.upcoming})` : ''}`.trim() },
+            { value: 'mine', label: `Mine ${counts.mine > 0 ? `(${counts.mine})` : ''}`.trim() },
+            { value: 'all', label: `Alle aktive (${counts.all})` },
+            { value: 'completed', label: `Fuldførte (${counts.completed})` },
+            { value: 'archived', label: 'Arkiverede' },
+          ]}
+        />
+      </div>
 
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
