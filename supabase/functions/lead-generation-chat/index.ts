@@ -1,6 +1,17 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import type { ConfirmNeededEvent, OwnerValidation, ComplianceFlags } from "../_shared/leadSource.ts";
+// NOTE (Chat-agent, 2026-10-26): ownerValidation.ts / complianceFilter.ts are being built by the
+// Enrichment-agent in a parallel worktree and do not exist on this branch yet. Importing them
+// ahead of the merge per DECISIONS.md section 4/5 — a human must verify these two paths and the
+// call signatures below once that branch lands (see final report).
+import { validateOwner } from "../_shared/ownerValidation.ts";
+import { mapComplianceFlags } from "../_shared/complianceFilter.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+function nowIso() { return new Date().toISOString(); }
 
 interface Lead {
   name: string;
@@ -32,6 +43,15 @@ interface Lead {
   ai_score?: number;
   ai_quality?: string;
   ai_reason?: string;
+  // Persistence linkage — set once a lead has been written to lead_gen_results.
+  result_id?: string;
+  owner_name?: string | null;
+  owner_role?: string | null;
+  owner_confidence?: number;
+  owner_sources?: string[];
+  reklamebeskyttet?: boolean | null;
+  samtykke_status?: "ukendt" | "givet" | "nej";
+  cvr_status?: string | null;
   [key: string]: unknown;
 }
 
@@ -210,7 +230,7 @@ async function searchGoogleMaps(
     const items = await runRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Google Maps: ${items.length} virksomheder`, items.length);
-    return items.map(mapGoogleItem).filter(Boolean);
+    return items.map(mapGoogleItem).filter((l): l is Lead => l !== null);
   } catch (e) {
     console.error("Google Maps error:", e);
     return await searchGoogleMapsAsync(token, searchQueries, maxResults, onProgress);
@@ -261,7 +281,7 @@ async function searchGoogleMapsAsync(
     const items = await dataRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Google Maps: ${items.length} virksomheder`, items.length);
-    return items.map(mapGoogleItem).filter(Boolean);
+    return items.map(mapGoogleItem).filter((l): l is Lead => l !== null);
   } catch { return []; }
 }
 
@@ -360,7 +380,7 @@ async function searchKrak(
     const items = await runRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Krak: ${items.length} virksomheder`, items.length);
-    return items.map(mapKrakApifyItem).filter(Boolean).slice(0, maxResults);
+    return items.map(mapKrakApifyItem).filter((l): l is Lead => l !== null).slice(0, maxResults);
   } catch (e) {
     console.error("Krak Apify error:", e);
     return await searchKrakAsync(token, keyword, maxResults, onProgress);
@@ -416,7 +436,7 @@ async function searchKrakAsync(
     const items = await dataRes.json();
     if (!Array.isArray(items)) return [];
     onProgress?.(`✅ Krak: ${items.length} virksomheder`, items.length);
-    return items.map(mapKrakApifyItem).filter(Boolean).slice(0, maxResults);
+    return items.map(mapKrakApifyItem).filter((l): l is Lead => l !== null).slice(0, maxResults);
   } catch { return []; }
 }
 
@@ -552,7 +572,8 @@ async function enrichLeadContacts(
 
   const results = await Promise.allSettled(
     batch.map(async lead => {
-      const url = lead.website.startsWith("http") ? lead.website : `https://${lead.website}`;
+      const site = lead.website ?? "";
+      const url = site.startsWith("http") ? site : `https://${site}`;
       const scraped = await scrapeContactFromWebsite(url);
       return { leadName: lead.name, ...scraped };
     }),
@@ -677,17 +698,328 @@ function normalizeDomain(url: string): string {
   } catch { return normalize(url); }
 }
 
+// ═══════════════════════════════════════════════════════════
+// PERSISTENCE — lead_gen_sessions / lead_gen_results
+// (same tables + columns lead-gen-api/index.ts already writes, so results
+// stay compatible with src/hooks/api/useLeadGen.ts and LeadGenerationPage.tsx)
+// ═══════════════════════════════════════════════════════════
+// Untyped schema: this function writes columns added by the leadgen migration that aren't in the
+// generated Database types yet, so a strict client would type every insert/update as `never`.
+type SupabaseServiceClient = SupabaseClient<any>;
+
+function mapActiveStatus(status?: string): "active_likely" | "uncertain" | "inactive_likely" {
+  const s = (status || "").toLowerCase();
+  if (s.includes("lukket") || s.includes("ophørt") || s.includes("ophoert")) return "inactive_likely";
+  if (s.includes("aktiv") || s === "active") return "active_likely";
+  return "uncertain";
+}
+
+// This file's own confidence signal is a string ("high"|"medium"|"none"); lead_gen_results
+// stores email_confidence/domain_confidence as 0-100 integers (same scale lead-gen-api uses).
+function confidenceToScore(c?: string): number {
+  if (c === "high") return 90;
+  if (c === "medium") return 50;
+  return 0;
+}
+
+// lead_gen_results.lead_score is compared against a 0-100 scale elsewhere (lead-gen-api's
+// "hot lead" threshold is lead_score >= 60), but this file's scoreAndRank/aiQualifyLeads score
+// on a 1-10 scale. Rescale x10 so a persisted chat-sourced lead sorts comparably — a judgment
+// call, flagged in the final report for a human to confirm against real data.
+function rescaleScore(lead: Lead): number {
+  const raw = typeof lead.ai_score === "number" ? lead.ai_score : (typeof lead.score === "number" ? lead.score : 5);
+  return Math.max(0, Math.min(100, Math.round(raw * 10)));
+}
+
+function toResultRow(lead: Lead, sessionId: string, companyId: string): Record<string, unknown> {
+  return {
+    session_id: sessionId,
+    company_id: companyId,
+    company_name: lead.name || "Unknown",
+    registration_number: lead.number || null,
+    website: lead.website || null,
+    business_email: lead.email || null,
+    email_status: lead.email ? "unverified" : "missing",
+    email_type: lead.email ? "unknown" : "missing",
+    email_confidence: confidenceToScore(lead.email_confidence),
+    domain_confidence: confidenceToScore(lead.phone_confidence),
+    phone: lead.phone || null,
+    address: lead.address || null,
+    city: lead.city || null,
+    country: lead.country || "DK",
+    industry: lead.industry || null,
+    source_url: lead.website || null,
+    source_registry: lead.source || (lead.sources?.[0] ?? null),
+    source_list: lead.sources || [],
+    google_maps_url: lead.place_id ? `https://www.google.com/maps/place/?q=place_id:${lead.place_id}` : null,
+    review_count: lead.reviews || 0,
+    rating: lead.rating ?? null,
+    lead_score: rescaleScore(lead),
+    active_status: mapActiveStatus(lead.status),
+    metadata: {
+      match_reasons: lead.match_reasons || [],
+      ai_quality: lead.ai_quality || null,
+      ai_reason: lead.ai_reason || null,
+      data_quality: lead.data_quality || null,
+    },
+    normalized_phone: lead.phone ? normalizePhone(lead.phone) : null,
+    normalized_domain: lead.website ? normalizeDomain(lead.website) : null,
+    owner_name: lead.owner_name ?? null,
+    owner_role: lead.owner_role ?? null,
+    owner_confidence: lead.owner_confidence ?? 0,
+    owner_sources: lead.owner_sources ?? [],
+    reklamebeskyttet: lead.reklamebeskyttet ?? null,
+    samtykke_status: lead.samtykke_status ?? "ukendt",
+    cvr_status: lead.cvr_status ?? null,
+  };
+}
+
+// Inserts leads that have not been persisted yet (no result_id), updates ones that have.
+// Returns the same array with result_id attached to every element — callers must keep using
+// this returned array so later enrichment stages can .update() by id instead of re-inserting.
+async function persistLeads(
+  supabase: SupabaseServiceClient, sessionId: string, companyId: string, leads: Lead[],
+): Promise<Lead[]> {
+  const toInsert = leads.filter(l => !l.result_id);
+  const toUpdate = leads.filter(l => !!l.result_id);
+
+  if (toInsert.length > 0) {
+    const rows = toInsert.map(l => toResultRow(l, sessionId, companyId));
+    const { data, error } = await supabase.from("lead_gen_results").insert(rows).select("id");
+    if (error) {
+      console.error("persistLeads insert error:", error.message);
+    } else if (data) {
+      for (let i = 0; i < toInsert.length; i++) {
+        toInsert[i].result_id = (data[i] as { id: string } | undefined)?.id;
+      }
+    }
+  }
+
+  for (const lead of toUpdate) {
+    const row = toResultRow(lead, sessionId, companyId);
+    delete (row as Record<string, unknown>).session_id;
+    delete (row as Record<string, unknown>).company_id;
+    const { error } = await supabase.from("lead_gen_results").update(row).eq("id", lead.result_id);
+    if (error) console.error("persistLeads update error:", error.message);
+  }
+
+  return leads;
+}
+
+async function updateSessionProgress(
+  supabase: SupabaseServiceClient, sessionId: string, progress: number, label: string, extra: Record<string, unknown> = {},
+) {
+  await supabase.from("lead_gen_sessions").update({
+    progress, progress_label: label, updated_at: nowIso(), ...extra,
+  }).eq("id", sessionId);
+}
+
+async function createLeadGenSession(
+  supabase: SupabaseServiceClient, companyId: string, userId: string, query: string, filters: Record<string, unknown>,
+): Promise<string> {
+  const { data, error } = await supabase.from("lead_gen_sessions")
+    .insert({ company_id: companyId, user_id: userId, query, filters: filters || {}, status: "running" })
+    .select("id").single();
+  if (error || !data) throw new Error(`Could not create lead_gen_sessions row: ${error?.message}`);
+  return (data as { id: string }).id;
+}
+
+async function loadSession(supabase: SupabaseServiceClient, sessionId: string, companyId: string) {
+  const { data } = await supabase.from("lead_gen_sessions").select("*")
+    .eq("id", sessionId).eq("company_id", companyId).single();
+  return data as Record<string, unknown> | null;
+}
+
+// Reconstructs the in-memory Lead[] shape from already-persisted lead_gen_results rows, for
+// resuming a session on mode:"confirm" (a stateless, separate function invocation).
+function dbRowToLead(row: Record<string, unknown>): Lead {
+  return {
+    name: (row.company_name as string) || "Unknown",
+    number: (row.registration_number as string) || "",
+    address: (row.address as string) || "",
+    city: (row.city as string) || "",
+    industry: (row.industry as string) || "",
+    status: (row.active_status as string) || "uncertain",
+    country: (row.country as string) || "DK",
+    email: (row.business_email as string) || "",
+    phone: (row.phone as string) || "",
+    website: (row.website as string) || "",
+    source: (row.source_registry as string) || "",
+    sources: (row.source_list as string[]) || [],
+    rating: (row.rating as number | null) ?? null,
+    reviews: (row.review_count as number) || 0,
+    score: Math.max(1, Math.min(10, Math.round(((row.lead_score as number) || 50) / 10))),
+    result_id: row.id as string,
+    owner_name: row.owner_name as string | null,
+    owner_role: row.owner_role as string | null,
+    owner_confidence: (row.owner_confidence as number) || 0,
+    owner_sources: (row.owner_sources as string[]) || [],
+    reklamebeskyttet: row.reklamebeskyttet as boolean | null,
+    samtykke_status: (row.samtykke_status as "ukendt" | "givet" | "nej") || "ukendt",
+    cvr_status: row.cvr_status as string | null,
+  };
+}
+
+async function loadPersistedLeads(supabase: SupabaseServiceClient, sessionId: string): Promise<Lead[]> {
+  const { data } = await supabase.from("lead_gen_results").select("*").eq("session_id", sessionId).limit(2000);
+  return (data || []).map(dbRowToLead);
+}
+
+// ─── Owner validation + compliance flags (per DECISIONS.md section 4) ───
+async function runOwnerValidationAndCompliance(
+  supabase: SupabaseServiceClient, leads: Lead[], send: (type: string, data: Record<string, unknown>) => void,
+): Promise<Lead[]> {
+  const BATCH = 8;
+  for (let i = 0; i < leads.length; i += BATCH) {
+    const batch = leads.slice(i, i + BATCH);
+    await Promise.all(batch.map(async lead => {
+      let owner: OwnerValidation | null = null;
+      let compliance: ComplianceFlags | null = null;
+      try {
+        owner = await validateOwner({
+          name: lead.name,
+          website: lead.website || undefined,
+        });
+      } catch (e) {
+        console.error("validateOwner error:", e);
+      }
+      try {
+        // The free cvrapi.dk tier this pipeline uses never returns reklamebeskyttet/ejer data
+        // (DECISIONS.md section 3/4) — this mapping call exists so a future gated-CVR upgrade
+        // is a drop-in, but today it will realistically always yield "unknown".
+        compliance = mapComplianceFlags({
+          cvrNumber: lead.number || undefined,
+          activeStatus: lead.status || undefined,
+        });
+      } catch (e) {
+        console.error("mapComplianceFlags error:", e);
+      }
+
+      lead.owner_name = owner?.owner_name ?? null;
+      lead.owner_role = owner?.owner_role ?? null;
+      lead.owner_confidence = owner?.owner_confidence ?? 0;
+      lead.owner_sources = owner?.owner_sources ?? [];
+      lead.reklamebeskyttet = compliance?.reklamebeskyttet ?? null;
+      lead.samtykke_status = compliance?.samtykke_status ?? "ukendt";
+      lead.cvr_status = compliance?.cvr_status ?? null;
+
+      if (lead.result_id) {
+        await supabase.from("lead_gen_results").update({
+          owner_name: lead.owner_name, owner_role: lead.owner_role,
+          owner_confidence: lead.owner_confidence, owner_sources: lead.owner_sources,
+          reklamebeskyttet: lead.reklamebeskyttet, samtykke_status: lead.samtykke_status,
+          cvr_status: lead.cvr_status,
+        }).eq("id", lead.result_id);
+        send("owner_validated", {
+          result_id: lead.result_id,
+          owner_name: lead.owner_name, owner_role: lead.owner_role,
+          owner_confidence: lead.owner_confidence, owner_sources: lead.owner_sources,
+        });
+      }
+    }));
+  }
+  return leads;
+}
+
+// ─── Save-to-CRM commit (mode:"confirm", kind:"save_confirm", accept:true) ──────────────
+// IMPORTANT: public.leads is a FROZEN legacy table (see
+// supabase/migrations/20260918000002_freeze_legacy_leads_table.sql — INSERT/UPDATE/DELETE
+// revoked from authenticated/anon, and no FKs reference it anymore). The real, UI-visible CRM
+// lead store today is public.customers with record_type='lead' (see
+// 20260824000001_merge_leads_into_customers_schema.sql and lead-gen-api/index.ts's own
+// /sessions/:id/import handler at ~line 1429). Writing to public.leads would silently create
+// leads invisible to every existing CRM screen. This deviates from the literal task brief,
+// which predates that freeze migration — flagged prominently in the final report.
+async function saveResultsToCrm(
+  supabase: SupabaseServiceClient, companyId: string, userId: string, results: Record<string, unknown>[],
+): Promise<{ saved_count: number; skipped_count: number; skipped_reasons: string[] }> {
+  let savedCount = 0;
+  const skippedReasons: string[] = [];
+
+  for (const r of results) {
+    const normPhone = (r.normalized_phone as string) || null;
+    const normDomain = (r.normalized_domain as string) || null;
+    const nameKey = ((r.company_name as string) || "").toLowerCase();
+    const cityKey = ((r.city as string) || "").toLowerCase();
+
+    // Dedupe against other already-imported lead_gen_results rows for this company, using the
+    // exact normalization the idx_lead_gen_results_dedupe_* indexes (migration
+    // 20261026000001) were built on: normalized phone, normalized domain, or name+city.
+    let isDupe = false;
+    if (nameKey) {
+      const { count: nameCityDupe } = await supabase.from("lead_gen_results")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId).eq("imported", true).neq("id", r.id as string)
+        .ilike("company_name", nameKey).ilike("city", cityKey || "");
+      isDupe = (nameCityDupe || 0) > 0;
+    }
+    if (!isDupe && normPhone) {
+      const { count } = await supabase.from("lead_gen_results").select("id", { count: "exact", head: true })
+        .eq("company_id", companyId).eq("imported", true).neq("id", r.id as string).eq("normalized_phone", normPhone);
+      isDupe = (count || 0) > 0;
+    }
+    if (!isDupe && normDomain) {
+      const { count } = await supabase.from("lead_gen_results").select("id", { count: "exact", head: true })
+        .eq("company_id", companyId).eq("imported", true).neq("id", r.id as string).eq("normalized_domain", normDomain);
+      isDupe = (count || 0) > 0;
+    }
+
+    if (isDupe) {
+      skippedReasons.push(`${r.company_name || "Unknown"}: findes allerede som lead`);
+      continue;
+    }
+
+    // customers.email is NOT NULL — same wrinkle as the legacy leads table. Leads with no email
+    // get a placeholder, matching the exact pattern lead-gen-api's own import already uses.
+    const email = (r.business_email as string) || `noemail-${(r.id as string).slice(0, 8)}@placeholder.local`;
+
+    const { data: inserted, error } = await supabase.from("customers").insert({
+      company_id: companyId,
+      created_by: userId,
+      name: (r.company_name as string) || "Unknown Lead",
+      company_name: (r.company_name as string) || null,
+      email,
+      phone: (r.phone as string) || null,
+      address: (r.address as string) || null,
+      city: (r.city as string) || null,
+      industry: (r.industry as string) || null,
+      status: "new",
+      score: (r.lead_score as number) || 0,
+      tags: ["lead-gen", "chat"],
+      record_type: "lead",
+      notes: [
+        r.website ? `Website: ${r.website}` : null,
+        r.owner_name ? `Ejer/kontakt: ${r.owner_name}${r.owner_role ? ` (${r.owner_role})` : ""} [${r.owner_confidence || 0}% sikkerhed]` : null,
+        r.google_maps_url ? `Google Maps: ${r.google_maps_url}` : null,
+      ].filter(Boolean).join("\n") || null,
+    }).select("id").single();
+
+    if (error || !inserted) {
+      console.error("saveResultsToCrm insert error:", error?.message);
+      skippedReasons.push(`${r.company_name || "Unknown"}: gem mislykkedes (${error?.message || "ukendt fejl"})`);
+      continue;
+    }
+
+    await supabase.from("lead_gen_results").update({
+      imported: true, imported_lead_id: (inserted as { id: string }).id,
+    }).eq("id", r.id as string);
+    savedCount++;
+  }
+
+  return { saved_count: savedCount, skipped_count: skippedReasons.length, skipped_reasons: skippedReasons };
+}
+
 function areDuplicates(a: Lead, b: Lead): boolean {
   if (a.number && b.number && a.number === b.number) return true;
   const nameA = normalize(a.name), nameB = normalize(b.name);
   if (nameA && nameB && nameA.length > 3 && nameB.length > 3) {
     if (nameA === nameB) return true;
     if (nameA.includes(nameB) || nameB.includes(nameA)) {
-      const cityA = normalize(a.city || a.address), cityB = normalize(b.city || b.address);
+      const cityA = normalize(a.city || a.address || ""), cityB = normalize(b.city || b.address || "");
       if (cityA && cityB && (cityA.includes(cityB) || cityB.includes(cityA))) return true;
     }
   }
-  const phoneA = normalizePhone(a.phone), phoneB = normalizePhone(b.phone);
+  const phoneA = normalizePhone(a.phone || ""), phoneB = normalizePhone(b.phone || "");
   if (phoneA && phoneB && phoneA.length >= 8 && phoneA === phoneB) return true;
   if (a.website && b.website) {
     const domA = normalizeDomain(a.website), domB = normalizeDomain(b.website);
@@ -827,12 +1159,12 @@ function scoreAndRank(leads: Lead[], intent: {
       if (lead.email_confidence === "high") score += 0.5;
 
       // Multi-source bonus
-      if (lead.sources?.length >= 2) { score += 1; match_reasons.push(`🔗 ${lead.sources.length} kilder`); }
+      if ((lead.sources?.length ?? 0) >= 2) { score += 1; match_reasons.push(`🔗 ${lead.sources?.length ?? 0} kilder`); }
       if (lead.sources?.includes("Krak")) match_reasons.push("📞 Krak");
       if (lead.sources?.includes("Google")) match_reasons.push("🗺️ Google");
 
       score = Math.max(1, Math.min(10, Math.round(score)));
-      return { ...lead, score, match_reasons, phone: normalizePhoneNumber(lead.phone) };
+      return { ...lead, score, match_reasons, phone: normalizePhoneNumber(lead.phone || "") };
     })
     .filter(lead => {
       if (intent.requireEmail && !lead.email) return false;
