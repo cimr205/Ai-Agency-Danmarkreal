@@ -357,3 +357,30 @@
   --cal-grid-line: #ECECEF;
   --cal-hour-label: #6B6B70;
 }
+
+/* Workspace design language. Role-named aliases of the calendar tokens above
+   so every module that adopts the calendar's dark-panel/gradient look (Power
+   Dialer first; more modules later) shares one source of truth instead of
+   redefining the same hex values under a second name. Fixed palette, same as
+   the calendar: independent of the app's light/dark theme by design. */
+:root {
+  --workspace-frame: var(--cal-app-bg);
+  --workspace-panel: var(--cal-sidebar-card);
+  --workspace-panel-row: var(--cal-sidebar-card-row);
+  --workspace-ink-on-dark: var(--cal-sidebar-text);
+  --workspace-label-on-dark: var(--cal-sidebar-label);
+  --workspace-muted-on-dark: var(--cal-sidebar-muted);
+  --workspace-gradient: var(--cal-panel-gradient);
+  --workspace-accent: var(--cal-accent-purple);
+  --workspace-today: var(--cal-accent-lime);
+  --workspace-ink: #0A0A0A;
+  --workspace-tile-active: var(--cal-day-active);
+  --workspace-tile-inactive: var(--cal-day-future);
+  --workspace-surface: var(--cal-grid-bg);
+  --workspace-surface-line: var(--cal-grid-line);
+  --workspace-surface-label: var(--cal-hour-label);
+  --workspace-outcome-answered: #5BBF8A;
+  --workspace-outcome-none: #9A9AA3;
+  --workspace-outcome-callback: #E3B34F;
+  --workspace-outcome-negative: #D9695F;
+}
