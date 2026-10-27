@@ -205,12 +205,16 @@ export default function IcpPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : profiles.length === 0 ? (
-        <EmptyState
-          icon={Target}
-          title={t('icp.noIcpsYet')}
-          hint={t('icp.noIcpsDesc')}
-          action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
-        />
+        <WorkspaceFrame>
+          <WorkspaceSurface className="rounded-[22px] p-4">
+            <EmptyState
+              icon={Target}
+              title={t('icp.noIcpsYet')}
+              hint={t('icp.noIcpsDesc')}
+              action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
+            />
+          </WorkspaceSurface>
+        </WorkspaceFrame>
       ) : (
         <WorkspaceFrame>
           <WorkspaceSurface className="rounded-[22px] p-4">
