@@ -329,7 +329,6 @@
     "expandSidebar": "Expand sidebar",
     "openMenu": "Open menu",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow Chat",
     "workspaceNavigation": "Workspace navigation",
     "controlRoom": "Control room",
@@ -1885,6 +1884,15 @@
     "queue": {
       "title": "Lead queue"
     },
+    "views": {
+      "queue": "Queue",
+      "history": "History",
+      "setup": "Setup"
+    },
+    "status": {
+      "connected": "Phone ready",
+      "disconnected": "Phone not connected"
+    },
     "outcomes": {
       "noAnswer": "No answer",
       "callback": "Callback",
@@ -3063,6 +3071,106 @@
       "messaged": "Messaged",
       "replied": "Replied",
       "skipped": "Skipped"
+    }
+  },
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "actionFallback": "The action"
+    },
+    "functionAreas": {
+      "accounting": "Accounting integration",
+      "aiActions": "AI assistant",
+      "aiAnalyze": "AI analysis",
+      "aiEmailWriter": "AI email writer",
+      "aiGenerate": "AI generation",
+      "aiHealth": "AI connection",
+      "aiOperatingManager": "AI operating manager",
+      "autopilot": "Autopilot",
+      "callScript": "Call script",
+      "chat": "AI chat",
+      "companiesHouse": "Companies House lookup",
+      "csvImport": "CSV import",
+      "customerPortal": "Customer portal",
+      "cvrSearch": "CVR lookup",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero connection",
+      "dineroSync": "Dinero sync",
+      "economic": "e-conomic connection",
+      "economicSync": "e-conomic sync",
+      "emailCampaigns": "Email campaigns",
+      "emailProvider": "Email provider",
+      "emailQueue": "Email queue",
+      "emailTrack": "Email tracking",
+      "emailVerify": "Email verification",
+      "gmail": "Gmail connection",
+      "gmailSync": "Gmail sync",
+      "icpScore": "ICP scoring",
+      "integrations": "Integrations",
+      "invoicePayment": "Invoice payment",
+      "leadGen": "Lead generation",
+      "leadRecommend": "Lead recommendations",
+      "linkedinOutreach": "LinkedIn outreach",
+      "mcpServer": "MCP server",
+      "meetingSummary": "Meeting summary",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta Ads sync",
+      "payment": "Payment",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Subscription",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow assistant",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "the information sent was invalid.",
+        "what": "Check the fields and try again."
+      },
+      "unauthorized": {
+        "why": "your session has expired.",
+        "what": "Log in again."
+      },
+      "forbidden": {
+        "why": "you don't have access to this.",
+        "what": "Contact an administrator if this seems wrong."
+      },
+      "notFound": {
+        "why": "it could not be found.",
+        "what": "Check that it still exists."
+      },
+      "conflict": {
+        "why": "it conflicts with something already in progress.",
+        "what": "Refresh the page and try again."
+      },
+      "rateLimited": {
+        "why": "there are too many requests right now.",
+        "what": "Wait a moment and try again."
+      },
+      "serverError": {
+        "why": "something went wrong on our side or with a connected service.",
+        "what": "Try again in a moment."
+      },
+      "network": {
+        "why": "the connection failed or the service is not responding.",
+        "what": "Check your internet connection and try again."
+      },
+      "unknown": {
+        "why": "something unexpected happened.",
+        "what": "Try again, and contact support if it keeps happening."
+      }
+    },
+    "details": {
+      "show": "Show details",
+      "hide": "Hide details",
+      "copy": "Copy",
+      "copied": "Copied",
+      "function": "Function",
+      "status": "Status",
+      "time": "Time",
+      "requestId": "Request ID"
     }
   }
 }
