@@ -12,22 +12,24 @@ import { MetaQuickAnalyst } from "@/components/marketing/meta/MetaQuickAnalyst";
 import { MetaPerformanceCharts } from "@/components/marketing/meta/MetaPerformanceCharts";
 import { CreateCampaignWizard } from "@/components/marketing/meta/CreateCampaignWizard";
 import AiMediaContent from "@/components/marketing/AiMediaContent";
-import { LayoutDashboard, Target, Layers, Lightbulb, BarChart3, Plus, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { SegmentedControl } from "@/components/workspace/SegmentedControl";
+
+type MetaSection = "overview" | "campaigns" | "adsets" | "insights" | "reports" | "media";
 
 export default function MetaAdsManagePage() {
   const { t } = useI18n();
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState<MetaSection>("overview");
   const [wizardOpen, setWizardOpen] = useState(false);
 
-  const sidebarItems = [
-    { id: "overview", label: t('pages.meta.overview'), icon: LayoutDashboard },
-    { id: "campaigns", label: t('pages.meta.campaigns'), icon: Target },
-    { id: "adsets", label: t('pages.meta.adSets'), icon: Layers },
-    { id: "insights", label: t('pages.meta.insights'), icon: Lightbulb },
-    { id: "reports", label: t('pages.meta.reports'), icon: BarChart3 },
-    { id: "media", label: t('pages.meta.aiMedia'), icon: Sparkles },
+  const sections: { id: MetaSection; label: string }[] = [
+    { id: "overview", label: t('pages.meta.overview') },
+    { id: "campaigns", label: t('pages.meta.campaigns') },
+    { id: "adsets", label: t('pages.meta.adSets') },
+    { id: "insights", label: t('pages.meta.insights') },
+    { id: "reports", label: t('pages.meta.reports') },
+    { id: "media", label: t('pages.meta.aiMedia') },
   ];
 
   return (
@@ -43,28 +45,7 @@ export default function MetaAdsManagePage() {
         </Button>
       </div>
 
-      {/* Section tabs — single flat row, no second sidebar */}
-      <div className="flex items-center gap-1 flex-wrap border-b border-border/60 -mb-px">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeSection === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={cn(
-                "flex items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors shrink-0",
-                isActive
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+      <SegmentedControl<MetaSection> layoutId="metaSectionPill" value={activeSection} onChange={setActiveSection} options={sections} />
 
       <div className="space-y-6">
         {activeSection !== "media" && <MetaOverviewKPIs />}

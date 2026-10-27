@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { da, de, enUS } from 'date-fns/locale';
 import { MessageSquarePlus, MessagesSquare } from 'lucide-react';
 import { toast } from 'sonner';
@@ -113,12 +114,12 @@ export default function InboxPage() {
         <EmptyState icon={MessagesSquare} title={t('pages.inbox.loadError')} />
       ) : (
         <>
-          {/* Desktop 3-panel */}
+          {/* Desktop 3-panel — dark list panel + rounded frame, matching the workspace design language */}
           <div
-            className="hidden flex-1 gap-px overflow-hidden rounded-xl bg-border/30 lg:grid"
+            className="hidden flex-1 gap-[10px] overflow-hidden rounded-[32px] bg-workspace-frame p-2 lg:grid"
             style={{ gridTemplateColumns: isDetailsOpen && selected ? '320px 1fr 300px' : '320px 1fr' }}
           >
-            <div className="flex flex-col overflow-hidden bg-background">
+            <div className="flex flex-col overflow-hidden rounded-[22px] bg-workspace-panel">
               <ConversationList
                 conversations={conversations}
                 selectedId={selectedId}
@@ -132,7 +133,7 @@ export default function InboxPage() {
                 onNewConversation={() => setIsNewOpen(true)}
               />
             </div>
-            <div className="flex flex-col overflow-hidden bg-background">
+            <div className="flex flex-col overflow-hidden rounded-[22px] bg-background">
               {selected && userId ? (
                 <ConversationThread
                   conversation={selected}
@@ -155,14 +156,17 @@ export default function InboxPage() {
               )}
             </div>
             {selected && isDetailsOpen && (
-              <div className="hidden overflow-y-auto bg-background xl:block">
+              <div className="hidden overflow-y-auto rounded-[22px] bg-background xl:block">
                 <ConversationDetailsPanel conversation={selected} dateFnsLocale={dateFnsLocale} />
               </div>
             )}
           </div>
 
           {/* Mobile: list or thread */}
-          <div className="flex-1 overflow-hidden rounded-xl border border-border/30 lg:hidden">
+          <div className={cn(
+            'flex-1 overflow-hidden rounded-[22px] lg:hidden',
+            mobileView === 'list' || !selected || !userId ? 'bg-workspace-panel' : 'border border-border/30 bg-background',
+          )}>
             {mobileView === 'list' || !selected || !userId ? (
               <ConversationList
                 conversations={conversations}
