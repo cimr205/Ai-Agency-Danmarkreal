@@ -19,6 +19,7 @@ import { MailSidebar, type FolderId } from '@/components/email/MailSidebar';
 import { EmailListPane, type Email, type ReadFilter } from '@/components/email/EmailListPane';
 import { EmailReaderPane } from '@/components/email/EmailReaderPane';
 import { ComposeDialog, type ComposeMode, type ComposePayload, parseRecipients } from '@/components/email/ComposeDialog';
+import { WorkspaceFrame } from '@/components/workspace/WorkspacePanel';
 
 export default function EmailsPage() {
   const { t, locale } = useI18n();
@@ -389,16 +390,16 @@ export default function EmailsPage() {
       </div>
 
       {/* Three-pane inbox */}
-      <Card className="flex-1 overflow-hidden p-0">
-        <div className="flex h-[calc(100vh-14rem)] min-h-[560px] w-full">
+      <WorkspaceFrame className="flex-1 overflow-hidden">
+        <div className="flex h-[calc(100vh-14rem)] min-h-[560px] w-full gap-[10px]">
           {!isMobile && (
-            <div className="w-60 shrink-0 border-r border-border">
+            <div className="w-60 shrink-0 overflow-hidden rounded-[22px]">
               {sidebar}
             </div>
           )}
 
           {(!isMobile || mobileView === 'list') && (
-            <div className={`${isMobile ? 'w-full' : 'w-[360px] shrink-0 border-r border-border'}`}>
+            <div className={`overflow-hidden rounded-[22px] bg-background ${isMobile ? 'w-full' : 'w-[360px] shrink-0'}`}>
               <EmailListPane
                 title={folderTitle}
                 emails={visibleEmails}
@@ -421,7 +422,7 @@ export default function EmailsPage() {
           )}
 
           {(!isMobile || mobileView === 'reader') && (
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-[22px] bg-background">
               <EmailReaderPane
                 email={selectedEmail}
                 dateLocale={dateLocale}
@@ -447,7 +448,7 @@ export default function EmailsPage() {
             </div>
           )}
         </div>
-      </Card>
+      </WorkspaceFrame>
 
       {/* Mobile folder navigation */}
       <Sheet open={mobileFoldersOpen} onOpenChange={setMobileFoldersOpen}>

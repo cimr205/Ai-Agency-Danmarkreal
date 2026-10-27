@@ -24,6 +24,7 @@ import IcpScoreBreakdown from "@/components/icp/IcpScoreBreakdown";
 import { useI18n } from "@/lib/i18n";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { WorkspaceFrame, WorkspaceSurface } from "@/components/workspace/WorkspacePanel";
 
 function scoreTierBadge(score: number) {
   if (score >= 80) return <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs">Hot</Badge>;
@@ -211,9 +212,11 @@ export default function IcpPage() {
           action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <WorkspaceFrame>
+          <WorkspaceSurface className="rounded-[22px] p-4">
+            <div className="grid gap-3 md:grid-cols-2">
           {profiles.map((icp) => (
-            <Card key={icp.id} className="space-y-4 p-6">
+            <Card key={icp.id} className="space-y-4 border-workspace-surface-line p-6 shadow-none">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -295,7 +298,9 @@ export default function IcpPage() {
               </div>
             </Card>
           ))}
-        </div>
+            </div>
+          </WorkspaceSurface>
+        </WorkspaceFrame>
       )}
     </div>
   );

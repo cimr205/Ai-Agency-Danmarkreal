@@ -158,9 +158,15 @@ export default function WorkSchedulePage() {
           <p className="text-muted-foreground">{t('workforce.scheduleSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <Button variant={view === 'week' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('week')}><Calendar className="h-4 w-4" /></Button>
-            <Button variant={view === 'list' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('list')}><List className="h-4 w-4" /></Button>
+          <div role="tablist" className="flex rounded-full bg-[rgba(160,165,175,0.35)] p-1">
+            <button
+              type="button" role="tab" aria-selected={view === 'week'} onClick={() => setView('week')}
+              className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${view === 'week' ? 'bg-white text-workspace-ink' : 'text-workspace-ink/70'}`}
+            ><Calendar className="h-4 w-4" /></button>
+            <button
+              type="button" role="tab" aria-selected={view === 'list'} onClick={() => setView('list')}
+              className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${view === 'list' ? 'bg-white text-workspace-ink' : 'text-workspace-ink/70'}`}
+            ><List className="h-4 w-4" /></button>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
