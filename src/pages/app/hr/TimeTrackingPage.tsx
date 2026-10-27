@@ -12,6 +12,8 @@ import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { getErrorMessage } from '@/lib/errors';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 function BigTimer({ checkIn }: { checkIn: string }) {
   const [display, setDisplay] = useState('0:00:00');
@@ -226,47 +228,15 @@ export default function TimeTrackingPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.todayHours')}</p>
-                <p className="text-2xl font-bold">{isActive && session ? ((Date.now() - new Date(session.check_in).getTime()) / 3600000).toFixed(1) : '0'}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-chart-blue/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-chart-blue" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.weekHours')}</p>
-                <p className="text-2xl font-bold">{weekHours}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-chart-violet/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-chart-violet" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.monthHours')}</p>
-                <p className="text-2xl font-bold">{monthHours}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+            <WorkspaceTile label={t('workforce.todayHours')} value={`${isActive && session ? ((Date.now() - new Date(session.check_in).getTime()) / 3600000).toFixed(1) : '0'}h`} active />
+            <WorkspaceTile label={t('workforce.weekHours')} value={`${weekHours}h`} />
+            <WorkspaceTile label={t('workforce.monthHours')} value={`${monthHours}h`} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* History */}
       <Card className="border-border/50">

@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Wallet, Banknote, Users } from 'lucide-react';
+import { Plus, Search, Banknote } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 const DATE_LOCALES = { da, de, en: enUS } as const;
 const LOCALE_CURRENCY: Record<string, { currency: string; locale: string }> = {
@@ -84,11 +86,15 @@ export default function PayrollPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><Banknote className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.totalSalaryMonth')}</p><p className="text-2xl font-bold text-success">{formatCurrency(totalSalary)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Wallet className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.averageSalary')}</p><p className="text-2xl font-bold">{formatCurrency(avgSalary)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.records')}</p><p className="text-2xl font-bold">{payrolls.length}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <WorkspaceTile label={t('hr.totalSalaryMonth')} value={formatCurrency(totalSalary)} active />
+            <WorkspaceTile label={t('hr.averageSalary')} value={formatCurrency(avgSalary)} />
+            <WorkspaceTile label={t('hr.records')} value={payrolls.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchEmployeePlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 

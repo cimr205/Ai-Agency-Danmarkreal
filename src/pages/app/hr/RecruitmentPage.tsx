@@ -9,11 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, UserPlus, Briefcase, Users, CheckCircle } from 'lucide-react';
+import { Plus, Search, UserPlus } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 export default function RecruitmentPage() {
   const { t } = useI18n();
@@ -84,12 +86,16 @@ export default function RecruitmentPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><Briefcase className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.openPositions')}</p><p className="text-2xl font-bold text-success">{openPositions}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.interviewing')}</p><p className="text-2xl font-bold">{interviewingPositions}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.filled')}</p><p className="text-2xl font-bold">{filledPositions}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><UserPlus className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.total')}</p><p className="text-2xl font-bold">{recs.length}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <WorkspaceTile label={t('hr.openPositions')} value={openPositions} active />
+            <WorkspaceTile label={t('hr.interviewing')} value={interviewingPositions} />
+            <WorkspaceTile label={t('hr.filled')} value={filledPositions} />
+            <WorkspaceTile label={t('hr.total')} value={recs.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchPositionPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 

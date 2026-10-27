@@ -9,7 +9,7 @@ import { DealBoardView } from '@/components/deals/DealBoardView';
 import { DealListView } from '@/components/deals/DealListView';
 import { DealCalendarView } from '@/components/deals/DealCalendarView';
 import { DealDetailSheet } from '@/components/deals/DealDetailSheet';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { buildStages, getStageLabelFor, normalizeStageKey, type StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { reportError } from '@/lib/sentry';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 type DealStage = string;
 
@@ -224,12 +226,16 @@ export default function DealsPage() {
       {!isEmpty && (
         <>
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.totalDeals')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalDeals}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.pipelineValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.wonValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(wonValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.avgDealValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalDeals ? totalValue / totalDeals : 0)}</div></CardContent></Card>
-          </div>
+          <WorkspaceFrame>
+            <WorkspaceGradientSurface className="p-4">
+              <div className="grid gap-3 md:grid-cols-4">
+                <WorkspaceTile label={t('pages.deals.totalDeals')} value={totalDeals} active />
+                <WorkspaceTile label={t('pages.deals.pipelineValue')} value={formatCurrency(totalValue)} />
+                <WorkspaceTile label={t('pages.deals.wonValue')} value={formatCurrency(wonValue)} />
+                <WorkspaceTile label={t('pages.deals.avgDealValue')} value={formatCurrency(totalDeals ? totalValue / totalDeals : 0)} />
+              </div>
+            </WorkspaceGradientSurface>
+          </WorkspaceFrame>
 
           {/* Toolbar */}
           <div className="flex items-center gap-4">

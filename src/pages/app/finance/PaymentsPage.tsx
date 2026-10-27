@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, CreditCard, CheckCircle, Clock, Building2, Smartphone, Download } from 'lucide-react';
+import { Plus, CreditCard, Building2, Smartphone, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 
 const paymentMethods = [
   { value: 'bank_transfer', label: 'bankTransfer', icon: Building2 },
@@ -176,20 +178,27 @@ export default function PaymentsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><CheckCircle className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('payments.completed')}</p><p className="text-2xl font-bold text-success">{formatCurrency(totalCompleted)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center"><Clock className="h-6 w-6 text-warning" /></div><div><p className="text-sm text-muted-foreground">{t('payments.pending')}</p><p className="text-2xl font-bold">{pendingPayments.length}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><CreditCard className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('payments.totalPayments')}</p><p className="text-2xl font-bold">{allPayments.length}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <WorkspaceTile label={t('payments.completed')} value={formatCurrency(totalCompleted)} active />
+            <WorkspaceTile label={t('payments.pending')} value={pendingPayments.length} />
+            <WorkspaceTile label={t('payments.totalPayments')} value={allPayments.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
-      {/* Status filter tabs */}
-      <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-        <TabsList>
-          <TabsTrigger value="all">{t('common.all')} ({allPayments.length})</TabsTrigger>
-          <TabsTrigger value="completed">{t('payments.completed')} ({completedPayments.length})</TabsTrigger>
-          <TabsTrigger value="pending">{t('payments.pending')} ({pendingPayments.length})</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Status filter */}
+      <SegmentedControl
+        layoutId="paymentsStatusPill"
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={[
+          { value: 'all', label: `${t('common.all')} (${allPayments.length})` },
+          { value: 'completed', label: `${t('payments.completed')} (${completedPayments.length})` },
+          { value: 'pending', label: `${t('payments.pending')} (${pendingPayments.length})` },
+        ]}
+      />
 
       {/* Table */}
       <Card><CardContent className="p-0">

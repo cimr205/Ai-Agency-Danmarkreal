@@ -10,6 +10,9 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-f
 import { toast } from 'sonner';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { reportError } from '@/lib/sentry';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 
 export default function WorkforceReportsPage() {
   const { t } = useI18n();
@@ -151,10 +154,15 @@ export default function WorkforceReportsPage() {
           <p className="text-sm text-muted-foreground">{t('workforce.reportsSubtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <Button variant={period === 'week' ? 'secondary' : 'ghost'} size="sm" onClick={() => setPeriod('week')}>{t('workforce.thisWeek')}</Button>
-            <Button variant={period === 'month' ? 'secondary' : 'ghost'} size="sm" onClick={() => setPeriod('month')}>{t('workforce.thisMonth')}</Button>
-          </div>
+          <SegmentedControl<'week' | 'month'>
+            layoutId="workforceReportsPeriodPill"
+            value={period}
+            onChange={setPeriod}
+            options={[
+              { value: 'week', label: t('workforce.thisWeek') },
+              { value: 'month', label: t('workforce.thisMonth') },
+            ]}
+          />
           <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!report?.employees?.length}>
             <Download className="h-4 w-4 mr-1" /><span className="hidden sm:inline">{t('workforce.exportCSV')}</span><span className="sm:hidden">CSV</span>
           </Button>
@@ -167,25 +175,15 @@ export default function WorkforceReportsPage() {
       {error && <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />}
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpis.map(kpi => (
-          <Card key={kpi.label} className="border-border/50">
-            <CardContent className="pt-6">
-              {isLoading ? <Skeleton className="h-16 w-full" /> : (
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${kpi.bg} flex items-center justify-center`}>
-                    <kpi.icon className={`h-6 w-6 ${kpi.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                    <p className="text-2xl font-bold">{kpi.value}</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {kpis.map((kpi, i) => (
+              <WorkspaceTile key={kpi.label} label={kpi.label} value={isLoading ? '…' : kpi.value} active={i === 0} />
+            ))}
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Employee Table */}
       <Card className="border-border/50">
