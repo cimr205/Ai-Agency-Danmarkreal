@@ -61,6 +61,12 @@ export default function DealsPage() {
   const totalValue = deals.reduce((sum, d) => sum + Number(d.value || 0), 0);
   const totalDeals = deals.length;
   const wonValue = deals.filter(d => normalizeStageKey(d.stage) === 'won').reduce((sum, d) => sum + Number(d.value || 0), 0);
+  // "Pipeline value" must mean open opportunities only — same definition the
+  // dashboard's get_dashboard_summary() RPC uses (stage not in won/lost) — so
+  // the two screens never show different numbers for the same label (#003).
+  const openValue = deals
+    .filter(d => !['won', 'lost'].includes(normalizeStageKey(d.stage)))
+    .reduce((sum, d) => sum + Number(d.value || 0), 0);
 
   useEffect(() => {
     if (searchParams.get('create') !== 'true') return;
@@ -230,7 +236,7 @@ export default function DealsPage() {
             <WorkspaceGradientSurface className="p-4">
               <div className="grid gap-3 md:grid-cols-4">
                 <WorkspaceTile label={t('pages.deals.totalDeals')} value={totalDeals} active />
-                <WorkspaceTile label={t('pages.deals.pipelineValue')} value={formatCurrency(totalValue)} />
+                <WorkspaceTile label={t('pages.deals.pipelineValue')} value={formatCurrency(openValue)} />
                 <WorkspaceTile label={t('pages.deals.wonValue')} value={formatCurrency(wonValue)} />
                 <WorkspaceTile label={t('pages.deals.avgDealValue')} value={formatCurrency(totalDeals ? totalValue / totalDeals : 0)} />
               </div>
