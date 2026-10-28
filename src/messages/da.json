@@ -454,7 +454,8 @@
     "plannedHours": "Planlagt",
     "deviation": "Afvigelse",
     "daysWorked": "Arbejdsdage",
-    "noReportData": "Ingen data for denne periode"
+    "noReportData": "Ingen data for denne periode",
+    "forgotClockOut": "Denne arbejdsdag har været åben siden {since}. Har du glemt at stemple ud? Stop arbejdsdagen og ret tiden."
   },
   "errorBoundary": {
     "title": "Noget gik galt",

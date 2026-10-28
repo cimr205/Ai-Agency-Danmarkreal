@@ -33,7 +33,7 @@ function BigTimer({ checkIn }: { checkIn: string }) {
 }
 
 export default function TimeTrackingPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { isAdmin } = useAuth();
   const { data: session, isLoading: sessionLoading, error: sessionError } = useMyActiveSession();
   const clockIn = useClockIn();
@@ -227,11 +227,21 @@ export default function TimeTrackingPage() {
         </CardContent>
       </Card>
 
+      {/* A workday open for more than 16 hours is almost certainly a missed
+          clock-out; say so instead of silently accruing hours for days. */}
+      {isActive && session && (Date.now() - new Date(session.check_in).getTime()) > 16 * 3600000 && (
+        <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {t('workforce.forgotClockOut').replace('{since}', new Date(session.check_in).toLocaleString(locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB'))}
+        </div>
+      )}
+
       {/* Stats */}
       <WorkspaceFrame>
         <WorkspaceGradientSurface className="p-4">
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-            <WorkspaceTile label={t('workforce.todayHours')} value={`${isActive && session ? ((Date.now() - new Date(session.check_in).getTime()) / 3600000).toFixed(1) : '0'}h`} active />
+            {/* Only the part of the open session that falls on today counts as
+                "today" — a session left open since last week showed 161h today. */}
+            <WorkspaceTile label={t('workforce.todayHours')} value={`${isActive && session ? ((Date.now() - Math.max(new Date(session.check_in).getTime(), new Date(new Date().setHours(0, 0, 0, 0)).getTime())) / 3600000).toFixed(1) : '0'}h`} active />
             <WorkspaceTile label={t('workforce.weekHours')} value={`${weekHours}h`} />
             <WorkspaceTile label={t('workforce.monthHours')} value={`${monthHours}h`} />
           </div>

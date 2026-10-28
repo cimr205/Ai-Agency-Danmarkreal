@@ -437,7 +437,8 @@
     "plannedHours": "Planned",
     "deviation": "Deviation",
     "daysWorked": "Days worked",
-    "noReportData": "No data for this period"
+    "noReportData": "No data for this period",
+    "forgotClockOut": "This workday has been open since {since}. Did you forget to clock out? Stop the workday and correct the time."
   },
   "errorBoundary": {
     "title": "Something went wrong",

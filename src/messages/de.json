@@ -454,7 +454,8 @@
     "plannedHours": "Soll",
     "deviation": "Abweichung",
     "daysWorked": "Arbeitstage",
-    "noReportData": "Keine Daten für diesen Zeitraum"
+    "noReportData": "Keine Daten für diesen Zeitraum",
+    "forgotClockOut": "Dieser Arbeitstag ist seit {since} offen. Hast du vergessen auszustempeln? Beende den Arbeitstag und korrigiere die Zeit."
   },
   "errorBoundary": {
     "title": "Etwas ist schiefgelaufen",
