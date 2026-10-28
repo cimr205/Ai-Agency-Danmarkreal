@@ -92,7 +92,10 @@ export function deriveClientSignals(input: {
 
   // Suggestion: meeting
   const lastMeeting = timeline.find(e => e.kind === "meeting");
-  if (!lastMeeting || (Date.now() - new Date(lastMeeting.at).getTime()) / dayMs > 60) {
+  // "I har ikke mødtes længe" only makes sense for a client we've had for a
+  // while — it was shown for clients created the same day.
+  const clientAgeDays = (now - new Date(customer.created_at).getTime()) / dayMs;
+  if (clientAgeDays > 30 && (!lastMeeting || (Date.now() - new Date(lastMeeting.at).getTime()) / dayMs > 60)) {
     out.push({
       id: "meeting-suggest",
       kind: "suggestion",

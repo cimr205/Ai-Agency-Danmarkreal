@@ -184,7 +184,15 @@ function SignalSummary({ event }: { event: WorkspaceEvent }) {
       case "invoice.paid": return `Betalt: ${p.number} · ${formatMoney(p.amount)}`;
       case "task.created": return `Opgave: ${p.title}`;
       case "task.completed": return `✓ ${p.title}`;
-      default: return JSON.stringify(p).slice(0, 80);
+      default: {
+        // Unknown event types (lead.updated, meeting.booked, payment.received…)
+        // used to dump raw JSON ({"current":{"id":…}}). Show the most
+        // human-readable field available instead.
+        const obj = (p.current && typeof p.current === "object" ? p.current : p) as Record<string, unknown>;
+        const label = obj.title ?? obj.name ?? obj.subject ?? obj.number ?? obj.invoice_number ?? obj.email;
+        const amount = obj.amount ?? obj.value;
+        return [label, typeof amount === "number" ? formatMoney(amount) : null].filter(Boolean).join(" · ") || event.type.replace(/[._]/g, " ");
+      }
     }
   })();
   return <div className="text-[12px] text-muted-foreground mt-0.5 truncate">{summary}</div>;

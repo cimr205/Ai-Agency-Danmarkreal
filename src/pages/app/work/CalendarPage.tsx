@@ -118,7 +118,10 @@ export default function CalendarPage() {
 
   // ── Visible range ──────────────────────────────────────────────────────
   const days = useMemo(
-    () => (view === 'day' ? [selected] : Array.from({ length: 8 }, (_, i) => addDays(selected, i))),
+    // A week is Monday–Sunday (7 columns). It used to be 8 rolling days
+    // starting today, so the "week" began mid-week and the last column was
+    // cut off by the viewport.
+    () => (view === 'day' ? [selected] : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(selected, { weekStartsOn: 1 }), i))),
     [view, selected],
   );
   const range = useMemo(() => {

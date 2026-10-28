@@ -137,9 +137,8 @@ export function ClientHeader({ customer, stats }: Props) {
               >
                 {customer.name}
               </h1>
-              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-mono text-emerald-500/90 shrink-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Aktiv
-              </span>
+              {/* The hardcoded "Aktiv" badge contradicted the relationship bar
+                  ("INAKTIV RELATION") — the bar below is the single source. */}
             </div>
             <div className="mt-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-[12.5px] text-muted-foreground">
               {customer.vat_number && (
