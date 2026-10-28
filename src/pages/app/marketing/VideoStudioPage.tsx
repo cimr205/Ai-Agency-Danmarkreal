@@ -15,7 +15,6 @@ import { Clapperboard, Plus, Trash2, Download, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
 import { useVideoProjects, useCreateVideoProject, useDeleteVideoProject, signVideoAssetUrl } from '@/hooks/api/useVideoStudio';
 import { BrowserSupportBanner, detectVideoStudioSupport } from '@/components/video-studio/BrowserSupportBanner';
 import { VideoEditorWorkspace } from '@/components/video-studio/VideoEditorWorkspace';
@@ -93,7 +92,10 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       setPendingStage({ width: preset.width, height: preset.height });
       setOpenProjectId(project.id);
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('videoStudio.createError') || 'Could not create project');
+      // Never surface the raw Postgres/Storage error (e.g. a missing-table
+      // message) to the customer — log it for diagnosis, show a plain Danish toast.
+      console.error('[VideoStudio] create project failed:', err);
+      toast.error(t('videoStudio.createError') || 'Could not create project');
     }
   };
 
@@ -108,7 +110,8 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       await deleteMutation.mutateAsync(id);
       toast.success(t('videoStudio.deleted') || 'Video deleted');
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('common.error') || 'Something went wrong');
+      console.error('[VideoStudio] delete project failed:', err);
+      toast.error(t('common.error') || 'Something went wrong');
     }
   };
 
@@ -120,7 +123,8 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       const url = await signVideoAssetUrl(path);
       window.open(url, '_blank', 'noopener');
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('common.error') || 'Something went wrong');
+      console.error('[VideoStudio] download export failed:', err);
+      toast.error(t('common.error') || 'Something went wrong');
     }
   };
 
