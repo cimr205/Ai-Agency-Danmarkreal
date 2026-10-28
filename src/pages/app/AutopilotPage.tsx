@@ -19,7 +19,7 @@ import {
 } from "@/hooks/api/useAutopilot";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 const AGENT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autopilot-agent`;
 
