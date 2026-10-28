@@ -19,6 +19,17 @@ Deno.serve(withSentry("ai-health", async (req) => {
     const modelsUrl = ai.url.replace(/\/chat\/completions$/, "/models");
     const res = await fetch(modelsUrl, { headers: { Authorization: `Bearer ${ai.apiKey}` }, signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`Modellen svarede ikke korrekt (HTTP ${res.status}).`);
+    // Reachable isn't enough: OpenRouter retires model ids, and every AI call
+    // then fails with 404 while this check still said "online". Confirm the
+    // configured model is actually offered.
+    const list = await res.json().catch(() => null) as { data?: Array<{ id?: string }>; models?: Array<{ name?: string; model?: string }> } | null;
+    const ids = [
+      ...(list?.data ?? []).map((m) => m.id),
+      ...(list?.models ?? []).flatMap((m) => [m.name, m.model]),
+    ].filter((id): id is string => typeof id === "string");
+    if (ids.length > 0 && !ids.includes(ai.model)) {
+      throw new Error(`Modellen "${ai.model}" findes ikke længere hos udbyderen. Opdatér LOCAL_LLM_MODEL. / The model "${ai.model}" is no longer offered by the provider. Update LOCAL_LLM_MODEL.`);
+    }
 
     return new Response(JSON.stringify({ online: true, model: ai.model, provider: ai.provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -44,7 +44,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       onResult({ name: company.name || '', address, cvr: company.cvr || term.replace(/\D/g, '') });
       toast.success(`Fandt: ${company.name}`);
     } catch (e) {
-      showError(e, { action: 'slå CVR op', module: 'cvr' });
+      showError(e, { action: t3('slå CVR op', 'look up CVR', 'CVR nachschlagen'), module: 'cvr' });
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
   return (
     <div className={className}>
       <Label className="flex items-center gap-1.5 mb-1.5">
-        <Building2 className="h-3.5 w-3.5" /> CVR-opslag
+        <Building2 className="h-3.5 w-3.5" /> {t3('CVR-opslag', 'CVR lookup', 'CVR-Suche')}
       </Label>
       <div className="flex gap-2">
         <Input
@@ -63,7 +63,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); lookup(); } }}
           maxLength={200}
         />
-        <Button type="button" variant="secondary" size="sm" onClick={lookup} disabled={loading || cvr.trim().length < 2}>
+        <Button type="button" variant="secondary" size="sm" onClick={lookup} disabled={loading || cvr.trim().length < 2} aria-label={t3('Slå op i CVR', 'Look up in CVR', 'Im CVR nachschlagen')}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </Button>
       </div>

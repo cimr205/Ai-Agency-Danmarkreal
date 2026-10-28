@@ -182,6 +182,9 @@ export function useVideoProjects() {
       if (error) throw error;
       return (data ?? []) as VideoProject[];
     },
+    // A missing table (PGRST205 — migration not applied) won't fix itself;
+    // retrying only fires three more failing requests per visit.
+    retry: (count, err) => !/PGRST205|schema cache|video_projects/i.test(String((err as { code?: string; message?: string })?.code ?? '') + String((err as Error)?.message ?? '')) && count < 3,
   });
 }
 

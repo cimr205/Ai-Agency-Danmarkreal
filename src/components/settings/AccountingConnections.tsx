@@ -21,6 +21,31 @@ async function startOAuth(fn: 'dinero-oauth-start' | 'economic-oauth-start') {
   window.location.href = data.authorize_url;
 }
 
+
+// The OAuth callbacks redirect back with a short error code; show it as a sentence.
+function oauthErrorText(code: string | null): string {
+  switch (code) {
+    case 'missing_state':
+    case 'expired_state':
+    case 'invalid_or_expired_state':
+      return t3('Login-sessionen udløb. Start forbindelsen igen.', 'The sign-in session expired. Start the connection again.', 'Die Anmeldesitzung ist abgelaufen. Bitte Verbindung neu starten.');
+    case 'missing_code':
+    case 'user_declined_or_missing_token':
+    case 'access_denied':
+      return t3('Adgang blev ikke givet.', 'Access was not granted.', 'Der Zugriff wurde nicht erteilt.');
+    case 'token_exchange_failed':
+    case 'grant_token_invalid':
+      return t3('Udbyderen afviste login. Prøv igen.', 'The provider rejected the sign-in. Please try again.', 'Der Anbieter hat die Anmeldung abgelehnt. Bitte erneut versuchen.');
+    case 'no_organization':
+      return t3('Kontoen har ingen virksomhed tilknyttet hos udbyderen.', 'The account has no company with the provider.', 'Das Konto hat beim Anbieter kein Unternehmen.');
+    case 'save_failed':
+    case 'internal_error':
+      return t3('Forbindelsen kunne ikke gemmes. Prøv igen.', 'The connection could not be saved. Please try again.', 'Die Verbindung konnte nicht gespeichert werden. Bitte erneut versuchen.');
+    default:
+      return code || t3('ukendt fejl', 'unknown error', 'unbekannter Fehler');
+  }
+}
+
 export function AccountingConnections() {
   const [dinero, setDinero] = useState<DineroConnection | null>(null);
   const [economic, setEconomic] = useState<EconomicConnection | null>(null);
@@ -47,10 +72,10 @@ export function AccountingConnections() {
     const params = new URLSearchParams(window.location.search);
     const dineroStatus = params.get('dinero');
     const economicStatus = params.get('economic');
-    if (dineroStatus === 'connected') toast.success('Dinero forbundet!');
-    if (dineroStatus === 'error') toast.error(`${t3("Dinero-forbindelse fejlede", "Dinero connection failed", "Dinero-Verbindung fehlgeschlagen")}: ${params.get('dinero_error') || t3("ukendt fejl", "unknown error", "unbekannter Fehler")}`);
-    if (economicStatus === 'connected') toast.success('e-conomic forbundet!');
-    if (economicStatus === 'error') toast.error(`${t3("e-conomic-forbindelse fejlede", "e-conomic connection failed", "e-conomic-Verbindung fehlgeschlagen")}: ${params.get('economic_error') || t3("ukendt fejl", "unknown error", "unbekannter Fehler")}`);
+    if (dineroStatus === 'connected') toast.success(t3('Dinero forbundet!', 'Dinero connected!', 'Dinero verbunden!'));
+    if (dineroStatus === 'error') toast.error(`${t3("Dinero-forbindelse fejlede", "Dinero connection failed", "Dinero-Verbindung fehlgeschlagen")}: ${oauthErrorText(params.get('dinero_error'))}`);
+    if (economicStatus === 'connected') toast.success(t3('e-conomic forbundet!', 'e-conomic connected!', 'e-conomic verbunden!'));
+    if (economicStatus === 'error') toast.error(`${t3("e-conomic-forbindelse fejlede", "e-conomic connection failed", "e-conomic-Verbindung fehlgeschlagen")}: ${oauthErrorText(params.get('economic_error'))}`);
     if (dineroStatus || economicStatus) {
       const url = new URL(window.location.href);
       url.searchParams.delete('dinero');
