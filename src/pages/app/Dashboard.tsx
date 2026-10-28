@@ -10,8 +10,11 @@ import { useDashboard, type FocusItem } from "@/hooks/api/useDashboard";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 
-const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall } as const;
-const FOCUS_CTA = { invoice: "Send rykker", deal: "Følg op", lead: "Ring nu" } as const;
+// "followup" items (crm_activities due today) are merged in by useDashboard;
+// without an entry here the spotlight rendered <undefined /> and crashed the
+// whole dashboard whenever a manual follow-up was due.
+const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall, followup: Clock3 } as const;
+const FOCUS_CTA = { invoice: "Send rykker", deal: "Følg op", lead: "Ring nu", followup: "Følg op" } as const;
 const AURORA_COLORS = ["#5b7cfa", "#9b7cff", "#20d6ff", "#f59fe8"];
 
 type Tone = "blue" | "violet" | "cyan" | "risk";
@@ -22,6 +25,9 @@ function focusItemText(item: FocusItem): string {
   }
   if (item.kind === "deal") {
     return "Deal “" + item.label + "” har stået i " + item.stage + " i " + item.days + " dag" + (item.days === 1 ? "" : "e");
+  }
+  if (item.kind === "followup") {
+    return (item.company ? item.company + ": " : "") + item.label + (item.overdue ? " (overskredet)" : "");
   }
   const who = item.company ? item.label + " hos " + item.company : item.label;
   return item.overdue ? who + ": opfølgning er overskredet" : who + ": " + item.days + " dage uden kontakt";
@@ -54,7 +60,7 @@ export default function Dashboard() {
     { label: "Cash collected", value: isLoading ? null : format(monthValue), detail: typeof momDelta === "number" ? (momDelta >= 0 ? "+" : "-") + Math.abs(momDelta) + "% vs. sidste måned" : "første aktive måned", href: base + "/finance/invoices", tone: momDelta !== null && momDelta < 0 ? "risk" : "blue", icon: Wallet },
     { label: "Pipeline", value: isLoading ? null : format(d?.deals?.openValue ?? 0), detail: openDeals + " åbne muligheder", href: base + "/crm/deals?view=board", tone: "violet", icon: Briefcase },
     { label: "Pressure", value: isLoading ? null : format(overdueValue), detail: (d?.invoices?.overdue ?? 0) + " forfaldne fakturaer", href: base + "/finance/invoices", tone: overdueValue > 0 ? "risk" : "cyan", icon: AlertTriangle },
-    { label: "Workload", value: isLoading ? null : String(activeWork), detail: tasks.length + " opgaver i dag", href: base + "/work/tasks", tone: activeWork > 8 ? "risk" : "blue", icon: CheckCircle2 },
+    { label: "Workload", value: isLoading ? null : String(activeWork), detail: tasks.length + " næste åbne opgaver", href: base + "/work/tasks", tone: activeWork > 8 ? "risk" : "blue", icon: CheckCircle2 },
   ] as const;
 
   const quickActions = [
@@ -68,12 +74,12 @@ export default function Dashboard() {
   const spotlightItems = [
     ...focusItems.slice(0, 2).map((item) => ({
       id: item.kind + "-" + item.id,
-      label: item.kind === "invoice" ? "Cash signal" : item.kind === "deal" ? "Pipeline signal" : "Lead signal",
+      label: item.kind === "invoice" ? "Cash signal" : item.kind === "deal" ? "Pipeline signal" : item.kind === "followup" ? "Follow-up" : "Lead signal",
       title: focusItemText(item),
       meta: FOCUS_CTA[item.kind],
       icon: FOCUS_ICON[item.kind],
       tone: item.overdue || item.kind === "invoice" ? "risk" : "blue",
-      href: item.kind === "invoice" ? base + "/finance/invoices" : item.kind === "deal" ? base + "/crm/deals?view=board" : base + "/crm/leads",
+      href: item.kind === "invoice" ? base + "/finance/invoices" : item.kind === "deal" ? base + "/crm/deals?view=board" : item.kind === "followup" ? (item.company ? base + "/clients/" + item.id : base + "/work/tasks") : base + "/crm/leads",
     })),
     ...tasks.slice(0, 2).map((task) => ({ id: "task-" + task.id, label: "Execution", title: task.title, meta: task.due_date ? new Date(task.due_date).toLocaleDateString("da-DK", { day: "numeric", month: "short" }) : "uden frist", icon: CheckCircle2, tone: task.priority === "high" ? "risk" : "violet", href: base + "/work/tasks" })),
     ...meetings.slice(0, 1).map((meeting) => ({ id: "meeting-" + meeting.id, label: "Calendar", title: meeting.title, meta: new Date(meeting.start_time).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }), icon: Calendar, tone: "cyan", href: base + "/work/calendar" })),

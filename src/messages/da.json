@@ -1183,7 +1183,8 @@
       "noLead": "Intet lead",
       "moveToStage": "Flyt til stadie",
       "bulkStageUpdated": "Deals opdateret",
-      "valuePositive": "Værdien skal være større end 0."
+      "valuePositive": "Værdien skal være større end 0.",
+      "confirmLostTitle": "Markér denne deal som tabt?"
     },
     "invoices": {
       "title": "Fakturaer",
@@ -1274,7 +1275,10 @@
       "companyDetails": "Virksomhedsoplysninger",
       "customerDetails": "Kundeoplysninger",
       "markSelectedSent": "Markér som sendt",
-      "connectPayments": "Forbind betalinger"
+      "connectPayments": "Forbind betalinger",
+      "confirmMarkPaidTitle": "Markér faktura som betalt?",
+      "confirmMarkPaidDesc": "Det registrerer en betaling for hele det resterende beløb",
+      "confirmMarkPaidDraft": "fakturaen er stadig en kladde og er aldrig sendt"
     },
     "tasks": {
       "title": "Opgaver",

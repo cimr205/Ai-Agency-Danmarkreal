@@ -12,10 +12,20 @@ export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // RLS lets system_admin users read employee_profiles of *every*
+      // tenant, so without this scope the HR pages (and the leave/payroll
+      // employee pickers) mixed in other companies' staff, e.g. QA tenants.
+      // This is workspace scoping, not a security boundary — RLS still is.
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = user
+        ? await supabase.from('profiles').select('company_id').eq('user_id', user.id).maybeSingle()
+        : { data: null };
+      let query = supabase
         .from('employee_profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      if (profile?.company_id) query = query.eq('company_id', profile.company_id);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

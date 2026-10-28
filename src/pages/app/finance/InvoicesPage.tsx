@@ -888,11 +888,30 @@ export default function InvoicesPage() {
                       </Button>
                     )}
                     {invoice.status !== 'paid' && (
-                      <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
-                        try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
-                      }}>
-                        <DollarSign className="h-4 w-4 text-success" />
-                      </Button>
+                      // Registers a payment for the full remaining amount, so ask
+                      // first — it used to happen on a single stray click, even
+                      // on drafts that were never sent.
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" title={t('profile.markAsPaid')}>
+                            <DollarSign className="h-4 w-4 text-success" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('pages.invoices.confirmMarkPaidTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('pages.invoices.confirmMarkPaidDesc')} ({invoice.invoice_number} · {formatCurrency(Number(invoice.amount))}){invoice.status === 'draft' ? ' — ' + t('pages.invoices.confirmMarkPaidDraft') : ''}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={async () => {
+                              try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
+                            }}>{t('profile.markAsPaid')}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                     <Button variant="ghost" size="icon" title={t('pages.invoices.sendEmail')} onClick={() => openEmailDialog(invoice)}>
                       <Send className="h-4 w-4" />

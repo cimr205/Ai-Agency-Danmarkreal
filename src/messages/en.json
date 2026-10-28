@@ -1166,7 +1166,8 @@
       "noLead": "No lead",
       "moveToStage": "Move to stage",
       "bulkStageUpdated": "Deals updated",
-      "valuePositive": "The value must be greater than 0."
+      "valuePositive": "The value must be greater than 0.",
+      "confirmLostTitle": "Mark this deal as lost?"
     },
     "invoices": {
       "title": "Invoices",
@@ -1257,7 +1258,10 @@
       "companyDetails": "Company details",
       "customerDetails": "Customer details",
       "markSelectedSent": "Mark as sent",
-      "connectPayments": "Connect payments"
+      "connectPayments": "Connect payments",
+      "confirmMarkPaidTitle": "Mark invoice as paid?",
+      "confirmMarkPaidDesc": "This registers a payment for the full remaining amount",
+      "confirmMarkPaidDraft": "this invoice is still a draft and was never sent"
     },
     "tasks": {
       "title": "Tasks",

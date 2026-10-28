@@ -1183,7 +1183,8 @@
       "noLead": "Kein Lead",
       "moveToStage": "In Phase verschieben",
       "bulkStageUpdated": "Deals aktualisiert",
-      "valuePositive": "Der Wert muss größer als 0 sein."
+      "valuePositive": "Der Wert muss größer als 0 sein.",
+      "confirmLostTitle": "Diesen Deal als verloren markieren?"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -1274,7 +1275,10 @@
       "companyDetails": "Firmendetails",
       "customerDetails": "Kundendetails",
       "markSelectedSent": "Als gesendet markieren",
-      "connectPayments": "Zahlungen verbinden"
+      "connectPayments": "Zahlungen verbinden",
+      "confirmMarkPaidTitle": "Rechnung als bezahlt markieren?",
+      "confirmMarkPaidDesc": "Dadurch wird eine Zahlung über den gesamten Restbetrag erfasst",
+      "confirmMarkPaidDraft": "diese Rechnung ist noch ein Entwurf und wurde nie versendet"
     },
     "tasks": {
       "title": "Aufgaben",

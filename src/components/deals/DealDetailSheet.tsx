@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Briefcase, Trophy, XCircle, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 import { DealCoachPanel } from '@/components/deals/DealCoachPanel';
@@ -146,9 +147,23 @@ export function DealDetailSheet({
                     </Button>
                   )}
                   {deal.stage !== 'lost' && (
-                    <Button variant="destructive" className="flex-1" onClick={() => onMarkLost(deal.id)}>
-                      <XCircle className="h-4 w-4 mr-2" />{t('pages.deals.markLost')}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="flex-1">
+                          <XCircle className="h-4 w-4 mr-2" />{t('pages.deals.markLost')}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('pages.deals.confirmLostTitle')}</AlertDialogTitle>
+                          <AlertDialogDescription>{deal.title}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onMarkLost(deal.id)}>{t('pages.deals.markLost')}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
                 {/* "Mark as Won" is disabled until a customer and expected
