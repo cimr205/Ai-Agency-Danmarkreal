@@ -370,6 +370,13 @@ const DE: Record<string, string> = {
   "Failed": "Fehlgeschlagen",
   "updates ambiently · every 15 sec": "aktualisiert sich alle 15 Sek.",
   "Loading…": "Lädt…",
+  "Hide converted": "Konvertierte ausblenden",
+  "Show converted": "Konvertierte anzeigen",
+  "An employee with this email or name already exists.": "Es gibt bereits einen Mitarbeiter mit dieser E-Mail oder diesem Namen.",
+  "Details": "Details",
+  "Select": "Auswählen",
+  "Automatic": "Automatisch",
+  "Created automatically by a workflow rule. You can turn the rule off under Workflows.": "Automatisch von einer Workflow-Regel erstellt. Sie können die Regel unter Workflows deaktivieren.",
 };
 
 export function tl(locale: Locale | string, da: string, en: string): string {

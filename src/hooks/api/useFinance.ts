@@ -48,6 +48,7 @@ export function useCustomers() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60_000,
   });
 }
 

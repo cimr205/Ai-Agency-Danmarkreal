@@ -174,11 +174,13 @@ export default function CalendarPage() {
   const en = locale === 'en';
   const hourLabel = useCallback((h: number) => {
     const d = new Date(2000, 0, 1, h);
-    return en ? format(d, 'h a').toLowerCase() : format(d, 'HH:mm');
-  }, [en]);
-  const timeRange = useCallback((s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm')}` : `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`), [en]);
-  const popoverTime = (s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm a').toLowerCase()}` : timeRange(s, e));
-  const popoverDate = (d: Date) => format(d, en ? 'MMM d, yyyy' : 'd. MMM yyyy', { locale: dfLocale });
+    // 24-hour clock in every locale (the English view uses en-GB dates; its
+    // "h:mm - h:mm" ranges had no am/pm, so 1:00 - 2:00 was ambiguous).
+    return format(d, 'HH:mm');
+  }, []);
+  const timeRange = useCallback((s: Date, e: Date) => `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`, []);
+  const popoverTime = (s: Date, e: Date) => timeRange(s, e);
+  const popoverDate = (d: Date) => format(d, en ? 'd MMM yyyy' : 'd. MMM yyyy', { locale: dfLocale });
 
   // ── Navigation ─────────────────────────────────────────────────────────
   const go = (step: number) => {

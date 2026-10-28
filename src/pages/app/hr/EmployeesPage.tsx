@@ -17,6 +17,7 @@ import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import EmployeeDetailPanel from '@/components/hr/EmployeeDetailPanel';
 import type { Tables } from '@/integrations/supabase/types';
+import { tx } from '@/lib/inlineI18n';
 
 export default function EmployeesPage() {
   const { t, locale } = useI18n();
@@ -46,7 +47,13 @@ export default function EmployeesPage() {
       toast.success(t('hr.employeeCreated'));
       setNewEmployee({ full_name: '', email: '', position: '', department: '' });
       setIsCreateOpen(false);
-    } catch { toast.error(t('hr.employeeCreateError')); }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'DUPLICATE_EMPLOYEE') {
+        toast.error(tx('Der findes allerede en medarbejder med denne e-mail eller dette navn.', 'An employee with this email or name already exists.'));
+      } else {
+        toast.error(t('hr.employeeCreateError'));
+      }
+    }
   };
 
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';

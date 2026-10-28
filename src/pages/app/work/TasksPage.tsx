@@ -18,11 +18,13 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
+import { tx } from '@/lib/inlineI18n';
 
 type Task = {
   id: string; title: string; description?: string | null; status: string;
   due_date?: string | null; priority?: string | null; assigned_to?: string | null;
   completed_at?: string | null; created_at: string; archived: boolean;
+  source_event_id?: string | null;
   assigned_profile?: { full_name: string | null; email: string } | null;
 };
 
@@ -216,12 +218,17 @@ export default function TasksPage() {
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`Vælg: ${task.title}`} />
+            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`${tx('Vælg', 'Select')}: ${task.title}`} />
             <Checkbox checked={task.status === 'completed'} onCheckedChange={() => handleToggleComplete(task)} className="mt-1" aria-label={`${t('pages.tasks.completed')}: ${task.title}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className={`font-medium ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>{task.title}</span>
                 <Badge className={statusColors[task.status]} variant="secondary">{statusLabels[task.status]}</Badge>
+                {task.source_event_id && (
+                  <Badge variant="outline" className="text-[10px]" title={tx('Oprettet automatisk af en workflow-regel. Du kan slå reglen fra under Workflows.', 'Created automatically by a workflow rule. You can turn the rule off under Workflows.')}>
+                    {tx('Automatisk', 'Automatic')}
+                  </Badge>
+                )}
                 {task.priority && task.priority !== 'medium' && (
                   <Badge className={priorityColors[task.priority] || ''} variant="secondary">{priorityLabels[task.priority] || task.priority}</Badge>
                 )}

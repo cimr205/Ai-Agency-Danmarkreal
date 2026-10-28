@@ -34,6 +34,7 @@ import type { Tables, Enums } from '@/integrations/supabase/types';
 import { AppError, invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { tx } from '@/lib/inlineI18n';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -136,6 +137,9 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Converted leads (status 'customer') live under Customers; hide them from the
+  // default list and KPIs so the lead list only shows open leads.
+  const [showConverted, setShowConverted] = useState(false);
   const [industryFilter, setIndustryFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [quickView, setQuickView] = useState<QuickView>('all');
@@ -237,8 +241,10 @@ export default function LeadsPage() {
   const bulkDelete = useBulkDeleteLeads();
   const bulkUpdate = useBulkUpdateLeads();
   const allLeads = result?.data ?? [];
+  const convertedOnPage = useMemo(() => allLeads.filter((l: Lead) => l.status === 'customer').length, [allLeads]);
+  const hideConverted = statusFilter === 'all' && !showConverted;
   const leads = useMemo(() => {
-    const sorted = [...allLeads];
+    const sorted = hideConverted ? allLeads.filter((l: Lead) => l.status !== 'customer') : [...allLeads];
     sorted.sort((a: Lead, b: Lead) => {
       let aVal: unknown = a[sortCol as keyof Lead] ?? '';
       let bVal: unknown = b[sortCol as keyof Lead] ?? '';
@@ -249,8 +255,8 @@ export default function LeadsPage() {
       return 0;
     });
     return sorted;
-  }, [allLeads, sortCol, sortDir]);
-  const totalCount = result?.count ?? 0;
+  }, [allLeads, sortCol, sortDir, hideConverted]);
+  const totalCount = Math.max(0, (result?.count ?? 0) - (hideConverted ? convertedOnPage : 0));
   const pageSize = result?.pageSize ?? 100;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -709,6 +715,13 @@ export default function LeadsPage() {
             {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
+        {statusFilter === 'all' && convertedOnPage > 0 && (
+          <Button type="button" variant="outline" className="h-11 rounded-full" onClick={() => setShowConverted(v => !v)}>
+            {showConverted
+              ? tx('Skjul konverterede', 'Hide converted')
+              : `${tx('Vis konverterede', 'Show converted')} (${convertedOnPage})`}
+          </Button>
+        )}
         <Select value={ownerFilter} onValueChange={setOwnerFilter}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder={t('pages.leads.owner')} /></SelectTrigger>
           <SelectContent>

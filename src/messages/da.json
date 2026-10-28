@@ -1205,7 +1205,7 @@
       "noLead": "Intet lead",
       "moveToStage": "Flyt til stadie",
       "bulkStageUpdated": "Deals opdateret",
-      "valuePositive": "Værdien skal være større end 0.",
+      "valuePositive": "Værdien kan ikke være negativ.",
       "confirmLostTitle": "Markér denne deal som tabt?"
     },
     "invoices": {

@@ -398,6 +398,7 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
           {actions.map((a) => {
             const Icon = ACTION_ICON[a.action_type] ?? Sparkles;
             const isProposed = ["proposed", "awaiting_approval"].includes(a.status);
+            const badRecipient = isProposed ? invalidRecipient(a.payload as Record<string, unknown> | null) : null;
 
             return (
               <motion.div
@@ -415,7 +416,7 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                     {isProposed && a.payload && Object.keys(a.payload).length > 0 && (
                       <details className="text-[11px]">
                         <summary className="cursor-pointer text-muted-foreground/70 font-mono uppercase tracking-[0.1em] text-[10px]">
-                          Detaljer
+                          {tx("Detaljer", "Details")}
                         </summary>
                         <dl className="mt-1 space-y-0.5 pl-2 border-l border-border/40">
                           {Object.entries(a.payload).map(([key, value]) => (
@@ -433,12 +434,18 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                     </div>
                   </div>
                 </div>
+                {isProposed && badRecipient && (
+                  <div className="mt-2 pl-10 text-[11px] text-destructive">
+                    {tx(`Kan ikke godkendes: "${badRecipient}" er ikke en rigtig modtager.`, `Can't be approved: "${badRecipient}" is not a real recipient.`)}
+                  </div>
+                )}
                 {isProposed && (
                   <div className="mt-3 flex items-center gap-1 pl-10">
                     <Button
                       size="sm" className="h-7 text-[11px]"
                       onClick={() => exec.mutate(a)}
-                      disabled={exec.isPending}
+                      disabled={exec.isPending || !!badRecipient}
+                      title={badRecipient ? tx(`Modtageren "${badRecipient}" ligner en pladsholder — afvis forslaget eller ret adressen`, `The recipient "${badRecipient}" looks like a placeholder — reject the suggestion or fix the address`) : undefined}
                     >
                       {exec.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
                       {tx("Approve & udfør", "Approve & run")}
@@ -460,12 +467,31 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
   );
 }
 
+
+// AI drafts sometimes fill in a placeholder recipient ("leverandør@firma.dk").
+// Approving would send to a made-up or foreign address, so block those.
+const PLACEHOLDER_DOMAINS = /@(example\.(com|org|net|dk)|firma\.dk|virksomhed\.dk|eksempel\.dk|domain\.(com|dk)|domæne\.dk|test\.(com|dk)|email\.(com|dk)|company\.com)$/i;
+const VALID_EMAIL = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+function invalidRecipient(payload: Record<string, unknown> | null | undefined): string | null {
+  if (!payload) return null;
+  for (const [key, value] of Object.entries(payload)) {
+    if (!/^(to|to_email|recipient|recipient_email|email|cc|bcc)$/i.test(key)) continue;
+    const list = Array.isArray(value) ? value : String(value ?? '').split(/[,;]/);
+    for (const raw of list) {
+      const addr = String(raw).trim();
+      if (!addr) continue;
+      if (!VALID_EMAIL.test(addr) || PLACEHOLDER_DOMAINS.test(addr)) return addr;
+    }
+  }
+  return null;
+}
+
 // ─── shared ───────────────────────────────────────────────────────────────
 
 function Loading() {
   return (
     <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin mr-2" /> Henter…
+      <Loader2 className="h-4 w-4 animate-spin mr-2" /> {tx("Henter…", "Loading…")}
     </div>
   );
 }

@@ -1205,7 +1205,7 @@
       "noLead": "Kein Lead",
       "moveToStage": "In Phase verschieben",
       "bulkStageUpdated": "Deals aktualisiert",
-      "valuePositive": "Der Wert muss größer als 0 sein.",
+      "valuePositive": "Der Wert darf nicht negativ sein.",
       "confirmLostTitle": "Diesen Deal als verloren markieren?"
     },
     "invoices": {

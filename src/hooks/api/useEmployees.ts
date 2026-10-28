@@ -59,8 +59,14 @@ export function useCreateEmployee() {
       // EMP-1787148209 and every id after it kept growing from there.
       const { data: existingEmps } = await supabase
         .from('employee_profiles')
-        .select('employee_id, department')
+        .select('employee_id, department, email, full_name')
         .eq('company_id', profile.company_id);
+      // One person = one employee record. The same person had been created
+      // three times ("Cimraan Farah", "cimraan farah", "cimraan").
+      const dupe = (existingEmps ?? []).find(e =>
+        (input.email && e.email?.trim().toLowerCase() === input.email) ||
+        (e.full_name?.trim().toLowerCase() === input.full_name.toLowerCase()));
+      if (dupe) throw new Error('DUPLICATE_EMPLOYEE');
       // Reuse the existing spelling of a department ("QA" vs "qa").
       if (input.department) {
         const match = (existingEmps ?? []).find(e => e.department && e.department.toLowerCase() === input.department!.toLowerCase());

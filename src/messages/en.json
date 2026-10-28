@@ -1185,7 +1185,7 @@
       "noLead": "No lead",
       "moveToStage": "Move to stage",
       "bulkStageUpdated": "Deals updated",
-      "valuePositive": "The value must be greater than 0.",
+      "valuePositive": "The value cannot be negative.",
       "confirmLostTitle": "Mark this deal as lost?"
     },
     "invoices": {

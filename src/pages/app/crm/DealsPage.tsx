@@ -95,7 +95,8 @@ export default function DealsPage() {
   const handleCreate = async () => {
     const errors: Record<string, string> = {};
     if (!newDeal.title.trim()) errors.title = t('pages.deals.titleRequired') || 'Title is required';
-    if (!newDeal.value || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) <= 0) errors.value = newDeal.value && parseFloat(newDeal.value) <= 0 ? t('pages.deals.valuePositive') : (t('pages.deals.valueRequired') || 'Value is required');
+    // 0 is allowed (value not known yet) — lead conversion creates 0-value deals too.
+    if (newDeal.value === '' || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) < 0) errors.value = newDeal.value !== '' && parseFloat(newDeal.value) < 0 ? t('pages.deals.valuePositive') : (t('pages.deals.valueRequired') || 'Value is required');
     if ((customers ?? []).length === 0) errors.customer_id = tl(locale, 'Opret mindst én kunde før du opretter en deal', 'Create at least one customer before creating a deal');
     else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = tl(locale, 'Kunde er påkrævet', 'Customer is required');
     if (!newDeal.expected_close_date) errors.expected_close_date = tl(locale, 'Forventet lukkedato er påkrævet', 'Expected close date is required');
