@@ -45,6 +45,7 @@ import { useLeadFolders, useCreateLeadFolder } from "@/hooks/api/useLeads";
 import { useQueueLinkedInOutreach } from "@/hooks/api/useLinkedInOutreach";
 import type { Tables } from "@/integrations/supabase/types";
 import { WorkspaceFrame, WorkspaceGradientSurface, WorkspacePillButton } from "@/components/workspace/WorkspacePanel";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 type LeadFolder = Tables<'lead_folders'>;
 
@@ -610,7 +611,7 @@ export default function LeadGenerationPage() {
                   {sessionsQuery.data.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium text-sm">{s.query}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{new Date(s.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                       <TableCell className="text-sm">{s.results_count}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 border ${statusBadge(s.status)}`}>{s.status}</Badge>
@@ -658,7 +659,7 @@ export default function LeadGenerationPage() {
                     <TableRow key={s.id}>
                       <TableCell className="font-medium text-sm">{s.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.query}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{new Date(s.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" onClick={() => { loadSavedSearch(s); toast.success(t("leadGen.searchLoaded")); }} className="gap-1">

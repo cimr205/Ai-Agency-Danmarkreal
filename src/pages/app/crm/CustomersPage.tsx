@@ -13,6 +13,7 @@ import { Plus, Search, Users, Mail, ArrowUpRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { CvrLookupField } from '@/components/shared/CvrLookupField';
 import { useI18n } from '@/lib/i18n';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export default function CustomersPage() {
   const { t } = useI18n();
@@ -162,7 +163,7 @@ export default function CustomersPage() {
                       </a>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(customer.created_at).toLocaleDateString()}
+                      {new Date(customer.created_at).toLocaleDateString(dateLocaleTag())}
                     </TableCell>
                   </TableRow>
                 ))

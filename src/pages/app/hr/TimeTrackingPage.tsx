@@ -68,15 +68,25 @@ export default function TimeTrackingPage() {
   const { data: weekEntries } = useTimeEntries({ startDate: weekStart, endDate: weekEnd, employeeId: viewEmployeeId });
   const { data: monthEntries } = useTimeEntries({ startDate: monthStart, endDate: monthEnd, employeeId: viewEmployeeId });
 
-  const calcHours = (entries: AttendanceLog[]) => {
+  // Hours that fall inside [from, to] — an entry (or a session still open)
+  // is clipped to the period. Counting whole entries by their check-in date
+  // made a session open since last week show 0h this week but 171h this month.
+  const calcHours = (entries: AttendanceLog[], from: Date, to: Date) => {
+    const seen = new Set<string>();
     return entries.reduce((total, e) => {
-      const end = e.check_out ? new Date(e.check_out).getTime() : Date.now();
-      return total + (end - new Date(e.check_in).getTime()) / 3600000;
+      if (seen.has(e.id)) return total;
+      seen.add(e.id);
+      const start = Math.max(new Date(e.check_in).getTime(), from.getTime());
+      const end = Math.min(e.check_out ? new Date(e.check_out).getTime() : Date.now(), to.getTime());
+      return end > start ? total + (end - start) / 3600000 : total;
     }, 0);
   };
 
-  const weekHours = weekEntries ? Math.round(calcHours(weekEntries) * 10) / 10 : 0;
-  const monthHours = monthEntries ? Math.round(calcHours(monthEntries) * 10) / 10 : 0;
+  const viewingSelf = !viewEmployeeId || viewEmployeeId === employeeProfileId;
+  const openSession = viewingSelf && isActive && session ? [session as unknown as AttendanceLog] : [];
+  const periodEntries = [...(weekEntries ?? []), ...(monthEntries ?? []), ...openSession];
+  const weekHours = Math.round(calcHours(periodEntries, startOfWeek(today, { weekStartsOn: 1 }), endOfWeek(today, { weekStartsOn: 1 })) * 10) / 10;
+  const monthHours = Math.round(calcHours(periodEntries, startOfMonth(today), endOfMonth(today)) * 10) / 10;
 
   const handleClockIn = useCallback(async () => {
     setActionError(null);

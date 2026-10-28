@@ -15,7 +15,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { DecimalInput } from '@/components/shared/DecimalInput';
-import { tl } from '@/lib/inlineI18n';
+import { dateLocaleTag, tl } from '@/lib/inlineI18n';
 
 type Customer = Tables<'customers'>;
 
@@ -120,7 +120,7 @@ export function DealDetailSheet({
 
                 <div>
                   <Label className="text-xs text-muted-foreground">{t('pages.deals.created')}</Label>
-                  <p>{new Date(deal.created_at).toLocaleDateString()}</p>
+                  <p>{new Date(deal.created_at).toLocaleDateString(dateLocaleTag())}</p>
                 </div>
 
                 <div className="space-y-2">

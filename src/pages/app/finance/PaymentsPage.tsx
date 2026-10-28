@@ -18,6 +18,7 @@ import { formatDocumentAmount } from '@/contexts/CurrencyContext';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 const paymentMethods = [
   { value: 'bank_transfer', label: 'bankTransfer', icon: Building2 },
@@ -88,7 +89,7 @@ export default function PaymentsPage() {
   const handleExport = useCallback(() => {
     if (allPayments.length === 0) return;
     const csv = ["Invoice,Method,Amount,Status,Paid", ...allPayments.map(p =>
-      `${p.invoices?.invoice_number || ''},${p.payment_method || ''},${p.amount},${p.status},${p.paid_at ? new Date(p.paid_at).toLocaleDateString() : ''}`
+      `${p.invoices?.invoice_number || ''},${p.payment_method || ''},${p.amount},${p.status},${p.paid_at ? new Date(p.paid_at).toLocaleDateString(dateLocaleTag()) : ''}`
     )].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -238,7 +239,7 @@ export default function PaymentsPage() {
                 </TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(payment.amount))}</TableCell>
                 <TableCell><StatusBadge status={payment.status} label={statusLabels[payment.status]} /></TableCell>
-                <TableCell className="text-muted-foreground">{payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : '–'}</TableCell>
+                <TableCell className="text-muted-foreground">{payment.paid_at ? new Date(payment.paid_at).toLocaleDateString(dateLocaleTag()) : '–'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

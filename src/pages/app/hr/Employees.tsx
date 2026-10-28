@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 type Employee = {
   id: string;
@@ -76,7 +77,7 @@ export default function EmployeesPage() {
                       {e.is_active ? 'Aktiv' : 'Inaktiv'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{e.start_date ? new Date(e.start_date).toLocaleDateString() : '—'}</TableCell>
+                  <TableCell>{e.start_date ? new Date(e.start_date).toLocaleDateString(dateLocaleTag()) : '—'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

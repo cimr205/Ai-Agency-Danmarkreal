@@ -20,6 +20,7 @@ import { useLeads } from '@/hooks/api/useLeads';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import type { Json } from '@/integrations/supabase/types';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 type QuoteLine = { description: string; quantity: number; unit_price: number };
 
@@ -257,8 +258,8 @@ export default function QuotesPage() {
                     <TableCell className="font-medium">{quote.title}</TableCell>
                     <TableCell><StatusBadge status={quote.status} label={t(`quotes.statusLabels.${quote.status}`) || quote.status} /></TableCell>
                     <TableCell className="font-medium">{formatCurrency(quote.total)}</TableCell>
-                    <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString(dateLocaleTag()) : '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.sent')}</Button>}

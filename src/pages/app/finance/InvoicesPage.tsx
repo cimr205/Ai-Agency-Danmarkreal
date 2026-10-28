@@ -38,7 +38,7 @@ import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTempla
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
-import { t3, tl } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tl } from '@/lib/inlineI18n';
 
 type Lead = Tables<'leads'>;
 
@@ -124,7 +124,8 @@ export default function InvoicesPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [lines, setLines] = useState<InvoiceLine[]>([{ description: '', quantity: 1, unit_price: 0, total: 0 }]);
-  const [dueDate, setDueDate] = useState('');
+  // Prefilled with the 14-day default so the user sees the date that will be saved.
+  const [dueDate, setDueDate] = useState(defaultDueDate);
   const [notes, setNotes] = useState('');
   const [priceMode, setPriceMode] = useState<'excl' | 'incl'>('excl');
   const [createStep, setCreateStep] = useState<'details' | 'lines'>('details');
@@ -258,7 +259,7 @@ export default function InvoicesPage() {
     setEmailTo(customerEmail);
     const companyName = company?.name || 'Company';
     setEmailSubject(t('pages.invoices.emailSubjectDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{company}}', companyName));
-    setEmailMessage(t('pages.invoices.emailMessageDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{amount}}', formatCurrency(Number(invoice.amount))).replace('{{dueDate}}', invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '–').replace('{{company}}', companyName));
+    setEmailMessage(t('pages.invoices.emailMessageDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{amount}}', formatCurrency(Number(invoice.amount))).replace('{{dueDate}}', invoice.due_date ? new Date(invoice.due_date).toLocaleDateString(dateLocaleTag()) : '–').replace('{{company}}', companyName));
     setEmailDialogInvoice(invoice);
   };
 
@@ -363,7 +364,7 @@ export default function InvoicesPage() {
 
   const addLine = () => setLines([...lines, { description: '', quantity: 1, unit_price: 0, total: 0 }]);
   const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
-  const resetForm = () => { setSelectedCustomerId(''); setLines([{ description: '', quantity: 1, unit_price: 0, total: 0 }]); setDueDate(''); setNotes(''); setPriceMode('excl'); setCreateStep('details'); setShowNewCustomer(false); setLeadSearch(''); };
+  const resetForm = () => { setSelectedCustomerId(''); setLines([{ description: '', quantity: 1, unit_price: 0, total: 0 }]); setDueDate(defaultDueDate()); setNotes(''); setPriceMode('excl'); setCreateStep('details'); setShowNewCustomer(false); setLeadSearch(''); };
 
   // Create invoice directly from a lead — auto-creates a customer if needed
   const handleSelectLead = async (lead: Lead) => {
@@ -881,7 +882,7 @@ export default function InvoicesPage() {
                 <TableCell className="text-right">{formatCurrency(Number(invoice.vat_amount || 0))}</TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(invoice.amount))}</TableCell>
                 <TableCell><StatusBadge status={effStatus(invoice)} label={statusLabels[effStatus(invoice)]} /></TableCell>
-                <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
+                <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString(dateLocaleTag()) : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
                     {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
@@ -1090,11 +1091,11 @@ export default function InvoicesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.invoices.issued')}</Label>
-                    <p className="text-sm font-medium">{selectedInvoice.issued_at ? new Date(selectedInvoice.issued_at).toLocaleDateString() : '–'}</p>
+                    <p className="text-sm font-medium">{selectedInvoice.issued_at ? new Date(selectedInvoice.issued_at).toLocaleDateString(dateLocaleTag()) : '–'}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.invoices.dueDate')}</Label>
-                    <p className="text-sm font-medium">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '–'}</p>
+                    <p className="text-sm font-medium">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString(dateLocaleTag()) : '–'}</p>
                   </div>
                 </div>
 
@@ -1151,7 +1152,7 @@ export default function InvoicesPage() {
                           <div key={p.id} className="flex items-center gap-2 text-sm">
                             <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                             <span className="flex-1">{formatCurrency(Number(p.amount))}</span>
-                            <span className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '–'}</span>
+                            <span className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString(dateLocaleTag()) : '–'}</span>
                             <StatusBadge status={p.status} />
                           </div>
                         ))}
@@ -1248,7 +1249,7 @@ export default function InvoicesPage() {
                         subtotal: editSubtotal,
                         vat_amount: editVatAmount,
                         amount: editTotal,
-                        due_date: editingInvoice.editDueDate || null,
+                        due_date: editingInvoice.editDueDate || defaultDueDate(),
                         notes: editingInvoice.editNotes || null,
                       }).eq('id', editingInvoice.id);
                       if (error) throw error;

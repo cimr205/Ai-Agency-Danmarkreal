@@ -18,7 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
-import { t3, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 type Task = {
   id: string; title: string; description?: string | null; status: string;
@@ -245,7 +245,7 @@ export default function TasksPage() {
                 {task.due_date && (
                   <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {isOverdue ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                    {new Date(task.due_date).toLocaleDateString()}
+                    {new Date(task.due_date).toLocaleDateString(dateLocaleTag())}
                   </div>
                 )}
                 {task.status !== 'completed' && (

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Briefcase, Trophy, XCircle, Plus } from 'lucide-react';
 import type { DealWithCustomer } from '@/hooks/api/useDeals';
 import { stageColors } from '@/lib/deals/stages';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export function DealListView({
   deals, isLoading, error, t, formatCurrency, getStageLabel, onSelectDeal, onMarkWon, onMarkLost, onCreate,
@@ -70,8 +71,8 @@ export function DealListView({
                   <TableCell className="text-muted-foreground">{deal.customers?.name || '—'}</TableCell>
                   <TableCell><span className="font-medium">{formatCurrency(deal.value)}</span></TableCell>
                   <TableCell><Badge variant="outline" className={stageColors[deal.stage] || ''}>{getStageLabel(deal.stage)}</Badge></TableCell>
-                  <TableCell className="text-muted-foreground">{deal.expected_close_date ? new Date(deal.expected_close_date).toLocaleDateString() : '—'}</TableCell>
-                  <TableCell className="text-muted-foreground">{deal.created_at ? new Date(deal.created_at).toLocaleDateString() : '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{deal.expected_close_date ? new Date(deal.expected_close_date).toLocaleDateString(dateLocaleTag()) : '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{deal.created_at ? new Date(deal.created_at).toLocaleDateString(dateLocaleTag()) : '—'}</TableCell>
                   <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {deal.stage !== 'won' && <Button variant="ghost" size="sm" className="text-success" onClick={() => onMarkWon(deal.id)}><Trophy className="h-3.5 w-3.5" /></Button>}

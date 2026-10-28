@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export type InvoiceTemplate = 'modern' | 'classic' | 'minimal' | 'bold' | 'elegant';
 
@@ -196,8 +197,8 @@ export async function generateInvoicePdf(data: InvoicePdfData, template: Invoice
   doc.setFont(t.font, 'normal');
   doc.setTextColor(100, 116, 139);
   const metaItems = [
-    [isDa ? 'Udstedt' : 'Issued', data.issuedAt ? new Date(data.issuedAt).toLocaleDateString() : '–'],
-    [isDa ? 'Forfald' : 'Due', data.dueDate ? new Date(data.dueDate).toLocaleDateString() : '–'],
+    [isDa ? 'Udstedt' : 'Issued', data.issuedAt ? new Date(data.issuedAt).toLocaleDateString(dateLocaleTag()) : '–'],
+    [isDa ? 'Forfald' : 'Due', data.dueDate ? new Date(data.dueDate).toLocaleDateString(dateLocaleTag()) : '–'],
     [isDa ? 'Status' : 'Status', data.status],
   ];
   let metaY = y + 13;

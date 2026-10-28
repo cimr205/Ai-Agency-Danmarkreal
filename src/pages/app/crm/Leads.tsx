@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { CsvImportWizard } from '@/components/import/CsvImportWizard';
 import { useI18n } from '@/lib/i18n';
 import React from 'react';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 const statusColors: Record<string, string> = {
   new: 'bg-primary/15 text-primary',
@@ -311,7 +312,7 @@ export default function LeadsPage() {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -373,7 +374,7 @@ export default function LeadsPage() {
                       ))}
                     </div>
                     <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />{new Date(lead.created_at).toLocaleDateString()}
+                      <Calendar className="h-3 w-3" />{new Date(lead.created_at).toLocaleDateString(dateLocaleTag())}
                     </span>
                   </div>
                 </CardContent>
@@ -423,7 +424,7 @@ export default function LeadsPage() {
                   )}
                   <div className="flex items-center gap-3 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground">{t('pages.leads.created')}: {new Date(selectedLead.created_at).toLocaleDateString()}</span>
+                    <span className="text-muted-foreground">{t('pages.leads.created')}: {new Date(selectedLead.created_at).toLocaleDateString(dateLocaleTag())}</span>
                   </div>
                 </div>
 
@@ -457,7 +458,7 @@ export default function LeadsPage() {
                 {selectedLead.value != null && selectedLead.value > 0 && (
                   <div className="space-y-1">
                     <Label>{t('pages.deals.value')}</Label>
-                    <p className="text-lg font-bold text-primary">{selectedLead.value.toLocaleString()} kr</p>
+                    <p className="text-lg font-bold text-primary">{selectedLead.value.toLocaleString(dateLocaleTag())} kr</p>
                   </div>
                 )}
 

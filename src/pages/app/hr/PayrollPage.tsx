@@ -33,7 +33,7 @@ export default function PayrollPage() {
   const { t, locale } = useI18n();
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newPayroll, setNewPayroll] = useState({ employee_id: '', salary: '', period: '' });
+  const [newPayroll, setNewPayroll] = useState({ employee_id: '', salary: '', period: new Date().toISOString().slice(0, 7) });
 
   const dateFnsLocale = DATE_LOCALES[locale] || enUS;
   const currConfig = LOCALE_CURRENCY[locale] || LOCALE_CURRENCY.da;
@@ -62,7 +62,7 @@ export default function PayrollPage() {
     try {
       await createPayroll.mutateAsync({ employee_profile_id: newPayroll.employee_id, base_salary: salary, net_salary: salary, period: newPayroll.period });
       toast.success(t('hr.payrollRegistered'));
-      setNewPayroll({ employee_id: '', salary: '', period: '' });
+      setNewPayroll({ employee_id: '', salary: '', period: new Date().toISOString().slice(0, 7) });
       setIsCreateOpen(false);
     } catch { toast.error(t('hr.payrollRegisterError')); }
   };

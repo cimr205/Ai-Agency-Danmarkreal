@@ -34,7 +34,7 @@ import type { Tables, Enums } from '@/integrations/supabase/types';
 import { AppError, invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
-import { t3, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -1049,7 +1049,7 @@ export default function LeadsPage() {
                         </Popover>
                       </TableCell>
                       <TableCell className={`${cellPad} text-sm text-muted-foreground`}>
-                        {lead.last_touched_at ? new Date(lead.last_touched_at).toLocaleDateString() : '–'}
+                        {lead.last_touched_at ? new Date(lead.last_touched_at).toLocaleDateString(dateLocaleTag()) : '–'}
                       </TableCell>
                       <TableCell className={cellPad} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1322,7 +1322,7 @@ export default function LeadsPage() {
                   <Label className="text-xs text-muted-foreground flex items-center gap-1">
                     {t('pages.leads.estimatedValue') || 'Estimated Deal Value'}
                   </Label>
-                  <p className="text-lg font-semibold">{selectedLead.value ? `${Number(selectedLead.value).toLocaleString()} ${selectedLead.currency || 'DKK'}` : '–'}</p>
+                  <p className="text-lg font-semibold">{selectedLead.value ? `${Number(selectedLead.value).toLocaleString(dateLocaleTag())} ${selectedLead.currency || 'DKK'}` : '–'}</p>
                 </div>
 
                 {/* AI Relationship Summary */}
@@ -1353,8 +1353,8 @@ export default function LeadsPage() {
 
                 {/* Meta */}
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>{t('common.created')}: {new Date(selectedLead.created_at).toLocaleDateString()}</p>
-                  {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString()}</p>}
+                  <p>{t('common.created')}: {new Date(selectedLead.created_at).toLocaleDateString(dateLocaleTag())}</p>
+                  {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString(dateLocaleTag())}</p>}
                 </div>
 
                 {/* Convert to Deal — one atomic server-side conversion

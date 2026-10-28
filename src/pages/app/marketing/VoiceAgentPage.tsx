@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { t3 } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3 } from '@/lib/inlineI18n';
 
 interface TwilioAccount { account_sid: string; }
 interface VoiceAgent { id: string; name: string; voice: string; language: string; system_prompt: string; greeting: string; is_active: boolean; }
@@ -392,7 +392,7 @@ export default function VoiceAgentPage() {
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {events.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.waitingForEvents')}</p> : events.map(e => (
                         <div key={e.id} className="flex gap-3 text-sm border-l-2 border-border pl-3 py-1">
-                          <div className="text-xs text-muted-foreground min-w-20">{new Date(e.created_at).toLocaleTimeString()}</div>
+                          <div className="text-xs text-muted-foreground min-w-20">{new Date(e.created_at).toLocaleTimeString(dateLocaleTag())}</div>
                           <div className="flex-1">
                             <Badge variant="outline" className="text-xs mr-2">{e.speaker || t('voiceAgent.systemLabel')}</Badge>
                             <span className="text-muted-foreground text-xs mr-2">{e.event_type}</span>
@@ -418,7 +418,7 @@ export default function VoiceAgentPage() {
                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{c.to_number}</div>
-                        <div className="text-xs text-muted-foreground">{c.started_at ? new Date(c.started_at).toLocaleString() : '—'} · {c.duration_seconds}s</div>
+                        <div className="text-xs text-muted-foreground">{c.started_at ? new Date(c.started_at).toLocaleString(dateLocaleTag()) : '—'} · {c.duration_seconds}s</div>
                         {c.summary && <div className="text-xs mt-1 line-clamp-2 max-w-2xl">{c.summary}</div>}
                       </div>
                       <Badge variant={c.status === 'completed' ? 'default' : 'secondary'}>{c.status}</Badge>
