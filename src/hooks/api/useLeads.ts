@@ -130,7 +130,20 @@ export function useCreateLead() {
       if (!profile?.company_id) throw new Error('No company');
       const { data, error } = await supabase
         .from('customers')
-        .insert({ ...input, company_id: profile.company_id, created_by: session.user.id, record_type: 'lead' })
+        // status/owner defaults: without them a fresh lead had status NULL
+        // (blank pill, never counted under "New") and no owner ("My leads"
+        // stayed 0 for leads you created yourself). Email is normalised so
+        // the same address in another casing isn't stored as a new contact.
+        .insert({
+          ...input,
+          name: input.name.trim(),
+          email: input.email.trim().toLowerCase(),
+          status: 'new',
+          owner_id: session.user.id,
+          company_id: profile.company_id,
+          created_by: session.user.id,
+          record_type: 'lead',
+        })
         .select()
         .single();
       if (error) throw error;

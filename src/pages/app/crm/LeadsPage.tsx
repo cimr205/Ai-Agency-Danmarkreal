@@ -263,14 +263,16 @@ export default function LeadsPage() {
   const countNew = useMemo(() => leads.filter(l => l.status === 'new').length, [leads]);
   const countNeedsContact = useMemo(() => leads.filter(isNeedsContact).length, [leads]);
   const countStale = useMemo(() => leads.filter(isStale).length, [leads]);
-  const countMine = useMemo(() => user ? leads.filter(l => l.owner_id === user.id).length : 0, [leads, user]);
+  // owner_id holds the auth user id; useAuth().user.id is the *profile* id,
+  // so comparing against it made "My leads" always 0.
+  const countMine = useMemo(() => user ? leads.filter(l => l.owner_id === user.user_id).length : 0, [leads, user]);
 
   const visibleLeads = useMemo(() => leads.filter(l => {
     if (ownerFilter !== 'all' && l.owner_id !== ownerFilter) return false;
     if (quickView === 'new' && l.status !== 'new') return false;
     if (quickView === 'followup' && !isNeedsContact(l)) return false;
     if (quickView === 'stale' && !isStale(l)) return false;
-    if (quickView === 'mine' && l.owner_id !== user?.id) return false;
+    if (quickView === 'mine' && l.owner_id !== user?.user_id) return false;
     return true;
   }), [leads, ownerFilter, quickView, user]);
 
@@ -1140,7 +1142,25 @@ export default function LeadsPage() {
       )}
 
       {/* Lead Detail Sheet */}
-      <Sheet open={!!selectedLead} onOpenChange={open => { if (!open) setSelectedLead(null); }}>
+      <Sheet open={!!selectedLead} onOpenChange={open => {
+        if (open) return;
+        // Status/potential autosave, but notes/tags/phone/company only saved
+        // via the Save button at the bottom — closing the panel silently
+        // threw those edits away. Save them on close when anything changed.
+        if (selectedLead) {
+          const dirty = (selectedLead.notes || '') !== editNotes
+            || (selectedLead.phone || '') !== editPhone
+            || (selectedLead.company_name || '') !== editCompany
+            || (selectedLead.industry || '') !== editIndustry
+            || JSON.stringify(selectedLead.tags || []) !== JSON.stringify(editTags);
+          if (dirty) {
+            updateLead.mutateAsync({ id: selectedLead.id, data: { notes: editNotes, phone: editPhone, company_name: editCompany, tags: editTags, industry: editIndustry || null } })
+              .then(() => toast.success(t('common.saved')))
+              .catch(() => toast.error(t('common.error')));
+          }
+        }
+        setSelectedLead(null);
+      }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           {selectedLead && (
             <>

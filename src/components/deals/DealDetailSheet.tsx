@@ -12,7 +12,7 @@ import { MeetingSummaryDialog } from '@/components/deals/MeetingSummaryDialog';
 import type { DealWithCustomer } from '@/hooks/api/useDeals';
 import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
-import { canMarkDealWon } from '@/lib/deals/wonValidation';
+import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 
 type Customer = Tables<'customers'>;
 
@@ -136,6 +136,11 @@ export function DealDetailSheet({
                     </Button>
                   )}
                 </div>
+                {/* "Mark as Won" is disabled until a customer and expected
+                    close date exist — say so instead of a silent grey button. */}
+                {deal.stage !== 'won' && !canMarkDealWon(deal) && (
+                  <p className="text-xs text-muted-foreground">{getWonValidationMessage(locale)}</p>
+                )}
               </div>
             </>
           )}

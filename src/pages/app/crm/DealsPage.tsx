@@ -58,8 +58,13 @@ export default function DealsPage() {
   const filteredDeals = deals.filter(deal => deal.title.toLowerCase().includes(search.toLowerCase()));
   const isEmpty = !isLoading && deals.length === 0;
 
-  const totalValue = deals.reduce((sum, d) => sum + Number(d.value || 0), 0);
+  // Pipeline = open deals only. Won/lost deals are closed and must not
+  // inflate "Pipeline Value" / "Avg. Deal Value" (a 50.000 kr lost deal was
+  // being counted as pipeline).
+  const openDeals = deals.filter(d => !['won', 'lost'].includes(normalizeStageKey(d.stage)));
+  const totalValue = openDeals.reduce((sum, d) => sum + Number(d.value || 0), 0);
   const totalDeals = deals.length;
+  const openDealCount = openDeals.length;
   const wonValue = deals.filter(d => normalizeStageKey(d.stage) === 'won').reduce((sum, d) => sum + Number(d.value || 0), 0);
 
   useEffect(() => {
@@ -232,7 +237,7 @@ export default function DealsPage() {
                 <WorkspaceTile label={t('pages.deals.totalDeals')} value={totalDeals} active />
                 <WorkspaceTile label={t('pages.deals.pipelineValue')} value={formatCurrency(totalValue)} />
                 <WorkspaceTile label={t('pages.deals.wonValue')} value={formatCurrency(wonValue)} />
-                <WorkspaceTile label={t('pages.deals.avgDealValue')} value={formatCurrency(totalDeals ? totalValue / totalDeals : 0)} />
+                <WorkspaceTile label={t('pages.deals.avgDealValue')} value={formatCurrency(openDealCount ? totalValue / openDealCount : 0)} />
               </div>
             </WorkspaceGradientSurface>
           </WorkspaceFrame>
