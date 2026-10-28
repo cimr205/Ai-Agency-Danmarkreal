@@ -95,7 +95,7 @@ function useNavGroups(): NavGroup[] {
       section: "control", label: t("nav.controlRoom"), module: "system", accent: "#22D3EE",
       items: [
         { label: t("nav.controlRoomDashboard"), path: "workspace/control-room", icon: SquaresFour },
-        { label: t("nav.studio"), path: "workspace/studio", icon: TreeStructure },
+        { label: t("nav.workflowStudio"), path: "workspace/studio", icon: TreeStructure },
         { label: t("nav.workflowChat"), path: "workspace/workflow-chat", icon: ChatCenteredDots },
         { label: t("nav.operatingManager"), path: "workspace/operating-manager", icon: ShieldCheck },
         { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: PlugsConnected },

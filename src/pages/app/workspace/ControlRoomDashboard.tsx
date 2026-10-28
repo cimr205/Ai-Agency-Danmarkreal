@@ -42,7 +42,7 @@ export default function ControlRoomDashboard() {
         intro={tr(firstName ? 'sec.ctl.introNamed' : 'sec.ctl.intro', { name: firstName })}
         primary={{ label: tr('sec.cta.reviewAction'), href: `${base}/workspace/operating-manager` }}
         actions={[
-          { icon: Workflow, label: tr('nav.studio'), href: `${base}/workspace/studio` },
+          { icon: Workflow, label: tr('nav.workflowStudio'), href: `${base}/workspace/studio` },
           { icon: Plug, label: tr('nav.connectedApps'), href: `${base}/workspace/connected-apps` },
           { icon: Bot, label: tr('nav.assistant'), href: `${base}/pa` },
         ]}

@@ -122,7 +122,7 @@ export function ClientHeader({ customer, stats }: Props) {
         to={`${base}/clients`}
         className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground font-mono uppercase tracking-[0.1em] transition-colors"
       >
-        <ArrowLeft className="h-3 w-3" /> klienter
+        <ArrowLeft className="h-3 w-3" /> {t('nav.clients')}
       </Link>
 
       <div className="flex items-start justify-between gap-6 flex-wrap">

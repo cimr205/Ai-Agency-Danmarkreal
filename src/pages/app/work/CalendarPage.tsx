@@ -390,12 +390,28 @@ export default function CalendarPage() {
               <ChevronRight className="h-[18px] w-[18px]" />
             </button>
           </div>
+          {/* Explicit "New event" — creating used to be possible only by
+              discovering that empty grid slots are clickable. Opens a draft
+              at the next full hour on the selected day. */}
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const base = view === 'day' || isSameDay(selected, now) ? now : selected;
+              const day = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+              const minutes = isSameDay(base, now) ? Math.min(23, now.getHours() + 1) * 60 : 9 * 60;
+              onSlotClick(day, minutes);
+            }}
+            className="ml-auto h-10 rounded-[12px] border border-[#0A0A0A]/15 bg-white px-3 text-[14px] font-semibold text-[#0A0A0A]"
+          >
+            + {t('pages.calendar.newEvent')}
+          </button>
           <button
             type="button"
             onClick={join}
             disabled={!joinTarget}
             title={joinTarget ? joinTarget.title : t('pages.calendar.joinNone')}
-            className="ml-auto h-10 w-[76px] rounded-[12px] bg-[#0A0A0A] text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+            className="ml-2 h-10 w-[76px] rounded-[12px] bg-[#0A0A0A] text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
           >
             {t('pages.calendar.join')}
           </button>

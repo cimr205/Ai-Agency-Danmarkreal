@@ -344,7 +344,8 @@
     "financeDashboard": "Finance Dashboard",
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
-    "linkedinOutreach": "LinkedIn Outreach"
+    "linkedinOutreach": "LinkedIn Outreach",
+    "workflowStudio": "Workflow Studio"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -447,7 +448,7 @@
     "reloadPage": "Reload page"
   },
   "clients": {
-    "title": "Clients",
+    "title": "Customers",
     "subtitle": "Every client is a living object — communication, deals, invoices and activity in one place.",
     "searchPlaceholder": "Search client or email",
     "empty": "No clients yet.",
@@ -1349,7 +1350,7 @@
     "calendar": {
       "title": "Calendar",
       "subtitle": "View your events",
-      "newEvent": "New Event",
+      "newEvent": "New event",
       "createTitle": "Create event",
       "createSubtitle": "Add a new event to your calendar",
       "titleLabel": "Title",

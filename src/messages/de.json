@@ -37,7 +37,10 @@
     "account": "Konto",
     "create": "Erstellen",
     "selectAllVisible": "Alle sichtbaren auswählen ({count})",
-    "selected": "{count} ausgewählt"
+    "selected": "{count} ausgewählt",
+    "back": "Zurück",
+    "copied": "In die Zwischenablage kopiert",
+    "copy": "Kopieren"
   },
   "language": {
     "label": "Sprache",
@@ -361,7 +364,8 @@
     "financeDashboard": "Finanz-Dashboard",
     "hrDashboard": "HR-Dashboard",
     "controlRoomDashboard": "Kontrollraum-Dashboard",
-    "linkedinOutreach": "LinkedIn-Outreach"
+    "linkedinOutreach": "LinkedIn-Outreach",
+    "workflowStudio": "Workflow-Studio"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -1356,7 +1360,12 @@
       "selectAll": "Alle auswählen",
       "selectAllVisible": "Alle sichtbaren auswählen",
       "selected": "ausgewählt",
-      "emptyView": "In dieser Ansicht ist nichts — sieh in den anderen Tabs nach."
+      "emptyView": "In dieser Ansicht ist nichts — sieh in den anderen Tabs nach.",
+      "priorityHigh": "Hoch",
+      "priorityLabel": "Priorität",
+      "priorityLow": "Niedrig",
+      "priorityMedium": "Mittel",
+      "priorityUrgent": "Dringend"
     },
     "calendar": {
       "title": "Kalender",
@@ -2154,7 +2163,9 @@
     "confirmSendTitle": "Senden bestätigen",
     "confirmSendDesc": "Sie senden E-Mails an {count} Empfänger. Dies kann nicht rückgängig gemacht werden.",
     "confirmSend": "Jetzt senden",
-    "consentReminder": "Stellen Sie sicher, dass alle Empfänger zugestimmt haben (DSGVO)."
+    "consentReminder": "Stellen Sie sicher, dass alle Empfänger zugestimmt haben (DSGVO).",
+    "scheduled": "Für später planen",
+    "scheduledTime": "Senden um"
   },
   "pa": {
     "title": "Ihr persönlicher PA",
@@ -2309,7 +2320,23 @@
     "statusVerified": "Verifiziert",
     "statusLikelyValid": "Wahrscheinlich gültig",
     "statusUnverified": "Nicht verifiziert",
-    "statusMissing": "Fehlt"
+    "statusMissing": "Fehlt",
+    "allDuplicated": "Alle gefundenen Firmen sind bereits in deiner Datenbank. Versuche eine andere Suche.",
+    "allImported": "Alle Leads bereits importiert",
+    "colSource": "Quelle",
+    "colValidation": "Validierung",
+    "excludeKeywordsLabel": "Stichwörter ausschließen",
+    "excludeKeywordsPlaceholder": "Auszuschließende Stichwörter, durch Komma getrennt",
+    "importAll": "Alle importieren",
+    "importCta": "Importieren",
+    "importToFolder": "In Ordner importieren",
+    "importToFolderDesc": "Wähle einen Ordner für die Leads oder importiere ohne Ordner.",
+    "newSearch": "Neue Suche",
+    "nicheLabel": "Nische",
+    "nichePlaceholder": "z. B. Zahnarzt, Restaurant...",
+    "noFolder": "Kein Ordner",
+    "noNewResults": "Keine neuen Leads gefunden",
+    "selectFolder": "Ordner wählen"
   },
   "invitations": {
     "title": "Einladungen",
@@ -3188,5 +3215,44 @@
     "reject": "Ablehnen",
     "preparing": "Wird vorbereitet…",
     "prepare": "Nachfassen vorbereiten (KI)"
+  },
+  "adminGate": {
+    "accessDenied": "Zugriff verweigert — du hast keine Systemadministrator-Rechte",
+    "codeAccepted": "Code akzeptiert",
+    "codeHint": "Dieser Code ist nur autorisiertem Personal bekannt",
+    "enterCode": "Gib den geheimen Zugangscode ein, um fortzufahren",
+    "invalidCode": "Ungültiger Zugangscode",
+    "loginAsAdmin": "Als Admin anmelden",
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "loginWithAdmin": "Mit deinem Admin-Konto anmelden",
+    "secretCode": "Geheimer Code",
+    "verificationError": "Verifizierungsfehler",
+    "verificationFailed": "Verifizierung fehlgeschlagen",
+    "verifyCode": "Code prüfen"
+  },
+  "aiEmail": {
+    "casual": "Locker",
+    "coldOutreach": "Kaltakquise",
+    "contextPlaceholder": "Z. B. „Wir haben gerade ein neues Produkt für ihre Branche gestartet...“ oder „Sie haben gestern unsere Website besucht“",
+    "emailBody": "E-Mail-Text",
+    "extraContext": "Zusätzlicher Kontext (optional)",
+    "followUp": "Nachfassen",
+    "generate": "KI-E-Mail generieren",
+    "generateError": "E-Mail konnte nicht generiert werden",
+    "generating": "Personalisierte E-Mail wird erstellt...",
+    "meetingRequest": "Terminbuchung",
+    "openInEmail": "In E-Mail öffnen",
+    "professional": "Professionell",
+    "proposal": "Angebot",
+    "purpose": "Zweck",
+    "regenerate": "Neue Version generieren",
+    "subject": "Betreff",
+    "tone": "Ton",
+    "urgent": "Dringend"
+  },
+  "studio": {
+    "editorTab": "Editor",
+    "generateTab": "KI-Generierung",
+    "pageDescription": "Bearbeite und erstelle Video- und Bildinhalte, ohne die Plattform zu verlassen."
   }
 }

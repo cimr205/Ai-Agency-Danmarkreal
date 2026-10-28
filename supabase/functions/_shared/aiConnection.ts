@@ -43,8 +43,10 @@ export async function getCompanyAI(
   };
 }
 
+// Edge functions don't know the caller's UI language, so user-facing AI
+// errors carry Danish and English (they were Danish-only).
 export const AI_NOT_CONNECTED_MESSAGE =
-  "AI-modellen er ikke tilgængelig lige nu (LOCAL_LLM_BASE_URL er ikke konfigureret, eller udbyderen svarer ikke).";
+  "AI-modellen er ikke tilgængelig lige nu. / The AI model is unavailable right now.";
 
 /**
  * Explains a non-ok response from the configured LLM endpoint. Kept as a
@@ -75,7 +77,7 @@ export async function describeOpenAIError(
   return {
     status,
     message: body?.error?.message
-      ? `AI-fejl: ${body.error.message}`
-      : `AI-udbyderen svarede ikke korrekt (HTTP ${status}).`,
+      ? `AI-fejl / AI error: ${body.error.message}`
+      : `AI-udbyderen svarede ikke korrekt / The AI provider returned an error (HTTP ${status}).`,
   };
 }

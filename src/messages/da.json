@@ -37,7 +37,10 @@
     "account": "Konto",
     "create": "Opret",
     "selectAllVisible": "Vælg alle synlige ({count})",
-    "selected": "{count} valgt"
+    "selected": "{count} valgt",
+    "back": "Tilbage",
+    "copied": "Kopieret til udklipsholder",
+    "copy": "Kopiér"
   },
   "language": {
     "label": "Sprog",
@@ -335,7 +338,7 @@
     "accountMenu": "Kontomenu",
     "aiMedia": "AI Medier",
     "studios": "Studios",
-    "clients": "Klienter",
+    "clients": "Kunder",
     "connectedApps": "Forbundne apps",
     "help": "Hjælp",
     "messages": "Beskeder",
@@ -361,7 +364,8 @@
     "financeDashboard": "Finance Dashboard",
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
-    "linkedinOutreach": "LinkedIn Outreach"
+    "linkedinOutreach": "LinkedIn Outreach",
+    "workflowStudio": "Workflow Studio"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -464,7 +468,7 @@
     "reloadPage": "Genindlæs siden"
   },
   "clients": {
-    "title": "Klienter",
+    "title": "Kunder",
     "subtitle": "Hver klient er et levende objekt — kommunikation, deals, fakturaer og aktivitet samlet ét sted.",
     "searchPlaceholder": "Søg klient eller email",
     "empty": "Ingen klienter endnu.",
@@ -1366,7 +1370,7 @@
     "calendar": {
       "title": "Kalender",
       "subtitle": "Se dine begivenheder",
-      "newEvent": "Ny Begivenhed",
+      "newEvent": "Ny aftale",
       "createTitle": "Opret begivenhed",
       "createSubtitle": "Tilføj en ny begivenhed til din kalender",
       "titleLabel": "Titel",
@@ -3211,5 +3215,44 @@
     "reject": "Afvis",
     "preparing": "Forbereder…",
     "prepare": "Forbered opfølgning (AI)"
+  },
+  "adminGate": {
+    "accessDenied": "Adgang nægtet — du har ikke systemadministrator-rettigheder",
+    "codeAccepted": "Kode accepteret",
+    "codeHint": "Denne kode kendes kun af autoriseret personale",
+    "enterCode": "Indtast den hemmelige adgangskode for at fortsætte",
+    "invalidCode": "Ugyldig adgangskode",
+    "loginAsAdmin": "Log ind som admin",
+    "loginFailed": "Login mislykkedes",
+    "loginWithAdmin": "Log ind med din admin-konto",
+    "secretCode": "Hemmelig kode",
+    "verificationError": "Verifikationsfejl",
+    "verificationFailed": "Verifikation mislykkedes",
+    "verifyCode": "Bekræft kode"
+  },
+  "aiEmail": {
+    "casual": "Uformel",
+    "coldOutreach": "Kold henvendelse",
+    "contextPlaceholder": "Fx 'Vi har netop lanceret et nyt produkt til deres branche...' eller 'De besøgte vores hjemmeside i går'",
+    "emailBody": "E-mailtekst",
+    "extraContext": "Ekstra kontekst (valgfri)",
+    "followUp": "Opfølgning",
+    "generate": "Generér AI-e-mail",
+    "generateError": "Kunne ikke generere e-mail",
+    "generating": "Genererer personlig e-mail...",
+    "meetingRequest": "Mødebooking",
+    "openInEmail": "Åbn i e-mail",
+    "professional": "Professionel",
+    "proposal": "Tilbud",
+    "purpose": "Formål",
+    "regenerate": "Generér ny version",
+    "subject": "Emne",
+    "tone": "Tone",
+    "urgent": "Haster"
+  },
+  "studio": {
+    "editorTab": "Editor",
+    "generateTab": "AI-generering",
+    "pageDescription": "Redigér og generér video- og billedindhold uden at forlade platformen."
   }
 }
