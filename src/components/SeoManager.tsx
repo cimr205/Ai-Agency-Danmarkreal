@@ -38,15 +38,24 @@ function setMeta(selector: string, attribute: 'name' | 'property', key: string, 
   element.content = content;
 }
 
+/** Split "/de/app/x" into its locale and the rest. Exported for tests: German
+ *  routes once kept their prefix and were all titled "page not found". */
+export function splitLocalePath(pathname: string): { htmlLang: string; locale: 'da' | 'en'; suffix: string } {
+  const firstSegment = pathname.split('/')[1];
+  const htmlLang = isLocale(firstSegment) ? firstSegment : 'en';
+  return {
+    htmlLang,
+    locale: htmlLang === 'da' ? 'da' : 'en',
+    suffix: pathname.replace(/^\/(da|en|de)(?=\/|$)/, '') || '/',
+  };
+}
+
 export function SeoManager() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const firstSegment = pathname.split('/')[1];
-    const htmlLang = isLocale(firstSegment) ? firstSegment : 'en';
-    const locale = htmlLang === 'da' ? 'da' : 'en';
+    const { htmlLang, locale, suffix } = splitLocalePath(pathname);
     const localized = copy[locale];
-    const suffix = pathname.replace(/^\/(da|en|de)(?=\/|$)/, '') || '/';
     const isPrivate = /^\/(app|auth|admin)(\/|$)/.test(suffix);
 
     let title: string = localized.homeTitle;
