@@ -25,6 +25,7 @@ import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidati
 import { reportError } from '@/lib/sentry';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
+import { tl } from '@/lib/inlineI18n';
 
 type DealStage = string;
 
@@ -95,9 +96,9 @@ export default function DealsPage() {
     const errors: Record<string, string> = {};
     if (!newDeal.title.trim()) errors.title = t('pages.deals.titleRequired') || 'Title is required';
     if (!newDeal.value || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) <= 0) errors.value = newDeal.value && parseFloat(newDeal.value) <= 0 ? t('pages.deals.valuePositive') : (t('pages.deals.valueRequired') || 'Value is required');
-    if ((customers ?? []).length === 0) errors.customer_id = locale === 'da' ? 'Opret mindst én kunde før du opretter en deal' : 'Create at least one customer before creating a deal';
-    else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = locale === 'da' ? 'Kunde er påkrævet' : 'Customer is required';
-    if (!newDeal.expected_close_date) errors.expected_close_date = locale === 'da' ? 'Forventet lukkedato er påkrævet' : 'Expected close date is required';
+    if ((customers ?? []).length === 0) errors.customer_id = tl(locale, 'Opret mindst én kunde før du opretter en deal', 'Create at least one customer before creating a deal');
+    else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = tl(locale, 'Kunde er påkrævet', 'Customer is required');
+    if (!newDeal.expected_close_date) errors.expected_close_date = tl(locale, 'Forventet lukkedato er påkrævet', 'Expected close date is required');
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setFormErrors({});
     try {
@@ -199,14 +200,14 @@ export default function DealsPage() {
                 <div className="space-y-2">
                   <Label>{t('pages.deals.customer')} *</Label>
                   <Select value={newDeal.customer_id} onValueChange={v => { setNewDeal({ ...newDeal, customer_id: v }); setFormErrors(prev => ({ ...prev, customer_id: '' })); }}>
-                    <SelectTrigger className={formErrors.customer_id ? 'border-destructive' : ''}><SelectValue placeholder={locale === 'da' ? 'Vælg kunde' : 'Select customer'} /></SelectTrigger>
+                    <SelectTrigger className={formErrors.customer_id ? 'border-destructive' : ''}><SelectValue placeholder={tl(locale, 'Vælg kunde', 'Select customer')} /></SelectTrigger>
                     <SelectContent>
                       {(customers ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {(customers ?? []).length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      {locale === 'da' ? 'Du skal oprette en kunde først, før en deal kan gemmes.' : 'You need to create a customer before a deal can be saved.'}
+                      {tl(locale, 'Du skal oprette en kunde først, før en deal kan gemmes.', 'You need to create a customer before a deal can be saved.')}
                     </p>
                   )}
                   {formErrors.customer_id && <p className="text-xs text-destructive">{formErrors.customer_id}</p>}
@@ -216,7 +217,7 @@ export default function DealsPage() {
                   <Input type="date" value={newDeal.expected_close_date} onChange={e => { setNewDeal({ ...newDeal, expected_close_date: e.target.value }); setFormErrors(prev => ({ ...prev, expected_close_date: '' })); }} className={formErrors.expected_close_date ? 'border-destructive' : ''} />
                   {formErrors.expected_close_date && <p className="text-xs text-destructive">{formErrors.expected_close_date}</p>}
                 </div>
-                <div className="space-y-2"><Label>{t('pages.deals.notesLabel')}</Label><Textarea value={newDeal.notes} onChange={e => setNewDeal({ ...newDeal, notes: e.target.value })} placeholder={locale === 'da' ? 'Tilføj næste skridt, indvendinger og kontekst...' : 'Add next steps, objections, and context...'} rows={3} /></div>
+                <div className="space-y-2"><Label>{t('pages.deals.notesLabel')}</Label><Textarea value={newDeal.notes} onChange={e => setNewDeal({ ...newDeal, notes: e.target.value })} placeholder={tl(locale, 'Tilføj næste skridt, indvendinger og kontekst...', 'Add next steps, objections, and context...')} rows={3} /></div>
                 <Button onClick={handleCreate} disabled={createDeal.isPending} className="w-full">{createDeal.isPending ? t('pages.deals.creating') : t('pages.deals.createCta')}</Button>
               </div>
             </DialogContent>

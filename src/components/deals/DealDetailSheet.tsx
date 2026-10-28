@@ -15,6 +15,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { DecimalInput } from '@/components/shared/DecimalInput';
+import { tl } from '@/lib/inlineI18n';
 
 type Customer = Tables<'customers'>;
 
@@ -95,10 +96,10 @@ export function DealDetailSheet({
                         onValueChange={v => {
                           if (!v) return;
                           onCustomerLink(deal.id, v);
-                          toast.success(locale === 'da' ? 'Kontakt tilknyttet' : 'Contact linked');
+                          toast.success(tl(locale, 'Kontakt tilknyttet', 'Contact linked'));
                         }}
                       >
-                        <SelectTrigger className="h-8"><SelectValue placeholder={locale === 'da' ? 'Vælg kontakt...' : 'Link a contact...'} /></SelectTrigger>
+                        <SelectTrigger className="h-8"><SelectValue placeholder={tl(locale, 'Vælg kontakt...', 'Link a contact...')} /></SelectTrigger>
                         <SelectContent>
                           {(customers ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name} — {c.email}</SelectItem>)}
                         </SelectContent>
@@ -137,7 +138,7 @@ export function DealDetailSheet({
                 <DealCoachPanel dealId={deal.id} dealTitle={deal.title} />
 
                 <Button variant="outline" className="w-full gap-2" onClick={() => setMeetingSummaryOpen(true)}>
-                  <Mic className="h-4 w-4" /> {locale === 'da' ? 'AI Mødeopsummering' : 'AI Meeting Summary'}
+                  <Mic className="h-4 w-4" /> {tl(locale, 'AI Mødeopsummering', 'AI Meeting Summary')}
                 </Button>
 
                 <div className="flex gap-2">

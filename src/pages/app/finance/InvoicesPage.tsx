@@ -38,6 +38,7 @@ import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTempla
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
+import { tl } from '@/lib/inlineI18n';
 
 type Lead = Tables<'leads'>;
 
@@ -284,7 +285,7 @@ export default function InvoicesPage() {
 
       // Build HTML email with PDF link
       const htmlBody = emailMessage.replace(/\n/g, '<br/>') +
-        (pdfUrl ? `<br/><br/><a href="${pdfUrl}" style="display:inline-block;padding:12px 24px;background:#1e40af;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">📄 ${locale === 'da' ? 'Download faktura PDF' : 'Download Invoice PDF'}</a>` : '');
+        (pdfUrl ? `<br/><br/><a href="${pdfUrl}" style="display:inline-block;padding:12px 24px;background:#1e40af;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">📄 ${tl(locale, 'Download faktura PDF', 'Download Invoice PDF')}</a>` : '');
 
       await sendEmail.mutateAsync({ to: emailTo, subject: emailSubject, message: htmlBody });
       if (emailDialogInvoice?.status === 'draft') await updateStatus.mutateAsync({ id: emailDialogInvoice.id, status: 'sent' });
@@ -487,7 +488,7 @@ export default function InvoicesPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                       <Palette className="h-4 w-4" />
-                      {locale === 'da' ? 'Vælg fakturadesign' : 'Choose invoice design'}
+                      {tl(locale, 'Vælg fakturadesign', 'Choose invoice design')}
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                       {templateOptions.map(o => {
@@ -578,21 +579,21 @@ export default function InvoicesPage() {
                         <>
                           {/* Lead picker — search and pick a lead to invoice */}
                           <div className="space-y-2">
-                            <Label className="flex items-center gap-2"><Users className="h-3.5 w-3.5" />{locale === 'da' ? 'Find lead' : 'Find lead'}</Label>
+                            <Label className="flex items-center gap-2"><Users className="h-3.5 w-3.5" />{tl(locale, 'Find lead', 'Find lead')}</Label>
                             <Popover open={leadPickerOpen} onOpenChange={setLeadPickerOpen}>
                               <PopoverTrigger asChild>
                                 <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
                                   <span className="flex items-center gap-2 text-muted-foreground">
                                     <Search className="h-3.5 w-3.5" />
-                                    {locale === 'da' ? 'Søg efter et lead at fakturere…' : 'Search a lead to invoice…'}
+                                    {tl(locale, 'Søg efter et lead at fakturere…', 'Search a lead to invoice…')}
                                   </span>
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                 <Command shouldFilter={false}>
-                                  <CommandInput placeholder={locale === 'da' ? 'Søg navn, email, firma…' : 'Search name, email, company…'} value={leadSearch} onValueChange={setLeadSearch} />
+                                  <CommandInput placeholder={tl(locale, 'Søg navn, email, firma…', 'Search name, email, company…')} value={leadSearch} onValueChange={setLeadSearch} />
                                   <CommandList>
-                                    <CommandEmpty>{locale === 'da' ? 'Ingen leads fundet' : 'No leads found'}</CommandEmpty>
+                                    <CommandEmpty>{tl(locale, 'Ingen leads fundet', 'No leads found')}</CommandEmpty>
                                     <CommandGroup>
                                       {leads.slice(0, 25).map((lead: Lead) => (
                                         <CommandItem key={lead.id} value={lead.id} onSelect={() => handleSelectLead(lead)} className="flex items-start justify-between gap-3">
@@ -608,7 +609,7 @@ export default function InvoicesPage() {
                                 </Command>
                               </PopoverContent>
                             </Popover>
-                            <p className="text-xs text-muted-foreground">{locale === 'da' ? 'Vælger du et lead, oprettes en kunde automatisk.' : 'Picking a lead auto-creates a customer.'}</p>
+                            <p className="text-xs text-muted-foreground">{tl(locale, 'Vælger du et lead, oprettes en kunde automatisk.', 'Picking a lead auto-creates a customer.')}</p>
                           </div>
 
                           <Separator />
@@ -629,9 +630,9 @@ export default function InvoicesPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                   <Command>
-                                    <CommandInput placeholder={locale === 'da' ? 'Søg klient…' : 'Search client…'} value={customerSearch} onValueChange={setCustomerSearch} />
+                                    <CommandInput placeholder={tl(locale, 'Søg klient…', 'Search client…')} value={customerSearch} onValueChange={setCustomerSearch} />
                                     <CommandList>
-                                      <CommandEmpty>{locale === 'da' ? 'Ingen klienter fundet' : 'No clients found'}</CommandEmpty>
+                                      <CommandEmpty>{tl(locale, 'Ingen klienter fundet', 'No clients found')}</CommandEmpty>
                                       <CommandGroup>
                                         {(customers ?? []).map(c => (
                                           <CommandItem
@@ -688,22 +689,20 @@ export default function InvoicesPage() {
                               </Select>
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">{locale === 'da' ? 'Telefon' : 'Phone'} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
+                              <Label className="text-xs">{tl(locale, 'Telefon', 'Phone')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
                               <Input value={newCust.phone} onChange={e => setNewCust({ ...newCust, phone: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">{t('pages.invoices.newCustomerVat')} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
+                              <Label className="text-xs">{t('pages.invoices.newCustomerVat')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
                               <Input value={newCust.vat_number} onChange={e => setNewCust({ ...newCust, vat_number: e.target.value })} />
                             </div>
                             <div className="space-y-1 sm:col-span-2">
-                              <Label className="text-xs">{locale === 'da' ? 'Adresse' : 'Address'} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
-                              <Input value={newCust.address} onChange={e => setNewCust({ ...newCust, address: e.target.value })} placeholder={locale === 'da' ? 'Hovedgaden 1, 1000 København' : 'Main St 1, 1000 Copenhagen'} />
+                              <Label className="text-xs">{tl(locale, 'Adresse', 'Address')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
+                              <Input value={newCust.address} onChange={e => setNewCust({ ...newCust, address: e.target.value })} placeholder={tl(locale, 'Hovedgaden 1, 1000 København', 'Main St 1, 1000 Copenhagen')} />
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {locale === 'da'
-                              ? 'Bekræft kunden nedenfor, før du kan fortsætte til fakturalinjer.'
-                              : 'Confirm the customer below before you can continue to invoice lines.'}
+                            {tl(locale, 'Bekræft kunden nedenfor, før du kan fortsætte til fakturalinjer.', 'Confirm the customer below before you can continue to invoice lines.')}
                           </p>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={handleCreateCustomerInline} disabled={createCustomer.isPending || !newCust.name || !newCust.email}>
@@ -886,7 +885,7 @@ export default function InvoicesPage() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
                     {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Åbn Stripe-betaling' : 'Open Stripe payment'} onClick={async () => {
+                      <Button variant="ghost" size="icon" title={tl(locale, 'Åbn Stripe-betaling', 'Open Stripe payment')} onClick={async () => {
                         try {
                           const checkout = await createCheckout.mutateAsync(invoice.id);
                           window.open(checkout.checkout_url, '_blank', 'noopener,noreferrer');
@@ -1000,13 +999,13 @@ export default function InvoicesPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <FileText className="h-3.5 w-3.5" />
-                  {locale === 'da' ? 'PDF vedhæftes som link' : 'PDF attached as link'}
+                  {tl(locale, 'PDF vedhæftes som link', 'PDF attached as link')}
                 </div>
               </div>
 
               {/* Template selector for email PDF */}
               <div className="flex items-center gap-2">
-                <Label className="text-xs whitespace-nowrap">{locale === 'da' ? 'PDF skabelon' : 'PDF Template'}:</Label>
+                <Label className="text-xs whitespace-nowrap">{tl(locale, 'PDF skabelon', 'PDF Template')}:</Label>
                 <Select value={pdfTemplate} onValueChange={(v) => setPdfTemplate(v as InvoiceTemplate)}>
                   <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1076,7 +1075,7 @@ export default function InvoicesPage() {
                 {(selectedInvoice.quotes || selectedInvoice.quotes?.deal_id) && (
                   <div className="flex flex-wrap gap-1.5">
                     {selectedInvoice.quotes && (
-                      <RelationshipChip icon={FileText} label={locale === 'da' ? 'Tilbud' : 'Quote'} value={selectedInvoice.quotes.title} />
+                      <RelationshipChip icon={FileText} label={tl(locale, 'Tilbud', 'Quote')} value={selectedInvoice.quotes.title} />
                     )}
                     {selectedInvoice.quotes?.deal_id && (() => {
                       const deal = allDeals?.find((d) => d.id === selectedInvoice.quotes!.deal_id);

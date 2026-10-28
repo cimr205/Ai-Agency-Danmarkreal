@@ -8,6 +8,7 @@ import { RelationshipChip } from '@/components/shared/RelationshipChip';
 import { useI18n } from '@/lib/i18n';
 import { senderColor, senderInitials } from '@/lib/emailAvatar';
 import type { Email } from './EmailListPane';
+import { tl } from '@/lib/inlineI18n';
 
 interface EmailReaderPaneProps {
   email: Email | null;
@@ -84,10 +85,10 @@ export function EmailReaderPane({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {email.contact && <Badge variant="secondary">{locale === 'da' ? 'Kontakt' : 'Contact'}: {email.contact.name}</Badge>}
+            {email.contact && <Badge variant="secondary">{tl(locale, 'Kontakt', 'Contact')}: {email.contact.name}</Badge>}
             {email.deal && <Badge variant="outline">Deal: {email.deal.title}</Badge>}
             {!email.contact && !email.deal && (
-              <RelationshipChip muted value={locale === 'da' ? 'Ingen match i CRM' : 'No CRM match'} />
+              <RelationshipChip muted value={tl(locale, 'Ingen match i CRM', 'No CRM match')} />
             )}
             {email.has_attachments && <Badge variant="outline" className="gap-1"><Archive className="h-3 w-3" />{t('pages.email.hasAttachment')}</Badge>}
           </div>
