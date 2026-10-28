@@ -94,7 +94,7 @@ export default function DealsPage() {
   const handleCreate = async () => {
     const errors: Record<string, string> = {};
     if (!newDeal.title.trim()) errors.title = t('pages.deals.titleRequired') || 'Title is required';
-    if (!newDeal.value || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) <= 0) errors.value = t('pages.deals.valueRequired') || 'Value is required';
+    if (!newDeal.value || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) <= 0) errors.value = newDeal.value && parseFloat(newDeal.value) <= 0 ? t('pages.deals.valuePositive') : (t('pages.deals.valueRequired') || 'Value is required');
     if ((customers ?? []).length === 0) errors.customer_id = locale === 'da' ? 'Opret mindst én kunde før du opretter en deal' : 'Create at least one customer before creating a deal';
     else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = locale === 'da' ? 'Kunde er påkrævet' : 'Customer is required';
     if (!newDeal.expected_close_date) errors.expected_close_date = locale === 'da' ? 'Forventet lukkedato er påkrævet' : 'Expected close date is required';
@@ -135,6 +135,14 @@ export default function DealsPage() {
   const handleNotesUpdate = async (dealId: string, notes: string) => {
     try {
       await updateDeal.mutateAsync({ id: dealId, notes });
+      toast.success(t('common.saved'));
+    } catch { toast.error(t('common.error')); }
+  };
+
+  const handleValueUpdate = async (dealId: string, value: number) => {
+    try {
+      await updateDeal.mutateAsync({ id: dealId, value });
+      if (selectedDeal?.id === dealId) setSelectedDeal(d => d ? { ...d, value } : d);
       toast.success(t('common.saved'));
     } catch { toast.error(t('common.error')); }
   };
@@ -298,6 +306,7 @@ export default function DealsPage() {
         onCustomerLink={handleCustomerLink}
         onExpectedCloseChange={handleExpectedCloseChange}
         onNotesUpdate={handleNotesUpdate}
+        onValueUpdate={handleValueUpdate}
         onMarkWon={id => handleStageChange(id, 'won')}
         onMarkLost={id => handleStageChange(id, 'lost')}
       />

@@ -906,7 +906,15 @@
     "created": "Tilbud oprettet",
     "status": "Status",
     "leadRequired": "Et tilbud skal have et lead/en kunde, før det kan gemmes eller faktureres.",
-    "vatInvalid": "Momssatsen skal være mellem 0 og 100 %."
+    "vatInvalid": "Momssatsen skal være mellem 0 og 100 %.",
+    "statusLabels": {
+      "draft": "Kladde",
+      "sent": "Sendt",
+      "accepted": "Accepteret",
+      "rejected": "Afvist",
+      "expired": "Udløbet"
+    },
+    "expired": "Udløbet — kan ikke længere accepteres"
   },
   "roles": {
     "employee": "Medarbejder",
@@ -1023,7 +1031,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Ejer",
-      "nameRequired": "Navn og email er påkrævet",
+      "nameRequired": "Navn skal udfyldes",
       "created_success": "Lead oprettet",
       "created_error": "Kunne ikke oprette lead",
       "scoreUpdated": "Score opdateret",
@@ -1127,7 +1135,10 @@
       "aiEmailWriter": "AI mailskribent",
       "folderNameTooShort": "Mappenavn skal være mindst 2 tegn",
       "syncNow": "Synkronisér nu",
-      "connectCrm": "Forbind CRM"
+      "connectCrm": "Forbind CRM",
+      "phoneInvalid": "Angiv et gyldigt telefonnummer (kun tal, mellemrum, + og -).",
+      "duplicateEmail": "Der findes allerede et lead eller en kunde med denne e-mail.",
+      "convertedToExisting": "Deal oprettet og knyttet til en eksisterende kontakt med samme e-mail/telefon."
     },
     "deals": {
       "title": "Deals",
@@ -1171,7 +1182,8 @@
       "selectLead": "Vælg lead...",
       "noLead": "Intet lead",
       "moveToStage": "Flyt til stadie",
-      "bulkStageUpdated": "Deals opdateret"
+      "bulkStageUpdated": "Deals opdateret",
+      "valuePositive": "Værdien skal være større end 0."
     },
     "invoices": {
       "title": "Fakturaer",
@@ -2058,7 +2070,9 @@
     "selectError": "Vælg faktura og angiv beløb",
     "success": "Betaling registreret – faktura opdateret automatisk",
     "error": "Kunne ikke registrere betaling",
-    "exportHistory": "Eksporter"
+    "exportHistory": "Eksporter",
+    "manual": "Markeret betalt manuelt",
+    "noUnpaidInvoices": "Ingen ubetalte fakturaer — alle fakturaer er betalt."
   },
   "bulkEmail": {
     "title": "Masse-email",
@@ -2724,7 +2738,9 @@
       "1:1": "1:1 — Feed (kvadrat)",
       "4:5": "4:5 — Feed (portræt)",
       "16:9": "16:9 — YouTube / landskab"
-    }
+    },
+    "notDeployedTitle": "Video Studio er ikke sat op endnu",
+    "notDeployedHint": "Videoeditorens databasetabel er ikke deployet. En administrator skal køre den seneste databasemigration (supabase db push)."
   },
   "sec": {
     "home": "Hjem",

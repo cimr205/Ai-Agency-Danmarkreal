@@ -13,12 +13,13 @@ import type { DealWithCustomer } from '@/hooks/api/useDeals';
 import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
+import { DecimalInput } from '@/components/shared/DecimalInput';
 
 type Customer = Tables<'customers'>;
 
 export function DealDetailSheet({
   deal, open, onOpenChange, stages, customers, locale, t, formatCurrency,
-  onStageChange, onCustomerLink, onExpectedCloseChange, onNotesUpdate, onMarkWon, onMarkLost,
+  onStageChange, onCustomerLink, onExpectedCloseChange, onNotesUpdate, onValueUpdate, onMarkWon, onMarkLost,
 }: {
   deal: DealWithCustomer | null;
   open: boolean;
@@ -32,6 +33,7 @@ export function DealDetailSheet({
   onCustomerLink: (dealId: string, customerId: string) => void;
   onExpectedCloseChange: (dealId: string, value: string | null) => void;
   onNotesUpdate: (dealId: string, notes: string) => void;
+  onValueUpdate: (dealId: string, value: number) => void;
   onMarkWon: (dealId: string) => void;
   onMarkLost: (dealId: string) => void;
 }) {
@@ -55,7 +57,20 @@ export function DealDetailSheet({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.deals.value')}</Label>
-                    <p className="text-lg font-bold">{formatCurrency(deal.value)}</p>
+                    {/* Editable: deals created by lead conversion start at 0 kr
+                        and previously had no way to get a value from here. */}
+                    <DecimalInput
+                      key={deal.id}
+                      className="mt-1 h-8 font-semibold"
+                      value={Number(deal.value || 0)}
+                      onValueChange={() => { /* committed on blur */ }}
+                      onBlur={e => {
+                        const n = Number(e.currentTarget.value.replace(',', '.'));
+                        if (Number.isFinite(n) && n >= 0 && n !== Number(deal.value || 0)) onValueUpdate(deal.id, n);
+                      }}
+                      aria-label={t('pages.deals.value')}
+                      title={formatCurrency(deal.value)}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.deals.stage')}</Label>

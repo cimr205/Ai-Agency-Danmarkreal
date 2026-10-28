@@ -889,7 +889,15 @@
     "created": "Quote created",
     "status": "Status",
     "leadRequired": "A quote needs a lead/customer before it can be saved or invoiced.",
-    "vatInvalid": "VAT rate must be between 0 and 100 %."
+    "vatInvalid": "VAT rate must be between 0 and 100 %.",
+    "statusLabels": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "expired": "Expired — can no longer be accepted"
   },
   "roles": {
     "employee": "Employee",
@@ -1006,7 +1014,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Owner",
-      "nameRequired": "Name and email are required",
+      "nameRequired": "Name is required",
       "created_success": "Lead created",
       "created_error": "Could not create lead",
       "scoreUpdated": "Score updated",
@@ -1110,7 +1118,10 @@
       "aiEmailWriter": "AI Email Writer",
       "folderNameTooShort": "Folder name must be at least 2 characters",
       "syncNow": "Sync now",
-      "connectCrm": "Connect CRM"
+      "connectCrm": "Connect CRM",
+      "phoneInvalid": "Enter a valid phone number (digits, spaces, + and - only).",
+      "duplicateEmail": "A lead or customer with this email already exists.",
+      "convertedToExisting": "Deal created and linked to an existing contact with the same email/phone."
     },
     "deals": {
       "title": "Deals",
@@ -1154,7 +1165,8 @@
       "selectLead": "Select lead...",
       "noLead": "No lead",
       "moveToStage": "Move to stage",
-      "bulkStageUpdated": "Deals updated"
+      "bulkStageUpdated": "Deals updated",
+      "valuePositive": "The value must be greater than 0."
     },
     "invoices": {
       "title": "Invoices",
@@ -2041,7 +2053,9 @@
     "selectError": "Select invoice and enter amount",
     "success": "Payment registered – invoice updated automatically",
     "error": "Could not register payment",
-    "exportHistory": "Export"
+    "exportHistory": "Export",
+    "manual": "Marked as paid manually",
+    "noUnpaidInvoices": "No unpaid invoices — every invoice is already paid."
   },
   "bulkEmail": {
     "title": "Bulk Email",
@@ -2766,7 +2780,9 @@
       "1:1": "1:1 — Feed (square)",
       "4:5": "4:5 — Feed (portrait)",
       "16:9": "16:9 — YouTube / landscape"
-    }
+    },
+    "notDeployedTitle": "Video Studio isn't set up yet",
+    "notDeployedHint": "The video editor's database table hasn't been deployed. An administrator needs to run the latest database migration (supabase db push)."
   },
   "sec": {
     "home": "Home",

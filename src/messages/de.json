@@ -906,7 +906,15 @@
     "created": "Angebot erstellt",
     "status": "Status",
     "leadRequired": "Ein Angebot braucht einen Lead/Kunden, bevor es gespeichert oder abgerechnet werden kann.",
-    "vatInvalid": "Der MwSt.-Satz muss zwischen 0 und 100 % liegen."
+    "vatInvalid": "Der MwSt.-Satz muss zwischen 0 und 100 % liegen.",
+    "statusLabels": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen"
+    },
+    "expired": "Abgelaufen — kann nicht mehr angenommen werden"
   },
   "roles": {
     "employee": "Mitarbeiter",
@@ -1023,7 +1031,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Inhaber",
-      "nameRequired": "Name und E-Mail sind erforderlich",
+      "nameRequired": "Name ist erforderlich",
       "created_success": "Lead erstellt",
       "created_error": "Lead konnte nicht erstellt werden",
       "scoreUpdated": "Score aktualisiert",
@@ -1127,7 +1135,10 @@
       "aiEmailWriter": "KI-E-Mail-Assistent",
       "folderNameTooShort": "Der Ordnername muss mindestens 2 Zeichen lang sein",
       "syncNow": "Jetzt synchronisieren",
-      "connectCrm": "CRM verbinden"
+      "connectCrm": "CRM verbinden",
+      "phoneInvalid": "Gib eine gültige Telefonnummer ein (nur Ziffern, Leerzeichen, + und -).",
+      "duplicateEmail": "Ein Lead oder Kunde mit dieser E-Mail existiert bereits.",
+      "convertedToExisting": "Deal erstellt und mit einem bestehenden Kontakt mit derselben E-Mail/Telefonnummer verknüpft."
     },
     "deals": {
       "title": "Deals",
@@ -1171,7 +1182,8 @@
       "selectLead": "Lead auswählen...",
       "noLead": "Kein Lead",
       "moveToStage": "In Phase verschieben",
-      "bulkStageUpdated": "Deals aktualisiert"
+      "bulkStageUpdated": "Deals aktualisiert",
+      "valuePositive": "Der Wert muss größer als 0 sein."
     },
     "invoices": {
       "title": "Rechnungen",
@@ -2053,7 +2065,9 @@
     "selectError": "Rechnung wählen und Betrag eingeben",
     "success": "Zahlung registriert – Rechnung automatisch aktualisiert",
     "error": "Zahlung konnte nicht registriert werden",
-    "exportHistory": "Exportieren"
+    "exportHistory": "Exportieren",
+    "manual": "Manuell als bezahlt markiert",
+    "noUnpaidInvoices": "Keine unbezahlten Rechnungen — alle Rechnungen sind bezahlt."
   },
   "bulkEmail": {
     "title": "Massen-E-Mail",
@@ -2701,7 +2715,9 @@
       "1:1": "1:1 — Feed (quadratisch)",
       "4:5": "4:5 — Feed (Hochformat)",
       "16:9": "16:9 — YouTube / Querformat"
-    }
+    },
+    "notDeployedTitle": "Video Studio ist noch nicht eingerichtet",
+    "notDeployedHint": "Die Datenbanktabelle des Video-Editors wurde noch nicht bereitgestellt. Ein Administrator muss die neueste Datenbankmigration ausführen (supabase db push)."
   },
   "sec": {
     "home": "Start",

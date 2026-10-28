@@ -61,7 +61,9 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
   // project must NOT reuse a stale preset — its own saved stage takes over on load.
   const [pendingStage, setPendingStage] = useState<{ width: number; height: number } | undefined>();
 
-  const { data: projects = [], isLoading } = useVideoProjects();
+  const { data: projects = [], isLoading, error: projectsError } = useVideoProjects();
+  // PGRST205 = the video_projects table isn't deployed in this database yet.
+  const studioNotDeployed = /video_projects|PGRST205|schema cache/i.test(getErrorMessage(projectsError) || '');
   const createMutation = useCreateVideoProject();
   const deleteMutation = useDeleteVideoProject();
 
@@ -93,7 +95,8 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       setPendingStage({ width: preset.width, height: preset.height });
       setOpenProjectId(project.id);
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('videoStudio.createError') || 'Could not create project');
+      const msg = getErrorMessage(err) || '';
+      toast.error(/video_projects|PGRST205|schema cache/i.test(msg) ? t('videoStudio.notDeployedHint') : (msg || t('videoStudio.createError') || 'Could not create project'));
     }
   };
 
@@ -164,7 +167,15 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
         </div>
       )}
 
-      {!isLoading && projects.length === 0 && (
+      {!isLoading && projectsError && (
+        <EmptyState
+          icon={Clapperboard}
+          title={studioNotDeployed ? t('videoStudio.notDeployedTitle') : (t('common.error') || 'Something went wrong')}
+          hint={studioNotDeployed ? t('videoStudio.notDeployedHint') : (getErrorMessage(projectsError) || '')}
+        />
+      )}
+
+      {!isLoading && !projectsError && projects.length === 0 && (
         <EmptyState
           icon={Clapperboard}
           title={t('videoStudio.emptyTitle') || 'No videos yet'}

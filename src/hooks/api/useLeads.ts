@@ -128,6 +128,15 @@ export function useCreateLead() {
         .eq('user_id', session.user.id)
         .single();
       if (!profile?.company_id) throw new Error('No company');
+      // Same email (any casing) already a lead/contact in this company →
+      // refuse instead of silently creating a duplicate record.
+      const email = input.email.trim().toLowerCase();
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('id')
+        .ilike('email', email.replace(/[%_\\]/g, ch => `\\${ch}`))
+        .limit(1);
+      if (existing && existing.length > 0) throw new Error('DUPLICATE_LEAD_EMAIL');
       const { data, error } = await supabase
         .from('customers')
         // status/owner defaults: without them a fresh lead had status NULL
@@ -137,7 +146,7 @@ export function useCreateLead() {
         .insert({
           ...input,
           name: input.name.trim(),
-          email: input.email.trim().toLowerCase(),
+          email,
           status: 'new',
           owner_id: session.user.id,
           company_id: profile.company_id,

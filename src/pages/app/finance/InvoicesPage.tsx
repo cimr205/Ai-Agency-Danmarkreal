@@ -33,7 +33,7 @@ import { RelationshipChip } from '@/components/shared/RelationshipChip';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n, type Locale } from '@/lib/i18n';
-import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDocumentAmount } from '@/contexts/CurrencyContext';
 import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTemplate, type InvoicePdfData } from '@/lib/invoicePdf';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
@@ -57,8 +57,7 @@ function getVatInfo(country: string, customerType: string): { rate: number; note
 }
 
 function useFormatCurrency() {
-  const { format } = useCurrency();
-  return useCallback((amount: number) => format(amount), [format]);
+  return useCallback((amount: number) => formatDocumentAmount(amount), []);
 }
 
 function buildPdfData(invoice: InvoiceWithCustomer, company: Company | null | undefined, formatCurrency: (n: number) => string, locale: string, statusLabels: Record<string, string>): InvoicePdfData {
@@ -148,7 +147,12 @@ export default function InvoicesPage() {
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
       setIsCreateOpen(true);
+      // Client page → "Faktura" passes ?customer=<id>; preselect it instead
+      // of making the user pick the same client again.
+      const customerParam = searchParams.get('customer');
+      if (customerParam) setSelectedCustomerId(customerParam);
       searchParams.delete('create');
+      searchParams.delete('customer');
       setSearchParams(searchParams, { replace: true });
     }
   }, []);

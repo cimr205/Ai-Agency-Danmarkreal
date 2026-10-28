@@ -109,7 +109,11 @@ export function explainError(err: unknown, context: ExplainErrorContext = {}): E
     const area = areaKey ? t(`errors.functionAreas.${areaKey}`) : getFunctionAreaName(err.functionName);
     const bucket = statusBucket(err.kind, err.status);
 
-    const serverWhy = bucket === 'badRequest' ? sanitizeServerMessage(err.serverMessage) : undefined;
+    // Codes whose server message is written for the end user (e.g. CVR
+    // lookup quota used up) are shown as-is instead of the generic
+    // "something went wrong on our side" text.
+    const userFacingCode = err.code === 'QUOTA_EXCEEDED' || err.code === 'AI_MODEL_UNAVAILABLE';
+    const serverWhy = bucket === 'badRequest' || userFacingCode ? sanitizeServerMessage(err.serverMessage) : undefined;
     const why = serverWhy ?? t(`errors.status.${bucket}.why`);
     const what = err.hint ? (/[.!?]$/.test(err.hint) ? err.hint : `${err.hint}.`) : t(`errors.status.${bucket}.what`);
 

@@ -15,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, FileText, Trash2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDocumentAmount } from '@/contexts/CurrencyContext';
 import { useLeads } from '@/hooks/api/useLeads';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
@@ -57,7 +57,7 @@ function useCreateQuote() {
 
 export default function QuotesPage() {
   const { t } = useI18n();
-  const { format: formatCurrency } = useCurrency();
+  const formatCurrency = formatDocumentAmount;
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -245,14 +245,18 @@ export default function QuotesPage() {
                 {filteredQuotes.map((quote) => (
                   <TableRow key={quote.id}>
                     <TableCell className="font-medium">{quote.title}</TableCell>
-                    <TableCell><StatusBadge status={quote.status} /></TableCell>
+                    <TableCell><StatusBadge status={quote.status} label={t(`quotes.statusLabels.${quote.status}`) || quote.status} /></TableCell>
                     <TableCell className="font-medium">{formatCurrency(quote.total)}</TableCell>
                     <TableCell className="text-muted-foreground">{quote.valid_until ? new Date(quote.valid_until).toLocaleDateString() : '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.sent')}</Button>}
-                        {quote.status === 'sent' && <>
+                        {/* An expired quote can't be accepted any more — the offer has lapsed. */}
+                        {quote.status === 'sent' && quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10) && (
+                          <span className="text-xs text-muted-foreground self-center">{t('quotes.expired')}</span>
+                        )}
+                        {quote.status === 'sent' && !(quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10)) && <>
                           <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'accepted' })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t('quotes.accepted')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'rejected' })}>{t('quotes.rejected')}</Button>
                         </>}

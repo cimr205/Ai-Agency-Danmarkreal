@@ -156,7 +156,7 @@ export default function LeadsPage() {
   const [newTagInput, setNewTagInput] = useState('');
   const [newFilterTagInput, setNewFilterTagInput] = useState('');
   const [newLead, setNewLead] = useState({ name: '', email: '', phone: '', company_name: '' });
-  const [createErrors, setCreateErrors] = useState<{ name?: string; email?: string }>({});
+  const [createErrors, setCreateErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
   const [isDragging, setIsDragging] = useState(false);
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [aiEmailLead, setAiEmailLead] = useState<{ id: string; name: string; email: string } | null>(null);
@@ -282,7 +282,7 @@ export default function LeadsPage() {
     customer: t('pages.leads.statusCustomer') || 'Customer',
   };
 
-  const relatedDeals = selectedLead ? (allDeals ?? []).filter((d: Deal) => d.customer_id === selectedLead.id || d.notes?.includes(selectedLead.name)) : [];
+  const relatedDeals = selectedLead ? (allDeals ?? []).filter((d: Deal) => d.customer_id === selectedLead.id || d.customer_id === selectedLead.converted_customer_id) : [];
 
   const openLeadDetail = (lead: Lead) => {
     setSelectedLead(lead);
@@ -311,10 +311,11 @@ export default function LeadsPage() {
   };
 
   const handleCreate = async () => {
-    const errors: { name?: string; email?: string } = {};
+    const errors: { name?: string; email?: string; phone?: string } = {};
     if (!newLead.name.trim()) errors.name = t('pages.leads.nameRequired');
     if (!newLead.email.trim()) errors.email = t('pages.leads.emailRequired') || 'Email is required';
-    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(newLead.email)) errors.email = t('pages.leads.emailInvalid') || 'Invalid email';
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newLead.email.trim())) errors.email = t('pages.leads.emailInvalid') || 'Invalid email';
+    if (newLead.phone && !/^\+?[\d\s().-]{6,20}$/.test(newLead.phone.trim())) errors.phone = t('pages.leads.phoneInvalid');
     if (Object.keys(errors).length > 0) { setCreateErrors(errors); return; }
     setCreateErrors({});
     try {
@@ -322,7 +323,10 @@ export default function LeadsPage() {
       toast.success(t('pages.leads.created_success'));
       setNewLead({ name: '', email: '', phone: '', company_name: '' });
       setIsCreateOpen(false);
-    } catch { toast.error(t('pages.leads.created_error')); }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'DUPLICATE_LEAD_EMAIL') { setCreateErrors({ email: t('pages.leads.duplicateEmail') }); return; }
+      toast.error(t('pages.leads.created_error'));
+    }
   };
 
   const handleStatusChange = async (id: string, status: Enums<'lead_status'>) => {
@@ -627,7 +631,7 @@ export default function LeadsPage() {
                   <Input type="email" value={newLead.email} onChange={e => { setNewLead(p => ({ ...p, email: e.target.value })); setCreateErrors(prev => ({ ...prev, email: undefined })); }} className={createErrors.email ? 'border-destructive' : ''} />
                   {createErrors.email && <p className="text-xs text-destructive mt-1">{createErrors.email}</p>}
                 </div>
-                <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))} /></div>
+                <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => { setNewLead(p => ({ ...p, phone: e.target.value })); setCreateErrors(prev => ({ ...prev, phone: undefined })); }} className={createErrors.phone ? 'border-destructive' : ''} />{createErrors.phone && <p className="text-xs text-destructive mt-1">{createErrors.phone}</p>}</div>
                 <div><Label>{t('pages.leads.company')}</Label><Input value={newLead.company_name} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} /></div>
                 <Button onClick={handleCreate} disabled={createLead.isPending} className="w-full">
                   {createLead.isPending ? t('common.saving') : t('pages.leads.addLead')}
@@ -1353,11 +1357,14 @@ export default function LeadsPage() {
                   onClick={async () => {
                     const locale = isLocale(params.locale) ? params.locale : 'en';
                     try {
-                      await convertToDeal.mutateAsync({
+                      const result = await convertToDeal.mutateAsync({
                         leadId: selectedLead.id,
                         dealName: `Deal: ${selectedLead.name}`,
                         value: selectedLead.value ?? undefined,
                       });
+                      // The RPC reuses an existing contact with the same email/phone;
+                      // say so, otherwise the deal silently shows another name.
+                      if (result?.dedupe_result === 'matched_existing') toast.info(t('pages.leads.convertedToExisting'));
                       navigate(`/${locale}/app/crm/deals`);
                     } catch {
                       toast.error(t('common.error'));

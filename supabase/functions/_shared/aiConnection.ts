@@ -66,7 +66,11 @@ export async function describeOpenAIError(
     // ignore, body wasn't JSON
   }
   if (status === 404) {
-    return { status, message: "Den konfigurerede model kunne ikke findes hos udbyderen." };
+    // The provider's 404 means "unknown model" (a platform config problem),
+    // not "your record is missing" — passing 404 through made the UI say
+    // "It could not be found. Check that it still exists." on every AI
+    // feature. 503 = service unavailable is what the caller should see.
+    return { status: 503, message: "AI-modellen er ikke tilgængelig lige nu (den konfigurerede model findes ikke hos udbyderen). / The AI model is unavailable right now." };
   }
   return {
     status,

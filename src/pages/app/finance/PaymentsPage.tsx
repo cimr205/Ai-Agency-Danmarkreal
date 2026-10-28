@@ -14,7 +14,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Plus, CreditCard, Building2, Smartphone, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDocumentAmount } from '@/contexts/CurrencyContext';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
@@ -28,7 +28,7 @@ const paymentMethods = [
 
 export default function PaymentsPage() {
   const { t, locale } = useI18n();
-  const { format: formatCurrency } = useCurrency();
+  const formatCurrency = formatDocumentAmount;
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
@@ -51,6 +51,7 @@ export default function PaymentsPage() {
     stripe: 'Stripe',
     quickpay: 'QuickPay',
     mobilepay: 'MobilePay',
+    manual: t('payments.manual'),
   };
 
   const allPayments = payments ?? [];
@@ -128,6 +129,9 @@ export default function PaymentsPage() {
                   }}>
                     <SelectTrigger><SelectValue placeholder={t('payments.selectInvoice')} /></SelectTrigger>
                     <SelectContent>
+                      {unpaidInvoices.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">{t('payments.noUnpaidInvoices')}</div>
+                      )}
                       {unpaidInvoices.map(inv => (
                         <SelectItem key={inv.id} value={inv.id}>
                           {inv.invoice_number} – {formatCurrency(Number(inv.amount))} ({inv.customers?.name || '–'})
