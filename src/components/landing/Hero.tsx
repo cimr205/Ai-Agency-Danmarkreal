@@ -2,12 +2,14 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { isLocale } from '@/lib/i18n';
+import { usePricing } from '@/hooks/usePricing';
 import { SalesPdfDownload } from './SalesPdfDownload';
 
 export function Hero() {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const isDa = locale === 'da';
+  const pricing = usePricing();
 
   const modules = isDa
     ? ['CRM & salgspipeline', 'HR & medarbejdere', 'Fakturering', 'Marketing & Meta Ads', 'AI-assistent', 'E-mail & indbakke', 'Kalender & opgaver', 'Lead generation']
@@ -169,7 +171,9 @@ export function Hero() {
               </ul>
               <div className="px-6 py-4 border-t border-foreground/[0.06] bg-foreground/[0.015]">
                 <span className="font-mono text-[10.5px] text-muted-foreground/60">
-                  {isDa ? 'Kr 499/md · Én pris, alt inkluderet' : 'DKK 499/mo · One price, everything in'}
+                  {isDa
+                    ? `Kr ${pricing.amount}/md · Én pris, alt inkluderet`
+                    : `${pricing.currency} ${pricing.amount}/mo · One price, everything in`}
                 </span>
               </div>
             </div>

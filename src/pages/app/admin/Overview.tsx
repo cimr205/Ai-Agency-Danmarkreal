@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 import { useAuth } from '@/hooks/useAuth';
+import { usePricing } from '@/hooks/usePricing';
 
 interface OwnerInfo {
   user_id: string;
@@ -67,6 +68,7 @@ export default function AdminOverviewPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [health, setHealth] = useState<Record<string, number | null> | null>(null);
+  const pricing = usePricing();
 
   const loadHealth = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_system_health_summary', { _hours: 24 });
@@ -138,7 +140,7 @@ export default function AdminOverviewPage() {
     setTogglingIds(prev => { const s = new Set(prev); s.delete(companyId); return s; });
   };
 
-  const PRICE_PER_SEAT_DKK = 499;
+  const PRICE_PER_SEAT_DKK = pricing.amount;
   const totalCompanies = companies.length;
   const totalUsers = companies.reduce((s, c) => s + c.userCount, 0);
   const totalEmployees = companies.reduce((s, c) => s + c.employees.length, 0);

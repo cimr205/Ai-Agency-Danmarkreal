@@ -9,33 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
+import { usePricing } from '@/hooks/usePricing';
 import { getErrorMessage } from '@/lib/errors';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
 }
 
-type BillingMode = 'full_suite' | 'per_module';
-type Module = 'crm' | 'hr' | 'marketing' | 'finance';
-
-const MODULE_PRICES_DKK: Record<Module, number> = {
-  crm: 299,
-  hr: 299,
-  marketing: 299,
-  finance: 199,
-};
-
-const FULL_SUITE_PRICE_DKK = 499;
-
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { toast } = useToast();
   const { user, refreshProfile } = useAuth();
   const { t } = useI18n();
+  const pricing = usePricing();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
   const [loading, setLoading] = useState(false);
@@ -44,13 +33,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [role, setRole] = useState('');
   const [teamSize, setTeamSize] = useState('1');
-  const [billingMode, setBillingMode] = useState<BillingMode>('full_suite');
-  const [moduleSeats, setModuleSeats] = useState<Record<Module, string>>({
-    crm: '', hr: '', marketing: '', finance: '',
-  });
-
-  const moduleTotal = (Object.entries(moduleSeats) as [Module, string][])
-    .reduce((sum, [mod, val]) => sum + (Number(val) || 0) * MODULE_PRICES_DKK[mod], 0);
 
   const goNext = () => {
     if (step === 1) {
@@ -79,13 +61,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const goBack = () => setStep(s => Math.max(s - 1, 1));
 
   const handleSubmit = async () => {
-    if (billingMode === 'per_module') {
-      const hasAnySeats = Object.values(moduleSeats).some(v => Number(v) > 0);
-      if (!hasAnySeats) {
-        toast({ variant: 'destructive', title: t('wizard.fillModuleSeats') });
-        return;
-      }
-    }
     if (!user) return;
 
     setLoading(true);
@@ -100,7 +75,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           onboarding_completed: true,
           subscription_status: 'none',
           applicant_role: role,
-          billing_mode: billingMode,
+          billing_mode: 'full_suite',
         });
 
       if (companyError) throw new Error(companyError.message);
@@ -124,17 +99,12 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       const locale = localeMatch?.[1] ?? 'da';
       const currency = locale === 'en' ? 'usd' : 'dkk';
 
-      const checkoutBody: Record<string, unknown> = { currency, locale, billing_mode: billingMode };
-      if (billingMode === 'per_module') {
-        checkoutBody.modules = {
-          crm: Number(moduleSeats.crm) || 0,
-          hr: Number(moduleSeats.hr) || 0,
-          marketing: Number(moduleSeats.marketing) || 0,
-          finance: Number(moduleSeats.finance) || 0,
-        };
-      } else {
-        checkoutBody.seat_limit = Number(teamSize) || 1;
-      }
+      const checkoutBody: Record<string, unknown> = {
+        currency,
+        locale,
+        billing_mode: 'full_suite',
+        seat_limit: Number(teamSize) || 1,
+      };
 
       const { data: checkout, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
         body: checkoutBody,
@@ -237,52 +207,21 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           )}
 
           {step === 3 && (
-            <>
-              <RadioGroup value={billingMode} onValueChange={v => setBillingMode(v as BillingMode)} className="space-y-3">
-                <label className="flex items-start gap-3 rounded-lg border p-4 cursor-pointer hover:bg-muted/50 has-[[data-state=checked]]:border-primary">
-                  <RadioGroupItem value="full_suite" id="mode-full" className="mt-0.5" />
-                  <div>
-                    <div className="font-medium">{t('wizard.billingModeFullSuite')}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {t('wizard.billingModeFullSuiteDesc').replace('{price}', String(FULL_SUITE_PRICE_DKK))}
-                    </div>
-                  </div>
-                </label>
-                <label className="flex items-start gap-3 rounded-lg border p-4 cursor-pointer hover:bg-muted/50 has-[[data-state=checked]]:border-primary">
-                  <RadioGroupItem value="per_module" id="mode-module" className="mt-0.5" />
-                  <div>
-                    <div className="font-medium">{t('wizard.billingModePerModule')}</div>
-                    <div className="text-sm text-muted-foreground">{t('wizard.billingModePerModuleDesc')}</div>
-                  </div>
-                </label>
-              </RadioGroup>
-
-              {billingMode === 'per_module' && (
-                <div className="space-y-3 pt-2">
-                  {(['crm', 'hr', 'marketing', 'finance'] as Module[]).map(mod => (
-                    <div key={mod} className="flex items-center justify-between gap-3">
-                      <Label htmlFor={`seats-${mod}`} className="flex-1">
-                        {t(`wizard.module${mod[0].toUpperCase()}${mod.slice(1)}`)}
-                        <span className="text-muted-foreground font-normal"> — {MODULE_PRICES_DKK[mod]} kr.</span>
-                      </Label>
-                      <Input
-                        id={`seats-${mod}`}
-                        type="number"
-                        min={0}
-                        className="w-24"
-                        placeholder="0"
-                        value={moduleSeats[mod]}
-                        onChange={e => setModuleSeats(prev => ({ ...prev, [mod]: e.target.value }))}
-                      />
-                    </div>
-                  ))}
-                  <div className="flex items-center justify-between pt-3 border-t text-sm font-medium">
-                    <span>{t('wizard.moduleTotalLabel')}</span>
-                    <span>{moduleTotal.toLocaleString('da-DK')} kr./md.</span>
-                  </div>
-                </div>
-              )}
-            </>
+            <div className="rounded-lg border p-4 space-y-2">
+              <div className="font-medium">{t('wizard.billingModeFullSuite')}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold">{pricing.amount}</span>
+                <span className="text-muted-foreground text-sm">
+                  {pricing.currency === 'DKK' ? 'kr' : pricing.currency} / {t('landing.pricingPer')}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t('wizard.billingModeFullSuiteDesc').replace('{price}', String(pricing.amount))}
+              </p>
+              <p className="text-xs text-muted-foreground pt-2 border-t">
+                {teamSize} × {pricing.amount} {pricing.currency === 'DKK' ? 'kr' : pricing.currency}/md.
+              </p>
+            </div>
           )}
 
           <div className="flex gap-3 mt-4">

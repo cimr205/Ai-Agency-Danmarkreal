@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { usePricing } from '@/hooks/usePricing';
 import { getErrorMessage } from '@/lib/errors';
 
 const FEATURES = [
@@ -23,6 +24,7 @@ const FEATURES = [
 export default function SubscriptionPage() {
   const { subscribed, status, trialEndsAt, periodEnd, isLoading, startCheckout, openPortal, checkSubscription } = useSubscription();
   const { t } = useI18n();
+  const pricing = usePricing();
 
   const handleSubscribe = async () => {
     try {
@@ -72,8 +74,10 @@ export default function SubscriptionPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">499</span>
-            <span className="text-muted-foreground">kr / bruger / måned</span>
+            <span className="text-4xl font-bold">{pricing.amount}</span>
+            <span className="text-muted-foreground">
+              {pricing.currency === 'DKK' ? 'kr' : pricing.currency} / bruger / måned
+            </span>
           </div>
 
           {status === 'trialing' && trialDaysLeft > 0 && (

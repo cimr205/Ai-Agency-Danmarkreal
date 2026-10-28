@@ -2,12 +2,14 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
 import { useI18n, isLocale } from '@/lib/i18n';
+import { usePricing } from '@/hooks/usePricing';
 
 export function Pricing() {
   const { t } = useI18n();
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const isDa = locale === 'da';
+  const pricing = usePricing();
 
   const featureKeys = [
     'landing.pricingF1', 'landing.pricingF2', 'landing.pricingF3',
@@ -58,10 +60,10 @@ export function Pricing() {
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em]">
-                  499
+                  {pricing.amount}
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
-                  <span className="text-[14px] font-display font-semibold text-foreground/80">kr</span>
+                  <span className="text-[14px] font-display font-semibold text-foreground/80">{pricing.currency === 'DKK' ? 'kr' : pricing.currency}</span>
                   <span className="text-[12px] text-muted-foreground font-mono mt-1">{t('landing.pricingPer')}</span>
                 </div>
               </div>

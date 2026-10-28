@@ -146,3 +146,8 @@ verify_jwt = false
 
 [functions.linkedin-outreach]
 verify_jwt = false
+
+# Public read-only pricing endpoint: returns the live Stripe seat price so the
+# UI never hardcodes an amount. No session needed (used on the landing page).
+[functions.get-pricing]
+verify_jwt = false

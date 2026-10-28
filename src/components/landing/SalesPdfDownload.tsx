@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function SalesPdfDownload() {
   const { t, locale } = useI18n();
@@ -10,6 +11,19 @@ export function SalesPdfDownload() {
   const generatePdf = async () => {
     setLoading(true);
     try {
+      // Live seat price from Stripe (499 DKK fallback if unreachable).
+      let seatPrice = 499;
+      let priceCurrency = 'DKK';
+      try {
+        const { data } = await supabase.functions.invoke('get-pricing', {
+          body: { currency: locale === 'en' ? 'usd' : 'dkk' },
+        });
+        if (data && typeof data.amount === 'number') {
+          seatPrice = data.amount;
+          priceCurrency = data.currency ?? 'DKK';
+        }
+      } catch { /* keep fallback */ }
+
       const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const w = doc.internal.pageSize.getWidth();
@@ -231,7 +245,7 @@ export function SalesPdfDownload() {
     doc.text(locale === 'da' ? 'Simpel og gennemsigtig pris' : 'Simple and transparent pricing', margin + 15, y + 15);
 
     doc.setFontSize(32);
-    doc.text('499 DKK', margin + 15, y + 35);
+    doc.text(`${seatPrice} ${priceCurrency}`, margin + 15, y + 35);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');

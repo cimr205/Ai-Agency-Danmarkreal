@@ -8,16 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Single plan: full suite, one price per seat. The amount lives in Stripe.
 const PRICE_ID_DKK = "price_1TIWHDRmhuA1UO2DtPQydBJs";
 const PRICE_ID_USD = "price_1TRI6CRmhuA1UO2DFwPscuN5";
-
-// Per-module seat pricing (DKK only for now — USD equivalents not yet set up).
-const MODULE_PRICE_IDS_DKK: Record<string, string> = {
-  crm: "price_1U5RJgRmhuA1UO2D43qQ61hB",
-  hr: "price_1U5RMdRmhuA1UO2DpbJm3pHJ",
-  marketing: "price_1U5ROMRmhuA1UO2D6cZX229M",
-  finance: "price_1U5RQ0RmhuA1UO2DEUz0Meg4",
-};
 
 serve(withSentry("create-checkout", async (req) => {
   if (req.method === "OPTIONS") {
@@ -63,33 +56,12 @@ serve(withSentry("create-checkout", async (req) => {
     const body = await req.json().catch(() => ({}));
     const currency = (body.currency || "dkk").toLowerCase() === "usd" ? "usd" : "dkk";
     const locale = body.locale === "en" ? "en" : "da";
-    const billingMode = body.billing_mode === "per_module" ? "per_module" : "full_suite";
 
-    // modules: { crm?: number, hr?: number, marketing?: number, finance?: number }
-    const modules = (body.modules && typeof body.modules === "object") ? body.modules as Record<string, number> : {};
-
-    let lineItems: { price: string; quantity: number }[] = [];
-    let totalSeats = 0;
-
-    if (billingMode === "per_module") {
-      if (currency === "usd") {
-        throw new Error("Per-module billing is only available in DKK today");
-      }
-      for (const [module, seats] of Object.entries(modules)) {
-        const count = Number(seats) || 0;
-        if (count <= 0) continue;
-        const priceId = MODULE_PRICE_IDS_DKK[module];
-        if (!priceId) throw new Error(`Unknown module: ${module}`);
-        lineItems.push({ price: priceId, quantity: count });
-        totalSeats += count;
-      }
-      if (lineItems.length === 0) throw new Error("Select at least one module with seats");
-    } else {
-      const seatLimit = body.seat_limit || company.seat_limit_trial || 5;
-      const priceId = currency === "usd" ? PRICE_ID_USD : PRICE_ID_DKK;
-      lineItems = [{ price: priceId, quantity: seatLimit }];
-      totalSeats = seatLimit;
-    }
+    // Single full-suite plan: one price per seat (everything included).
+    const seatLimit = Number(body.seat_limit) || company.seat_limit_trial || 5;
+    const priceId = currency === "usd" ? PRICE_ID_USD : PRICE_ID_DKK;
+    const lineItems: { price: string; quantity: number }[] = [{ price: priceId, quantity: seatLimit }];
+    const totalSeats = seatLimit;
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
@@ -120,10 +92,13 @@ serve(withSentry("create-checkout", async (req) => {
       line_items: lineItems,
       mode: "subscription",
       payment_method_collection: "always",
+      // Lets customers enter a Stripe promotion code (e.g. 211069) at checkout.
+      // The coupon/promo code itself is configured in Stripe, not here.
+      allow_promotion_codes: true,
       locale: locale === "en" ? "en" : "da",
       subscription_data: {
         trial_period_days: 14,
-        metadata: { company_id: company.id, currency, billing_mode: billingMode },
+        metadata: { company_id: company.id, currency, billing_mode: "full_suite" },
       },
       success_url: `${origin}/${locale}/app/dashboard?subscription=success`,
       cancel_url: `${origin}/${locale}/app/onboarding?subscription=cancelled`,
@@ -139,23 +114,9 @@ serve(withSentry("create-checkout", async (req) => {
         seat_limit_trial: totalSeats,
         trial_ends_at: trialEnds.toISOString(),
         subscription_status: "trialing",
-        billing_mode: billingMode,
+        billing_mode: "full_suite",
       })
       .eq("id", company.id);
-
-    if (billingMode === "per_module") {
-      const rows = Object.entries(modules)
-        .filter(([, seats]) => (Number(seats) || 0) > 0)
-        .map(([module, seats]) => ({
-          company_id: company.id,
-          module,
-          seat_count: Number(seats),
-          stripe_price_id: MODULE_PRICE_IDS_DKK[module],
-        }));
-      if (rows.length > 0) {
-        await supabaseClient.from("company_module_seats").upsert(rows, { onConflict: "company_id,module" });
-      }
-    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
