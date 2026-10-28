@@ -12,7 +12,9 @@ export function useGmailAccount() {
 
       const { data, error } = await supabase
         .from('email_accounts')
-        .select('*')
+        // Explicit columns: the OAuth access/refresh tokens are no longer
+        // selectable from the browser (see migration 20261028000001).
+        .select('id, company_id, user_id, provider, email_address, status, scopes, connected_at, last_synced_at, token_expires_at, created_at, updated_at')
         .eq('user_id', user.id)
         .eq('provider', 'gmail')
         .eq('status', 'connected')

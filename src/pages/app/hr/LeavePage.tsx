@@ -43,6 +43,7 @@ export default function LeavePage() {
 
   const handleCreate = async () => {
     if (!newLeave.employee_profile_id || !newLeave.start_date || !newLeave.end_date) { toast.error(t('hr.allFieldsRequired')); return; }
+    if (newLeave.end_date < newLeave.start_date) { toast.error(t('hr.leaveEndBeforeStart')); return; }
     try {
       await requestLeave.mutateAsync(newLeave);
       toast.success(t('hr.requestCreated'));

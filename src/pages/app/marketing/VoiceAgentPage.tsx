@@ -98,8 +98,11 @@ export default function VoiceAgentPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-      if (!profile?.company_id) { setLoading(false); return; }
+      // user from useAuth() is the profile row: its `id` is the profile id,
+      // not the auth uid, so the old .eq('user_id', user.id) lookup matched
+      // nothing (406) and the page never loaded agents or calls.
+      const profile = { company_id: user.company_id };
+      if (!profile.company_id) { setLoading(false); return; }
       setCompanyId(profile.company_id);
 
       const [ag, cl] = await Promise.all([
@@ -152,7 +155,7 @@ export default function VoiceAgentPage() {
       language: agentLanguage,
       system_prompt: agentPrompt,
       greeting: agentGreeting,
-      created_by: user?.id,
+      created_by: user?.user_id,
     });
     if (error) { toast.error(error.message); return; }
     toast.success(t('voiceAgent.agentCreated'));

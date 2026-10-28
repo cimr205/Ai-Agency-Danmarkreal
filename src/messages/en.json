@@ -714,7 +714,10 @@
     "fetchRecruitmentError": "Could not load positions",
     "searchPositionPlaceholder": "Search positions...",
     "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period.",
-    "departmentRequired": "Department is required"
+    "departmentRequired": "Department is required",
+    "salaryPositive": "Salary must be greater than 0.",
+    "payrollDuplicate": "This employee already has a payroll record for that period.",
+    "leaveEndBeforeStart": "The end date can't be before the start date."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -884,7 +887,9 @@
     "empty": "No quotes yet",
     "createFirst": "Create your first quote",
     "created": "Quote created",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "A quote needs a lead/customer before it can be saved or invoiced.",
+    "vatInvalid": "VAT rate must be between 0 and 100 %."
   },
   "roles": {
     "employee": "Employee",
@@ -1205,6 +1210,7 @@
       "issued": "Issued",
       "actions": "Actions",
       "selectError": "Select a customer and add at least one line",
+      "lineInvalid": "Every invoice line needs a description and an amount above 0.",
       "created_success": "Invoice created",
       "created_error": "Could not create invoice",
       "fetchError": "Could not fetch invoices",
@@ -2315,7 +2321,7 @@
     "secretHint": "If set, we'll include an X-Webhook-Signature header",
     "createWebhook": "Create Webhook",
     "fillRequired": "Please fill in all required fields",
-    "invalidUrl": "Please enter a valid URL",
+    "invalidUrl": "Enter a public https:// URL (http, localhost and private network addresses are not allowed).",
     "created": "Webhook created",
     "testSuccess": "Test webhook delivered successfully!",
     "testFailed": "Test webhook failed — check logs for details",

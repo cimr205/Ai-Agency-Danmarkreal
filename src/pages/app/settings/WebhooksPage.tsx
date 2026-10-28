@@ -46,9 +46,20 @@ export default function WebhooksPage() {
       toast.error(t("webhooks.fillRequired"));
       return;
     }
+    // Must be a public https endpoint — the edge function refuses to call
+    // http:// or localhost/private-network URLs (SSRF), so reject them here
+    // instead of letting the webhook silently fail on every event.
+    let parsed: URL | null = null;
     try {
-      new URL(form.url);
+      parsed = new URL(form.url);
     } catch {
+      parsed = null;
+    }
+    const host = parsed?.hostname.toLowerCase() ?? "";
+    const privateHost = host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")
+      || /^(0|10|127)\./.test(host) || /^169\.254\./.test(host) || /^192\.168\./.test(host)
+      || /^172\.(1[6-9]|2\d|3[01])\./.test(host) || host.startsWith("[");
+    if (!parsed || parsed.protocol !== "https:" || privateHost) {
       toast.error(t("webhooks.invalidUrl"));
       return;
     }

@@ -731,7 +731,10 @@
     "fetchRecruitmentError": "Kunne ikke hente stillinger",
     "searchPositionPlaceholder": "Søg efter stilling...",
     "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode.",
-    "departmentRequired": "Afdeling er påkrævet"
+    "departmentRequired": "Afdeling er påkrævet",
+    "salaryPositive": "Lønnen skal være større end 0.",
+    "payrollDuplicate": "Medarbejderen har allerede en lønregistrering for den periode.",
+    "leaveEndBeforeStart": "Slutdatoen kan ikke ligge før startdatoen."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -901,7 +904,9 @@
     "empty": "Ingen tilbud endnu",
     "createFirst": "Opret dit første tilbud",
     "created": "Tilbud oprettet",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "Et tilbud skal have et lead/en kunde, før det kan gemmes eller faktureres.",
+    "vatInvalid": "Momssatsen skal være mellem 0 og 100 %."
   },
   "roles": {
     "employee": "Medarbejder",
@@ -1222,6 +1227,7 @@
       "issued": "Udstedt",
       "actions": "Handlinger",
       "selectError": "Vælg kunde og tilføj mindst én linje",
+      "lineInvalid": "Alle fakturalinjer skal have en beskrivelse og et beløb over 0.",
       "created_success": "Faktura oprettet",
       "created_error": "Kunne ikke oprette faktura",
       "fetchError": "Kunne ikke hente fakturaer",
@@ -2332,7 +2338,7 @@
     "secretHint": "Hvis angivet, inkluderer vi en X-Webhook-Signature header",
     "createWebhook": "Opret webhook",
     "fillRequired": "Udfyld venligst alle påkrævede felter",
-    "invalidUrl": "Indtast venligst en gyldig URL",
+    "invalidUrl": "Angiv en offentlig https://-URL (http, localhost og private netværksadresser er ikke tilladt).",
     "created": "Webhook oprettet",
     "testSuccess": "Testwebhook blev leveret!",
     "testFailed": "Testwebhook fejlede — tjek logs for detaljer",

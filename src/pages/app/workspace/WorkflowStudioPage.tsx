@@ -61,8 +61,16 @@ export default function WorkflowStudioPage() {
       const data = await invokeFunction<{ trace?: Trace[] }>("workflow-runner", {
         body: { workflow_id: active.id, mode, ai_prompt: aiPrompt, payload: { sample: true, ts: Date.now() } },
       });
-      setTrace(data?.trace ?? []);
-      toast.success(mode === "test" ? "Test-kørsel fuldført" : "Workflow kørt live");
+      const steps = data?.trace ?? [];
+      setTrace(steps);
+      // Don't report success when a step failed (e.g. the AI step returning
+      // 404) — the trace already shows it, the toast used to say "fuldført".
+      const failed = steps.filter(s => s.status === "error");
+      if (failed.length > 0) {
+        toast.error(`${mode === "test" ? "Test-kørsel" : "Kørsel"} fejlede i ${failed.length} trin: ${failed.map(f => f.step).join(", ")}`);
+      } else {
+        toast.success(mode === "test" ? "Test-kørsel fuldført" : "Workflow kørt live");
+      }
     } catch (e) {
       showError(e, { module: "workflow-runner" });
     } finally {

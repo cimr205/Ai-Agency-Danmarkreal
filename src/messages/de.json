@@ -731,7 +731,10 @@
     "fetchRecruitmentError": "Stellen konnten nicht geladen werden",
     "searchPositionPlaceholder": "Stellen suchen...",
     "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen.",
-    "departmentRequired": "Abteilung ist erforderlich"
+    "departmentRequired": "Abteilung ist erforderlich",
+    "salaryPositive": "Das Gehalt muss größer als 0 sein.",
+    "payrollDuplicate": "Für diesen Mitarbeiter gibt es für diesen Zeitraum bereits eine Lohnabrechnung.",
+    "leaveEndBeforeStart": "Das Enddatum darf nicht vor dem Startdatum liegen."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -901,7 +904,9 @@
     "empty": "Noch keine Angebote",
     "createFirst": "Erstellen Sie Ihr erstes Angebot",
     "created": "Angebot erstellt",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "Ein Angebot braucht einen Lead/Kunden, bevor es gespeichert oder abgerechnet werden kann.",
+    "vatInvalid": "Der MwSt.-Satz muss zwischen 0 und 100 % liegen."
   },
   "roles": {
     "employee": "Mitarbeiter",
@@ -1222,6 +1227,7 @@
       "issued": "Ausgestellt",
       "actions": "Aktionen",
       "selectError": "Kunde wählen und mindestens eine Position hinzufügen",
+      "lineInvalid": "Jede Rechnungszeile braucht eine Beschreibung und einen Betrag über 0.",
       "created_success": "Rechnung erstellt",
       "created_error": "Rechnung konnte nicht erstellt werden",
       "fetchError": "Rechnungen konnten nicht geladen werden",
@@ -2309,7 +2315,7 @@
     "secretHint": "Falls angegeben, fügen wir einen X-Webhook-Signature-Header hinzu",
     "createWebhook": "Webhook erstellen",
     "fillRequired": "Bitte fülle alle Pflichtfelder aus",
-    "invalidUrl": "Bitte gib eine gültige URL ein",
+    "invalidUrl": "Gib eine öffentliche https://-URL ein (http, localhost und private Netzwerkadressen sind nicht erlaubt).",
     "created": "Webhook erstellt",
     "testSuccess": "Test-Webhook erfolgreich zugestellt!",
     "testFailed": "Test-Webhook fehlgeschlagen — prüfe die Logs für Details",

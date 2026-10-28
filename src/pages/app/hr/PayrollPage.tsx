@@ -16,11 +16,14 @@ import { da, de, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
+import { supabase } from '@/integrations/supabase/client';
 
 const DATE_LOCALES = { da, de, en: enUS } as const;
 const LOCALE_CURRENCY: Record<string, { currency: string; locale: string }> = {
   da: { currency: 'DKK', locale: 'da-DK' },
-  de: { currency: 'EUR', locale: 'de-DE' },
+  // The company pays in DKK regardless of UI language — switching the UI to
+  // German used to relabel every salary as EUR.
+  de: { currency: 'DKK', locale: 'de-DE' },
   en: { currency: 'DKK', locale: 'da-DK' },
 };
 
@@ -42,8 +45,19 @@ export default function PayrollPage() {
 
   const handleCreate = async () => {
     if (!newPayroll.employee_id || !newPayroll.salary || !newPayroll.period) { toast.error(t('hr.allFieldsRequired')); return; }
+    const salary = parseFloat(newPayroll.salary.replace(',', '.'));
+    if (!(salary > 0)) { toast.error(t('hr.salaryPositive')); return; }
+    // One payroll record per employee per period — registering twice used
+    // to double the month's total silently.
+    const { data: existing } = await supabase
+      .from('payroll')
+      .select('id')
+      .eq('employee_profile_id', newPayroll.employee_id)
+      .eq('period', newPayroll.period)
+      .limit(1);
+    if (existing && existing.length > 0) { toast.error(t('hr.payrollDuplicate')); return; }
     try {
-      await createPayroll.mutateAsync({ employee_profile_id: newPayroll.employee_id, base_salary: parseFloat(newPayroll.salary), net_salary: parseFloat(newPayroll.salary), period: newPayroll.period });
+      await createPayroll.mutateAsync({ employee_profile_id: newPayroll.employee_id, base_salary: salary, net_salary: salary, period: newPayroll.period });
       toast.success(t('hr.payrollRegistered'));
       setNewPayroll({ employee_id: '', salary: '', period: '' });
       setIsCreateOpen(false);
