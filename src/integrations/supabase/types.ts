@@ -7904,6 +7904,17 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
       activate_company: { Args: { _company_id: string }; Returns: boolean }
+      admin_update_employee: {
+        Args: {
+          _department: string
+          _employee_id: string
+          _full_name: string
+          _is_active: boolean
+          _phone: string
+          _position: string
+        }
+        Returns: undefined
+      }
       attach_invoice_checkout_session: {
         Args: {
           p_company_id: string
@@ -8441,17 +8452,6 @@ export type Database = {
           p_provider_message_id: string
         }
         Returns: Json
-      }
-      admin_update_employee: {
-        Args: {
-          _employee_id: string
-          _full_name: string
-          _position: string
-          _department: string
-          _phone: string
-          _is_active: boolean
-        }
-        Returns: undefined
       }
       regenerate_activation_code: {
         Args: { _company_id: string }
