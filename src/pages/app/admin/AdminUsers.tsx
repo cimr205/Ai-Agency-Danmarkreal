@@ -14,7 +14,7 @@ import { Shield, Users, Loader2, Crown, UserCog, User, Eye, Mail, Copy, Clock, X
 import { ROLE_LABELS, ROLE_HIERARCHY, canManageRole } from "@/lib/auth";
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 interface UserWithRole {
   user_id: string;
@@ -86,7 +86,7 @@ export default function AdminUsers() {
     } catch (error) {
       console.error("Error fetching users:", error);
       reportError(error, { module: "admin", action: "fetch_users" });
-      toast.error("Kunne ikke hente brugere");
+      toast.error(tx("Kunne ikke hente brugere", "Could not load users"));
     }
   };
 
@@ -121,11 +121,11 @@ export default function AdminUsers() {
       });
       if (error) throw error;
       setLastToken(data as string);
-      toast.success(`Invitation sendt til ${inviteEmail}`);
+      toast.success(t3(`Invitation sendt til ${inviteEmail}`, `Invitation sent to ${inviteEmail}`, `Einladung an ${inviteEmail} gesendet`));
       setInviteEmail("");
       fetchInvitations();
     } catch (error) {
-      toast.error(getErrorMessage(error) || "Kunne ikke oprette invitation");
+      toast.error(getErrorMessage(error) || t3("Kunne ikke oprette invitation", "Could not create invitation", "Einladung konnte nicht erstellt werden"));
     } finally {
       setInviting(false);
     }
@@ -138,7 +138,7 @@ export default function AdminUsers() {
       toast.success("Invitation tilbagekaldt");
       fetchInvitations();
     } catch (error) {
-      toast.error(getErrorMessage(error) || "Kunne ikke tilbagekalde invitation");
+      toast.error(getErrorMessage(error) || t3("Kunne ikke tilbagekalde invitation", "Could not revoke invitation", "Einladung konnte nicht widerrufen werden"));
     }
   };
 
@@ -146,7 +146,7 @@ export default function AdminUsers() {
     const locale = window.location.pathname.split("/")[1] || "en";
     const link = `${window.location.origin}/${locale}/invite?token=${token}`;
     navigator.clipboard.writeText(link);
-    toast.success("Invite-link kopieret til udklipsholder");
+    toast.success(tx("Invite-link kopieret til udklipsholder", "Invite link copied to clipboard"));
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -202,24 +202,24 @@ export default function AdminUsers() {
           <Shield className="h-8 w-8 text-destructive" />
           <div>
             <h1 className="text-3xl font-bold text-foreground">Brugeradministration</h1>
-            <p className="text-muted-foreground">Administrer brugere og invitationer i organisationen</p>
+            <p className="text-muted-foreground">{tx("Administrer brugere og invitationer i organisationen", "Manage users and invitations in the organisation")}</p>
           </div>
         </div>
         {isAdmin && (
           <Dialog open={inviteOpen} onOpenChange={(open) => { setInviteOpen(open); if (!open) setLastToken(null); }}>
             <DialogTrigger asChild>
-              <Button className="gap-2"><Send className="w-4 h-4" />Invitér medarbejder</Button>
+              <Button className="gap-2"><Send className="w-4 h-4" />{t3("Invitér medarbejder", "Invite employee", "Mitarbeiter einladen")}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invitér ny medarbejder</DialogTitle>
+                <DialogTitle>{tx("Invitér ny medarbejder", "Invite a new employee")}</DialogTitle>
                 <DialogDescription>
-                  Send en invitation via e-mail. Medarbejderen tilknyttes automatisk din virksomhed.
+                  {tx("Send en invitation via e-mail. Medarbejderen tilknyttes automatisk din virksomhed.", "Send an invitation by email. The employee is linked to your company automatically.")}
                 </DialogDescription>
               </DialogHeader>
               {lastToken ? (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Invitation oprettet! Del dette link med medarbejderen:</p>
+                  <p className="text-sm text-muted-foreground">{tx("Invitation oprettet! Del dette link med medarbejderen:", "Invitation created! Share this link with the employee:")}</p>
                   <div className="flex gap-2">
                     <Input
                       readOnly
@@ -230,7 +230,7 @@ export default function AdminUsers() {
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Linket udløber om 7 dage.</p>
+                  <p className="text-xs text-muted-foreground">{tx("Linket udløber om 7 dage.", "The link expires in 7 days.")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -238,7 +238,7 @@ export default function AdminUsers() {
                     <label className="text-sm font-medium">E-mail</label>
                     <Input
                       type="email"
-                      placeholder="medarbejder@firma.dk"
+                      placeholder={tx("medarbejder@firma.dk", "employee@company.com")}
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                     />
@@ -264,7 +264,7 @@ export default function AdminUsers() {
                 {!lastToken && (
                   <Button onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}>
                     {inviting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Mail className="w-4 h-4 mr-2" />}
-                    Opret invitation
+                    {tx("Opret invitation", "Create invitation")}
                   </Button>
                 )}
               </DialogFooter>
@@ -276,7 +276,7 @@ export default function AdminUsers() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Brugere</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{tx("Total Brugere", "Total users")}</CardTitle></CardHeader>
           <CardContent><div className="text-2xl font-bold">{users.length}</div></CardContent>
         </Card>
         <Card>
@@ -303,7 +303,7 @@ export default function AdminUsers() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Brugere</CardTitle>
-          <CardDescription>Alle brugere i din virksomhed</CardDescription>
+          <CardDescription>{tx("Alle brugere i din virksomhed", "All users in your company")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -332,7 +332,7 @@ export default function AdminUsers() {
                 </TableRow>
               ))}
               {users.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Ingen brugere fundet</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">{tx("Ingen brugere fundet", "No users found")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -343,7 +343,7 @@ export default function AdminUsers() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" />Invitationer</CardTitle>
-          <CardDescription>Sendte invitationer og deres status</CardDescription>
+          <CardDescription>{tx("Sendte invitationer og deres status", "Sent invitations and their status")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -383,7 +383,7 @@ export default function AdminUsers() {
                 </TableRow>
               ))}
               {invitations.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Ingen invitationer endnu</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">{tx("Ingen invitationer endnu", "No invitations yet")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

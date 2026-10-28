@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 interface Company {
   id: string;
@@ -131,7 +131,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
             {loading ? (
               <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
             ) : recentProfiles.length === 0 ? (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen brugere endnu</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{tx("Ingen brugere endnu", "No users yet")}</p>
             ) : (
               recentProfiles.map(p => (
                 <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">
@@ -157,7 +157,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
             {loading ? (
               <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
             ) : recentEmployees.length === 0 ? (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen medarbejdere endnu</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{tx("Ingen medarbejdere endnu", "No employees yet")}</p>
             ) : (
               recentEmployees.map(e => (
                 <div key={e.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">
@@ -182,7 +182,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
           {loading ? (
             <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
           ) : companies.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen virksomheder</p>
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{tx("Ingen virksomheder", "No companies")}</p>
           ) : (
             <div className="space-y-0.5 mt-1">
               {companies.map((company) => {
@@ -209,10 +209,10 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
                       <div className="ml-5 pl-3 border-l border-border/50 mt-0.5 space-y-0.5">
                         {isLoadingEmps ? (
                           <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" /> Henter medarbejdere...
+                            <Loader2 className="h-3 w-3 animate-spin" /> {tx("Henter medarbejdere...", "Loading employees...")}
                           </div>
                         ) : employees.length === 0 ? (
-                          <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen medarbejdere</p>
+                          <p className="px-2 py-1.5 text-xs text-muted-foreground">{tx("Ingen medarbejdere", "No employees")}</p>
                         ) : (
                           employees.map((emp) => (
                             <div key={emp.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">

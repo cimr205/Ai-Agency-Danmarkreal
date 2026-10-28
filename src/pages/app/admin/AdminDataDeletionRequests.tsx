@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { da } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
+import { tx } from '@/lib/inlineI18n';
 
 type DeletionRequest = {
   id: string;
@@ -34,7 +35,7 @@ export default function AdminDataDeletionRequests() {
       .select('id, user_id, company_id, status, requested_at, processed_at, notes')
       .order('requested_at', { ascending: false });
     if (error) {
-      toast.error(getErrorMessage(error) || 'Kunne ikke hente sletteanmodninger');
+      toast.error(getErrorMessage(error) || tx("Kunne ikke hente sletteanmodninger", "Could not load deletion requests"));
       setLoading(false);
       return;
     }
@@ -67,7 +68,7 @@ export default function AdminDataDeletionRequests() {
       toast.success('Markeret som behandlet');
       await load();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Kunne ikke opdatere anmodning');
+      toast.error(getErrorMessage(e) || tx("Kunne ikke opdatere anmodning", "Could not update the request"));
     } finally {
       setProcessing(null);
     }
@@ -93,13 +94,13 @@ export default function AdminDataDeletionRequests() {
       <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 border border-border rounded-lg p-3">
         <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
-          Denne side markerer kun anmodninger som behandlet — den sletter ikke automatisk brugerdata.
+          {tx("Denne side markerer kun anmodninger som behandlet — den sletter ikke automatisk brugerdata.", "This page only marks requests as handled — it does not delete user data automatically.")}
           Udfør den faktiske sletning manuelt (eller via en separat, verificeret handling) før du markerer en anmodning som behandlet.
         </p>
       </div>
 
       {requests.length === 0 && !loading && (
-        <p className="text-sm text-muted-foreground">Ingen sletteanmodninger.</p>
+        <p className="text-sm text-muted-foreground">{tx("Ingen sletteanmodninger.", "No deletion requests.")}</p>
       )}
 
       <div className="space-y-3">
@@ -124,7 +125,7 @@ export default function AdminDataDeletionRequests() {
               {r.status === 'pending' && (
                 <div className="flex items-start gap-2">
                   <Textarea
-                    placeholder="Noter (valgfrit)"
+                    placeholder={tx("Noter (valgfrit)", "Notes (optional)")}
                     value={notesDraft[r.id] ?? ''}
                     onChange={e => setNotesDraft(prev => ({ ...prev, [r.id]: e.target.value }))}
                     className="text-sm min-h-[2.5rem]"

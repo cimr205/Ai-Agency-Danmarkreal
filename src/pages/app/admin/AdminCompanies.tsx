@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 interface EmployeeInfo {
   id: string;
@@ -143,8 +143,8 @@ export default function AdminCompaniesPage() {
           [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)
         ) : (
           <>
-            <KpiCard label="Aktive Virksomheder" value={totalCompanies.toString()} />
-            <KpiCard label="Aktive Brugere" value={totalUsers.toString()} />
+            <KpiCard label={tx("Aktive Virksomheder", "Active companies")} value={totalCompanies.toString()} />
+            <KpiCard label={tx("Aktive Brugere", "Active users")} value={totalUsers.toString()} />
             <KpiCard label="Samlet Brugstid" value={formatDuration(totalSeconds)} />
             <KpiCard label="Cold Caller Brug" value={totalColdCaller.toLocaleString(dateLocaleTag())} />
           </>
@@ -156,7 +156,7 @@ export default function AdminCompaniesPage() {
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
       ) : companies.length === 0 ? (
         <Card className="rounded-xl">
-          <CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{tx("Ingen virksomheder fundet", "No companies found")}</CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -178,7 +178,7 @@ export default function AdminCompaniesPage() {
                       className="gap-1.5"
                       onClick={() => setExpandedId(isExpanded ? null : company.id)}
                     >
-                      Vis medarbejdere
+                      {tx("Vis medarbejdere", "Show employees")}
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </Button>
                   </div>
@@ -193,7 +193,7 @@ export default function AdminCompaniesPage() {
                       </h3>
 
                       {company.employees.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4">Ingen medarbejdere registreret</p>
+                        <p className="text-sm text-muted-foreground py-4">{tx("Ingen medarbejdere registreret", "No employees registered")}</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -201,9 +201,9 @@ export default function AdminCompaniesPage() {
                               <tr className="text-left text-xs text-muted-foreground border-b border-border/40">
                                 <th className="pb-2 pr-4 font-medium">Navn</th>
                                 <th className="pb-2 pr-4 font-medium">Oprettet</th>
-                                <th className="pb-2 pr-4 font-medium">Brug af Cold Caller</th>
+                                <th className="pb-2 pr-4 font-medium">{tx("Brug af Cold Caller", "Cold Caller usage")}</th>
                                 <th className="pb-2 pr-4 font-medium">Brugstid</th>
-                                <th className="pb-2 font-medium">Sidst aktiv</th>
+                                <th className="pb-2 font-medium">{tx("Sidst aktiv", "Last active")}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -223,7 +223,7 @@ export default function AdminCompaniesPage() {
                                       {sess ? formatDuration(sess.total_seconds) : '0 min'}
                                     </td>
                                     <td className="py-2.5 text-muted-foreground">
-                                      {sess ? `Sidst aktiv: ${format(new Date(sess.last_active), 'dd-MM-yyyy HH:mm:ss')}` : '—'}
+                                      {sess ? `${t3("Sidst aktiv", "Last active", "Zuletzt aktiv")}: ${format(new Date(sess.last_active), 'dd-MM-yyyy HH:mm:ss')}` : '—'}
                                     </td>
                                   </tr>
                                 );
