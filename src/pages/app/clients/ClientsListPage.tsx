@@ -43,8 +43,15 @@ export default function ClientsListPage() {
       toast.error(t('clients.invalidPhone'));
       return;
     }
+    // Danish CVR = 8 digits (optionally prefixed "DK"); foreign VAT numbers
+    // start with a 2-letter country code. "123" used to be accepted.
+    const vat = newClient.vat_number.replace(/\s+/g, '').toUpperCase();
+    if (vat && !/^(DK)?\d{8}$/.test(vat) && !/^[A-Z]{2}[0-9A-Z]{6,12}$/.test(vat)) {
+      toast.error(t('clients.invalidVat'));
+      return;
+    }
     try {
-      await createCustomer.mutateAsync(newClient);
+      await createCustomer.mutateAsync({ ...newClient, vat_number: vat });
       toast.success(t('clients.created_success'));
       setNewClient({ name: "", email: "", address: "", vat_number: "", phone: "" });
       setIsCreateOpen(false);

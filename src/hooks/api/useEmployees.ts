@@ -35,7 +35,16 @@ export function useEmployees() {
 export function useCreateEmployee() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { full_name: string; email: string; position?: string; department?: string; phone?: string }) => {
+    mutationFn: async (raw: { full_name: string; email: string; position?: string; department?: string; phone?: string }) => {
+      // Normalise free text so "qa" and "QA " don't become two departments.
+      const dept = raw.department?.trim();
+      const input = {
+        ...raw,
+        full_name: raw.full_name.trim(),
+        email: raw.email.trim().toLowerCase(),
+        position: raw.position?.trim(),
+        department: dept,
+      };
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
       const { data: profile } = await supabase
@@ -45,15 +54,22 @@ export function useCreateEmployee() {
         .single();
       if (!profile?.company_id) throw new Error('No company');
       // Generate a short employee ID like EMP-001
+      // Highest short EMP-NNN number in use. Taking "the latest row" and
+      // stripping non-digits turned a legacy epoch-style id into
+      // EMP-1787148209 and every id after it kept growing from there.
       const { data: existingEmps } = await supabase
         .from('employee_profiles')
-        .select('employee_id')
-        .eq('company_id', profile.company_id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      const lastNum = existingEmps?.[0]?.employee_id
-        ? parseInt(existingEmps[0].employee_id.replace(/\D/g, '')) || 0
-        : 0;
+        .select('employee_id, department')
+        .eq('company_id', profile.company_id);
+      // Reuse the existing spelling of a department ("QA" vs "qa").
+      if (input.department) {
+        const match = (existingEmps ?? []).find(e => e.department && e.department.toLowerCase() === input.department!.toLowerCase());
+        if (match?.department) input.department = match.department;
+      }
+      const lastNum = (existingEmps ?? []).reduce((max, e) => {
+        const m = /^EMP-(\d{1,5})$/.exec(e.employee_id ?? '');
+        return m ? Math.max(max, Number(m[1])) : max;
+      }, 0);
       const nextId = `EMP-${String(lastNum + 1).padStart(3, '0')}`;
 
       // If someone with this email already has portal access in this company,

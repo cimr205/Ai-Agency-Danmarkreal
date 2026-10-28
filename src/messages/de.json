@@ -486,7 +486,8 @@
     "edit": "Bearbeiten",
     "delete": "Löschen",
     "created_success": "Kunde hinzugefügt",
-    "created_error": "Kunde konnte nicht hinzugefügt werden"
+    "created_error": "Kunde konnte nicht hinzugefügt werden",
+    "invalidVat": "Gib eine gültige CVR- (8 Ziffern, z. B. DK12345678) oder EU-USt-IdNr. ein."
   },
   "dashboard": {
     "title": "Übersicht",
@@ -915,7 +916,8 @@
       "rejected": "Abgelehnt",
       "expired": "Abgelaufen"
     },
-    "expired": "Abgelaufen — kann nicht mehr angenommen werden"
+    "expired": "Abgelaufen — kann nicht mehr angenommen werden",
+    "duplicateNumber": "Ein Angebot mit dieser Nummer existiert bereits."
   },
   "roles": {
     "employee": "Mitarbeiter",
@@ -1291,7 +1293,9 @@
       "connectPayments": "Zahlungen verbinden",
       "confirmMarkPaidTitle": "Rechnung als bezahlt markieren?",
       "confirmMarkPaidDesc": "Dadurch wird eine Zahlung über den gesamten Restbetrag erfasst",
-      "confirmMarkPaidDraft": "diese Rechnung ist noch ein Entwurf und wurde nie versendet"
+      "confirmMarkPaidDraft": "diese Rechnung ist noch ein Entwurf und wurde nie versendet",
+      "senderIncomplete": "CVR-Nummer oder Adresse deines Unternehmens fehlt — Pflicht auf dänischen Rechnungen.",
+      "senderIncompleteLink": "Unternehmensdaten ergänzen"
     },
     "tasks": {
       "title": "Aufgaben",

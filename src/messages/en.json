@@ -469,7 +469,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "created_success": "Client added",
-    "created_error": "Could not add client"
+    "created_error": "Could not add client",
+    "invalidVat": "Enter a valid CVR (8 digits, e.g. DK12345678) or EU VAT number."
   },
   "dashboard": {
     "title": "Overview",
@@ -898,7 +899,8 @@
       "rejected": "Rejected",
       "expired": "Expired"
     },
-    "expired": "Expired — can no longer be accepted"
+    "expired": "Expired — can no longer be accepted",
+    "duplicateNumber": "A quote with this number already exists."
   },
   "roles": {
     "employee": "Employee",
@@ -1274,7 +1276,9 @@
       "connectPayments": "Connect payments",
       "confirmMarkPaidTitle": "Mark invoice as paid?",
       "confirmMarkPaidDesc": "This registers a payment for the full remaining amount",
-      "confirmMarkPaidDraft": "this invoice is still a draft and was never sent"
+      "confirmMarkPaidDraft": "this invoice is still a draft and was never sent",
+      "senderIncomplete": "Your company's CVR or address is missing — required on Danish invoices.",
+      "senderIncompleteLink": "Complete company info"
     },
     "tasks": {
       "title": "Tasks",

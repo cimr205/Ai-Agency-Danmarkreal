@@ -41,7 +41,10 @@ export default function Dashboard() {
   const routeLocale = isLocale(params.locale) ? params.locale : "en";
   const base = "/" + routeLocale + "/app";
   const { format } = useCurrency();
-  const showOnboardingBanner = isAdmin && !isOnboardingComplete();
+  // The localStorage flag is per browser; the profile flag is the durable
+  // record. Checking only localStorage showed "Færdiggør opsætningen" on
+  // every new device even though /onboarding (correctly) sends you back here.
+  const showOnboardingBanner = isAdmin && !isOnboardingComplete() && !profile?.onboarding_completed;
 
   const firstName = (profile?.full_name || "").split(" ")[0] || "der";
   const today = new Date().toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "short" }).replace(/\.$/, "");

@@ -486,7 +486,8 @@
     "edit": "Redigér",
     "delete": "Slet",
     "created_success": "Klient tilføjet",
-    "created_error": "Kunne ikke tilføje klient"
+    "created_error": "Kunne ikke tilføje klient",
+    "invalidVat": "Angiv et gyldigt CVR-nummer (8 cifre, fx DK12345678) eller EU-momsnummer."
   },
   "dashboard": {
     "title": "Overblik",
@@ -915,7 +916,8 @@
       "rejected": "Afvist",
       "expired": "Udløbet"
     },
-    "expired": "Udløbet — kan ikke længere accepteres"
+    "expired": "Udløbet — kan ikke længere accepteres",
+    "duplicateNumber": "Der findes allerede et tilbud med dette nummer."
   },
   "roles": {
     "employee": "Medarbejder",
@@ -1291,7 +1293,9 @@
       "connectPayments": "Forbind betalinger",
       "confirmMarkPaidTitle": "Markér faktura som betalt?",
       "confirmMarkPaidDesc": "Det registrerer en betaling for hele det resterende beløb",
-      "confirmMarkPaidDraft": "fakturaen er stadig en kladde og er aldrig sendt"
+      "confirmMarkPaidDraft": "fakturaen er stadig en kladde og er aldrig sendt",
+      "senderIncomplete": "Virksomhedens CVR eller adresse mangler — det skal stå på danske fakturaer.",
+      "senderIncompleteLink": "Udfyld virksomhedsinfo"
     },
     "tasks": {
       "title": "Opgaver",

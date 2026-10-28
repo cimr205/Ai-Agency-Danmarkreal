@@ -169,7 +169,7 @@ export function DealDetailSheet({
                 {/* "Mark as Won" is disabled until a customer and expected
                     close date exist — say so instead of a silent grey button. */}
                 {deal.stage !== 'won' && !canMarkDealWon(deal) && (
-                  <p className="text-xs text-muted-foreground">{getWonValidationMessage(locale)}</p>
+                  <p className="text-xs text-muted-foreground">{getWonValidationMessage(locale, deal)}</p>
                 )}
               </div>
             </>

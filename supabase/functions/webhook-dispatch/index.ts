@@ -142,9 +142,15 @@ async function deliverWithRetry(
           "raw", encoder.encode(webhook.secret_key),
           { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
         );
-        const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(JSON.stringify(payload)));
-        headers["X-Webhook-Signature"] = Array.from(new Uint8Array(sig))
-          .map(b => b.toString(16).padStart(2, "0")).join("");
+        const body = JSON.stringify(payload);
+        const hex = (buf: ArrayBuffer) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+        // Legacy body-only signature, kept so existing receivers don't break.
+        headers["X-Webhook-Signature"] = hex(await crypto.subtle.sign("HMAC", key, encoder.encode(body)));
+        // Replay-resistant signature: HMAC over "<unix-seconds>.<body>". A
+        // receiver should reject timestamps older than ~5 minutes.
+        const ts = Math.floor(Date.now() / 1000).toString();
+        headers["X-Webhook-Timestamp"] = ts;
+        headers["X-Webhook-Signature-V2"] = hex(await crypto.subtle.sign("HMAC", key, encoder.encode(`${ts}.${body}`)));
       }
 
       const res = await fetch(webhook.url, {

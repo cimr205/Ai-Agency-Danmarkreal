@@ -556,6 +556,14 @@ export default function InvoicesPage() {
                           {company?.email && <p className="text-sm text-muted-foreground">{company.email}</p>}
                         </div>
                       </div>
+                      {/* A Danish invoice must show the seller's CVR and address. */}
+                      {(!company?.cvr || !company?.address) && (
+                        <p className="mt-3 flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                          {t('pages.invoices.senderIncomplete')}
+                          <a className="ml-auto underline" href={`/${locale}/app/settings/company`}>{t('pages.invoices.senderIncompleteLink')}</a>
+                        </p>
+                      )}
                     </div>
                   </div>
 

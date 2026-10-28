@@ -125,6 +125,7 @@ export default function QuotesPage() {
     // A quote can only become an invoice with a lead/customer attached, so
     // require it up front instead of failing at conversion time.
     if (!leadId) { toast.error(t('quotes.leadRequired')); return; }
+    if ((quotes ?? []).some(q => q.title?.trim().toLowerCase() === title.trim().toLowerCase())) { toast.error(t('quotes.duplicateNumber')); return; }
     if (!(vatRate >= 0 && vatRate <= 100)) { toast.error(t('quotes.vatInvalid')); return; }
     try {
       await createQuote.mutateAsync({
@@ -144,7 +145,16 @@ export default function QuotesPage() {
           <h1 className="text-2xl font-bold">{t('quotes.title')}</h1>
           <p className="text-muted-foreground">{t('quotes.subtitle')}</p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={open => {
+          setIsCreateOpen(open);
+          // Prefill the next free quote number (Q-YYYY-NNN) — the title was a
+          // free-text placeholder, so two quotes could both be "Q-2026-001".
+          if (open && !title) {
+            const year = new Date().getFullYear();
+            const used = (quotes ?? []).map(q => /^Q-(\d{4})-(\d{3,})$/.exec(q.title ?? '')).filter((m): m is RegExpExecArray => !!m && Number(m[1]) === year).map(m => Number(m[2]));
+            setTitle(`Q-${year}-${String((used.length ? Math.max(...used) : 0) + 1).padStart(3, '0')}`);
+          }
+        }}>
           <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{t('quotes.newQuote')}</Button></DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{t('quotes.createTitle')}</DialogTitle><DialogDescription>{t('quotes.createSubtitle')}</DialogDescription></DialogHeader>
@@ -205,7 +215,7 @@ export default function QuotesPage() {
         <WorkspaceGradientSurface className="p-4">
           <div className="grid gap-3 md:grid-cols-4">
             <WorkspaceTile label={t('quotes.totalQuotes')} value={filteredQuotes.length} active />
-            <WorkspaceTile label={t('quotes.totalValue')} value={formatCurrency(filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0))} />
+            <WorkspaceTile label={t('quotes.totalValue')} value={formatCurrency(filteredQuotes.filter(q => q.status === 'sent' || q.status === 'accepted').reduce((s, q) => s + Number(q.total || 0), 0))} />
             <WorkspaceTile label={t('quotes.accepted')} value={filteredQuotes.filter(q => q.status === 'accepted').length} />
             <WorkspaceTile label={t('quotes.pending')} value={filteredQuotes.filter(q => q.status === 'sent').length} />
           </div>

@@ -53,6 +53,14 @@ export default function WorkflowStudioPage() {
     ];
   }, [active, aiPrompt]);
 
+  // Mirrors workflow-runner: only a webhook with a URL or an integration with
+  // a tool + capability actually executes; every other action type is
+  // skipped server-side ("Handlingstype ikke understøttet endnu").
+  const hasDestination = !!active && (
+    (active.action_type === "webhook" && !!active.webhook_url)
+    || (active.action_type === "run_integration" && !!active.action_capability && !!active.action_tool_slug)
+  );
+
   const runWorkflow = async (mode: "test" | "live") => {
     if (!active) return;
     setRunning(true);
@@ -98,7 +106,10 @@ export default function WorkflowStudioPage() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => runWorkflow("test")} disabled={!active || running}>
               {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <History className="h-3.5 w-3.5" />} Test-kør
             </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => runWorkflow("live")} disabled={!active || running}>
+            {/* A live run with no destination does nothing useful (the action
+                step reports "ingen destination"), so require one first. */}
+            <Button size="sm" className="gap-1.5" onClick={() => runWorkflow("live")} disabled={!active || running || !hasDestination}
+              title={active && !hasDestination ? "Tilføj en destination (webhook eller integration) før du kører live" : undefined}>
               <PlayCircle className="h-4 w-4" /> Kør live
             </Button>
           </div>

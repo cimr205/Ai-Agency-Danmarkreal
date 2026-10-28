@@ -122,7 +122,7 @@ export default function DealsPage() {
   const handleStageChange = async (dealId: string, stage: DealStage) => {
     const targetDeal = selectedDeal?.id === dealId ? selectedDeal : deals.find((deal) => deal.id === dealId);
     if (normalizeStageKey(stage) === 'won' && !canMarkDealWon(targetDeal)) {
-      toast.error(getWonValidationMessage(locale));
+      toast.error(getWonValidationMessage(locale, targetDeal));
       return;
     }
     try {
