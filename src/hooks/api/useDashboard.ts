@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { t3 } from '@/lib/inlineI18n';
 
 const DEFAULT_PIPELINE_STAGES = [
   { key: 'discovery', name: 'Discovery', color: '#3B82F6' },
@@ -101,7 +102,7 @@ export function useDashboard() {
           return {
             kind: 'followup',
             id: f.entity_type === 'customer' ? f.entity_id : f.id,
-            label: f.body || 'Opfølgning',
+            label: f.body || t3("Opfølgning", "Follow-up", "Nachfassen"),
             company: f.entity_type === 'customer' ? (nameById.get(f.entity_id) ?? null) : null,
             amount: null,
             days: Math.max(days, 0),

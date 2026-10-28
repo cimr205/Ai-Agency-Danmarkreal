@@ -1,24 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
+import { getLocaleFromPath } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { t3 } from '@/lib/inlineI18n';
 
 type EmailSummary = Pick<Tables<"emails">, "id" | "subject" | "from_address" | "from_name" | "received_at" | "snippet">;
 type CalendarEventSummary = Pick<Tables<"calendar_events">, "id" | "title" | "description" | "start_time" | "end_time" | "event_type">;
 
 export type TimelineKind = "email" | "invoice" | "payment" | "meeting" | "deal" | "activity" | "task";
 
-const ACTIVITY_TYPE_LABELS: Record<string, string> = {
-  call: "Opkald", email_sent: "Email sendt", email_received: "Email modtaget",
-  meeting: "Møde", note: "Note", task: "Opgave", status_change: "Status ændret",
-  deal_stage_change: "Deal-stadie ændret", quote_sent: "Tilbud sendt",
-  quote_accepted: "Tilbud accepteret", invoice_sent: "Faktura sendt",
-  payment_received: "Betaling modtaget",
-};
+const activityTypeLabels = (): Record<string, string> => ({
+  call: t3("Opkald", "Call", "Anruf"),
+  email_sent: t3("Email sendt", "Email sent", "E-Mail gesendet"),
+  email_received: t3("Email modtaget", "Email received", "E-Mail empfangen"),
+  meeting: t3("Møde", "Meeting", "Besprechung"),
+  note: t3("Note", "Note", "Notiz"),
+  task: t3("Opgave", "Task", "Aufgabe"),
+  status_change: t3("Status ændret", "Status changed", "Status geändert"),
+  deal_stage_change: t3("Deal-stadie ændret", "Deal stage changed", "Deal-Phase geändert"),
+  quote_sent: t3("Tilbud sendt", "Quote sent", "Angebot gesendet"),
+  quote_accepted: t3("Tilbud accepteret", "Quote accepted", "Angebot angenommen"),
+  invoice_sent: t3("Faktura sendt", "Invoice sent", "Rechnung gesendet"),
+  payment_received: t3("Betaling modtaget", "Payment received", "Zahlung erhalten"),
+});
 
-const DEAL_STAGE_LABELS: Record<string, string> = {
-  discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
-  negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
-};
+const dealStageLabels = (): Record<string, string> => ({
+  discovery: t3("Discovery", "Discovery", "Discovery"),
+  qualification: t3("Kvalificering", "Qualification", "Qualifizierung"),
+  proposal: t3("Tilbud", "Proposal", "Angebot"),
+  negotiation: t3("Forhandling", "Negotiation", "Verhandlung"),
+  won: t3("Vundet", "Won", "Gewonnen"),
+  lost: t3("Tabt", "Lost", "Verloren"),
+});
 
 export interface TimelineEvent {
   id: string;
@@ -31,7 +44,7 @@ export interface TimelineEvent {
 
 export function useClientGraph(customerId: string | undefined) {
   return useQuery({
-    queryKey: ["client-graph", customerId],
+    queryKey: ["client-graph", customerId, getLocaleFromPath()],
     enabled: !!customerId,
     staleTime: 60_000,
     queryFn: async () => {
@@ -106,8 +119,8 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `e:${e.id}`, kind: "email",
           at: e.received_at,
-          title: e.subject || "(uden emne)",
-          meta: `fra ${e.from_name || e.from_address}`,
+          title: e.subject || t3("(uden emne)", "(no subject)", "(kein Betreff)"),
+          meta: `${t3("fra", "from", "von")} ${e.from_name || e.from_address}`,
         });
       }
       for (const q of quotes) {
@@ -115,7 +128,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `q:${q.id}`, kind: "invoice",
           at: q.accepted_at || q.sent_at || q.created_at,
           title: `Tilbud: ${q.title}`,
-          meta: q.accepted_at ? ACTIVITY_TYPE_LABELS.quote_accepted : q.sent_at ? ACTIVITY_TYPE_LABELS.quote_sent : q.status,
+          meta: q.accepted_at ? activityTypeLabels().quote_accepted : q.sent_at ? activityTypeLabels().quote_sent : q.status,
           amount: Number(q.total),
         });
       }
@@ -123,7 +136,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `i:${inv.id}`, kind: "invoice",
           at: inv.issued_at || inv.created_at,
-          title: `Faktura #${inv.invoice_number}`,
+          title: `${t3("Faktura", "Invoice", "Rechnung")} #${inv.invoice_number}`,
           meta: inv.status,
           amount: Number(inv.amount),
         });
@@ -142,7 +155,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `m:${m.id}`, kind: "meeting",
           at: m.start_time,
           title: m.title,
-          meta: m.event_type || "møde",
+          meta: m.event_type || t3("møde", "meeting", "Besprechung"),
         });
       }
       for (const d of deals) {
@@ -150,7 +163,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `d:${d.id}`, kind: "deal",
           at: d.created_at,
           title: `Deal: ${d.title}`,
-          meta: DEAL_STAGE_LABELS[d.stage] || d.stage,
+          meta: dealStageLabels()[d.stage] || d.stage,
           amount: Number(d.value),
         });
       }
@@ -158,7 +171,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `a:${a.id}`, kind: "activity",
           at: a.created_at,
-          title: ACTIVITY_TYPE_LABELS[a.type] || a.type,
+          title: activityTypeLabels()[a.type] || a.type,
           meta: a.body || undefined,
         });
       }
@@ -168,7 +181,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `t:${task.id}`, kind: "task",
           at: task.completed_at || task.created_at,
-          title: `Opgave: ${task.title}`,
+          title: `${t3("Opgave", "Task", "Aufgabe")}: ${task.title}`,
           meta: [statusLabel, who ? `· ${who}` : null].filter(Boolean).join(" "),
         });
       }

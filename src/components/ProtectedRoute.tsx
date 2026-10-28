@@ -13,6 +13,7 @@ import { isLocale } from '@/lib/i18n';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { tx } from '@/lib/inlineI18n';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -108,12 +109,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             <div className="mx-auto rounded-full bg-destructive/10 p-4 w-fit mb-3">
               <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
-            <CardTitle>Adgang deaktiveret</CardTitle>
+            <CardTitle>{tx("Adgang deaktiveret", "Access deactivated")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Din virksomheds adgang til systemet er blevet deaktiveret af administratoren.
-              Kontakt support for mere information.
+              {tx("Din virksomheds adgang til systemet er blevet deaktiveret af administratoren. Kontakt support for mere information.", "Your company's access to the system has been deactivated by the administrator. Contact support for more information.")}
             </p>
           </CardContent>
         </Card>

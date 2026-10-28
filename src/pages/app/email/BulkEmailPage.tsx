@@ -21,7 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
-import { tl } from '@/lib/inlineI18n';
+import { t3, tl } from '@/lib/inlineI18n';
 
 type Recipient = { email: string; name: string; firstName: string; lastName: string; verified?: boolean | null; verifyReason?: string };
 type Attachment = { filename: string; content_type: string; data: string; size: number };
@@ -564,9 +564,7 @@ export default function BulkEmailPage() {
       });
       if (error) throw error;
       setProgress({ sent: 0, total: recipients.length, errors: Number((data as { suppressed?: number })?.suppressed ?? 0) });
-      toast.success(locale === 'da'
-        ? `${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`
-        : `${recipients.length} emails are queued and will continue in the background`);
+      toast.success(t3(`${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`, `${recipients.length} emails are queued and will continue in the background`, `${recipients.length} E-Mails sind sicher eingereiht und werden im Hintergrund versendet`, locale));
     } catch (error) {
       showError(error, { module: 'enqueue_email_campaign' });
     } finally {

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ErrorDetails } from "@/components/shared/ErrorDetails";
 import type { ExplainedErrorDetails } from "@/lib/errors";
+import { t3 } from '@/lib/inlineI18n';
 
 /**
  * Standardized error state — fills a gap the audit found consistently:
@@ -16,7 +17,7 @@ export function ErrorState({
   message,
   details,
   onRetry,
-  retryLabel = "Prøv igen",
+  retryLabel = t3("Prøv igen", "Try again", "Erneut versuchen"),
   bare,
 }: {
   title: string;

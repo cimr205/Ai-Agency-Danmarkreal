@@ -13,6 +13,7 @@ import { reportError } from '@/lib/sentry';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
+import { t3 } from '@/lib/inlineI18n';
 
 export default function WorkforceReportsPage() {
   const { t } = useI18n();
@@ -44,7 +45,7 @@ export default function WorkforceReportsPage() {
   };
 
   const handleExportPDF = async () => {
-    if (!allEntries?.length) { toast.error('Ingen data at eksportere'); return; }
+    if (!allEntries?.length) { toast.error(t3("Ingen data at eksportere", "No data to export", "Keine Daten zum Exportieren")); return; }
     try {
       const { default: jsPDF } = await import('jspdf');
       const { default: autoTable } = await import('jspdf-autotable');
@@ -123,7 +124,7 @@ export default function WorkforceReportsPage() {
     } catch (err) {
       console.error('PDF generation failed', err);
       reportError(err, { module: 'hr', action: 'generate_report_pdf' });
-      toast.error('Kunne ikke generere PDF');
+      toast.error(t3("Kunne ikke generere PDF", "Could not generate PDF", "PDF konnte nicht erstellt werden"));
     }
   };
 

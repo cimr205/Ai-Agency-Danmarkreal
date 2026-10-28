@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Bot, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useAIStatus } from "@/hooks/api/useAIConnection";
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 // AI runs on one shared, self-hosted Ollama instance — the approved stack
 // (Ollama/llama.cpp only, no hosted LLM APIs). There is nothing to connect
@@ -36,7 +36,7 @@ export default function AIConnectionPage() {
             )}
           </div>
           <CardDescription>
-            {isLoading ? "Henter status…" : status?.online ? `Model: ${status.detail}` : status?.detail}
+            {isLoading ? t3("Henter status…", "Loading status…", "Status wird geladen…") : status?.online ? `Model: ${status.detail}` : status?.detail}
           </CardDescription>
         </CardHeader>
         {!isLoading && !status?.online && (

@@ -130,7 +130,7 @@ export function buildAiSummary(input: {
   if (loc === "da") {
     if (n > 0) parts.push(`${n} åben${n > 1 ? "e" : ""} deal${n > 1 ? "s" : ""}`);
     if (stats.invoicedThisYear > 0) parts.push(`faktureret i år`);
-    if (o > 0) parts.push(`med ${o} forfalden faktura`);
+    if (o > 0) parts.push(`med ${o} ${o > 1 ? "forfaldne fakturaer" : "forfalden faktura"}`);
   } else if (loc === "de") {
     if (n > 0) parts.push(`${n} offene${n > 1 ? "" : "r"} Deal${n > 1 ? "s" : ""}`);
     if (stats.invoicedThisYear > 0) parts.push(`dieses Jahr fakturiert`);

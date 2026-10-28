@@ -1,3 +1,4 @@
+import { t3 } from '@/lib/inlineI18n';
 /**
  * Retry a function with exponential backoff.
  * Used in edge function calls and API requests.
@@ -31,5 +32,5 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   if (error && typeof error === 'object' && 'message' in error) return String((error as { message: unknown }).message);
-  return 'En uventet fejl opstod. Prøv igen.';
+  return t3("En uventet fejl opstod. Prøv igen.", "An unexpected error occurred. Please try again.", "Ein unerwarteter Fehler ist aufgetreten. Bitte erneut versuchen.");
 }

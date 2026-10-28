@@ -5,6 +5,7 @@ import { invokeFunction } from "@/lib/functions";
 import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { tx } from '@/lib/inlineI18n';
 
 export interface WorkspaceEvent {
   id: string;
@@ -111,7 +112,7 @@ export function useUpdateActionStatus() {
       await invokeFunction("ai-operating-manager", { body: { operation, actionId: id } });
     },
     onSuccess: (_d, v) => {
-      toast.success(v.status === "dismissed" ? "Forslag afvist" : "Forslag opdateret");
+      toast.success(v.status === "dismissed" ? tx("Forslag afvist", "Suggestion rejected") : tx("Forslag opdateret", "Suggestion updated"));
       qc.invalidateQueries({ queryKey: ["autopilot-actions"] });
     },
     onError: (e) => showError(e, { module: "ai-operating-manager" }),
@@ -128,7 +129,7 @@ export function useExecuteAction() {
         body: { operation: action.status === "failed" ? "retry" : "approve", actionId: action.id },
       }),
     onSuccess: () => {
-      toast.success("Handling udført");
+      toast.success(tx("Handling udført", "Action completed"));
       qc.invalidateQueries({ queryKey: ["autopilot-actions"] });
     },
     onError: (e) => showError(e, { module: "ai-operating-manager" }),

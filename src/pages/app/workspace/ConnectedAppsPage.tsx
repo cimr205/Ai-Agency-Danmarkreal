@@ -20,7 +20,7 @@ import {
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { isLocale } from "@/lib/i18n";
-import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -223,7 +223,7 @@ const catalog: Catalog[] = [
   { provider: "stripe",         name: "Stripe",          surface: "Payments · Subscriptions",    icon: CreditCard,     category: "Finance" },
   { provider: "hubspot",        name: "HubSpot",         surface: "CRM sync · Leads",            icon: Database,       category: "Sales" },
   { provider: "pipedrive",      name: "Pipedrive",       surface: "CRM sync · Deals",            icon: Database,       category: "Sales" },
-  { provider: "notion",         name: "Notion",          surface: "Dokumenter · Klient-noter",   icon: FileText,       category: "Documents" },
+  { provider: "notion",         name: "Notion",          get surface() { return tx("Dokumenter · Klient-noter", "Documents · Client notes"); }, icon: FileText,       category: "Documents" },
   { provider: "googledrive",    name: "Google Drive",    surface: "Filer · Klient-data",         icon: Cloud,          category: "Documents" },
   { provider: "github",         name: "GitHub",          surface: "Issues · Releases",           icon: Github,         category: "Developer" },
   { provider: "linkedin",       name: "LinkedIn",        surface: "Outreach · Berigelse",        icon: Linkedin,       category: "Marketing" },
@@ -318,7 +318,7 @@ export default function ConnectedAppsPage() {
           <div className="flex items-center gap-8 text-sm">
             <Pulse value={liveCount} label="Live forbindelser" />
             <Pulse value={fullCatalog.length - liveCount} label={tx("Tilgængelige", "Available")} muted />
-            <Pulse value={fullCatalog.length} label={toolkitsLoading ? "Henter…" : "I kataloget"} muted />
+            <Pulse value={fullCatalog.length} label={toolkitsLoading ? tx("Henter…", "Loading…") : tx("I kataloget", "In the catalogue")} muted />
           </div>
         </div>
 
@@ -340,7 +340,7 @@ export default function ConnectedAppsPage() {
       )}
 
       <section className="space-y-3">
-        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Aktive moduler</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">{tx("Aktive moduler", "Active modules")}</div>
         <div className="grid gap-3 sm:grid-cols-2">
           {LIVE_MODULES.map((m) => {
             const modAvail = availability?.modules.find((x) => x.module === m.module);
@@ -357,9 +357,9 @@ export default function ConnectedAppsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{m.title}</span>
                       {isOn ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500"><CheckCircle2 className="h-3 w-3" /> Aktiv via {activeProvider}</span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500"><CheckCircle2 className="h-3 w-3" /> {tx("Aktiv via", "Active via")} {activeProvider}</span>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">Ikke forbundet</span>
+                        <span className="text-[10px] text-muted-foreground">{tx("Ikke forbundet", "Not connected")}</span>
                       )}
                     </div>
                   </div>
@@ -367,7 +367,7 @@ export default function ConnectedAppsPage() {
                 <p className="text-xs text-muted-foreground leading-relaxed">{m.outcome}</p>
                 {isOn ? (
                   <Link to={`/${locale}/app/${m.pageLink}`} className="inline-flex items-center gap-1 text-xs text-emerald-500 hover:underline">
-                    Gå til {m.title} <ArrowRight className="h-3 w-3" />
+                    {tx("Gå til", "Go to")} {m.title} <ArrowRight className="h-3 w-3" />
                   </Link>
                 ) : (
                   connectTarget && (
@@ -384,7 +384,7 @@ export default function ConnectedAppsPage() {
 
       {isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Henter forbindelser…
+          <Loader2 className="h-4 w-4 animate-spin" /> {tx("Henter forbindelser…", "Loading connections…")}
         </div>
       )}
 
@@ -415,7 +415,7 @@ export default function ConnectedAppsPage() {
           onClick={() => setShowFullCatalog(true)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full justify-between rounded-xl border border-border/30 px-4 py-3 transition-colors"
         >
-          <span>Vis resten af kataloget ({fullCatalog.length - LIVE_MODULES.reduce((n, m) => n + m.providers.length, 0)} apps, endnu ikke koblet til en funktion)</span>
+          <span>{tx("Vis resten af kataloget", "Show the rest of the catalogue")} ({fullCatalog.length - LIVE_MODULES.reduce((n, m) => n + m.providers.length, 0)} {tx("apps, endnu ikke koblet til en funktion", "apps, not yet linked to a feature")})</span>
           <ChevronRight className="h-4 w-4 shrink-0" />
         </button>
       ) : (
@@ -425,7 +425,7 @@ export default function ConnectedAppsPage() {
               onClick={() => setShowFullCatalog(false)}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground -mb-6"
             >
-              <ChevronDown className="h-3.5 w-3.5" /> Skjul katalog
+              <ChevronDown className="h-3.5 w-3.5" /> {tx("Skjul katalog", "Hide catalogue")}
             </button>
           )}
           {grouped.map(([cat, items]) => (
@@ -524,14 +524,14 @@ function AppRow({
       <div className="shrink-0 flex items-center gap-2">
         {isConnected ? (
           <>
-            <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onConnect}>Administrér</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onConnect}>{tx("Administrér", "Manage")}</Button>
             <Button size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground hover:text-destructive" onClick={onDisconnect}>
               Afbryd
             </Button>
           </>
         ) : isPending ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
-            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> Afventer
+            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> {tx("Afventer", "Pending")}
           </Button>
         ) : canConnect ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
@@ -586,16 +586,16 @@ function ConnectDialog({
                 {isConnected ? tx("Forbundet", "Connected") : tx("Afventer bekræftelse", "Awaiting confirmation")}
               </div>
               {isConnected && existing?.connected_at && (
-                <span>Forbundet {new Date(existing.connected_at).toLocaleDateString(dateLocaleTag())}</span>
+                <span>{tx("Forbundet", "Connected")} {new Date(existing.connected_at).toLocaleDateString(dateLocaleTag())}</span>
               )}
-              {isPending && <span>Forbindelsen mangler stadig at blive bekræftet hos {item.name}.</span>}
+              {isPending && <span>{tx("Forbindelsen mangler stadig at blive bekræftet hos", "The connection still has to be confirmed with")} {item.name}.</span>}
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={onClose}>Luk</Button>
+            <Button variant="ghost" onClick={onClose}>{tx("Luk", "Close")}</Button>
             <Button variant="outline" className="text-destructive hover:text-destructive" onClick={onDisconnect}>
-              Afbryd forbindelse
+              {tx("Afbryd forbindelse", "Disconnect")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -612,7 +612,7 @@ function ConnectDialog({
               <AppLogo logoUrl={composioToolkit?.meta?.logo} icon={item.icon} />
             </div>
             <div>
-              <DialogTitle>Forbind {item.name}</DialogTitle>
+              <DialogTitle>{tx("Forbind", "Connect")} {item.name}</DialogTitle>
               <DialogDescription className="text-xs">{item.surface}</DialogDescription>
             </div>
           </div>
@@ -622,9 +622,9 @@ function ConnectDialog({
           {canConnect ? (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-                <CheckCircle2 className="h-3 w-3" /> Rigtig konto-forbindelse
+                <CheckCircle2 className="h-3 w-3" /> {tx("Rigtig konto-forbindelse", "Real account connection")}
               </div>
-              Log ind med jeres {item.name}-konto. Kræver kontoen en API-nøgle i stedet for login, beder {item.name} selv om den på næste skærm.
+              {t3(`Log ind med jeres ${item.name}-konto. Kræver kontoen en API-nøgle i stedet for login, beder ${item.name} selv om den på næste skærm.`, `Sign in with your ${item.name} account. If the account needs an API key instead of a login, ${item.name} asks for it on the next screen.`, `Melden Sie sich mit Ihrem ${item.name}-Konto an. Benötigt das Konto stattdessen einen API-Schlüssel, fragt ${item.name} auf dem nächsten Bildschirm danach.`)}
               {(() => {
                 const poweredModule = LIVE_MODULES.find((m) => m.providers.includes(item.provider));
                 return poweredModule ? (
@@ -641,7 +641,7 @@ function ConnectDialog({
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
                 <Lock className="h-3 w-3" /> {tx("Kræver avanceret opsætning", "Requires advanced setup")}
               </div>
-              {item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos {item.name}, ikke bare et login.
+              {t3(`${item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos ${item.name}, ikke bare et login.`, `${item.name} can't be connected automatically yet — this integration needs your own OAuth app registered with ${item.name}, not just a login.`, `${item.name} kann noch nicht automatisch verbunden werden — diese Integration braucht Ihre eigene, bei ${item.name} registrierte OAuth-App, nicht nur ein Login.`)}
             </div>
           )}
 
@@ -657,7 +657,7 @@ function ConnectDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Annullér</Button>
+          <Button variant="ghost" onClick={onClose}>{tx("Annullér", "Cancel")}</Button>
           {canConnect && (
             <Button
               className="gap-2"

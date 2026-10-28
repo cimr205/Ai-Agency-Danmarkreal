@@ -4,6 +4,7 @@ import { invokeFunction } from "@/lib/functions";
 import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { t3 } from '@/lib/inlineI18n';
 
 export interface Integration {
   id: string;
@@ -40,7 +41,7 @@ export function useConnectGmail() {
     mutationFn: async () => {
       const data = await invokeFunction<{ auth_url?: string }>("gmail-auth");
       const url = data?.auth_url;
-      if (!url) throw new Error("Ingen auth URL");
+      if (!url) throw new Error(t3("Ingen login-URL modtaget", "No sign-in URL received", "Keine Anmelde-URL erhalten"));
       window.location.href = url;
     },
     onError: (e) => showError(e, { module: "gmail-auth" }),
@@ -64,7 +65,7 @@ export function useDisconnectIntegration() {
       toast.success("Forbindelse afbrudt");
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke afbryde"),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke afbryde", "Could not disconnect", "Trennen fehlgeschlagen")),
   });
 }
 
@@ -78,7 +79,7 @@ export function useConnectWebhook() {
   const { profile } = useAuth();
   return useMutation({
     mutationFn: async (input: { provider: string; name: string; webhookUrl: string; accountLabel?: string }) => {
-      if (!profile?.company_id) throw new Error("Ingen virksomhed tilknyttet");
+      if (!profile?.company_id) throw new Error(t3("Ingen virksomhed tilknyttet", "No company linked", "Kein Unternehmen verknüpft"));
       try { new URL(input.webhookUrl); } catch { throw new Error("Ugyldig webhook URL"); }
 
       // Upsert integration row
@@ -133,7 +134,7 @@ export function useConnectWebhook() {
       toast.success(`${v.name} forbundet`);
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke forbinde"),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke forbinde", "Could not connect", "Verbindung fehlgeschlagen")),
   });
 }
 
@@ -144,7 +145,7 @@ export function useTestConnection() {
   return useMutation({
     mutationFn: async (integration: Integration) => {
       const url = (integration.metadata as { webhook_url?: string })?.webhook_url;
-      if (!url) throw new Error("Ingen webhook URL gemt");
+      if (!url) throw new Error(t3("Ingen webhook-URL gemt", "No webhook URL saved", "Keine Webhook-URL gespeichert"));
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,10 +156,10 @@ export function useTestConnection() {
           timestamp: new Date().toISOString(),
         }),
       }).catch(() => null);
-      if (!res || !res.ok) throw new Error(`Webhook svarede ikke OK${res ? ` (${res.status})` : ""}`);
+      if (!res || !res.ok) throw new Error(`${t3("Webhook svarede ikke OK", "Webhook did not respond OK", "Webhook hat nicht mit OK geantwortet")}${res ? ` (${res.status})` : ""}`);
     },
     onSuccess: () => toast.success("Webhook svarede 200 — forbindelsen virker"),
-    onError: (e: Error) => toast.error(e?.message ?? "Test fejlede"),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Test fejlede", "Test failed", "Test fehlgeschlagen")),
   });
 }
 
@@ -287,7 +288,7 @@ export function useSyncCrmContacts() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      if (res.imported > 0) toast.success(`${res.imported} nye leads importeret fra ${res.provider}`);
+      if (res.imported > 0) toast.success(t3(`${res.imported} nye leads importeret fra ${res.provider}`, `${res.imported} new leads imported from ${res.provider}`, `${res.imported} neue Leads aus ${res.provider} importiert`));
     },
     onError: (e) => showError(e, { module: "composio-integration" }),
   });
@@ -304,7 +305,7 @@ export function useSyncFinancePayments() {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      if (res.matched > 0) toast.success(`${res.matched} betaling(er) matchet og markeret betalt`);
+      if (res.matched > 0) toast.success(t3(`${res.matched} betaling(er) matchet og markeret betalt`, `${res.matched} payment(s) matched and marked paid`, `${res.matched} Zahlung(en) zugeordnet und als bezahlt markiert`));
     },
     onError: (e) => showError(e, { module: "composio-integration" }),
   });

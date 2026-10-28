@@ -14,6 +14,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-f
 import { getErrorMessage } from '@/lib/errors';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
+import { t3 } from '@/lib/inlineI18n';
 
 function BigTimer({ checkIn }: { checkIn: string }) {
   const [display, setDisplay] = useState('0:00:00');
@@ -81,7 +82,7 @@ export default function TimeTrackingPage() {
     setActionError(null);
     const targetId = isAdmin && selectedEmployee ? selectedEmployee : employeeProfileId;
     if (!targetId) {
-      const msg = 'Ingen medarbejderprofil fundet. Prøv at genindlæse siden.';
+      const msg = t3("Ingen medarbejderprofil fundet. Prøv at genindlæse siden.", "No employee profile found. Try reloading the page.", "Kein Mitarbeiterprofil gefunden. Bitte Seite neu laden.");
       setActionError(msg);
       toast.error(msg);
       return;
@@ -90,7 +91,7 @@ export default function TimeTrackingPage() {
       await clockIn.mutateAsync(targetId);
       toast.success(t('workforce.clockedIn'));
     } catch (err) {
-      const msg = getErrorMessage(err) || 'Clock-in fejlede';
+      const msg = getErrorMessage(err) || t3("Clock-in fejlede", "Clock-in failed", "Einstempeln fehlgeschlagen");
       setActionError(msg);
       toast.error(msg);
     }
@@ -99,7 +100,7 @@ export default function TimeTrackingPage() {
   const handleClockOut = useCallback(async () => {
     setActionError(null);
     if (!session || !('id' in session)) {
-      const msg = 'Ingen aktiv session fundet';
+      const msg = t3("Ingen aktiv session fundet", "No active session found", "Keine aktive Sitzung gefunden");
       setActionError(msg);
       toast.error(msg);
       return;
@@ -108,7 +109,7 @@ export default function TimeTrackingPage() {
       await clockOut.mutateAsync(session.id);
       toast.success(t('workforce.clockedOut'));
     } catch (err) {
-      const msg = getErrorMessage(err) || 'Clock-out fejlede';
+      const msg = getErrorMessage(err) || t3("Clock-out fejlede", "Clock-out failed", "Ausstempeln fehlgeschlagen");
       setActionError(msg);
       toast.error(msg);
     }
@@ -156,7 +157,7 @@ export default function TimeTrackingPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 text-destructive">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm">Fejl ved indlæsning af session: {getErrorMessage(sessionError) || 'Ukendt fejl'}</p>
+              <p className="text-sm">{t3("Fejl ved indlæsning af session", "Error loading session", "Fehler beim Laden der Sitzung")}: {getErrorMessage(sessionError) || t3("Ukendt fejl", "Unknown error", "Unbekannter Fehler")}</p>
             </div>
           </CardContent>
         </Card>

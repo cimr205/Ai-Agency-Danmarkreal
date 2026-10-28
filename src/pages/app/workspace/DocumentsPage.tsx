@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { FileText, Loader2, ExternalLink, Plug } from "lucide-react";
 import { useModuleAvailability, useDocuments } from "@/hooks/api/useIntegrations";
 import { useI18n } from "@/lib/i18n";
-import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 // The first product module built on top of the Capability Engine
 // (Connected Apps → capabilities → module). This page never mentions
@@ -60,7 +60,7 @@ export default function DocumentsPage() {
 
           {documentsLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Henter dokumenter…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t3("Henter dokumenter…", "Loading documents…", "Dokumente werden geladen…")}
             </div>
           )}
 

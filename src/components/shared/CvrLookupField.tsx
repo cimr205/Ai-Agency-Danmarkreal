@@ -6,6 +6,7 @@ import { Search, Loader2, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
+import { t3 } from '@/lib/inlineI18n';
 
 interface CvrLookupFieldProps {
   onResult: (result: { name: string; address: string; cvr: string }) => void;
@@ -21,7 +22,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
     // number OR company name, so pass the raw term — do not strip to digits.
     const term = cvr.trim();
     if (term.length < 2) {
-      toast.error('Indtast mindst 2 tegn (CVR-nummer eller virksomhedsnavn)');
+      toast.error(t3("Indtast mindst 2 tegn (CVR-nummer eller virksomhedsnavn)", "Enter at least 2 characters (CVR number or company name)", "Mindestens 2 Zeichen eingeben (CVR-Nummer oder Firmenname)"));
       return;
     }
     setLoading(true);
@@ -34,7 +35,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
 
       const results = payload?.results ?? [];
       if (!results.length) {
-        toast.error(`Ingen virksomhed fundet for "${term}"`);
+        toast.error(t3(`Ingen virksomhed fundet for "${term}"`, `No company found for "${term}"`, `Kein Unternehmen gefunden für "${term}"`));
         return;
       }
 
@@ -56,7 +57,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       </Label>
       <div className="flex gap-2">
         <Input
-          placeholder="Indtast CVR-nummer eller virksomhedsnavn..."
+          placeholder={t3("Indtast CVR-nummer eller virksomhedsnavn...", "Enter CVR number or company name...", "CVR-Nummer oder Firmenname eingeben...")}
           value={cvr}
           onChange={e => setCvr(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); lookup(); } }}
@@ -66,7 +67,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground mt-1">Udfyld automatisk navn og adresse fra CVR-registret</p>
+      <p className="text-xs text-muted-foreground mt-1">{t3("Udfyld automatisk navn og adresse fra CVR-registret", "Fill in name and address automatically from the Danish CVR register", "Name und Adresse automatisch aus dem dänischen CVR-Register ausfüllen")}</p>
     </div>
   );
 }

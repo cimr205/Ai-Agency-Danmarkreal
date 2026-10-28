@@ -18,7 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { SegmentedControl } from '@/components/workspace/SegmentedControl';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type Task = {
   id: string; title: string; description?: string | null; status: string;
@@ -195,7 +195,7 @@ export default function TasksPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`)) return;
+    if (!confirm(t3(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`, `Delete ${selectedIds.size} task(s)? This cannot be undone.`, `${selectedIds.size} Aufgabe(n) löschen? Das kann nicht rückgängig gemacht werden.`))) return;
     try {
       await bulkDelete.mutateAsync(Array.from(selectedIds));
       toast.success('Slettet');
@@ -204,7 +204,7 @@ export default function TasksPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Slet denne opgave? Dette kan ikke fortrydes.')) return;
+    if (!confirm(t3('Slet denne opgave? Dette kan ikke fortrydes.', 'Delete this task? This cannot be undone.', 'Diese Aufgabe löschen? Das kann nicht rückgängig gemacht werden.'))) return;
     try {
       await deleteTask.mutateAsync(id);
       toast.success('Slettet');
@@ -268,7 +268,7 @@ export default function TasksPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => updateTask.mutate({ id: task.id, data: { archived: !task.archived } })}>
-                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? 'Fjern fra arkiv' : 'Arkivér'}
+                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive focus:text-destructive">
                   <Trash2 className="h-3.5 w-3.5 mr-2" />Slet
@@ -407,14 +407,14 @@ export default function TasksPage() {
               <span className="text-xs text-muted-foreground">{selectedIds.size} {t('pages.tasks.selected')}</span>
               <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">{t3('Tildel til', 'Assign to', 'Zuweisen an')}</Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {(teamProfiles ?? []).map(p => (
                     <DropdownMenuItem key={p.user_id} onClick={() => handleBulkReassign(p.user_id)}>{p.full_name || p.email}</DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? 'Fjern fra arkiv' : 'Arkivér'}</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}</Button>
               <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
             </div>
           )}

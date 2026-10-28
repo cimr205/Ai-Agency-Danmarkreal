@@ -38,7 +38,7 @@ import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTempla
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
-import { tl } from '@/lib/inlineI18n';
+import { t3, tl } from '@/lib/inlineI18n';
 
 type Lead = Tables<'leads'>;
 
@@ -937,9 +937,9 @@ export default function InvoicesPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>{t('common.confirmDelete') || 'Slet faktura?'}</AlertDialogTitle>
+                          <AlertDialogTitle>{t('common.confirmDelete') || t3("Slet faktura?", "Delete invoice?", "Rechnung löschen?")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {(t('common.confirmDeleteDesc') || 'Denne handling kan ikke fortrydes.')} ({invoice.invoice_number})
+                            {(t('common.confirmDeleteDesc') || t3("Denne handling kan ikke fortrydes.", "This action cannot be undone.", "Diese Aktion kann nicht rückgängig gemacht werden."))} ({invoice.invoice_number})
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

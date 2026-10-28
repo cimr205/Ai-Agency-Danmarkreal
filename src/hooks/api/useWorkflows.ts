@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { t3 } from '@/lib/inlineI18n';
 
 export function useWorkflows() {
   const { profile } = useAuth();
@@ -64,7 +65,7 @@ export async function sendWorkflowChat(messages: ChatMessage[]): Promise<string>
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({ error: "Netværksfejl" }));
-    throw new Error(err.error || `Fejl ${resp.status}`);
+    throw new Error(err.error || `${t3("Fejl", "Error", "Fehler")} ${resp.status}`);
   }
 
   const data = await resp.json();

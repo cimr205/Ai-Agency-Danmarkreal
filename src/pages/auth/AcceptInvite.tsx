@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from '@/lib/errors';
+import { t3 } from '@/lib/inlineI18n';
 
 type InvitationPreview = {
   email: string;
@@ -46,12 +47,12 @@ export default function AcceptInvite() {
         }
         if (inv.status !== "pending") {
           setStatus("error");
-          setErrorMsg("Denne invitation er allerede brugt eller tilbagekaldt.");
+          setErrorMsg(t3("Denne invitation er allerede brugt eller tilbagekaldt.", "This invitation has already been used or revoked.", "Diese Einladung wurde bereits verwendet oder widerrufen."));
           return;
         }
         if (new Date(inv.expires_at) < new Date()) {
           setStatus("error");
-          setErrorMsg("Denne invitation er udløbet.");
+          setErrorMsg(t3("Denne invitation er udløbet.", "This invitation has expired.", "Diese Einladung ist abgelaufen."));
           return;
         }
         setInvitation(inv);
@@ -79,14 +80,14 @@ export default function AcceptInvite() {
       const { error } = await supabase.rpc("accept_invitation", { invite_token: token });
       if (error) throw error;
       setStatus("success");
-      toast.success("Du er nu tilknyttet virksomheden!");
+      toast.success(t3("Du er nu tilknyttet virksomheden!", "You have joined the company!", "Sie sind jetzt mit dem Unternehmen verbunden!"));
       // Refresh profile and redirect after short delay
       setTimeout(() => {
         window.location.href = `/${locale || "en"}/app/dashboard`;
       }, 2000);
     } catch (error) {
       setStatus("error");
-      setErrorMsg((getErrorMessage(error) || "Kunne ikke acceptere invitationen."));
+      setErrorMsg((getErrorMessage(error) || t3("Kunne ikke acceptere invitationen.", "Could not accept the invitation.", "Die Einladung konnte nicht angenommen werden.")));
     }
   };
 
@@ -108,18 +109,18 @@ export default function AcceptInvite() {
             <>
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
               <CardTitle>Velkommen!</CardTitle>
-              <CardDescription>Du er nu tilknyttet {companyName}. Du bliver omdirigeret...</CardDescription>
+              <CardDescription>{t3(`Du er nu tilknyttet ${companyName}. Du bliver omdirigeret...`, `You have joined ${companyName}. Redirecting...`, `Sie sind jetzt mit ${companyName} verbunden. Weiterleitung...`)}</CardDescription>
             </>
           ) : status === "error" ? (
             <>
               <XCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
-              <CardTitle>Invitation fejlede</CardTitle>
+              <CardTitle>{t3("Invitation fejlede", "Invitation failed", "Einladung fehlgeschlagen")}</CardTitle>
               <CardDescription>{errorMsg}</CardDescription>
             </>
           ) : (
             <>
               <Mail className="h-12 w-12 text-primary mx-auto mb-2" />
-              <CardTitle>Du er inviteret!</CardTitle>
+              <CardTitle>{t3("Du er inviteret!", "You are invited!", "Sie sind eingeladen!")}</CardTitle>
               <CardDescription>
                 Du er blevet inviteret til at slutte dig til <strong>{companyName}</strong> som{" "}
                 <strong>{invitation?.role === "company_admin" ? "administrator" : "medarbejder"}</strong>.
@@ -152,7 +153,7 @@ export default function AcceptInvite() {
           )}
           {status === "error" && (
             <Button variant="outline" onClick={() => navigate(`/${locale || "en"}/auth/login`)}>
-              Gå til login
+              {t3("Gå til login", "Go to login", "Zum Login")}
             </Button>
           )}
         </CardContent>

@@ -24,22 +24,22 @@ import { da } from "date-fns/locale";
 import { getErrorMessage } from '@/lib/errors';
 import { tx } from '@/lib/inlineI18n';
 
-const EVENT_LABELS: Record<string, string> = {
-  "lead.created": "Lead oprettet",
-  "lead.updated": "Lead opdateret",
-  "deal.created": "Deal oprettet",
-  "deal.won": "Deal vundet",
-  "deal.lost": "Deal tabt",
-  "task.created": "Opgave oprettet",
+const eventLabels = (): Record<string, string> => ({
+  "lead.created": tx("Lead oprettet", "Lead created"),
+  "lead.updated": tx("Lead opdateret", "Lead updated"),
+  "deal.created": tx("Deal oprettet", "Deal created"),
+  "deal.won": tx("Deal vundet", "Deal won"),
+  "deal.lost": tx("Deal tabt", "Deal lost"),
+  "task.created": tx("Opgave oprettet", "Task created"),
   "task.completed": tx("Opgave færdig", "Task completed"),
-  "employee.created": "Medarbejder oprettet",
+  "employee.created": tx("Medarbejder oprettet", "Employee created"),
   "employee.clocked_in": "Clock in",
   "employee.clocked_out": "Clock out",
-  "invoice.created": "Faktura oprettet",
-  "invoice.paid": "Faktura betalt",
-  "email.sent": "Email sendt",
+  "invoice.created": tx("Faktura oprettet", "Invoice created"),
+  "invoice.paid": tx("Faktura betalt", "Invoice paid"),
+  "email.sent": tx("Email sendt", "Email sent"),
   "email.opened": tx("Email åbnet", "Email opened"),
-};
+});
 
 function actionLabel(wf: { action_type: string; action_tool_slug?: string | null; webhook_url?: string | null }): string {
   if (wf.action_type === "run_integration") return wf.action_tool_slug ? `${tx("Kør", "Run")} ${wf.action_tool_slug}` : tx("Kør handling", "Run action");
@@ -47,10 +47,10 @@ function actionLabel(wf: { action_type: string; action_tool_slug?: string | null
   return wf.action_type;
 }
 
-const QUICK_PROMPTS = [
+const quickPrompts = () => [
   { label: tx("Ny lead → Zapier", "New lead → Zapier"), prompt: tx("Når en ny lead bliver oprettet, send data til Zapier", "When a new lead is created, send the data to Zapier") },
-  { label: "Deal vundet → Slack", prompt: tx("Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack", "When a deal is won, send a message to Zapier so it can go to Slack") },
-  { label: "Faktura betalt → Sheets", prompt: tx("Når en faktura bliver betalt, send betalingsdata til Zapier webhook", "When an invoice is paid, send the payment data to a Zapier webhook") },
+  { label: tx("Deal vundet → Slack", "Deal won → Slack"), prompt: tx("Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack", "When a deal is won, send a message to Zapier so it can go to Slack") },
+  { label: tx("Faktura betalt → Sheets", "Invoice paid → Sheets"), prompt: tx("Når en faktura bliver betalt, send betalingsdata til Zapier webhook", "When an invoice is paid, send the payment data to a Zapier webhook") },
   { label: tx("Foreslå workflows", "Suggest workflows"), prompt: tx("Foreslå smarte workflows baseret på min brug af systemet", "Suggest smart workflows based on how I use the system") },
 ];
 
@@ -124,7 +124,7 @@ export default function WorkflowsPage() {
             {activeWorkflows.length} aktive
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            {totalRuns} kørsler
+            {totalRuns} {tx("kørsler", "runs")}
           </Badge>
           <Button
             variant="outline"
@@ -156,7 +156,7 @@ export default function WorkflowsPage() {
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 max-w-lg w-full">
-                  {QUICK_PROMPTS.map((qp) => (
+                  {quickPrompts().map((qp) => (
                     <button
                       key={qp.label}
                       onClick={() => send(qp.prompt)}
@@ -262,7 +262,7 @@ export default function WorkflowsPage() {
                               {wf.description || wf.trigger_event}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {EVENT_LABELS[wf.trigger_event] || wf.trigger_event} → {actionLabel(wf)}
+                              {eventLabels()[wf.trigger_event] || wf.trigger_event} → {actionLabel(wf)}
                             </p>
                           </div>
                           <Switch
@@ -276,7 +276,7 @@ export default function WorkflowsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                              {wf.run_count || 0} kørsler
+                              {wf.run_count || 0} {tx("kørsler", "runs")}
                             </Badge>
                             {wf.last_run_at && (
                               <span className="text-[10px] text-muted-foreground">

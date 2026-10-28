@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useIssueMcpToken, useMcpTokens, useRevokeMcpToken } from "@/hooks/api/useMcpTokens";
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-server`;
 
@@ -20,7 +20,7 @@ const CLIENTS = [
   {
     id: "claude-code",
     name: "Claude Code",
-    blurb: "Anthropic's CLI for engineers — tilføj som remote MCP server.",
+    blurb: ["Anthropic's CLI for engineers — tilføj som remote MCP server.", "Anthropic's CLI for engineers — add it as a remote MCP server."] as const,
     snippet: (token: string) =>
       `claude mcp add --transport http business-os ${MCP_URL} \\\n  --header "Authorization: Bearer ${token}"`,
     lang: "bash",
@@ -28,7 +28,7 @@ const CLIENTS = [
   {
     id: "claude-desktop",
     name: "Claude Desktop",
-    blurb: "Indsæt i ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) eller %APPDATA%\\Claude\\claude_desktop_config.json (Windows).",
+    blurb: ["Indsæt i ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) eller %APPDATA%\\Claude\\claude_desktop_config.json (Windows).", "Paste into ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) or %APPDATA%\\Claude\\claude_desktop_config.json (Windows)."] as const,
     snippet: (token: string) =>
       JSON.stringify(
         {
@@ -46,7 +46,7 @@ const CLIENTS = [
   {
     id: "cursor",
     name: "Cursor",
-    blurb: "Indsæt i ~/.cursor/mcp.json (eller projektets .cursor/mcp.json).",
+    blurb: ["Indsæt i ~/.cursor/mcp.json (eller projektets .cursor/mcp.json).", "Paste into ~/.cursor/mcp.json (or the project's .cursor/mcp.json)."] as const,
     snippet: (token: string) =>
       JSON.stringify(
         {
@@ -65,7 +65,7 @@ const CLIENTS = [
   {
     id: "raw",
     name: "Andre klienter",
-    blurb: "Enhver MCP-kompatibel klient (Zed, Continue, Cline, Open WebUI…) kan bruge endpointet direkte.",
+    blurb: ["Enhver MCP-kompatibel klient (Zed, Continue, Cline, Open WebUI…) kan bruge endpointet direkte.", "Any MCP-compatible client (Zed, Continue, Cline, Open WebUI…) can use the endpoint directly."] as const,
     snippet: (token: string) =>
       `Endpoint: ${MCP_URL}\nTransport: streamable-http\nHeader: Authorization: Bearer ${token}`,
     lang: "text",
@@ -100,16 +100,14 @@ export function AiClientsPanel() {
             AI Clients · Model Context Protocol
           </div>
           <h2 className="text-2xl font-semibold tracking-tight font-display">
-            Claude Code & venner kobler direkte til hele virksomhedens infrastruktur.
+            {tx("Claude Code & venner kobler direkte til hele virksomhedens infrastruktur.", "Claude Code & friends plug straight into your whole company stack.")}
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Workspacet eksponerer leads, deals, opgaver, integrationer og webhook-handlinger som MCP-tools.
-            Generer en token, sæt den i din AI-klient — så har Claude Code, Claude Desktop, Cursor osv.
-            adgang til præcis det du har her, scoped til din virksomhed.
+            {tx("Workspacet eksponerer leads, deals, opgaver, integrationer og webhook-handlinger som MCP-tools. Generer en token, sæt den i din AI-klient — så har Claude Code, Claude Desktop, Cursor osv. adgang til præcis det du har her, scoped til din virksomhed.", "The workspace exposes leads, deals, tasks, integrations and webhook actions as MCP tools. Generate a token and put it in your AI client — then Claude Code, Claude Desktop, Cursor etc. get access to exactly what you have here, scoped to your company.")}
           </p>
         </div>
         <Button onClick={() => { setIssued(null); setName(""); setOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1.5" /> Ny token
+          <Plus className="h-4 w-4 mr-1.5" /> {tx("Ny token", "New token")}
         </Button>
       </div>
 
@@ -129,7 +127,7 @@ export function AiClientsPanel() {
           </TabsList>
           {CLIENTS.map((c) => (
             <TabsContent key={c.id} value={c.id} className="p-5 space-y-3 mt-0">
-              <p className="text-xs text-muted-foreground">{c.blurb}</p>
+              <p className="text-xs text-muted-foreground">{tx(c.blurb[0], c.blurb[1])}</p>
               <div className="relative">
                 <pre className="text-[12px] leading-relaxed font-mono bg-background/60 border border-border/40 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all">
                   {c.snippet(tokenForSnippets)}
@@ -140,7 +138,7 @@ export function AiClientsPanel() {
                   onClick={() => copy(c.id, c.snippet(tokenForSnippets))}
                 >
                   {copied === c.id ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                  Kopiér
+                  {tx("Kopiér", "Copy")}
                 </Button>
               </div>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -155,16 +153,16 @@ export function AiClientsPanel() {
       {/* Token list */}
       <div className="rounded-xl border border-border/40 overflow-hidden">
         <div className="px-4 py-3 border-b border-border/40 flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">
-          <KeyRound className="h-3 w-3" /> Tokens ({active.length} aktive)
+          <KeyRound className="h-3 w-3" /> Tokens ({active.length} {tx("aktive", "active")})
         </div>
         {isLoading ? (
           <div className="p-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Henter…
+            <Loader2 className="h-4 w-4 animate-spin" /> {tx("Henter…", "Loading…")}
           </div>
         ) : tokens.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary/70" />
-            Ingen tokens endnu — opret én for at koble Claude Code til.
+            {tx("Ingen tokens endnu — opret én for at koble Claude Code til.", "No tokens yet — create one to connect Claude Code.")}
           </div>
         ) : (
           <div className="divide-y divide-border/30">
@@ -173,11 +171,11 @@ export function AiClientsPanel() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{t.name}</div>
                   <div className="text-[11px] text-muted-foreground font-mono">
-                    {t.token_prefix}…{t.revoked_at ? " · tilbagekaldt" : ""}
+                    {t.token_prefix}…{t.revoked_at ? ` · ${tx("tilbagekaldt", "revoked")}` : ""}
                   </div>
                 </div>
                 <div className="text-[11px] text-muted-foreground">
-                  {t.last_used_at ? `brugt ${new Date(t.last_used_at).toLocaleString(dateLocaleTag())}` : "aldrig brugt"}
+                  {t.last_used_at ? `${tx("brugt", "used")} ${new Date(t.last_used_at).toLocaleString(dateLocaleTag())}` : tx("aldrig brugt", "never used")}
                 </div>
                 {!t.revoked_at && (
                   <Button
@@ -185,7 +183,7 @@ export function AiClientsPanel() {
                     className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
                     onClick={() => revoke.mutate(t.id)}
                   >
-                    <Trash2 className="h-3 w-3 mr-1" /> Tilbagekald
+                    <Trash2 className="h-3 w-3 mr-1" /> {tx("Tilbagekald", "Revoke")}
                   </Button>
                 )}
               </div>
@@ -198,17 +196,17 @@ export function AiClientsPanel() {
       <Dialog open={open} onOpenChange={(o) => { if (!o) { setOpen(false); setIssued(null); } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{issued ? "Token oprettet" : "Ny MCP token"}</DialogTitle>
+            <DialogTitle>{issued ? tx("Token oprettet", "Token created") : tx("Ny MCP token", "New MCP token")}</DialogTitle>
             <DialogDescription>
               {issued
-                ? "Kopiér tokenet nu — det vises kun denne ene gang."
-                : "Giv tokenet et navn (fx 'Claude Code – Macbook')."}
+                ? tx("Kopiér tokenet nu — det vises kun denne ene gang.", "Copy the token now — it is only shown this once.")
+                : tx("Giv tokenet et navn (fx 'Claude Code – Macbook').", "Give the token a name (e.g. 'Claude Code – Macbook').")}
             </DialogDescription>
           </DialogHeader>
 
           {!issued ? (
             <div className="space-y-3 py-2">
-              <Label htmlFor="t-name" className="text-xs">Navn</Label>
+              <Label htmlFor="t-name" className="text-xs">{tx("Navn", "Name")}</Label>
               <Input
                 id="t-name" value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="Claude Code – Macbook" autoFocus
@@ -218,7 +216,7 @@ export function AiClientsPanel() {
             <div className="space-y-3 py-2">
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/90 flex gap-2">
                 <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                Gem tokenet et sikkert sted. Vi opbevarer kun en hash — du kan ikke se det igen.
+                {tx("Gem tokenet et sikkert sted. Vi opbevarer kun en hash — du kan ikke se det igen.", "Store the token somewhere safe. We only keep a hash — you can't see it again.")}
               </div>
               <div className="relative">
                 <pre className="text-[12px] font-mono bg-background/60 border border-border/40 rounded-lg p-3 break-all whitespace-pre-wrap">
@@ -230,7 +228,7 @@ export function AiClientsPanel() {
                   onClick={() => copy("issued", issued.token)}
                 >
                   {copied === "issued" ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                  Kopiér
+                  {tx("Kopiér", "Copy")}
                 </Button>
               </div>
             </div>
@@ -239,17 +237,17 @@ export function AiClientsPanel() {
           <DialogFooter>
             {!issued ? (
               <>
-                <Button variant="ghost" onClick={() => setOpen(false)}>Annullér</Button>
+                <Button variant="ghost" onClick={() => setOpen(false)}>{tx("Annullér", "Cancel")}</Button>
                 <Button
                   onClick={() => issue.mutate(name || "AI Client", { onSuccess: setIssued })}
                   disabled={issue.isPending}
                 >
                   {issue.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Bot className="h-4 w-4 mr-1.5" />}
-                  Opret token
+                  {tx("Opret token", "Create token")}
                 </Button>
               </>
             ) : (
-              <Button onClick={() => { setOpen(false); setIssued(null); }}>Luk</Button>
+              <Button onClick={() => { setOpen(false); setIssued(null); }}>{tx("Luk", "Close")}</Button>
             )}
           </DialogFooter>
         </DialogContent>

@@ -15,11 +15,11 @@ import { tx } from '@/lib/inlineI18n';
 
 type View = "today" | "approvals" | "signals" | "history";
 
-const VIEWS: Array<{ id: View; label: string; icon: typeof Target }> = [
-  { id: "today", label: "I dag", icon: Target },
+const views = (): Array<{ id: View; label: string; icon: typeof Target }> => [
+  { id: "today", label: tx("I dag", "Today"), icon: Target },
   { id: "approvals", label: tx("Godkend", "Approve"), icon: ShieldCheck },
-  { id: "signals", label: "Signaler", icon: Zap },
-  { id: "history", label: "Historik", icon: History },
+  { id: "signals", label: tx("Signaler", "Signals"), icon: Zap },
+  { id: "history", label: tx("Historik", "History"), icon: History },
 ];
 
 const SEVERITY_STYLE: Record<string, string> = {
@@ -51,10 +51,10 @@ export function OperatingManagerPanel() {
   const today = useMemo(() => signals.filter((item) => item.category === "today" || item.severity === "critical").slice(0, 8), [signals]);
   const model = brief.data?.model;
   const modelLabel = !brief.data
-    ? "Kontrollerer AI…"
+    ? tx("Kontrollerer AI…", "Checking AI…")
     : model?.online
       ? `Open-source AI online${model.name ? ` · ${model.name}` : ""}`
-      : model?.configured ? tx("AI-server kan ikke nås", "AI server unreachable") : "Handlingsmotor klar · AI mangler";
+      : model?.configured ? tx("AI-server kan ikke nås", "AI server unreachable") : tx("Handlingsmotor klar · AI mangler", "Action engine ready · AI missing");
 
   const submit = async (text = commandText) => {
     const clean = text.trim();
@@ -94,7 +94,7 @@ export function OperatingManagerPanel() {
             onClick={() => brief.refetch()}
             disabled={brief.isFetching}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-            aria-label="Opdater driftsbillede"
+            aria-label={tx("Opdater driftsbillede", "Refresh operations view")}
           >
             <RefreshCw className={cn("h-3.5 w-3.5", brief.isFetching && "animate-spin")} />
           </button>
@@ -123,8 +123,8 @@ export function OperatingManagerPanel() {
         {answer && (
           <div className="mt-3 rounded-xl border border-primary/20 bg-primary/[0.04] p-3 text-xs leading-relaxed text-foreground/85">
             <div className="mb-1 flex items-center gap-1.5 font-medium text-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" /> Driftsleder
-              <button type="button" onClick={() => setAnswer(null)} className="ml-auto grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-muted" aria-label="Luk svar">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> {tx("Driftsleder", "Operating manager")}
+              <button type="button" onClick={() => setAnswer(null)} className="ml-auto grid h-6 w-6 place-items-center rounded-md text-muted-foreground hover:bg-muted" aria-label={tx("Luk svar", "Close answer")}>
                 <X className="h-3 w-3" />
               </button>
             </div>
@@ -133,7 +133,7 @@ export function OperatingManagerPanel() {
         )}
 
         <div className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5" aria-label="Hurtige kommandoer">
-          {[tx("Hvad er vigtigst?", "What matters most?"), "Lav min dag klar", tx("Opret opgave: Følg op på varme leads", "Create task: follow up on warm leads")].map((label) => (
+          {[tx("Hvad er vigtigst?", "What matters most?"), tx("Lav min dag klar", "Get my day ready"), tx("Opret opgave: Følg op på varme leads", "Create task: follow up on warm leads")].map((label) => (
             <button key={label} type="button" onClick={() => void submit(label)} disabled={command.isPending}
               className="h-7 shrink-0 rounded-full border border-border/50 px-2.5 text-[10px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50">
               {label}
@@ -142,8 +142,8 @@ export function OperatingManagerPanel() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 border-b border-border/50 px-2" role="tablist" aria-label="Driftsleder visninger">
-        {VIEWS.map(({ id, label, icon: Icon }) => {
+      <div className="grid grid-cols-4 border-b border-border/50 px-2" role="tablist" aria-label={tx("Driftsleder visninger", "Operating manager views")}>
+        {views().map(({ id, label, icon: Icon }) => {
           const count = id === "approvals" ? awaiting.length : id === "signals" ? signals.length : id === "today" ? today.length : 0;
           return (
             <button
@@ -179,7 +179,7 @@ export function OperatingManagerPanel() {
       </div>
 
       <div className="flex h-9 shrink-0 items-center justify-between border-t border-border/40 px-4 text-[9px] uppercase tracking-[0.14em] text-muted-foreground/60">
-        <span>{model?.online ? "AI + faktiske data" : "Faktiske data"} · Godkend før ændring</span>
+        <span>{model?.online ? tx("AI + faktiske data", "AI + real data") : tx("Faktiske data", "Real data")} · {tx("Godkend før ændring", "Approve before changes")}</span>
         <span>{brief.data ? formatTime(brief.data.generatedAt) : "—"}</span>
       </div>
     </div>
@@ -217,7 +217,7 @@ function TodayView({ stats, signals, pending, onSignal, onOpenApprovals }: {
         <section>
           <div className="flex items-center justify-between">
             <SectionLabel>{tx("Klar til beslutning", "Ready for a decision")}</SectionLabel>
-            <button type="button" onClick={onOpenApprovals} className="flex h-8 items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">Se alle <ChevronRight className="h-3 w-3" /></button>
+            <button type="button" onClick={onOpenApprovals} className="flex h-8 items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">{tx("Se alle", "See all")} <ChevronRight className="h-3 w-3" /></button>
           </div>
           <button type="button" onClick={onOpenApprovals} className="mt-2 w-full rounded-xl border border-border/50 bg-card/40 p-3 text-left transition-colors hover:bg-muted/50">
             <div className="flex items-center gap-2 text-xs font-medium"><ShieldCheck className="h-4 w-4 text-primary" />{pending.length} {pending.length === 1 ? "handling" : "handlinger"} afventer godkendelse</div>
@@ -245,9 +245,9 @@ function SectionLabel({ children }: { children: ReactNode }) {
 function SignalList({ signals, onOpen }: { signals: OperatingSignal[]; onOpen: (signal: OperatingSignal) => void }) {
   if (!signals.length) return <PanelState icon={CheckCircle2} text={tx("Ingen åbne signaler. Driftsbilledet er roligt.", "No open signals. Operations are calm.")} />;
   const groups = [
-    { label: "Kritiske signaler", items: signals.filter((item) => ["critical", "high"].includes(item.severity)) },
+    { label: tx("Kritiske signaler", "Critical signals"), items: signals.filter((item) => ["critical", "high"].includes(item.severity)) },
     { label: tx("I dag og prioriteter", "Today and priorities"), items: signals.filter((item) => !["critical", "high"].includes(item.severity) && item.category !== "opportunity") },
-    { label: "Muligheder", items: signals.filter((item) => item.category === "opportunity") },
+    { label: tx("Muligheder", "Opportunities"), items: signals.filter((item) => item.category === "opportunity") },
   ].filter((group) => group.items.length);
   return (
     <div className="space-y-5 p-4">

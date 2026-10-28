@@ -34,7 +34,7 @@ import type { Tables, Enums } from '@/integrations/supabase/types';
 import { AppError, invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -396,7 +396,7 @@ export default function LeadsPage() {
     try {
       const text = await file.text();
       const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast.error('CSV filen skal have mindst én header og én data-række'); return; }
+      if (lines.length < 2) { toast.error(t3("CSV-filen skal have mindst én header og én data-række", "The CSV file needs at least one header row and one data row", "Die CSV-Datei braucht mindestens eine Kopf- und eine Datenzeile")); return; }
 
       const firstLine = lines[0];
       const semicolons = (firstLine.match(/;/g) || []).length;
@@ -437,7 +437,7 @@ export default function LeadsPage() {
 
       const mappedFields = Object.values(autoMap).filter(Boolean);
       if (!mappedFields.includes('name') || !mappedFields.includes('email')) {
-        toast.error(t('pages.leads.csvMissingFields') || 'CSV mangler name/email kolonner — brug manuel import');
+        toast.error(t('pages.leads.csvMissingFields') || t3("CSV mangler name/email-kolonner — brug manuel import", "CSV is missing name/email columns — use manual import", "CSV ohne name/email-Spalten — bitte manuellen Import nutzen"));
         setIsImportOpen(true);
         return;
       }
@@ -468,9 +468,9 @@ export default function LeadsPage() {
           }
         } catch (verifyErr) {
           if (verifyErr instanceof Error && verifyErr.name === 'AbortError') {
-            toast.warning('Email-verificering tog for lang tid — fortsætter uden', { duration: 3000 });
+            toast.warning(t3("Email-verificering tog for lang tid — fortsætter uden", "Email verification took too long — continuing without it", "E-Mail-Prüfung dauerte zu lange — es wird ohne fortgefahren"), { duration: 3000 });
           } else if (verifyErr instanceof AppError && verifyErr.kind === 'network') {
-            toast.warning('Email-verificering kunne ikke nås — fortsætter uden', { duration: 3000 });
+            toast.warning(t3("Email-verificering kunne ikke nås — fortsætter uden", "Email verification unreachable — continuing without it", "E-Mail-Prüfung nicht erreichbar — es wird ohne fortgefahren"), { duration: 3000 });
           }
           console.warn('Email verification fejlede, fortsætter uden:', verifyErr);
         }
@@ -482,11 +482,11 @@ export default function LeadsPage() {
         : rows;
 
       if (filteredRows.length === 0) {
-        toast.error('Ingen gyldige emails fundet — import afbrudt');
+        toast.error(t3("Ingen gyldige emails fundet — import afbrudt", "No valid emails found — import stopped", "Keine gültigen E-Mails gefunden — Import abgebrochen"));
         return;
       }
 
-      setAutoImportProgress(`Importerer ${filteredRows.length} leads med AI-klassificering...`);
+      setAutoImportProgress(t3(`Importerer ${filteredRows.length} leads med AI-klassificering...`, `Importing ${filteredRows.length} leads with AI classification...`, `${filteredRows.length} Leads werden mit KI-Klassifizierung importiert...`));
 
       const result = await invokeFunction<{ error?: string; imported: number; duplicates: number; ai_classified: boolean }>('csv-import-leads', {
         body: { rows: filteredRows, mapping: autoMap, useAi: true },

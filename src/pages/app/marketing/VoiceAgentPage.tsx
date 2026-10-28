@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { t3 } from '@/lib/inlineI18n';
 
 interface TwilioAccount { account_sid: string; }
 interface VoiceAgent { id: string; name: string; voice: string; language: string; system_prompt: string; greeting: string; is_active: boolean; }
@@ -86,7 +87,7 @@ export default function VoiceAgentPage() {
   const [agentVoice, setAgentVoice] = useState('alloy');
   const [agentLanguage, setAgentLanguage] = useState('da');
   const [agentPrompt, setAgentPrompt] = useState('You are a friendly sales assistant calling on behalf of our company. Be polite, brief, and helpful.');
-  const [agentGreeting, setAgentGreeting] = useState('Hej, det er en AI-assistent fra os. Har du to minutter til en kort snak?');
+  const [agentGreeting, setAgentGreeting] = useState(() => t3("Hej, det er en AI-assistent fra os. Har du to minutter til en kort snak?", "Hi, this is an AI assistant calling from us. Do you have two minutes for a quick chat?", "Hallo, hier ist ein KI-Assistent von uns. Haben Sie zwei Minuten für ein kurzes Gespräch?"));
 
   // Call dialog
   const [callDialog, setCallDialog] = useState(false);
@@ -317,7 +318,7 @@ export default function VoiceAgentPage() {
                     <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI-model</CardTitle>
                     <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Ollama (selv-hostet)</Badge>
                   </div>
-                  <CardDescription>Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.</CardDescription>
+                  <CardDescription>{t3("Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.", "Replies in the call come from a shared, self-hosted AI model — no setup needed.", "Die Antworten im Gespräch kommen von einem gemeinsam genutzten, selbst gehosteten KI-Modell — keine Einrichtung nötig.")}</CardDescription>
                 </CardHeader>
               </Card>
             </div>

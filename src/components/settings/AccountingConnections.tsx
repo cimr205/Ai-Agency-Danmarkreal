@@ -8,7 +8,7 @@ import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type DineroConnection = Tables<'dinero_connections'>;
 type EconomicConnection = Tables<'economic_connections'>;
@@ -48,9 +48,9 @@ export function AccountingConnections() {
     const dineroStatus = params.get('dinero');
     const economicStatus = params.get('economic');
     if (dineroStatus === 'connected') toast.success('Dinero forbundet!');
-    if (dineroStatus === 'error') toast.error(`Dinero-forbindelse fejlede: ${params.get('dinero_error') || 'ukendt fejl'}`);
+    if (dineroStatus === 'error') toast.error(`${t3("Dinero-forbindelse fejlede", "Dinero connection failed", "Dinero-Verbindung fehlgeschlagen")}: ${params.get('dinero_error') || t3("ukendt fejl", "unknown error", "unbekannter Fehler")}`);
     if (economicStatus === 'connected') toast.success('e-conomic forbundet!');
-    if (economicStatus === 'error') toast.error(`e-conomic-forbindelse fejlede: ${params.get('economic_error') || 'ukendt fejl'}`);
+    if (economicStatus === 'error') toast.error(`${t3("e-conomic-forbindelse fejlede", "e-conomic connection failed", "e-conomic-Verbindung fehlgeschlagen")}: ${params.get('economic_error') || t3("ukendt fejl", "unknown error", "unbekannter Fehler")}`);
     if (dineroStatus || economicStatus) {
       const url = new URL(window.location.href);
       url.searchParams.delete('dinero');
@@ -92,7 +92,7 @@ export function AccountingConnections() {
         body: { action: 'pull_customers' },
       });
       if (data?.error) throw new Error(data.error);
-      toast.success(`${data.imported} kunder importeret`);
+      toast.success(t3(`${data.imported} kunder importeret`, `${data.imported} customers imported`, `${data.imported} Kunden importiert`));
     } catch (e) {
       showError(e, { module: 'accounting' });
     } finally {
@@ -155,7 +155,7 @@ export function AccountingConnections() {
                       onClick={() => handleImport(row.key)}
                     >
                       {busy === `${row.key}-import` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                      Importér kunder
+                      {tx("Importér kunder", "Import customers")}
                     </Button>
                     <Button
                       size="sm"
@@ -163,7 +163,7 @@ export function AccountingConnections() {
                       disabled={busy === row.key}
                       onClick={() => handleDisconnect(row.key)}
                     >
-                      {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Afbryd'}
+                      {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t3("Afbryd", "Disconnect", "Trennen")}
                     </Button>
                   </>
                 ) : (

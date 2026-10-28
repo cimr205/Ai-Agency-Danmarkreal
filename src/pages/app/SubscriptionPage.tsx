@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
-import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 const FEATURES = [
   tx("Ubegrænsede leads & deals", "Unlimited leads & deals"),
@@ -105,11 +105,11 @@ export default function SubscriptionPage() {
             ) : (
               <Button onClick={handleSubscribe} disabled={isLoading}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Start 14-dages gratis prøveperiode
+                {tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}
               </Button>
             )}
             <Button variant="ghost" onClick={checkSubscription} disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Opdater status'}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t3("Opdater status", "Refresh status", "Status aktualisieren")}
             </Button>
           </div>
         </CardContent>

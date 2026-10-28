@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Database, Mail, Users, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 function useSystemMetrics() {
   return useQuery({
@@ -44,10 +44,10 @@ export default function MonitoringPage() {
   const { t } = useI18n();
 
   const cards = [
-    { title: 'Aktive brugere', value: metrics?.totalUsers ?? '-', icon: Users, color: 'text-primary' },
-    { title: 'Total leads', value: metrics?.totalLeads ?? '-', icon: Database, color: 'text-success' },
-    { title: 'Aktiviteter (24t)', value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-chart-cyan' },
-    { title: 'Emails sendt (24t)', value: metrics?.emailsSent24h ?? '-', icon: Mail, color: 'text-primary' },
+    { title: t3("Aktive brugere", "Active users", "Aktive Nutzer"), value: metrics?.totalUsers ?? '-', icon: Users, color: 'text-primary' },
+    { title: t3("Leads i alt", "Total leads", "Leads gesamt"), value: metrics?.totalLeads ?? '-', icon: Database, color: 'text-success' },
+    { title: t3("Aktiviteter (24t)", "Activities (24h)", "Aktivitäten (24 Std.)"), value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-chart-cyan' },
+    { title: t3("Emails sendt (24t)", "Emails sent (24h)", "E-Mails gesendet (24 Std.)"), value: metrics?.emailsSent24h ?? '-', icon: Mail, color: 'text-primary' },
   ];
 
   return (
@@ -90,14 +90,14 @@ export default function MonitoringPage() {
               <CheckCircle className="w-4 h-4 text-success" />
               <div>
                 <p className="text-sm font-medium">{metrics?.emailsSent24h ?? 0} sendt</p>
-                <p className="text-xs text-muted-foreground">Sidste 24 timer</p>
+                <p className="text-xs text-muted-foreground">{t3("Sidste 24 timer", "Last 24 hours", "Letzte 24 Stunden")}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-destructive" />
               <div>
                 <p className="text-sm font-medium">{metrics?.emailsFailed24h ?? 0} fejlet</p>
-                <p className="text-xs text-muted-foreground">Sidste 24 timer</p>
+                <p className="text-xs text-muted-foreground">{t3("Sidste 24 timer", "Last 24 hours", "Letzte 24 Stunden")}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

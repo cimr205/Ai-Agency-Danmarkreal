@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useWorkflows } from "@/hooks/api/useWorkflows";
 import { invokeFunction } from "@/lib/functions";
 import { showError } from "@/lib/showError";
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type StepKind = "trigger" | "filter" | "ai" | "action";
 
@@ -116,7 +116,7 @@ export default function WorkflowStudioPage() {
         </div>
       </header>
 
-      {isLoading && <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Henter workflows…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />{t3("Henter workflows…", "Loading workflows…", "Workflows werden geladen…")}</div>}
       {!isLoading && workflows.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/50 p-10 text-center text-muted-foreground">
           {tx("Ingen workflows endnu. Opret ét under Indstillinger → Webhooks for at se det her.", "No workflows yet. Create one under Settings → Webhooks to see it here.")}
