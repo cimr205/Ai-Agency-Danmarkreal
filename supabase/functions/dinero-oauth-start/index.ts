@@ -1,6 +1,7 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
+import { sanitizeAppReturnUrl } from "../_shared/appReturnUrl.ts";
 
 const DINERO_AUTHORIZE_URL = "https://connect.visma.com/connect/authorize";
 const DINERO_SCOPES = "dineropublicapi:read dineropublicapi:write offline_access";
@@ -26,8 +27,13 @@ Deno.serve(withSentry("dinero-oauth-start", async (req) => {
     const clientId = Deno.env.get("DINERO_CLIENT_ID");
     if (!clientId) throw new Error("DINERO_CLIENT_ID not configured");
 
-    const { redirect_uri, return_url } = await req.json().catch(() => ({}));
-    const REDIRECT_URI = redirect_uri || `${Deno.env.get("SUPABASE_URL")}/functions/v1/dinero-oauth-callback`;
+    // Both values are client-supplied. The provider redirect is pinned to our
+    // own callback (a caller-chosen redirect_uri would send the grant to an
+    // arbitrary host), and return_url goes through the same allow-list the
+    // Gmail flow uses so the callback can't be turned into an open redirect.
+    const body = await req.json().catch(() => ({}));
+    const return_url = sanitizeAppReturnUrl(body?.return_url);
+    const REDIRECT_URI = `${Deno.env.get("SUPABASE_URL")}/functions/v1/dinero-oauth-callback`;
 
     // PKCE
     const codeVerifier = base64url(crypto.getRandomValues(new Uint8Array(32)));

@@ -1,6 +1,7 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { requireCompanyAuth } from "../_shared/auth.ts";
+import { sanitizeAppReturnUrl } from "../_shared/appReturnUrl.ts";
 
 const ECONOMIC_REQUEST_ACCESS_URL = "https://secure.e-conomic.com/secure/api1/requestaccess.aspx";
 
@@ -15,8 +16,13 @@ Deno.serve(withSentry("economic-oauth-start", async (req) => {
     const appPublicToken = Deno.env.get("ECONOMIC_APP_PUBLIC_TOKEN");
     if (!appPublicToken) throw new Error("ECONOMIC_APP_PUBLIC_TOKEN not configured");
 
-    const { redirect_uri, return_url } = await req.json().catch(() => ({}));
-    const REDIRECT_URI = redirect_uri || `${Deno.env.get("SUPABASE_URL")}/functions/v1/economic-oauth-callback`;
+    // Both values are client-supplied. The provider redirect is pinned to our
+    // own callback (a caller-chosen redirect_uri would send the grant to an
+    // arbitrary host), and return_url goes through the same allow-list the
+    // Gmail flow uses so the callback can't be turned into an open redirect.
+    const body = await req.json().catch(() => ({}));
+    const return_url = sanitizeAppReturnUrl(body?.return_url);
+    const REDIRECT_URI = `${Deno.env.get("SUPABASE_URL")}/functions/v1/economic-oauth-callback`;
 
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const { data: stateRow, error: stateErr } = await supabase
