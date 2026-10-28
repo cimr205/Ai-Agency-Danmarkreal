@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 
 /**
  * AI-assisted lead actions. These drive the deployed `ai-operating-manager`
@@ -27,7 +27,7 @@ export interface ProposedAction {
 export function useProposeFollowup() {
   return useMutation({
     mutationFn: async (input: { leadId: string; title: string; dueDate: string; priority?: string }): Promise<ProposedAction> => {
-      const { data, error } = await supabase.functions.invoke('ai-operating-manager', {
+      const data = await invokeFunction<{ error?: string; action: ProposedAction }>('ai-operating-manager', {
         body: {
           operation: 'propose',
           actionName: 'tasks.create',
@@ -38,9 +38,8 @@ export function useProposeFollowup() {
           idempotencyKey: `lead-followup:${input.leadId}:${input.title}`.slice(0, 180),
         },
       });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return (data as { action: ProposedAction }).action;
+      if (data?.error) throw new Error(data.error);
+      return data.action;
     },
   });
 }
@@ -50,12 +49,11 @@ export function useReviewAction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ actionId, operation }: { actionId: string; operation: 'approve' | 'reject' }) => {
-      const { data, error } = await supabase.functions.invoke('ai-operating-manager', {
+      const data = await invokeFunction<{ error?: string; action?: ProposedAction; result?: Record<string, unknown>; idempotentReplay?: boolean; status?: string }>('ai-operating-manager', {
         body: { operation, actionId },
       });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return data as { action?: ProposedAction; result?: Record<string, unknown>; idempotentReplay?: boolean; status?: string };
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] });

@@ -1,9 +1,8 @@
 import { lazy, Suspense, useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clapperboard, Wand2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 
 // Lazy per-tab: the video editor and the AI generator are each substantial
 // (canvas/video-processing deps) — bundling both into StudioPage directly
@@ -42,37 +41,34 @@ export default function StudioPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.marketing') || 'Marketing'}
         title={t('nav.studio') || 'Studio'}
         description={t('studio.pageDescription') || 'Edit and generate video and image content without leaving the platform.'}
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as StudioTab)}>
-        <TabsList>
-          <TabsTrigger value="editor" className="gap-1.5">
-            <Clapperboard className="h-3.5 w-3.5" />
-            {t('studio.editorTab') || 'Editor'}
-          </TabsTrigger>
-          <TabsTrigger value="generate" className="gap-1.5">
-            <Wand2 className="h-3.5 w-3.5" />
-            {t('studio.generateTab') || 'AI Generate'}
-          </TabsTrigger>
-        </TabsList>
+      <SegmentedControl<StudioTab>
+        layoutId="studioTabPill"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'editor', label: t('studio.editorTab') || 'Editor' },
+          { value: 'generate', label: t('studio.generateTab') || 'AI Generate' },
+        ]}
+      />
 
-        <TabsContent value="editor" className="mt-6">
+      <div className="mt-6">
+        {tab === 'editor' ? (
           <Suspense fallback={TAB_LOADER}>
             <VideoStudioPage showHeader={false} onEditorOpenChange={setEditorOpen} />
           </Suspense>
-        </TabsContent>
-
-        <TabsContent value="generate" className="mt-6">
+        ) : (
           <Suspense fallback={TAB_LOADER}>
             <AiMediaPage showHeader={false} />
           </Suspense>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }

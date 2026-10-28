@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/lib/i18n";
 import type { Tables } from "@/integrations/supabase/types";
 import { getErrorMessage } from '@/lib/errors';
+import { showError } from '@/lib/showError';
 
 type WebhookRow = Tables<'webhooks'>;
 
@@ -77,7 +78,7 @@ export default function WebhooksPage() {
       if (status === "success") toast.success(t("webhooks.testSuccess"));
       else toast.error(t("webhooks.testFailed"));
     } catch (e) {
-      toast.error(t("webhooks.testFailedPrefix") + ": " + (getErrorMessage(e) || String(e)));
+      showError(e, { module: "webhook-dispatch" });
     }
   };
 

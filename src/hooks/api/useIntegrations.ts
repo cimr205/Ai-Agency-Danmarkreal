@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -36,13 +38,12 @@ export function useConnectGmail() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("gmail-auth");
-      if (error) throw error;
-      const url = (data as { auth_url?: string } | null)?.auth_url;
+      const data = await invokeFunction<{ auth_url?: string }>("gmail-auth");
+      const url = data?.auth_url;
       if (!url) throw new Error("Ingen auth URL");
       window.location.href = url;
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke starte Gmail-flow"),
+    onError: (e) => showError(e, { module: "gmail-auth" }),
     onSettled: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 }
@@ -166,20 +167,9 @@ export function useTestConnection() {
 // function — the platform API key never reaches the browser.
 
 async function callComposioIntegration<T = unknown>(action: string, body: Record<string, unknown> = {}): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("composio-integration", { body: { action, ...body } });
-  if (error) {
-    const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
-    let message = error.message;
-    try {
-      const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
-      if (parsed?.error) message = parsed.error;
-    } catch {
-      // ignore, fall back to error.message
-    }
-    throw new Error(message);
-  }
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+  const data = await invokeFunction<T & { error?: string }>("composio-integration", { body: { action, ...body } });
+  if (data && typeof data === "object" && "error" in data && data.error) throw new Error(data.error);
+  return data;
 }
 
 export interface ComposioToolkit {
@@ -206,7 +196,7 @@ export function useCreateComposioConnection() {
   return useMutation({
     mutationFn: (toolkit: string) =>
       callComposioIntegration<{ redirectUrl: string; connectionId: string }>("create-connection", { toolkit }),
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke starte forbindelse"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -227,7 +217,7 @@ export function useDisconnectComposioConnection() {
       qc.invalidateQueries({ queryKey: ["integrations"] });
       toast.success("Forbindelse afbrudt");
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke afbryde forbindelsen"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -299,7 +289,7 @@ export function useSyncCrmContacts() {
       qc.invalidateQueries({ queryKey: ["integrations"] });
       if (res.imported > 0) toast.success(`${res.imported} nye leads importeret fra ${res.provider}`);
     },
-    onError: (e: Error) => toast.error(e?.message ?? "CRM-synkronisering fejlede"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -316,6 +306,6 @@ export function useSyncFinancePayments() {
       qc.invalidateQueries({ queryKey: ["integrations"] });
       if (res.matched > 0) toast.success(`${res.matched} betaling(er) matchet og markeret betalt`);
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Betalings-synkronisering fejlede"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }

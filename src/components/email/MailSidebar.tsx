@@ -40,12 +40,12 @@ export function MailSidebar({ activeFolder, onSelectFolder, counts, customFolder
   };
 
   return (
-    <div className="flex h-full w-full flex-col gap-1 overflow-y-auto p-3">
+    <div className="flex h-full w-full flex-col gap-1 overflow-y-auto bg-workspace-panel p-3">
       <div className="flex items-center gap-2 px-2 pb-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-workspace-accent text-white">
           <Mail className="h-4 w-4" />
         </div>
-        <span className="text-sm font-semibold text-foreground">{t('pages.email.smartInbox')}</span>
+        <span className="text-sm font-semibold text-workspace-ink-on-dark">{t('pages.email.smartInbox')}</span>
       </div>
 
       {items.map(({ id, label, icon: Icon, count }) => (
@@ -53,32 +53,32 @@ export function MailSidebar({ activeFolder, onSelectFolder, counts, customFolder
           key={id}
           onClick={() => onSelectFolder(id)}
           className={cn(
-            'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors text-left',
-            activeFolder === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            'flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors text-left',
+            activeFolder === id ? 'bg-workspace-panel-row text-workspace-ink-on-dark font-medium' : 'text-workspace-label-on-dark hover:bg-workspace-panel-row'
           )}
         >
           <Icon className="h-4 w-4 shrink-0" />
           <span className="flex-1 truncate">{label}</span>
-          {!!count && <span className={cn('rounded-full px-1.5 py-0.5 text-xs font-medium', activeFolder === id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{count}</span>}
+          {!!count && <span className={cn('rounded-full px-1.5 py-0.5 text-xs font-medium', activeFolder === id ? 'bg-workspace-accent text-white' : 'bg-white/10 text-workspace-label-on-dark')}>{count}</span>}
         </button>
       ))}
 
       <button
         onClick={() => onSelectFolder('starred')}
         className={cn(
-          'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors text-left',
-          activeFolder === 'starred' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+          'flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors text-left',
+          activeFolder === 'starred' ? 'bg-workspace-panel-row text-workspace-ink-on-dark font-medium' : 'text-workspace-label-on-dark hover:bg-workspace-panel-row'
         )}
       >
         <Star className="h-4 w-4 shrink-0" />
         <span className="flex-1 truncate">{t('pages.email.starred')}</span>
-        {!!counts.starred && <span className={cn('rounded-full px-1.5 py-0.5 text-xs font-medium', activeFolder === 'starred' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{counts.starred}</span>}
+        {!!counts.starred && <span className={cn('rounded-full px-1.5 py-0.5 text-xs font-medium', activeFolder === 'starred' ? 'bg-workspace-accent text-white' : 'bg-white/10 text-workspace-label-on-dark')}>{counts.starred}</span>}
       </button>
 
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground/50">
+            <div className="flex cursor-not-allowed items-center gap-2.5 rounded-full px-3 py-2 text-sm text-workspace-muted-on-dark">
               <FileText className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate">{t('pages.email.drafts')}</span>
             </div>
@@ -87,7 +87,7 @@ export function MailSidebar({ activeFolder, onSelectFolder, counts, customFolder
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground/50">
+            <div className="flex cursor-not-allowed items-center gap-2.5 rounded-full px-3 py-2 text-sm text-workspace-muted-on-dark">
               <Trash2 className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate">{t('pages.email.deleted')}</span>
             </div>
@@ -97,30 +97,30 @@ export function MailSidebar({ activeFolder, onSelectFolder, counts, customFolder
       </TooltipProvider>
 
       <div className="mt-4 flex items-center justify-between px-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('pages.email.folders')}</span>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAddOpen(true)} aria-label={t('pages.email.addFolder')}>
+        <span className="text-xs font-semibold uppercase tracking-wide text-workspace-muted-on-dark">{t('pages.email.folders')}</span>
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-workspace-label-on-dark hover:bg-workspace-panel-row hover:text-workspace-ink-on-dark" onClick={() => setAddOpen(true)} aria-label={t('pages.email.addFolder')}>
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
 
       {customFolders.length === 0 ? (
-        <p className="px-3 py-2 text-xs text-muted-foreground">{t('pages.email.noFoldersYet')}</p>
+        <p className="px-3 py-2 text-xs text-workspace-muted-on-dark">{t('pages.email.noFoldersYet')}</p>
       ) : (
         customFolders.map((folder) => (
           <div
             key={folder.id}
             className={cn(
-              'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-              activeFolder === `custom:${folder.id}` ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+              'group flex items-center gap-2.5 rounded-full px-3 py-2 text-sm transition-colors',
+              activeFolder === `custom:${folder.id}` ? 'bg-workspace-panel-row text-workspace-ink-on-dark font-medium' : 'text-workspace-label-on-dark hover:bg-workspace-panel-row'
             )}
           >
             <button onClick={() => onSelectFolder(`custom:${folder.id}`)} className="flex flex-1 items-center gap-2.5 truncate text-left">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-primary/60" />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-workspace-accent" />
               <span className="truncate">{folder.name}</span>
             </button>
             <button
               onClick={() => onRemoveFolder(folder.id)}
-              className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+              className="shrink-0 opacity-0 group-hover:opacity-100 text-workspace-muted-on-dark hover:text-workspace-outcome-negative"
               aria-label={t('pages.email.deleteFolder')}
             >
               <X className="h-3.5 w-3.5" />
@@ -129,7 +129,7 @@ export function MailSidebar({ activeFolder, onSelectFolder, counts, customFolder
         ))
       )}
 
-      <button onClick={() => setAddOpen(true)} className="mt-1 flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground text-left">
+      <button onClick={() => setAddOpen(true)} className="mt-1 flex items-center gap-2.5 rounded-full px-3 py-2 text-sm text-workspace-label-on-dark hover:bg-workspace-panel-row hover:text-workspace-ink-on-dark text-left">
         <Plus className="h-4 w-4 shrink-0" />
         <span>{t('pages.email.addFolder')}</span>
       </button>

@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, AlertTriangle, CheckCircle, RefreshCw, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage, getFunctionErrorMessage } from '@/lib/errors';
 
 interface DealCoachAnalysis {
   win_probability: number;
@@ -30,14 +29,13 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
   const analyze = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('deal-coach', {
+      const data = await invokeFunction<DealCoachAnalysis & { error?: string }>('deal-coach', {
         body: { deal_id: dealId },
       });
-      if (error) throw new Error(await getFunctionErrorMessage(error));
       if (data?.error) throw new Error(data.error);
       setAnalysis(data);
     } catch (e) {
-      toast.error((getErrorMessage(e) || t('dealCoach.analyzeError')));
+      showError(e, { module: 'deal-coach' });
     } finally {
       setLoading(false);
     }

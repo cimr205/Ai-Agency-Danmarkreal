@@ -12,6 +12,7 @@ import { Search, Building2, ArrowUpRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CvrLookupField } from "@/components/shared/CvrLookupField";
 import { isValidEmail, isValidPhone, MAX_NAME_LENGTH } from "@/lib/validation";
+import { WorkspaceFrame, WorkspaceSurface } from "@/components/workspace/WorkspacePanel";
 
 export default function ClientsListPage() {
   const { t } = useI18n();
@@ -95,7 +96,7 @@ export default function ClientsListPage() {
   );
 
   return (
-    <div className="space-y-10">
+    <div className="workspace-theme space-y-10">
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -115,43 +116,47 @@ export default function ClientsListPage() {
         </div>
       </header>
 
-      <ul className="divide-y divide-border/50 border-y border-border/50">
-        {isLoading && Array.from({ length: 6 }).map((_, i) => (
-          <li key={i} className="py-4"><Skeleton className="h-6 w-full" /></li>
-        ))}
-        {!isLoading && list.length === 0 && (
-          <li className="py-16 flex flex-col items-center justify-center gap-3 text-center">
-            <div className="h-11 w-11 rounded-full bg-foreground/[0.04] border border-border/50 grid place-items-center">
-              <Building2 className="h-5 w-5 text-muted-foreground/60" />
-            </div>
-            <p className="text-[13px] text-muted-foreground">{t('clients.empty')}</p>
-            {createDialog}
-          </li>
-        )}
-        {list.map(c => {
-          const initials = c.name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
-          return (
-            <li key={c.id}>
-              <Link
-                to={`${base}/clients/${c.id}`}
-                className="group py-4 flex items-center gap-4 hover:bg-foreground/[0.02] -mx-4 px-4 rounded-md transition-colors"
-              >
-                <div className="h-9 w-9 rounded-md bg-foreground/[0.04] border border-border/50 grid place-items-center text-[12px] font-display text-foreground/80">
-                  {initials || <Building2 className="h-4 w-4" />}
+      <WorkspaceFrame>
+        <WorkspaceSurface className="rounded-[22px] p-2">
+          <ul className="divide-y divide-workspace-surface-line">
+            {isLoading && Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="px-3 py-4"><Skeleton className="h-6 w-full" /></li>
+            ))}
+            {!isLoading && list.length === 0 && (
+              <li className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+                <div className="h-11 w-11 rounded-full bg-black/5 grid place-items-center">
+                  <Building2 className="h-5 w-5 text-workspace-surface-label" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] text-foreground/90 truncate">{c.name}</div>
-                  <div className="text-[11.5px] text-muted-foreground/70 truncate">{c.email}</div>
-                </div>
-                <span className="text-[10.5px] font-mono text-muted-foreground/50 hidden sm:block">
-                  {new Date(c.created_at).toLocaleDateString("da-DK", { month: "short", year: "numeric" })}
-                </span>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-foreground transition-colors" />
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                <p className="text-[13px] text-workspace-surface-label">{t('clients.empty')}</p>
+                {createDialog}
+              </li>
+            )}
+            {list.map(c => {
+              const initials = c.name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+              return (
+                <li key={c.id}>
+                  <Link
+                    to={`${base}/clients/${c.id}`}
+                    className="group flex items-center gap-4 rounded-xl px-3 py-3 transition-colors hover:bg-black/[0.03]"
+                  >
+                    <div className="h-9 w-9 shrink-0 rounded-xl bg-workspace-accent/10 grid place-items-center text-[12px] font-semibold text-workspace-accent">
+                      {initials || <Building2 className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13.5px] text-workspace-ink truncate">{c.name}</div>
+                      <div className="text-[11.5px] text-workspace-surface-label truncate">{c.email}</div>
+                    </div>
+                    <span className="text-[10.5px] font-mono text-workspace-surface-label hidden sm:block">
+                      {new Date(c.created_at).toLocaleDateString("da-DK", { month: "short", year: "numeric" })}
+                    </span>
+                    <ArrowUpRight className="h-4 w-4 text-workspace-surface-label group-hover:text-workspace-ink transition-colors" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </WorkspaceSurface>
+      </WorkspaceFrame>
     </div>
   );
 }

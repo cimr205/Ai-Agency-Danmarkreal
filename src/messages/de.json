@@ -346,7 +346,6 @@
     "expandSidebar": "Seitenleiste ausklappen",
     "openMenu": "Menü öffnen",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow-Chat",
     "workspaceNavigation": "Workspace-Navigation",
     "controlRoom": "Kontrollraum",
@@ -1897,6 +1896,15 @@
     "queue": {
       "title": "Lead-Warteschlange"
     },
+    "views": {
+      "queue": "Warteschlange",
+      "history": "Verlauf",
+      "setup": "Einrichtung"
+    },
+    "status": {
+      "connected": "Telefon bereit",
+      "disconnected": "Telefon nicht verbunden"
+    },
     "outcomes": {
       "noAnswer": "Keine Antwort",
       "callback": "Rückruf",
@@ -2998,6 +3006,106 @@
       "messaged": "Nachricht gesendet",
       "replied": "Geantwortet",
       "skipped": "Übersprungen"
+    }
+  },
+  "errors": {
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "actionFallback": "Die Aktion"
+    },
+    "functionAreas": {
+      "accounting": "Buchhaltungsintegration",
+      "aiActions": "KI-Assistent",
+      "aiAnalyze": "KI-Analyse",
+      "aiEmailWriter": "KI-E-Mail-Assistent",
+      "aiGenerate": "KI-Erstellung",
+      "aiHealth": "KI-Verbindung",
+      "aiOperatingManager": "KI-Betriebsleiter",
+      "autopilot": "Autopilot",
+      "callScript": "Anrufskript",
+      "chat": "KI-Chat",
+      "companiesHouse": "Companies-House-Abfrage",
+      "csvImport": "CSV-Import",
+      "customerPortal": "Kundenportal",
+      "cvrSearch": "CVR-Abfrage",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero-Verbindung",
+      "dineroSync": "Dinero-Synchronisierung",
+      "economic": "e-conomic-Verbindung",
+      "economicSync": "e-conomic-Synchronisierung",
+      "emailCampaigns": "E-Mail-Kampagnen",
+      "emailProvider": "E-Mail-Anbieter",
+      "emailQueue": "E-Mail-Warteschlange",
+      "emailTrack": "E-Mail-Tracking",
+      "emailVerify": "E-Mail-Verifizierung",
+      "gmail": "Gmail-Verbindung",
+      "gmailSync": "Gmail-Synchronisierung",
+      "icpScore": "ICP-Bewertung",
+      "integrations": "Integrationen",
+      "invoicePayment": "Rechnungszahlung",
+      "leadGen": "Lead-Generierung",
+      "leadRecommend": "Lead-Empfehlungen",
+      "linkedinOutreach": "LinkedIn-Outreach",
+      "mcpServer": "MCP-Server",
+      "meetingSummary": "Besprechungszusammenfassung",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta-Ads-Synchronisierung",
+      "payment": "Zahlung",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Abonnement",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow-Assistent",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "die gesendeten Angaben waren ungültig.",
+        "what": "Prüfen Sie die Felder und versuchen Sie es erneut."
+      },
+      "unauthorized": {
+        "why": "Ihre Sitzung ist abgelaufen.",
+        "what": "Melden Sie sich erneut an."
+      },
+      "forbidden": {
+        "why": "Sie haben keinen Zugriff darauf.",
+        "what": "Wenden Sie sich an einen Administrator, falls das nicht stimmt."
+      },
+      "notFound": {
+        "why": "es konnte nicht gefunden werden.",
+        "what": "Prüfen Sie, ob es noch existiert."
+      },
+      "conflict": {
+        "why": "es steht im Konflikt mit etwas, das bereits läuft.",
+        "what": "Aktualisieren Sie die Seite und versuchen Sie es erneut."
+      },
+      "rateLimited": {
+        "why": "es gibt gerade zu viele Anfragen.",
+        "what": "Warten Sie einen Moment und versuchen Sie es erneut."
+      },
+      "serverError": {
+        "why": "bei uns oder einem verbundenen Dienst ist etwas schiefgelaufen.",
+        "what": "Versuchen Sie es gleich noch einmal."
+      },
+      "network": {
+        "why": "die Verbindung ist fehlgeschlagen oder der Dienst antwortet nicht.",
+        "what": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+      },
+      "unknown": {
+        "why": "es ist ein unerwarteter Fehler aufgetreten.",
+        "what": "Versuchen Sie es erneut und kontaktieren Sie den Support, falls es weiterhin auftritt."
+      }
+    },
+    "details": {
+      "show": "Details anzeigen",
+      "hide": "Details ausblenden",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "function": "Funktion",
+      "status": "Status",
+      "time": "Zeitpunkt",
+      "requestId": "Anfrage-ID"
     }
   }
 }

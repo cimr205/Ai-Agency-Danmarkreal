@@ -7,12 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Clock, LogIn, LogOut, UserCheck } from 'lucide-react';
+import { Search, Clock, LogIn, LogOut } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { da, de, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 const DATE_LOCALES = { da, de, en: enUS } as const;
 
@@ -50,7 +52,7 @@ export default function AttendancePage() {
   const checkedOut = filteredAttendance.filter(r => r.check_out).length;
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-foreground">{t('hr.attendanceTitle')}</h1><p className="text-muted-foreground">{format(new Date(), "EEEE, d. MMMM yyyy", { locale: dateFnsLocale })}</p></div>
       </div>
@@ -77,11 +79,15 @@ export default function AttendancePage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><UserCheck className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.presentNow')}</p><p className="text-2xl font-bold text-success">{presentToday}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><LogOut className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.checkedOut')}</p><p className="text-2xl font-bold">{checkedOut}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Clock className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.totalRecords')}</p><p className="text-2xl font-bold">{records.length}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <WorkspaceTile label={t('hr.presentNow')} value={presentToday} active />
+            <WorkspaceTile label={t('hr.checkedOut')} value={checkedOut} />
+            <WorkspaceTile label={t('hr.totalRecords')} value={records.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchEmployeePlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 
 // useUpdateLead lives in useLeads.ts — it's the canonical version (repointed
 // to the unified customers table). Re-exported here so existing importers
@@ -19,12 +19,11 @@ export type LeadAiSummary = {
 export function useLeadAiRecommendation() {
   return useMutation({
     mutationFn: async (leadId: string) => {
-      const { data, error } = await supabase.functions.invoke('lead-ai-recommend', {
+      const data = await invokeFunction<LeadAiSummary & { error?: string }>('lead-ai-recommend', {
         body: { lead_id: leadId },
       });
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
-      return data as LeadAiSummary;
+      return data;
     },
   });
 }

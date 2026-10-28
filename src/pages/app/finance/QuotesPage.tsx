@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLeads } from '@/hooks/api/useLeads';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 import type { Json } from '@/integrations/supabase/types';
 
 type QuoteLine = { description: string; quantity: number; unit_price: number };
@@ -124,7 +126,7 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('quotes.title')}</h1>
@@ -187,12 +189,16 @@ export default function QuotesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.length}</div><p className="text-xs text-muted-foreground">{t('quotes.totalQuotes')}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-primary">{formatCurrency(filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0))}</div><p className="text-xs text-muted-foreground">{t('quotes.totalValue')}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-success">{filteredQuotes.filter(q => q.status === 'accepted').length}</div><p className="text-xs text-muted-foreground">{t('quotes.accepted')}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="text-2xl font-bold">{filteredQuotes.filter(q => q.status === 'sent').length}</div><p className="text-xs text-muted-foreground">{t('quotes.pending')}</p></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <WorkspaceTile label={t('quotes.totalQuotes')} value={filteredQuotes.length} active />
+            <WorkspaceTile label={t('quotes.totalValue')} value={formatCurrency(filteredQuotes.reduce((s, q) => s + Number(q.total || 0), 0))} />
+            <WorkspaceTile label={t('quotes.accepted')} value={filteredQuotes.filter(q => q.status === 'accepted').length} />
+            <WorkspaceTile label={t('quotes.pending')} value={filteredQuotes.filter(q => q.status === 'sent').length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Search */}
       <div className="relative max-w-sm">

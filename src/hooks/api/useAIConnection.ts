@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { explainError } from "@/lib/errors";
 
 // AI runs on one shared, self-hosted Ollama instance (approved stack:
 // Ollama/llama.cpp only — no OpenAI, no Groq, no other hosted LLM API).
@@ -16,19 +17,12 @@ export function useAIStatus() {
   return useQuery({
     queryKey: ["ai-status"],
     queryFn: async (): Promise<AIStatus> => {
-      const { data, error } = await supabase.functions.invoke("ai-health", { body: {} });
-      if (error) {
-        const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
-        let message = error.message;
-        try {
-          const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
-          if (parsed?.error) message = parsed.error;
-        } catch {
-          // ignore, fall back to error.message
-        }
-        return { online: false, detail: message };
+      try {
+        const data = await invokeFunction<{ model?: string } | null>("ai-health", { body: {} });
+        return { online: true, detail: data?.model ?? "Ollama" };
+      } catch (error) {
+        return { online: false, detail: explainError(error, { action: "check the AI connection" }).message };
       }
-      return { online: true, detail: (data as { model?: string } | null)?.model ?? "Ollama" };
     },
     staleTime: 60_000,
   });

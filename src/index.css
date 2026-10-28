@@ -357,3 +357,63 @@
   --cal-grid-line: #ECECEF;
   --cal-hour-label: #6B6B70;
 }
+
+/* Workspace design language — the app's own identity (emerald + terracotta,
+   soft glass surfaces), independent of both the calendar's fixed palette
+   above and the app's default light/dark theme. Deliberately its own token
+   set rather than aliases: the calendar stays exactly as designed, and this
+   can evolve without touching it. */
+:root {
+  --workspace-frame: linear-gradient(135deg, rgba(22,129,90,0.10) 0%, rgba(224,122,63,0.10) 100%), #F3F8F4;
+  --workspace-frame-border: rgba(16,35,26,0.07);
+  --workspace-panel: linear-gradient(165deg, #0F2219 0%, #0A1612 100%);
+  --workspace-panel-row: rgba(255,255,255,0.09);
+  --workspace-panel-row-active: rgba(224,122,63,0.22);
+  --workspace-ink-on-dark: #F3FAF6;
+  --workspace-label-on-dark: #A9CBB7;
+  --workspace-muted-on-dark: #5E7A6B;
+  --workspace-gradient: linear-gradient(135deg, #EAF7EF 0%, #F6FAF3 45%, #FDEFE0 100%);
+  --workspace-accent: #16815A;
+  --workspace-accent-2: #DD7A3C;
+  --workspace-today: #DD7A3C;
+  --workspace-ink: #11231A;
+  --workspace-tile-active: rgba(255,255,255,0.78);
+  --workspace-tile-inactive: rgba(255,255,255,0.42);
+  --workspace-surface: #FFFFFF;
+  --workspace-surface-line: #E8EEE9;
+  --workspace-surface-label: #6E8277;
+  --workspace-glass-border: rgba(16,35,26,0.07);
+  --workspace-outcome-answered: #16815A;
+  --workspace-outcome-none: #9AA39C;
+  --workspace-outcome-callback: #DD7A3C;
+  --workspace-outcome-negative: #BF4B3F;
+}
+
+/* Scoped shadcn-token override: any default shadcn primitive (Button, Badge,
+   Input focus ring, …) rendered inside a workspace-redesigned page should
+   pick up the emerald/terracotta identity instead of the app's default blue
+   "template" theme — without touching that default theme for Home/Control
+   room or any other un-redesigned screen. Declared once, undoes itself
+   naturally outside `.workspace-theme` since CSS custom properties resolve
+   to the nearest ancestor that sets them. */
+.workspace-theme {
+  --background: 140 20% 97%;
+  --foreground: 155 35% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 155 35% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 155 35% 11%;
+  --primary: 160 68% 29%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 140 22% 94%;
+  --secondary-foreground: 155 35% 14%;
+  --muted: 140 18% 94%;
+  --muted-foreground: 155 14% 42%;
+  --accent: 24 68% 56%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 58% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 150 15% 89%;
+  --input: 150 15% 89%;
+  --ring: 160 68% 29%;
+}

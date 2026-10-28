@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 import type { Tables, Json, Enums, Database } from '@/integrations/supabase/types';
 
 export type Customer = Tables<'customers'>;
@@ -216,8 +217,7 @@ export function useDeleteInvoice() {
 export function useCreateInvoiceCheckout() {
   return useMutation({
     mutationFn: async (invoiceId: string) => {
-      const { data, error } = await supabase.functions.invoke('create-invoice-checkout', { body: { invoice_id: invoiceId } });
-      if (error) throw error;
+      const data = await invokeFunction<{ checkout_url?: string; expires_at: string; error?: string }>('create-invoice-checkout', { body: { invoice_id: invoiceId } });
       if (!data?.checkout_url) throw new Error(data?.error || 'Checkout URL was not created');
       return data as { checkout_url: string; expires_at: string };
     },

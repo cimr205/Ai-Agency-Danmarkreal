@@ -31,7 +31,9 @@ import { CsvImportWizard } from '@/components/import/CsvImportWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import type { Tables, Enums } from '@/integrations/supabase/types';
-import { getErrorMessage } from '@/lib/errors';
+import { AppError, invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -438,13 +440,14 @@ export default function LeadsPage() {
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 60000);
-          const { data: verifyData } = await supabase.functions.invoke('verify-emails', {
+          const verifyData = await invokeFunction<{ results?: { valid: boolean; email: string }[] }>('verify-emails', {
             body: { emails: allEmails },
+            signal: controller.signal,
           });
           clearTimeout(timeout);
           if (verifyData?.results) {
             validEmails = new Set(
-              (verifyData.results as { valid: boolean; email: string }[]).filter((r) => r.valid).map((r) => r.email)
+              verifyData.results.filter((r) => r.valid).map((r) => r.email)
             );
             const invalidCount = allEmails.length - validEmails.size;
             if (invalidCount > 0) {
@@ -454,6 +457,8 @@ export default function LeadsPage() {
         } catch (verifyErr) {
           if (verifyErr instanceof Error && verifyErr.name === 'AbortError') {
             toast.warning('Email-verificering tog for lang tid — fortsætter uden', { duration: 3000 });
+          } else if (verifyErr instanceof AppError && verifyErr.kind === 'network') {
+            toast.warning('Email-verificering kunne ikke nås — fortsætter uden', { duration: 3000 });
           }
           console.warn('Email verification fejlede, fortsætter uden:', verifyErr);
         }
@@ -471,20 +476,18 @@ export default function LeadsPage() {
 
       setAutoImportProgress(`Importerer ${filteredRows.length} leads med AI-klassificering...`);
 
-      const { data, error } = await supabase.functions.invoke('csv-import-leads', {
+      const result = await invokeFunction<{ error?: string; imported: number; duplicates: number; ai_classified: boolean }>('csv-import-leads', {
         body: { rows: filteredRows, mapping: autoMap, useAi: true },
       });
 
-      if (error || data?.error) throw new Error(data?.error || error?.message);
-
-      const result = data;
+      if (result?.error) throw new Error(result.error);
       const removedCount = rows.length - filteredRows.length;
       toast.success(
         `✅ ${result.imported} leads importeret${removedCount > 0 ? ` · ${removedCount} ugyldige emails fjernet` : ''}${result.duplicates > 0 ? ` · ${result.duplicates} dubletter` : ''}${result.ai_classified ? ' · AI-klassificeret' : ''}`,
         { duration: 5000 }
       );
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Auto-import fejlede');
+      showError(err, { module: 'csv-import-leads' });
     } finally {
       setAutoImporting(false);
       setAutoImportProgress('');
@@ -525,7 +528,7 @@ export default function LeadsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="workspace-theme text-center py-12">
         <p className="text-destructive">{t('common.error')}: {error.message}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
       </div>
@@ -534,7 +537,7 @@ export default function LeadsPage() {
 
   return (
     <div
-      className="relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
+      className="workspace-theme relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(22,129,90,0.16),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(221,122,60,0.14),transparent_25%),linear-gradient(135deg,#f3faf5_0%,#f6faf2_52%,#fdf3e8_100%)] p-4 text-workspace-ink before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-emerald-400/10 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-orange-300/15 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -557,22 +560,30 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Lead cockpit — same visual language as the dashboard hero */}
-      <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl">
-        <div className="grid lg:grid-cols-[minmax(0,1.45fr)_360px]">
-          <div className="p-6 sm:p-8 lg:p-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">CRM · Lead cockpit</p>
-            <h1 className="mt-4 text-[40px] font-semibold leading-[0.96] tracking-[-0.055em] text-slate-950 sm:text-[54px]">
-              Relationer i bevægelse.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
-              Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-2">
+      {/* Lead cockpit — now the workspace design language (dark panel + gradient surface) */}
+      <WorkspaceFrame className="flex-col lg:flex-row">
+        <div className="order-2 w-full shrink-0 rounded-[22px] bg-workspace-panel p-6 text-workspace-ink-on-dark lg:order-1 lg:w-[340px] lg:p-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-workspace-muted-on-dark">Live lead signal</p>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Kontakter</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Følg op</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Nye</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Uden aktivitet</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
+          </div>
+        </div>
+        <WorkspaceGradientSurface className="order-1 p-6 sm:p-8 lg:order-2 lg:p-10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-workspace-ink/70">CRM · Lead cockpit</p>
+          <h1 className="mt-4 text-[36px] font-bold leading-[0.96] tracking-[-0.03em] text-workspace-ink sm:text-[46px]">
+            Relationer i bevægelse.
+          </h1>
+          <p className="mt-4 max-w-xl text-[15px] leading-7 text-workspace-ink/75">
+            Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-2">
           {crmSyncAvailable ? (
             <Button
               variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
+              className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               disabled={syncCrmContacts.isPending}
               onClick={() => syncCrmContacts.mutate()}
               title={`Synkroniseret via ${crmSyncProvider}`}
@@ -582,21 +593,21 @@ export default function LeadsPage() {
           ) : (
             <Button
               variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
+              className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
               <Plug className="h-3.5 w-3.5" /> Forbind CRM
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
+          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90">
             <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
+          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90">
             <Upload className="h-3.5 w-3.5" /> {t('pages.leads.import')}
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="h-11 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
+              <Button className="h-11 rounded-full bg-workspace-ink px-5 text-white shadow-sm hover:bg-workspace-ink/90"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -622,53 +633,40 @@ export default function LeadsPage() {
               </div>
             </DialogContent>
           </Dialog>
-            </div>
           </div>
-          <div className="relative border-t border-white/60 bg-slate-950/92 p-6 text-white lg:border-l lg:border-t-0 lg:p-8">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_5%,rgba(92,124,255,0.52),transparent_34%),radial-gradient(circle_at_100%_30%,rgba(244,114,255,0.28),transparent_38%)]" />
-            <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Live lead signal</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Kontakter</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{totalCount}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Følg op</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNeedsContact}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Nye</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNew}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Uden aktivitet</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countStale}</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Saved views: smart pills + custom saved lists, merged into one row */}
       <div className="flex items-center gap-2 overflow-x-auto rounded-[1.5rem] border border-white/70 bg-white/58 p-2 shadow-[0_16px_45px_rgba(45,77,150,0.10)] backdrop-blur-xl">
         <button
           onClick={resetToAllView}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.allLeads')} {totalCount}
         </button>
         <button
           onClick={() => { setQuickView('new'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewNew')} {countNew}
         </button>
         <button
           onClick={() => { setQuickView('followup'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewNeedsContact')} {countNeedsContact}
         </button>
         <button
           onClick={() => { setQuickView('stale'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewStale')} {countStale}
         </button>
         {user && (
           <button
             onClick={() => { setQuickView('mine'); setActiveListId(null); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
           >
             {t('pages.leads.viewMine')} {countMine}
           </button>
@@ -978,7 +976,7 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className={cellPad}>
                         <div className="flex flex-col">
-                          <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
+                          <span className="font-semibold tracking-[-0.01em] text-workspace-ink">{lead.name}</span>
                           {lead.acquisition_source && (
                             <span className="mt-1 w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
                               {lead.acquisition_source}

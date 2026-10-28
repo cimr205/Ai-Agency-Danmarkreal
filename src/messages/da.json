@@ -346,7 +346,6 @@
     "expandSidebar": "Fold sidebar ud",
     "openMenu": "Åbn menu",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow-chat",
     "workspaceNavigation": "Workspace-navigation",
     "controlRoom": "Kontrolrum",
@@ -1902,6 +1901,15 @@
     "queue": {
       "title": "Lead-kø"
     },
+    "views": {
+      "queue": "Kø",
+      "history": "Historik",
+      "setup": "Opsætning"
+    },
+    "status": {
+      "connected": "Telefon klar",
+      "disconnected": "Telefon ikke forbundet"
+    },
     "outcomes": {
       "noAnswer": "Intet svar",
       "callback": "Ring tilbage",
@@ -3021,6 +3029,106 @@
       "messaged": "Besked sendt",
       "replied": "Svaret",
       "skipped": "Sprunget over"
+    }
+  },
+  "errors": {
+    "generic": {
+      "title": "Noget gik galt",
+      "actionFallback": "Handlingen"
+    },
+    "functionAreas": {
+      "accounting": "Regnskabsintegration",
+      "aiActions": "AI-assistenten",
+      "aiAnalyze": "AI-analyse",
+      "aiEmailWriter": "AI e-mail-forfatter",
+      "aiGenerate": "AI-generering",
+      "aiHealth": "AI-forbindelse",
+      "aiOperatingManager": "AI-driftslederen",
+      "autopilot": "Autopilot",
+      "callScript": "Opkaldsscript",
+      "chat": "AI-chat",
+      "companiesHouse": "Companies House-opslag",
+      "csvImport": "CSV-import",
+      "customerPortal": "Kundeportal",
+      "cvrSearch": "CVR-opslag",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero-forbindelse",
+      "dineroSync": "Dinero-synkronisering",
+      "economic": "e-conomic-forbindelse",
+      "economicSync": "e-conomic-synkronisering",
+      "emailCampaigns": "E-mail-kampagner",
+      "emailProvider": "E-mail-udbyder",
+      "emailQueue": "E-mail-kø",
+      "emailTrack": "E-mail-sporing",
+      "emailVerify": "E-mail-verificering",
+      "gmail": "Gmail-forbindelse",
+      "gmailSync": "Gmail-synkronisering",
+      "icpScore": "ICP-scoring",
+      "integrations": "Integrationer",
+      "invoicePayment": "Fakturabetaling",
+      "leadGen": "Lead-generering",
+      "leadRecommend": "Lead-anbefalinger",
+      "linkedinOutreach": "LinkedIn-outreach",
+      "mcpServer": "MCP-server",
+      "meetingSummary": "Mødereferat",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta Ads-synkronisering",
+      "payment": "Betaling",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Abonnement",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow-assistenten",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "de indsendte oplysninger var ugyldige.",
+        "what": "Tjek felterne, og prøv igen."
+      },
+      "unauthorized": {
+        "why": "din session er udløbet.",
+        "what": "Log ind igen."
+      },
+      "forbidden": {
+        "why": "du har ikke adgang til det her.",
+        "what": "Kontakt en administrator, hvis det ikke stemmer."
+      },
+      "notFound": {
+        "why": "det kunne ikke findes.",
+        "what": "Tjek at det stadig findes."
+      },
+      "conflict": {
+        "why": "det er i konflikt med noget, der allerede er i gang.",
+        "what": "Opdater siden, og prøv igen."
+      },
+      "rateLimited": {
+        "why": "der er for mange forespørgsler lige nu.",
+        "what": "Vent et øjeblik, og prøv igen."
+      },
+      "serverError": {
+        "why": "der er en fejl hos os eller hos en forbundet tjeneste.",
+        "what": "Prøv igen om et øjeblik."
+      },
+      "network": {
+        "why": "forbindelsen fejlede, eller tjenesten svarer ikke.",
+        "what": "Tjek din internetforbindelse, og prøv igen."
+      },
+      "unknown": {
+        "why": "der skete en uventet fejl.",
+        "what": "Prøv igen, og kontakt support, hvis det fortsætter."
+      }
+    },
+    "details": {
+      "show": "Vis detaljer",
+      "hide": "Skjul detaljer",
+      "copy": "Kopiér",
+      "copied": "Kopieret",
+      "function": "Funktion",
+      "status": "Status",
+      "time": "Tidspunkt",
+      "requestId": "Forespørgsels-id"
     }
   }
 }

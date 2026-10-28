@@ -24,6 +24,7 @@ import IcpScoreBreakdown from "@/components/icp/IcpScoreBreakdown";
 import { useI18n } from "@/lib/i18n";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { WorkspaceFrame, WorkspaceSurface } from "@/components/workspace/WorkspacePanel";
 
 function scoreTierBadge(score: number) {
   if (score >= 80) return <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs">Hot</Badge>;
@@ -69,7 +70,7 @@ export default function IcpPage() {
   // ─── WIZARD VIEW ──────────────────────────────────────────
   if (view === "wizard") {
     return (
-      <div className="space-y-4">
+      <div className="workspace-theme space-y-4">
         <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => { setView("list"); setEditingIcp(null); }}>
           <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
         </Button>
@@ -89,7 +90,7 @@ export default function IcpPage() {
   // ─── MATCHES VIEW ─────────────────────────────────────────
   if (view === "matches" && selectedIcpId) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <Button variant="ghost" size="sm" className="gap-1.5 mb-3" onClick={() => setView("list")}>
             <ChevronLeft className="h-3.5 w-3.5" /> {t('icp.backToIcps')}
@@ -180,7 +181,7 @@ export default function IcpPage() {
 
   // ─── LIST VIEW (default) ──────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.crm')}
         title={t('icp.title')}
@@ -204,16 +205,22 @@ export default function IcpPage() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : profiles.length === 0 ? (
-        <EmptyState
-          icon={Target}
-          title={t('icp.noIcpsYet')}
-          hint={t('icp.noIcpsDesc')}
-          action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
-        />
+        <WorkspaceFrame>
+          <WorkspaceSurface className="rounded-[22px] p-4">
+            <EmptyState
+              icon={Target}
+              title={t('icp.noIcpsYet')}
+              hint={t('icp.noIcpsDesc')}
+              action={{ label: t('icp.createFirstIcp'), onClick: () => { setEditingIcp(null); setView("wizard"); }, icon: Plus }}
+            />
+          </WorkspaceSurface>
+        </WorkspaceFrame>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <WorkspaceFrame>
+          <WorkspaceSurface className="rounded-[22px] p-4">
+            <div className="grid gap-3 md:grid-cols-2">
           {profiles.map((icp) => (
-            <Card key={icp.id} className="space-y-4 p-6">
+            <Card key={icp.id} className="space-y-4 border-workspace-surface-line p-6 shadow-none">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -295,7 +302,9 @@ export default function IcpPage() {
               </div>
             </Card>
           ))}
-        </div>
+            </div>
+          </WorkspaceSurface>
+        </WorkspaceFrame>
       )}
     </div>
   );

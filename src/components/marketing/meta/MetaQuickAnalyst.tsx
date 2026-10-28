@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Send, User, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
+import { explainError } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n";
-import { getErrorMessage } from '@/lib/errors';
 
 export function MetaQuickAnalyst() {
   const { locale } = useI18n();
@@ -40,18 +40,16 @@ export function MetaQuickAnalyst() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("meta-ads-ai", {
+      const data = await invokeFunction<{ answer: string; error?: string }>("meta-ads-ai", {
         body: { type: "analyst", question: trimmed },
       });
-
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
       setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
     } catch (e) {
-      const msg = (getErrorMessage(e) || (isDa ? "Kunne ikke få svar" : "Failed to get answer"));
+      const msg = explainError(e).message;
       setMessages((prev) => [...prev, { role: "assistant", text: `${isDa ? 'Fejl' : 'Error'}: ${msg}` }]);
-      toast({ title: isDa ? "AI-analytikerfejl" : "AI Analyst Error", description: msg, variant: "destructive" });
+      showError(e, { module: "meta-ads-ai" });
     } finally {
       setLoading(false);
     }

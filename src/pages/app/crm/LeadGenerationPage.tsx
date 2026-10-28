@@ -44,6 +44,7 @@ import {
 import { useLeadFolders, useCreateLeadFolder } from "@/hooks/api/useLeads";
 import { useQueueLinkedInOutreach } from "@/hooks/api/useLinkedInOutreach";
 import type { Tables } from "@/integrations/supabase/types";
+import { WorkspaceFrame, WorkspaceGradientSurface, WorkspacePillButton } from "@/components/workspace/WorkspacePanel";
 
 type LeadFolder = Tables<'lead_folders'>;
 
@@ -273,108 +274,107 @@ export default function LeadGenerationPage() {
   // ─── RENDER ───────────────────────────────────────────────
   return (
     <TooltipProvider>
-    <div className="flex flex-col gap-6 p-1 pb-8 max-w-7xl mx-auto">
-      {/* HERO */}
-      <div className="text-center pt-4">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-3">
-          <Sparkles className="h-7 w-7 text-primary" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground">{t("leadGen.title")}</h1>
-        <p className="text-muted-foreground mt-1 text-sm">{t("leadGen.subtitle")}</p>
-      </div>
+    <div className="workspace-theme flex flex-col gap-6 p-1 pb-8 max-w-7xl mx-auto">
+      {/* HERO + SEARCH FORM — workspace gradient surface */}
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-5 sm:p-7">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/60">
+              <Sparkles className="h-6 w-6 text-workspace-accent" />
+            </div>
+            <div>
+              <h1 className="text-[22px] font-bold text-workspace-ink">{t("leadGen.title")}</h1>
+              <p className="text-sm text-workspace-ink/70">{t("leadGen.subtitle")}</p>
+            </div>
+          </div>
 
-      {/* ── SEARCH FORM ─────────────────────────────────────── */}
-      <Card className="p-5 space-y-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !isRunning && handleStartSearch()}
-              placeholder={t("leadGen.searchPlaceholder")}
-              className="pl-9"
-            />
+          <div className="mt-6 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-workspace-ink/50" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isRunning && handleStartSearch()}
+                placeholder={t("leadGen.searchPlaceholder")}
+                className="border-0 bg-white/80 pl-9 text-workspace-ink placeholder:text-workspace-ink/50"
+              />
+            </div>
+            <WorkspacePillButton onClick={handleStartSearch} disabled={isRunning || createSession.isPending}>
+              {createSession.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {t("leadGen.searchButton")}
+            </WorkspacePillButton>
           </div>
-          <Button
-            onClick={handleStartSearch}
-            disabled={isRunning || createSession.isPending}
-            className="gap-2"
-          >
-            {createSession.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {t("leadGen.searchButton")}
-          </Button>
-        </div>
 
-        {/* Filters grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("leadGen.cityLabel")}</label>
-            <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t("leadGen.cityPlaceholder")} />
+          {/* Filters grid */}
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-workspace-ink/70">{t("leadGen.cityLabel")}</label>
+              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t("leadGen.cityPlaceholder")} className="border-0 bg-white/80 text-workspace-ink placeholder:text-workspace-ink/50" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-workspace-ink/70">{t("leadGen.countryLabel")}</label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger className="border-0 bg-white/80 text-workspace-ink"><SelectValue placeholder={t("leadGen.countryPlaceholder")} /></SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-workspace-ink/70">{t("leadGen.nicheLabel")}</label>
+              <Input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder={t("leadGen.nichePlaceholder")} className="border-0 bg-white/80 text-workspace-ink placeholder:text-workspace-ink/50" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-workspace-ink/70">
+                {t("leadGen.scoreThreshold")}: {scoreThreshold}
+              </label>
+              <Slider value={[scoreThreshold]} onValueChange={([v]) => setScoreThreshold(v)} min={0} max={100} step={5} className="mt-2" />
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("leadGen.countryLabel")}</label>
-            <Select value={country} onValueChange={setCountry}>
-              <SelectTrigger><SelectValue placeholder={t("leadGen.countryPlaceholder")} /></SelectTrigger>
-              <SelectContent>
-                {COUNTRIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("leadGen.nicheLabel")}</label>
-            <Input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder={t("leadGen.nichePlaceholder")} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">
-              {t("leadGen.scoreThreshold")}: {scoreThreshold}
-            </label>
-            <Slider value={[scoreThreshold]} onValueChange={([v]) => setScoreThreshold(v)} min={0} max={100} step={5} className="mt-2" />
-          </div>
-        </div>
 
-        {/* Exclude keywords */}
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("leadGen.excludeKeywordsLabel")}</label>
-          <Input value={excludeKeywords} onChange={(e) => setExcludeKeywords(e.target.value)} placeholder={t("leadGen.excludeKeywordsPlaceholder")} />
-        </div>
+          {/* Exclude keywords */}
+          <div className="mt-4">
+            <label className="mb-1 block text-xs font-medium text-workspace-ink/70">{t("leadGen.excludeKeywordsLabel")}</label>
+            <Input value={excludeKeywords} onChange={(e) => setExcludeKeywords(e.target.value)} placeholder={t("leadGen.excludeKeywordsPlaceholder")} className="border-0 bg-white/80 text-workspace-ink placeholder:text-workspace-ink/50" />
+          </div>
 
-        {/* Checkbox filters + save */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-              <Checkbox checked={mustEmail} onCheckedChange={(v) => setMustEmail(!!v)} />
-              {t("leadGen.mustEmail")}
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-              <Checkbox checked={mustPhone} onCheckedChange={(v) => setMustPhone(!!v)} />
-              {t("leadGen.mustPhone")}
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-              <Checkbox checked={mustWebsite} onCheckedChange={(v) => setMustWebsite(!!v)} />
-              {t("leadGen.mustWebsite")}
-            </label>
+          {/* Checkbox filters + save */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-workspace-ink cursor-pointer">
+                <Checkbox checked={mustEmail} onCheckedChange={(v) => setMustEmail(!!v)} />
+                {t("leadGen.mustEmail")}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-workspace-ink cursor-pointer">
+                <Checkbox checked={mustPhone} onCheckedChange={(v) => setMustPhone(!!v)} />
+                {t("leadGen.mustPhone")}
+              </label>
+              <label className="flex items-center gap-2 text-sm text-workspace-ink cursor-pointer">
+                <Checkbox checked={mustWebsite} onCheckedChange={(v) => setMustWebsite(!!v)} />
+                {t("leadGen.mustWebsite")}
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder={t("leadGen.saveSearchName")}
+                className="h-8 w-48 border-0 bg-white/80 text-sm text-workspace-ink placeholder:text-workspace-ink/50"
+              />
+              <Button
+                size="sm" variant="outline"
+                onClick={handleSaveSearch}
+                disabled={!saveName.trim() || !query.trim() || saveSearch.isPending}
+                className="gap-1.5 border-0 bg-white/80 text-workspace-ink hover:bg-white"
+              >
+                <BookmarkPlus className="h-3.5 w-3.5" />{t("common.save")}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Input
-              value={saveName}
-              onChange={(e) => setSaveName(e.target.value)}
-              placeholder={t("leadGen.saveSearchName")}
-              className="w-48 h-8 text-sm"
-            />
-            <Button
-              size="sm" variant="outline"
-              onClick={handleSaveSearch}
-              disabled={!saveName.trim() || !query.trim() || saveSearch.isPending}
-              className="gap-1.5"
-            >
-              <BookmarkPlus className="h-3.5 w-3.5" />{t("common.save")}
-            </Button>
-          </div>
-        </div>
-      </Card>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* ── LIVE PROGRESS ───────────────────────────────────── */}
       {activeSession && isRunning && (

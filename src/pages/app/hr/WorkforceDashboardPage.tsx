@@ -9,7 +9,8 @@ import { format, differenceInMinutes } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { MetricTile, type Tone } from '@/components/shared/MetricTile';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 function LiveTimer({ checkIn }: { checkIn: string }) {
   const [elapsed, setElapsed] = useState('');
@@ -36,15 +37,15 @@ export default function WorkforceDashboardPage() {
   const activeNow = live?.activeNow?.length ?? 0;
   const notCheckedIn = totalEmployees - (live?.totalEntriesToday ?? 0);
 
-  const kpis: { label: string; value: string | number; icon: typeof Activity; tone: Tone }[] = [
-    { label: t('workforce.activeNow'), value: activeNow, icon: Activity, tone: 'success' },
-    { label: t('workforce.totalHoursToday'), value: `${live?.totalHoursToday ?? 0}h`, icon: Clock, tone: 'primary' },
-    { label: t('workforce.notCheckedIn'), value: Math.max(0, notCheckedIn), icon: UserX, tone: notCheckedIn > 0 ? 'warning' : 'primary' },
-    { label: t('workforce.totalEmployees'), value: totalEmployees, icon: Users, tone: 'primary' },
+  const kpis: { label: string; value: string | number }[] = [
+    { label: t('workforce.activeNow'), value: activeNow },
+    { label: t('workforce.totalHoursToday'), value: `${live?.totalHoursToday ?? 0}h` },
+    { label: t('workforce.notCheckedIn'), value: Math.max(0, notCheckedIn) },
+    { label: t('workforce.totalEmployees'), value: totalEmployees },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.hr') || 'HR'}
         title={t('workforce.dashboardTitle')}
@@ -54,13 +55,19 @@ export default function WorkforceDashboardPage() {
       {error && <ErrorState title={t('hr.fetchAttendanceError')} onRetry={() => refetch()} />}
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
-        ) : (
-          kpis.map((kpi) => <MetricTile key={kpi.label} label={kpi.label} value={kpi.value} icon={kpi.icon} tone={kpi.tone} />)
-        )}
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          {isLoading ? (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)}
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              {kpis.map((kpi, i) => <WorkspaceTile key={kpi.label} label={kpi.label} value={kpi.value} active={i === 0} />)}
+            </div>
+          )}
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Currently Working */}

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 
 // Gmail connection status
 export function useGmailAccount() {
@@ -29,12 +30,11 @@ export function useConnectGmail() {
     mutationFn: async () => {
       // Come back to Smart Inbox on this host, in the user's current locale.
       const locale = window.location.pathname.split('/')[1] || 'en';
-      const { data, error } = await supabase.functions.invoke('gmail-auth', {
+      const data = await invokeFunction<{ auth_url: string; error?: string }>('gmail-auth', {
         body: { return_url: `${window.location.origin}/${locale}/app/email/emails` },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { auth_url: string };
+      return data;
     },
   });
 }
@@ -67,12 +67,11 @@ export function useSyncEmails() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (maxResults?: number) => {
-      const { data, error } = await supabase.functions.invoke('gmail-sync', {
+      const data = await invokeFunction<{ synced: number; error?: string }>('gmail-sync', {
         body: { max_results: maxResults || 30 },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { synced: number };
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['synced-emails'] });
@@ -112,10 +111,9 @@ export function useEmails() {
 export function useSendEmail() {
   return useMutation({
     mutationFn: async (params: { to: string; subject: string; message: string; cc?: string; reply_to_message_id?: string }) => {
-      const { data, error } = await supabase.functions.invoke('gmail-send', {
+      const data = await invokeFunction<{ error?: string } & Record<string, unknown>>('gmail-send', {
         body: params,
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },

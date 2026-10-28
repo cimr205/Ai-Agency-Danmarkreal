@@ -3,9 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
-import { toast } from 'sonner';
+import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
 
 const FEATURES = [
   'Ubegrænsede leads & deals',
@@ -28,7 +27,7 @@ export default function SubscriptionPage() {
     try {
       await startCheckout();
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke starte checkout'));
+      showError(e, { module: 'create-checkout' });
     }
   };
 
@@ -36,7 +35,7 @@ export default function SubscriptionPage() {
     try {
       await openPortal();
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke åbne portal'));
+      showError(e, { module: 'customer-portal' });
     }
   };
 

@@ -9,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Calendar, Check, X, Clock } from 'lucide-react';
+import { Plus, Search, Calendar, Check, X } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 
 export default function LeavePage() {
   const { t, locale } = useI18n();
@@ -50,7 +52,7 @@ export default function LeavePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-foreground">{t('hr.leaveTitle')}</h1><p className="text-muted-foreground">{t('hr.leaveSubtitle')}</p></div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -86,11 +88,15 @@ export default function LeavePage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center"><Clock className="h-6 w-6 text-warning" /></div><div><p className="text-sm text-muted-foreground">{t('hr.awaitingApproval')}</p><p className="text-2xl font-bold">{pendingCount}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><Check className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('hr.approved')}</p><p className="text-2xl font-bold text-success">{approvedCount}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><Calendar className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('hr.totalRequests')}</p><p className="text-2xl font-bold">{leaves.length}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <WorkspaceTile label={t('hr.awaitingApproval')} value={pendingCount} active />
+            <WorkspaceTile label={t('hr.approved')} value={approvedCount} />
+            <WorkspaceTile label={t('hr.totalRequests')} value={leaves.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 
