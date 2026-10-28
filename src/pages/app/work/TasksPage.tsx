@@ -38,7 +38,11 @@ export default function TasksPage() {
   const { t } = useI18n();
   const { profile } = useAuth();
   const [search, setSearch] = useState('');
-  const [view, setView] = useState<ViewKey>('today');
+  // Default to "all active" — "today" only shows tasks due exactly today and
+  // silently excludes anything with no due_date, so a customer whose active
+  // tasks aren't due today saw an empty "No tasks found" list on first load
+  // even with active tasks (#009).
+  const [view, setView] = useState<ViewKey>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
