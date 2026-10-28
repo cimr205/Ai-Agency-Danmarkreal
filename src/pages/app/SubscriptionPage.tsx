@@ -5,10 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 const FEATURES = [
-  'Ubegrænsede leads & deals',
+  tx("Ubegrænsede leads & deals", "Unlimited leads & deals"),
   'AI-drevet ICP scoring',
   'Pipeline management',
   'Email integration (Gmail)',
@@ -43,10 +43,10 @@ export default function SubscriptionPage() {
   const getStatusBadge = () => {
     switch (status) {
       case 'active': return <Badge className="bg-success text-success-foreground">Aktiv</Badge>;
-      case 'trialing': return <Badge className="bg-warning text-warning-foreground">Prøveperiode</Badge>;
+      case 'trialing': return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
       case 'past_due': return <Badge variant="destructive">Forfaldent</Badge>;
       case 'canceled': return <Badge variant="secondary">Annulleret</Badge>;
-      default: return <Badge variant="outline">Ingen abonnement</Badge>;
+      default: return <Badge variant="outline">{tx("Ingen abonnement", "No subscription")}</Badge>;
     }
   };
 
@@ -55,8 +55,8 @@ export default function SubscriptionPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold">Abonnement</h1>
-        <p className="text-sm text-muted-foreground">Administrer dit abonnement og betalinger</p>
+        <h1 className="text-2xl font-bold">{tx("Abonnement", "Subscription")}</h1>
+        <p className="text-sm text-muted-foreground">{tx("Administrer dit abonnement og betalinger", "Manage your subscription and payments")}</p>
       </div>
 
       {/* Current Status */}
@@ -73,7 +73,7 @@ export default function SubscriptionPage() {
         <CardContent className="space-y-4">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold">499</span>
-            <span className="text-muted-foreground">kr / bruger / måned</span>
+            <span className="text-muted-foreground">{tx("kr / bruger / måned", "DKK / user / month")}</span>
           </div>
 
           {status === 'trialing' && trialDaysLeft > 0 && (

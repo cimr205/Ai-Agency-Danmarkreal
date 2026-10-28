@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { getErrorMessage } from '@/lib/errors';
+import { tx } from '@/lib/inlineI18n';
 
 const EVENT_LABELS: Record<string, string> = {
   "lead.created": "Lead oprettet",
@@ -30,27 +31,27 @@ const EVENT_LABELS: Record<string, string> = {
   "deal.won": "Deal vundet",
   "deal.lost": "Deal tabt",
   "task.created": "Opgave oprettet",
-  "task.completed": "Opgave færdig",
+  "task.completed": tx("Opgave færdig", "Task completed"),
   "employee.created": "Medarbejder oprettet",
   "employee.clocked_in": "Clock in",
   "employee.clocked_out": "Clock out",
   "invoice.created": "Faktura oprettet",
   "invoice.paid": "Faktura betalt",
   "email.sent": "Email sendt",
-  "email.opened": "Email åbnet",
+  "email.opened": tx("Email åbnet", "Email opened"),
 };
 
 function actionLabel(wf: { action_type: string; action_tool_slug?: string | null; webhook_url?: string | null }): string {
-  if (wf.action_type === "run_integration") return wf.action_tool_slug ? `Kør ${wf.action_tool_slug}` : "Kør handling";
+  if (wf.action_type === "run_integration") return wf.action_tool_slug ? `${tx("Kør", "Run")} ${wf.action_tool_slug}` : tx("Kør handling", "Run action");
   if (wf.action_type === "send_webhook") return "Webhook";
   return wf.action_type;
 }
 
 const QUICK_PROMPTS = [
-  { label: "Ny lead → Zapier", prompt: "Når en ny lead bliver oprettet, send data til Zapier" },
-  { label: "Deal vundet → Slack", prompt: "Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack" },
-  { label: "Faktura betalt → Sheets", prompt: "Når en faktura bliver betalt, send betalingsdata til Zapier webhook" },
-  { label: "Foreslå workflows", prompt: "Foreslå smarte workflows baseret på min brug af systemet" },
+  { label: tx("Ny lead → Zapier", "New lead → Zapier"), prompt: tx("Når en ny lead bliver oprettet, send data til Zapier", "When a new lead is created, send the data to Zapier") },
+  { label: "Deal vundet → Slack", prompt: tx("Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack", "When a deal is won, send a message to Zapier so it can go to Slack") },
+  { label: "Faktura betalt → Sheets", prompt: tx("Når en faktura bliver betalt, send betalingsdata til Zapier webhook", "When an invoice is paid, send the payment data to a Zapier webhook") },
+  { label: tx("Foreslå workflows", "Suggest workflows"), prompt: tx("Foreslå smarte workflows baseret på min brug af systemet", "Suggest smart workflows based on how I use the system") },
 ];
 
 export default function WorkflowsPage() {
@@ -114,7 +115,7 @@ export default function WorkflowsPage() {
           <div>
             <h1 className="text-lg font-semibold">Automation Assistant</h1>
             <p className="text-xs text-muted-foreground">
-              Skriv hvad du vil automatisere — AI bygger workflowet
+              {tx("Skriv hvad du vil automatisere — AI bygger workflowet", "Describe what to automate — AI builds the workflow")}
             </p>
           </div>
         </div>
@@ -148,11 +149,10 @@ export default function WorkflowsPage() {
                 </div>
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-semibold mb-2">
-                    Hej! Jeg er din Automation Assistant 🤖
+                    {tx("Hej! Jeg er din Automation Assistant 🤖", "Hi! I'm your Automation Assistant 🤖")}
                   </h2>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Skriv hvad du gerne vil automatisere, og jeg opretter workflowet for dig.
-                    Du kan forbinde Zapier, Make eller enhver webhook.
+                    {tx("Skriv hvad du gerne vil automatisere, og jeg opretter workflowet for dig. Du kan forbinde Zapier, Make eller enhver webhook.", "Describe what you want to automate and I'll create the workflow for you. You can connect Zapier, Make or any webhook.")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 max-w-lg w-full">
@@ -214,7 +214,7 @@ export default function WorkflowsPage() {
                   <div className="bg-muted/50 border border-border/50 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Tænker...
+                      {tx("Tænker...", "Thinking...")}
                     </div>
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function WorkflowsPage() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder='Skriv fx "Når en deal vindes, send det til Zapier"...'
+                placeholder={tx("Skriv fx \"Når en deal vindes, send det til Zapier\"...", "e.g. \"When a deal is won, send it to Zapier\"...")}
                 disabled={isLoading}
                 className="flex-1"
               />
@@ -249,7 +249,7 @@ export default function WorkflowsPage() {
             <ScrollArea className="flex-1 p-3">
               {!workflows?.length ? (
                 <p className="text-xs text-muted-foreground text-center py-6">
-                  Ingen workflows endnu
+                  {tx("Ingen workflows endnu", "No workflows yet")}
                 </p>
               ) : (
                 <div className="space-y-2">

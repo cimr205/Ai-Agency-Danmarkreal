@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Bot, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useAIStatus } from "@/hooks/api/useAIConnection";
+import { tx } from '@/lib/inlineI18n';
 
 // AI runs on one shared, self-hosted Ollama instance — the approved stack
 // (Ollama/llama.cpp only, no hosted LLM APIs). There is nothing to connect
@@ -18,7 +19,7 @@ export default function AIConnectionPage() {
           <Bot className="h-5 w-5" /> AI-model
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Alle AI-funktioner i systemet (workflows, AI-email, deal coach, Operating Manager, m.fl.) kører på én delt, selv-hostet model — ingen opsætning per virksomhed.
+          {tx("Alle AI-funktioner i systemet (workflows, AI-email, deal coach, Operating Manager, m.fl.) kører på én delt, selv-hostet model — ingen opsætning per virksomhed.", "All AI features (workflows, AI email, deal coach, Operating Manager and more) run on one shared model — no per-company setup.")}
         </p>
       </div>
 
@@ -31,7 +32,7 @@ export default function AIConnectionPage() {
             ) : status?.online ? (
               <Badge variant="outline" className="gap-1 border-emerald-500/40 text-emerald-500"><CheckCircle2 className="h-3 w-3" /> Online</Badge>
             ) : (
-              <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive"><XCircle className="h-3 w-3" /> Ikke tilgængelig</Badge>
+              <Badge variant="outline" className="gap-1 border-destructive/40 text-destructive"><XCircle className="h-3 w-3" /> {tx("Ikke tilgængelig", "Unavailable")}</Badge>
             )}
           </div>
           <CardDescription>
@@ -41,7 +42,7 @@ export default function AIConnectionPage() {
         {!isLoading && !status?.online && (
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Den selv-hostede Ollama-instans svarer ikke. AI-funktioner virker ikke før den er oppe igen — dette kræver ingen handling fra jer, det er en drift-opgave.
+              {tx("Den selv-hostede Ollama-instans svarer ikke. AI-funktioner virker ikke før den er oppe igen — dette kræver ingen handling fra jer, det er en drift-opgave.", "The AI model isn't responding. AI features won't work until it's back — no action needed from you, it's an operations task.")}
             </p>
           </CardContent>
         )}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Database, Mail, Users, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { tx } from '@/lib/inlineI18n';
 
 function useSystemMetrics() {
   return useQuery({
@@ -53,8 +54,8 @@ export default function MonitoringPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Systemovervågning</h1>
-          <p className="text-sm text-muted-foreground">Realtids systemstatus og performance metrics</p>
+          <h1 className="text-2xl font-bold">{tx("Systemovervågning", "System monitoring")}</h1>
+          <p className="text-sm text-muted-foreground">{tx("Realtids systemstatus og performance metrics", "Real-time system status and performance metrics")}</p>
         </div>
         <Badge variant="outline" className="gap-1.5">
           <span className="h-2 w-2 rounded-full bg-success animate-pulse" />

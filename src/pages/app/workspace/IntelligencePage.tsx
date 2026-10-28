@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
+import { tx } from '@/lib/inlineI18n';
 
 interface LogRow {
   id: string;
@@ -48,16 +49,15 @@ export default function IntelligencePage() {
     <div className="space-y-14 pb-20">
       <header className="space-y-6">
         <div className="text-[10px] font-mono uppercase tracking-[0.24em] text-muted-foreground/50">
-          Workspace · Ambient intelligens
+          Workspace · {tx("Ambient intelligens", "Ambient intelligence")}
         </div>
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Ambient intelligens
+              {tx("Ambient intelligens", "Ambient intelligence")}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Assistenten observerer workspace, udfører trygge handlinger automatisk og foreslår resten.
-              Aktivér den øverst i workspace-baren ved AI-prikken.
+              {tx("Assistenten observerer workspace, udfører trygge handlinger automatisk og foreslår resten. Aktivér den øverst i workspace-baren ved AI-prikken.", "The assistant watches the workspace, runs safe actions automatically and suggests the rest. Turn it on at the AI dot in the top workspace bar.")}
             </p>
           </div>
           <div className="flex items-center gap-3 text-xs">
@@ -72,15 +72,15 @@ export default function IntelligencePage() {
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border/30 rounded-xl overflow-hidden">
         <PulseCell value={String(todayCount)} label="Handlinger i dag" />
-        <PulseCell value={String(autoCount)} label="Udført automatisk" accent />
-        <PulseCell value={String(logs.filter(l => l.action_type === "workflow_test").length)} label="Test-kørsler" />
+        <PulseCell value={String(autoCount)} label={tx("Udført automatisk", "Done automatically")} accent />
+        <PulseCell value={String(logs.filter(l => l.action_type === "workflow_test").length)} label={tx("Test-kørsler", "Test runs")} />
         <PulseCell value={String(logs.filter(l => l.metadata?.status === "error").length)} label="Fejlede" />
       </section>
 
       <section className="space-y-6">
         <div className="flex items-end justify-between">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">
-            Strøm af handlinger
+            {tx("Strøm af handlinger", "Action stream")}
           </div>
           <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/40">
             opdateres ambient · hvert 15. sek
@@ -91,7 +91,7 @@ export default function IntelligencePage() {
           <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Henter…</div>
         ) : logs.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/50 p-10 text-center text-muted-foreground">
-            Ingen ambient handlinger endnu. Brug AI-baren øverst eller test et workflow.
+            {tx("Ingen ambient handlinger endnu. Brug AI-baren øverst eller test et workflow.", "No ambient actions yet. Use the AI bar at the top or test a workflow.")}
           </div>
         ) : (
           <ul className="space-y-1">
@@ -102,16 +102,16 @@ export default function IntelligencePage() {
 
       <section className="space-y-6">
         <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">
-          Hvad assistenten kan udføre
+          {tx("Hvad assistenten kan udføre", "What the assistant can do")}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border/30 rounded-xl overflow-hidden">
           {[
-            { icon: Mail, surface: "Gmail", caps: ["Skriv udkast", "Send svar (kræver bekræftelse)", "Søg tråde"] },
-            { icon: Calendar, surface: "Calendar", caps: ["Find tider", "Foreslå møde", "Genplanlæg"] },
-            { icon: TrendingUp, surface: "CRM", caps: ["Opret deal (kræver bekræftelse)", "Opdater lead-status", "Søg klienter"] },
-            { icon: CheckCircle2, surface: "Tasks", caps: ["Opret opgave", "Sæt deadline", "Sæt prioritet"] },
-            { icon: Wand2, surface: "Workflows", caps: ["Trigger flow (kræver bekræftelse)", "Test-kør", "Spor trin"] },
-            { icon: Brain, surface: "Indsigter", caps: ["Resumé", "Prioritering", "Risiko-detektion"] },
+            { icon: Mail, surface: "Gmail", caps: [tx("Skriv udkast", "Write draft"), tx("Send svar (kræver bekræftelse)", "Send reply (needs confirmation)"), tx("Søg tråde", "Search threads")] },
+            { icon: Calendar, surface: "Calendar", caps: [tx("Find tider", "Find times"), tx("Foreslå møde", "Suggest meeting"), tx("Genplanlæg", "Reschedule")] },
+            { icon: TrendingUp, surface: "CRM", caps: [tx("Opret deal (kræver bekræftelse)", "Create deal (needs confirmation)"), tx("Opdater lead-status", "Update lead status"), tx("Søg klienter", "Search clients")] },
+            { icon: CheckCircle2, surface: "Tasks", caps: [tx("Opret opgave", "Create task"), tx("Sæt deadline", "Set deadline"), tx("Sæt prioritet", "Set priority")] },
+            { icon: Wand2, surface: "Workflows", caps: [tx("Trigger flow (kræver bekræftelse)", "Trigger flow (needs confirmation)"), tx("Test-kør", "Test run"), tx("Spor trin", "Trace steps")] },
+            { icon: Brain, surface: tx("Indsigter", "Insights"), caps: [tx("Resumé", "Summary"), tx("Prioritering", "Prioritisation"), tx("Risiko-detektion", "Risk detection")] },
           ].map(c => <CapabilityCell key={c.surface} {...c} />)}
         </div>
       </section>
@@ -119,8 +119,7 @@ export default function IntelligencePage() {
       <footer className="border-t border-border/40 pt-8 flex items-start gap-3 text-sm text-muted-foreground max-w-3xl">
         <Sparkles className="h-4 w-4 mt-0.5 text-primary/70 shrink-0" />
         <p className="leading-relaxed">
-          Følsomme handlinger — afsendelse af email, sletning, oprettelse af deals — kræver altid bekræftelse.
-          Alt andet sker stille i baggrunden og logges her.
+          {tx("Følsomme handlinger — afsendelse af email, sletning, oprettelse af deals — kræver altid bekræftelse. Alt andet sker stille i baggrunden og logges her.", "Sensitive actions — sending email, deleting, creating deals — always need confirmation. Everything else happens quietly in the background and is logged here.")}
         </p>
       </footer>
     </div>

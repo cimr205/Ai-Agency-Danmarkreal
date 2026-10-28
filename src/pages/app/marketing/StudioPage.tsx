@@ -9,7 +9,10 @@ import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 // pushed a single chunk over 900kB. Code-splitting them means visiting one
 // tab doesn't pull in the other's dependencies until it's actually opened.
 const VideoStudioPage = lazy(() => import('./VideoStudioPage'));
-const AiMediaPage = lazy(() => import('@/pages/app/ai/AiMediaPage'));
+// AiMediaContent is the translated generator that also accepts an uploaded
+// reference image; the old AiMediaPage was Danish-only with no upload, so
+// Studio had no way to upload a file at all.
+const AiMediaContent = lazy(() => import('@/components/marketing/AiMediaContent'));
 
 const TAB_LOADER = (
   <div className="space-y-4">
@@ -65,7 +68,7 @@ export default function StudioPage() {
           </Suspense>
         ) : (
           <Suspense fallback={TAB_LOADER}>
-            <AiMediaPage showHeader={false} />
+            <AiMediaContent />
           </Suspense>
         )}
       </div>

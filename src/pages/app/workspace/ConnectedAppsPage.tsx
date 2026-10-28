@@ -20,7 +20,7 @@ import {
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { isLocale } from "@/lib/i18n";
-import { dateLocaleTag } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -184,7 +184,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "calendar",
     title: "Kalender",
-    outcome: "Jeres møder fra Google Calendar eller Outlook vises automatisk på Kalender-siden.",
+    outcome: tx("Jeres møder fra Google Calendar eller Outlook vises automatisk på Kalender-siden.", "Your meetings from Google Calendar or Outlook appear automatically on the Calendar page."),
     providers: ["googlecalendar", "outlook"],
     pageLink: "work/calendar",
     icon: Calendar,
@@ -192,7 +192,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "documents",
     title: "Dokumenter",
-    outcome: "Jeres sider fra Notion vises automatisk på Dokumenter-siden.",
+    outcome: tx("Jeres sider fra Notion vises automatisk på Dokumenter-siden.", "Your Notion pages appear automatically on the Documents page."),
     providers: ["notion"],
     pageLink: "workspace/documents",
     icon: FileText,
@@ -200,7 +200,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "crmSync",
     title: "CRM-synkronisering",
-    outcome: "Kontakter fra HubSpot importeres automatisk som leads på CRM-siden.",
+    outcome: tx("Kontakter fra HubSpot importeres automatisk som leads på CRM-siden.", "HubSpot contacts are imported automatically as leads in the CRM."),
     providers: ["hubspot", "pipedrive", "salesforce"],
     pageLink: "crm/leads",
     icon: Database,
@@ -208,7 +208,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "finance",
     title: "Betalinger",
-    outcome: "Stripe-betalinger matches automatisk til jeres fakturaer og markerer dem betalt.",
+    outcome: tx("Stripe-betalinger matches automatisk til jeres fakturaer og markerer dem betalt.", "Stripe payments are matched to your invoices automatically and mark them paid."),
     providers: ["stripe"],
     pageLink: "finance/invoices",
     icon: CreditCard,
@@ -216,10 +216,10 @@ const LIVE_MODULES: LiveModule[] = [
 ];
 
 const catalog: Catalog[] = [
-  { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Tråde",   icon: Mail,           category: "Communication" },
+  { provider: "gmail",          name: "Gmail",           surface: tx("Indbakke · Email · Tråde", "Inbox · Email · Threads"),   icon: Mail,           category: "Communication" },
   { provider: "outlook",        name: "Outlook",         surface: "Mail · Kalender",             icon: Mail,           category: "Communication" },
   { provider: "slack",          name: "Slack",           surface: "Beskeder · Notifikationer",   icon: MessagesSquare, category: "Communication" },
-  { provider: "googlecalendar", name: "Google Calendar", surface: "Møder · Booking",             icon: Calendar,       category: "Calendar" },
+  { provider: "googlecalendar", name: "Google Calendar", surface: tx("Møder · Booking", "Meetings · Booking"),             icon: Calendar,       category: "Calendar" },
   { provider: "stripe",         name: "Stripe",          surface: "Payments · Subscriptions",    icon: CreditCard,     category: "Finance" },
   { provider: "hubspot",        name: "HubSpot",         surface: "CRM sync · Leads",            icon: Database,       category: "Sales" },
   { provider: "pipedrive",      name: "Pipedrive",       surface: "CRM sync · Deals",            icon: Database,       category: "Sales" },
@@ -304,21 +304,20 @@ export default function ConnectedAppsPage() {
     <div className="space-y-14 pb-20">
       <header className="space-y-6">
         <div className="text-[10px] font-mono uppercase tracking-[0.24em] text-muted-foreground/50">
-          Workspace · Integrationslag
+          Workspace · {tx("Integrationslag", "Integration layer")}
         </div>
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Forbundne apps
+              {tx("Forbundne apps", "Connected apps")}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Fire ting herunder gør faktisk noget lige nu — Kalender, Dokumenter, CRM-synkronisering og Betalinger —
-              resten af kataloget kan I forbinde, men det er ikke koblet til en funktion i CRM'et endnu.
+              {tx("Fire ting herunder gør faktisk noget lige nu — Kalender, Dokumenter, CRM-synkronisering og Betalinger — resten af kataloget kan I forbinde, men det er ikke koblet til en funktion i CRM'et endnu.", "Four things below actually do something right now — Calendar, Documents, CRM sync and Payments. You can connect the rest of the catalogue, but it isn't wired to a CRM feature yet.")}
             </p>
           </div>
           <div className="flex items-center gap-8 text-sm">
             <Pulse value={liveCount} label="Live forbindelser" />
-            <Pulse value={fullCatalog.length - liveCount} label="Tilgængelige" muted />
+            <Pulse value={fullCatalog.length - liveCount} label={tx("Tilgængelige", "Available")} muted />
             <Pulse value={fullCatalog.length} label={toolkitsLoading ? "Henter…" : "I kataloget"} muted />
           </div>
         </div>
@@ -326,7 +325,7 @@ export default function ConnectedAppsPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
           <Input
-            placeholder="Søg systemer, signaler, datakilder…"
+            placeholder={tx("Søg systemer, signaler, datakilder…", "Search systems, signals, data sources…")}
             value={q} onChange={(e) => setQ(e.target.value)}
             className="pl-9 bg-card/40 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/40"
           />
@@ -335,7 +334,7 @@ export default function ConnectedAppsPage() {
 
       {error && (
         <ErrorState
-          title="Kunne ikke hente jeres forbindelser — modulerne nedenfor kan vise forkert status indtil dette virker igen."
+          title={tx("Kunne ikke hente jeres forbindelser — modulerne nedenfor kan vise forkert status indtil dette virker igen.", "Could not load your connections — the modules below may show the wrong status until this works again.")}
           onRetry={() => refetch()}
         />
       )}
@@ -465,7 +464,7 @@ export default function ConnectedAppsPage() {
       <footer className="border-t border-border/40 pt-8 flex items-start gap-3 text-sm text-muted-foreground max-w-3xl">
         <Sparkles className="h-4 w-4 mt-0.5 text-primary/70 shrink-0" />
         <p className="leading-relaxed">
-          Workflows og AI-actions bruger jeres forbundne konti direkte — ingen separate API-nøgler eller webhooks at vedligeholde.
+          {tx("Workflows og AI-actions bruger jeres forbundne konti direkte — ingen separate API-nøgler eller webhooks at vedligeholde.", "Workflows and AI actions use your connected accounts directly — no separate API keys or webhooks to maintain.")}
         </p>
       </footer>
 
@@ -536,11 +535,11 @@ function AppRow({
           </Button>
         ) : canConnect ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
-            Forbind
+            {tx("Forbind", "Connect")}
           </Button>
         ) : (
-          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70" title="Kræver jeres egen OAuth-app hos udbyderen">
-            <Lock className="h-3 w-3" /> Kræver opsætning
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70" title={tx("Kræver jeres egen OAuth-app hos udbyderen", "Requires your own OAuth app with the provider")}>
+            <Lock className="h-3 w-3" /> {tx("Kræver opsætning", "Requires setup")}
           </span>
         )}
       </div>
@@ -584,7 +583,7 @@ function ConnectDialog({
             <div className={`rounded-lg border p-3 text-xs leading-relaxed ${isConnected ? "border-emerald-500/30 bg-emerald-500/5 text-muted-foreground" : "border-border/40 bg-card/30 text-muted-foreground"}`}>
               <div className={`flex items-center gap-1.5 mb-1 ${isConnected ? "text-emerald-500" : "text-foreground/80"}`}>
                 {isConnected ? <CheckCircle2 className="h-3 w-3" /> : <Loader2 className="h-3 w-3 animate-spin" />}
-                {isConnected ? "Forbundet" : "Afventer bekræftelse"}
+                {isConnected ? tx("Forbundet", "Connected") : tx("Afventer bekræftelse", "Awaiting confirmation")}
               </div>
               {isConnected && existing?.connected_at && (
                 <span>Forbundet {new Date(existing.connected_at).toLocaleDateString(dateLocaleTag())}</span>
@@ -632,7 +631,7 @@ function ConnectDialog({
                   <span className="block mt-1.5 text-foreground/70">{poweredModule.outcome}</span>
                 ) : (
                   <span className="block mt-1.5 text-amber-500/90">
-                    Forbindelsen oprettes med det samme, men bruges endnu ikke af en specifik funktion i CRM'et — I forbinder den til senere brug.
+                    {tx("Forbindelsen oprettes med det samme, men bruges endnu ikke af en specifik funktion i CRM'et — I forbinder den til senere brug.", "The connection is created right away but isn't used by a specific CRM feature yet — you're connecting it for later use.")}
                   </span>
                 );
               })()}
@@ -640,7 +639,7 @@ function ConnectDialog({
           ) : (
             <div className="rounded-lg border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground leading-relaxed">
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-                <Lock className="h-3 w-3" /> Kræver avanceret opsætning
+                <Lock className="h-3 w-3" /> {tx("Kræver avanceret opsætning", "Requires advanced setup")}
               </div>
               {item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos {item.name}, ikke bare et login.
             </div>

@@ -11,12 +11,13 @@ import {
   useOperatingAction, useOperatingBrief, useOperatingCommand,
   type OperatingAction, type OperatingSignal,
 } from "@/hooks/api/useOperatingManager";
+import { tx } from '@/lib/inlineI18n';
 
 type View = "today" | "approvals" | "signals" | "history";
 
 const VIEWS: Array<{ id: View; label: string; icon: typeof Target }> = [
   { id: "today", label: "I dag", icon: Target },
-  { id: "approvals", label: "Godkend", icon: ShieldCheck },
+  { id: "approvals", label: tx("Godkend", "Approve"), icon: ShieldCheck },
   { id: "signals", label: "Signaler", icon: Zap },
   { id: "history", label: "Historik", icon: History },
 ];
@@ -53,7 +54,7 @@ export function OperatingManagerPanel() {
     ? "Kontrollerer AI…"
     : model?.online
       ? `Open-source AI online${model.name ? ` · ${model.name}` : ""}`
-      : model?.configured ? "AI-server kan ikke nås" : "Handlingsmotor klar · AI mangler";
+      : model?.configured ? tx("AI-server kan ikke nås", "AI server unreachable") : "Handlingsmotor klar · AI mangler";
 
   const submit = async (text = commandText) => {
     const clean = text.trim();
@@ -65,8 +66,8 @@ export function OperatingManagerPanel() {
       if (result.proposals.length) setView("approvals");
     } catch (error) {
       setAnswer(error instanceof Error
-        ? `Jeg kunne ikke færdiggøre svaret: ${error.message}`
-        : "Jeg kunne ikke færdiggøre svaret. Prøv igen om et øjeblik.");
+        ? `${tx("Jeg kunne ikke færdiggøre svaret", "I couldn't finish the answer")}: ${error.message}`
+        : tx("Jeg kunne ikke færdiggøre svaret. Prøv igen om et øjeblik.", "I couldn't finish the answer. Try again in a moment."));
     }
   };
 
@@ -86,7 +87,7 @@ export function OperatingManagerPanel() {
               </span>
               <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground" title={model?.error}>{modelLabel}</span>
             </div>
-            <p className="mt-1 text-sm font-medium text-foreground">Hvad skal virksomheden gøre nu?</p>
+            <p className="mt-1 text-sm font-medium text-foreground">{tx("Hvad skal virksomheden gøre nu?", "What should the business do now?")}</p>
           </div>
           <button
             type="button"
@@ -100,12 +101,12 @@ export function OperatingManagerPanel() {
         </div>
 
         <form onSubmit={(event) => { event.preventDefault(); void submit(); }} className="relative">
-          <label htmlFor="operating-command" className="sr-only">Giv driftslederen en kommando</label>
+          <label htmlFor="operating-command" className="sr-only">{tx("Giv driftslederen en kommando", "Give the operating manager a command")}</label>
           <input
             id="operating-command"
             value={commandText}
             onChange={(event) => setCommandText(event.target.value)}
-            placeholder="Skriv en opgave eller et spørgsmål…"
+            placeholder={tx("Skriv en opgave eller et spørgsmål…", "Write a task or a question…")}
             className="h-11 w-full rounded-xl border border-border/60 bg-background px-3 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
             disabled={command.isPending}
           />
@@ -132,7 +133,7 @@ export function OperatingManagerPanel() {
         )}
 
         <div className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5" aria-label="Hurtige kommandoer">
-          {["Hvad er vigtigst?", "Lav min dag klar", "Opret opgave: Følg op på varme leads"].map((label) => (
+          {[tx("Hvad er vigtigst?", "What matters most?"), "Lav min dag klar", tx("Opret opgave: Følg op på varme leads", "Create task: follow up on warm leads")].map((label) => (
             <button key={label} type="button" onClick={() => void submit(label)} disabled={command.isPending}
               className="h-7 shrink-0 rounded-full border border-border/50 px-2.5 text-[10px] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50">
               {label}
@@ -163,17 +164,17 @@ export function OperatingManagerPanel() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {brief.isLoading ? (
-          <PanelState icon={Loader2} text="Bygger driftsbilledet fra virksomhedens data…" spin />
+          <PanelState icon={Loader2} text={tx("Bygger driftsbilledet fra virksomhedens data…", "Building the operations picture from your company data…")} spin />
         ) : brief.isError ? (
-          <PanelState icon={CircleAlert} text={brief.error instanceof Error ? brief.error.message : "Driftsbilledet kunne ikke hentes"} action={() => brief.refetch()} />
+          <PanelState icon={CircleAlert} text={brief.error instanceof Error ? brief.error.message : tx("Driftsbilledet kunne ikke hentes", "The operations picture could not be loaded")} action={() => brief.refetch()} />
         ) : view === "today" ? (
           <TodayView stats={brief.data?.stats} signals={today} pending={awaiting.slice(0, 3)} onSignal={openSignal} onOpenApprovals={() => setView("approvals")} />
         ) : view === "approvals" ? (
-          <ActionList actions={awaiting} mutation={actionMutation} empty="Intet afventer din godkendelse." />
+          <ActionList actions={awaiting} mutation={actionMutation} empty={tx("Intet afventer din godkendelse.", "Nothing is awaiting your approval.")} />
         ) : view === "signals" ? (
           <SignalList signals={signals} onOpen={openSignal} />
         ) : (
-          <ActionList actions={history} mutation={actionMutation} empty="Historikken bliver synlig, når handlinger udføres eller afvises." history />
+          <ActionList actions={history} mutation={actionMutation} empty={tx("Historikken bliver synlig, når handlinger udføres eller afvises.", "History appears once actions are run or rejected.")} history />
         )}
       </div>
 
@@ -195,27 +196,27 @@ function TodayView({ stats, signals, pending, onSignal, onOpenApprovals }: {
   return (
     <div className="space-y-5 p-4">
       <div className="grid grid-cols-2 gap-2">
-        <Metric label="Kræver blik" value={(stats?.critical ?? 0) + (stats?.today ?? 0)} tone="urgent" />
+        <Metric label={tx("Kræver blik", "Needs attention")} value={(stats?.critical ?? 0) + (stats?.today ?? 0)} tone="urgent" />
         <Metric label="Afventer dig" value={stats?.awaitingApproval ?? 0} />
         <Metric label="Muligheder" value={stats?.opportunities ?? 0} />
-        <Metric label="Åbne signaler" value={signals.length} />
+        <Metric label={tx("Åbne signaler", "Open signals")} value={signals.length} />
       </div>
 
       <section>
-        <SectionLabel>Her er det vigtigste</SectionLabel>
+        <SectionLabel>{tx("Her er det vigtigste", "Here's what matters most")}</SectionLabel>
         {signals.length ? (
           <div className="mt-2 space-y-2">
             {signals.map((signal) => <SignalCard key={signal.id} signal={signal} onOpen={onSignal} />)}
           </div>
         ) : (
-          <EmptyInline icon={CheckCircle2} text="Ingen kritiske forhold i de aktuelle data." />
+          <EmptyInline icon={CheckCircle2} text={tx("Ingen kritiske forhold i de aktuelle data.", "Nothing critical in the current data.")} />
         )}
       </section>
 
       {pending.length > 0 && (
         <section>
           <div className="flex items-center justify-between">
-            <SectionLabel>Klar til beslutning</SectionLabel>
+            <SectionLabel>{tx("Klar til beslutning", "Ready for a decision")}</SectionLabel>
             <button type="button" onClick={onOpenApprovals} className="flex h-8 items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">Se alle <ChevronRight className="h-3 w-3" /></button>
           </div>
           <button type="button" onClick={onOpenApprovals} className="mt-2 w-full rounded-xl border border-border/50 bg-card/40 p-3 text-left transition-colors hover:bg-muted/50">
@@ -242,10 +243,10 @@ function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 function SignalList({ signals, onOpen }: { signals: OperatingSignal[]; onOpen: (signal: OperatingSignal) => void }) {
-  if (!signals.length) return <PanelState icon={CheckCircle2} text="Ingen åbne signaler. Driftsbilledet er roligt." />;
+  if (!signals.length) return <PanelState icon={CheckCircle2} text={tx("Ingen åbne signaler. Driftsbilledet er roligt.", "No open signals. Operations are calm.")} />;
   const groups = [
     { label: "Kritiske signaler", items: signals.filter((item) => ["critical", "high"].includes(item.severity)) },
-    { label: "I dag og prioriteter", items: signals.filter((item) => !["critical", "high"].includes(item.severity) && item.category !== "opportunity") },
+    { label: tx("I dag og prioriteter", "Today and priorities"), items: signals.filter((item) => !["critical", "high"].includes(item.severity) && item.category !== "opportunity") },
     { label: "Muligheder", items: signals.filter((item) => item.category === "opportunity") },
   ].filter((group) => group.items.length);
   return (
@@ -308,7 +309,7 @@ function ActionCard({ action, mutation, history }: { action: OperatingAction; mu
       setEditError(null);
       mutation.mutate({ operation: "edit", actionId: action.id, input: parsed }, { onSuccess: () => setEditing(false) });
     } catch {
-      setEditError("JSON-feltet er ikke gyldigt.");
+      setEditError(tx("JSON-feltet er ikke gyldigt.", "The JSON field isn't valid."));
     }
   };
 
@@ -346,7 +347,7 @@ function ActionCard({ action, mutation, history }: { action: OperatingAction; mu
           {editError && <p className="text-[10px] text-red-500">{editError}</p>}
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={saveDraft} disabled={busy}
-              className="h-9 rounded-lg bg-foreground px-3 text-[11px] font-medium text-background disabled:opacity-50">Gem ændring</button>
+              className="h-9 rounded-lg bg-foreground px-3 text-[11px] font-medium text-background disabled:opacity-50">{tx("Gem ændring", "Save change")}</button>
             <button type="button" onClick={() => setEditing(false)} className="h-9 rounded-lg px-3 text-[11px] text-muted-foreground hover:bg-muted">Annuller</button>
           </div>
         </div>
@@ -369,10 +370,10 @@ function ActionCard({ action, mutation, history }: { action: OperatingAction; mu
           <button type="button" onClick={() => mutation.mutate({ operation: retryable ? "retry" : "approve", actionId: action.id })} disabled={busy}
             className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg bg-foreground text-[11px] font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50">
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : retryable ? <RefreshCw className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
-            {retryable ? "Prøv igen" : "Godkend og udfør"}
+            {retryable ? tx("Prøv igen", "Try again") : tx("Godkend og udfør", "Approve and run")}
           </button>
           {pending && <button type="button" onClick={() => setEditing(true)} disabled={busy} className="h-10 rounded-lg border border-border/60 px-3 text-[11px] hover:bg-muted">Rediger</button>}
-          {pending && <button type="button" onClick={() => mutation.mutate({ operation: "reject", actionId: action.id })} disabled={busy} className="grid h-10 w-10 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-500" aria-label="Afvis handling"><X className="h-4 w-4" /></button>}
+          {pending && <button type="button" onClick={() => mutation.mutate({ operation: "reject", actionId: action.id })} disabled={busy} className="grid h-10 w-10 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-red-500" aria-label={tx("Afvis handling", "Reject action")}><X className="h-4 w-4" /></button>}
         </div>
       )}
     </article>
@@ -392,7 +393,7 @@ function PanelState({ icon: Icon, text, spin, action }: { icon: typeof Loader2; 
     <div className="flex min-h-[260px] flex-col items-center justify-center px-8 text-center text-xs leading-relaxed text-muted-foreground">
       <Icon className={cn("mb-3 h-6 w-6 text-muted-foreground/50", spin && "animate-spin")} />
       <p>{text}</p>
-      {action && <button type="button" onClick={action} className="mt-3 h-9 rounded-lg border border-border/60 px-3 text-[11px] text-foreground hover:bg-muted">Prøv igen</button>}
+      {action && <button type="button" onClick={action} className="mt-3 h-9 rounded-lg border border-border/60 px-3 text-[11px] text-foreground hover:bg-muted">{tx("Prøv igen", "Try again")}</button>}
     </div>
   );
 }

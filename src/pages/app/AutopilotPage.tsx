@@ -40,7 +40,7 @@ export default function AutopilotPage() {
       {/* Desktop cockpit */}
       <div className="hidden lg:grid lg:grid-cols-[320px_1fr_360px] gap-px bg-border/30 rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[600px]">
         <div className="bg-background overflow-hidden flex flex-col">
-          <SectionHeader icon={Activity} label="Live signaler" count={events.data?.length} />
+          <SectionHeader icon={Activity} label={tx("Live signaler", "Live signals")} count={events.data?.length} />
           <SignalFeed events={events.data ?? []} loading={events.isLoading} />
         </div>
         <div className="bg-background overflow-hidden flex flex-col">
@@ -85,17 +85,15 @@ function Header({ proposedCount, eventCount }: { proposedCount: number; eventCou
       <div className="flex items-end justify-between gap-6 flex-wrap">
         <div className="space-y-2 max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight font-display">
-            Drift hele forretningen <span className="text-muted-foreground/60">fra ét sted.</span>
+            {tx("Drift hele forretningen", "Run the whole business")} <span className="text-muted-foreground/60">{tx("fra ét sted.", "from one place.")}</span>
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Signaler fra CRM, finans, produktivitet og integrationer streamer ind live.
-            Agenten ser alt, foreslår handlinger, og udfører rutinearbejdet.
-            Eksterne handlinger venter på dit ét-klik approve.
+            {tx("Signaler fra CRM, finans, produktivitet og integrationer streamer ind live. Agenten ser alt, foreslår handlinger, og udfører rutinearbejdet. Eksterne handlinger venter på dit ét-klik approve.", "Signals from CRM, finance, productivity and integrations stream in live. The agent sees everything, suggests actions and does the routine work. External actions wait for your one-click approval.")}
           </p>
         </div>
         <div className="flex items-center gap-6 text-xs">
-          <Stat value={eventCount} label="Signaler" />
-          <Stat value={proposedCount} label="Venter approve" highlight={proposedCount > 0} />
+          <Stat value={eventCount} label={tx("Signaler", "Signals")} />
+          <Stat value={proposedCount} label={tx("Venter approve", "Awaiting approval")} highlight={proposedCount > 0} />
         </div>
       </div>
     </header>
@@ -134,7 +132,7 @@ const MODULE_ICON: Record<string, LucideIcon> = {
 
 function SignalFeed({ events, loading }: { events: WorkspaceEvent[]; loading: boolean }) {
   if (loading) return <Loading />;
-  if (events.length === 0) return <Empty icon={Activity} text="Ingen signaler endnu. Opret en lead, flyt en deal, eller send en faktura." />;
+  if (events.length === 0) return <Empty icon={Activity} text={tx("Ingen signaler endnu. Opret en lead, flyt en deal, eller send en faktura.", "No signals yet. Create a lead, move a deal or send an invoice.")} />;
 
   return (
     <ScrollArea className="flex-1">
@@ -178,12 +176,12 @@ function SignalSummary({ event }: { event: WorkspaceEvent }) {
       case "lead.created": return `${p.name ?? "Lead"} · ${p.company ?? ""} · score ${p.score ?? 0}`;
       case "lead.status_changed": return `${p.name}: ${p.from} → ${p.to}`;
       case "deal.created": return `${p.title} · ${formatMoney(p.value)}`;
-      case "deal.won": return `🏆 ${p.title} vundet · ${formatMoney(p.value)}`;
-      case "deal.lost": return `${p.title} tabt`;
+      case "deal.won": return `🏆 ${p.title} ${tx("vundet", "won")} · ${formatMoney(p.value)}`;
+      case "deal.lost": return `${p.title} ${tx("tabt", "lost")}`;
       case "deal.stage_changed": return `${p.title}: ${p.from} → ${p.to}`;
-      case "invoice.created": return `Faktura ${p.number} · ${formatMoney(p.amount)}`;
-      case "invoice.paid": return `Betalt: ${p.number} · ${formatMoney(p.amount)}`;
-      case "task.created": return `Opgave: ${p.title}`;
+      case "invoice.created": return `${tx("Faktura", "Invoice")} ${p.number} · ${formatMoney(p.amount)}`;
+      case "invoice.paid": return `${tx("Betalt", "Paid")}: ${p.number} · ${formatMoney(p.amount)}`;
+      case "task.created": return `${tx("Opgave", "Task")}: ${p.title}`;
       case "task.completed": return `✓ ${p.title}`;
       default: {
         // Unknown event types (lead.updated, meeting.booked, payment.received…)
@@ -208,10 +206,10 @@ function formatMoney(v: unknown) {
 // ─── AGENT CHAT ───────────────────────────────────────────────────────────
 
 const QUICK = [
-  "Giv mig et morgenbrief: top 5 ting jeg bør handle på i dag",
-  "Find leads med score > 70 der ikke er blevet kontaktet",
-  "Vis forfaldne fakturaer og foreslå rykker-emails",
-  "Hvilke deals står stille i pipeline > 14 dage?",
+  tx("Giv mig et morgenbrief: top 5 ting jeg bør handle på i dag", "Give me a morning brief: the top 5 things I should act on today"),
+  tx("Find leads med score > 70 der ikke er blevet kontaktet", "Find leads with score > 70 that haven't been contacted"),
+  tx("Vis forfaldne fakturaer og foreslå rykker-emails", "Show overdue invoices and suggest reminder emails"),
+  tx("Hvilke deals står stille i pipeline > 14 dage?", "Which deals have been stuck in the pipeline > 14 days?"),
 ];
 
 function AgentChat({ companyId, userId }: { companyId: string | null; userId: string | null }) {
@@ -252,7 +250,7 @@ function AgentChat({ companyId, userId }: { companyId: string | null; userId: st
         <div className="px-4 py-4 space-y-4">
           {messages.length === 0 && (
             <div className="space-y-3">
-              <div className="text-xs text-muted-foreground">Start med at spørge om noget — agenten kan handle på tværs af alle moduler.</div>
+              <div className="text-xs text-muted-foreground">{tx("Start med at spørge om noget — agenten kan handle på tværs af alle moduler.", "Start by asking something — the agent can act across all modules.")}</div>
               <div className="grid gap-2">
                 {QUICK.map((q) => (
                   <button
@@ -292,7 +290,7 @@ function AgentChat({ companyId, userId }: { companyId: string | null; userId: st
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-          placeholder={hasContext ? "Spørg eller giv en intention…" : "Logger ind…"}
+          placeholder={hasContext ? tx("Spørg eller giv en intention…", "Ask or state an intention…") : tx("Logger ind…", "Signing in…")}
           rows={2}
           className="resize-none text-sm bg-background/60 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/40"
           disabled={!hasContext || isBusy}
@@ -391,7 +389,7 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
   const exec = useExecuteAction();
   const updateStatus = useUpdateActionStatus();
   if (loading) return <Loading />;
-  if (actions.length === 0) return <Empty icon={Inbox} text="Ingen handlinger i kø. Bed agenten foreslå noget." />;
+  if (actions.length === 0) return <Empty icon={Inbox} text={tx("Ingen handlinger i kø. Bed agenten foreslå noget.", "No actions queued. Ask the agent to suggest something.")} />;
 
   return (
     <ScrollArea className="flex-1">
@@ -443,13 +441,13 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                       disabled={exec.isPending}
                     >
                       {exec.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
-                      Approve & udfør
+                      {tx("Approve & udfør", "Approve & run")}
                     </Button>
                     <Button
                       size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground"
                       onClick={() => updateStatus.mutate({ id: a.id, status: "dismissed" })}
                     >
-                      <X className="h-3 w-3 mr-1" /> Afvis
+                      <X className="h-3 w-3 mr-1" /> {tx("Afvis", "Reject")}
                     </Button>
                   </div>
                 )}

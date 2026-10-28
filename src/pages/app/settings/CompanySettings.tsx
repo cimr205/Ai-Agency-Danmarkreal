@@ -15,6 +15,7 @@ import { AccountingConnections } from '@/components/settings/AccountingConnectio
 import { getErrorMessage } from '@/lib/errors';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { tx } from '@/lib/inlineI18n';
 
 export default function CompanySettingsPage() {
   const { t, locale } = useI18n();
@@ -114,11 +115,11 @@ export default function CompanySettingsPage() {
               <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
               <div>
                 <p className="font-semibold text-sm">
-                  {locale === 'da' ? 'Firmaprofil er ufuldstændig' : locale === 'de' ? 'Firmenprofil ist unvollständig' : 'Company profile is incomplete'}
+                  {locale === 'da' ? tx("Firmaprofil er ufuldstændig", "Company profile is incomplete") : locale === 'de' ? 'Firmenprofil ist unvollständig' : 'Company profile is incomplete'}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {locale === 'da'
-                    ? 'Udfyld alle felter for at aktivere fakturering og professionel kommunikation.'
+                    ? tx("Udfyld alle felter for at aktivere fakturering og professionel kommunikation.", "Fill in all fields to enable invoicing and professional communication.")
                     : locale === 'de'
                     ? 'Füllen Sie alle Felder aus, um Rechnungsstellung und professionelle Kommunikation zu aktivieren.'
                     : 'Complete all fields to enable invoicing and professional communication.'}

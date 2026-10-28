@@ -8,6 +8,7 @@ import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
+import { tx } from '@/lib/inlineI18n';
 
 type DineroConnection = Tables<'dinero_connections'>;
 type EconomicConnection = Tables<'economic_connections'>;
@@ -122,9 +123,9 @@ export function AccountingConnections() {
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Regnskabsintegrationer</CardTitle>
+        <CardTitle className="text-base">{tx("Regnskabsintegrationer", "Accounting integrations")}</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Forbind Dinero eller e-conomic for at synkronisere kunder og fakturaer to-vejs.
+          {tx("Forbind Dinero eller e-conomic for at synkronisere kunder og fakturaer to-vejs.", "Connect Dinero or e-conomic to sync customers and invoices both ways.")}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -139,7 +140,7 @@ export function AccountingConnections() {
                 <div>
                   <p className="text-sm font-medium">{row.label}</p>
                   <p className="text-xs text-muted-foreground">
-                    {isConnected ? (row.name || 'Forbundet') : 'Ikke forbundet'}
+                    {isConnected ? (row.name || tx("Forbundet", "Connected")) : tx("Ikke forbundet", "Not connected")}
                   </p>
                 </div>
               </div>
