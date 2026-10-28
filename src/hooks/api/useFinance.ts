@@ -260,7 +260,13 @@ export function useUpdateInvoiceStatus() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+    // Marking paid registers a payment row, so the Payments page (and the
+    // finance dashboards) must refetch too — they used to keep showing the
+    // stale list until a full page reload.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invoices'] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+    },
   });
 }
 

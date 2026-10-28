@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DecimalInput } from '@/components/shared/DecimalInput';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Textarea } from '@/components/ui/textarea';
@@ -94,7 +95,13 @@ export default function QuotesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success(t('quotes.created'));
+      toast.success(t('pages.invoices.created_success'));
+    },
+    // The RPC rejects quotes without a billable customer; that used to fail
+    // silently (no toast at all).
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : '';
+      toast.error(/billable customer/i.test(msg) ? t('quotes.leadRequired') : (msg || t('common.error')));
     },
   });
 
@@ -102,9 +109,10 @@ export default function QuotesPage() {
     q.title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0);
-  const vatAmount = subtotal * (vatRate / 100);
-  const total = subtotal + vatAmount;
+  const roundOre = (n: number) => Math.round(n * 100) / 100;
+  const subtotal = roundOre(lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0));
+  const vatAmount = roundOre(subtotal * (vatRate / 100));
+  const total = roundOre(subtotal + vatAmount);
 
   const addLine = () => setLines(prev => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
   const updateLine = (idx: number, field: keyof QuoteLine, value: string | number) => {
@@ -114,6 +122,10 @@ export default function QuotesPage() {
 
   const handleCreate = async () => {
     if (!title.trim() || lines.length === 0) { toast.error(t('quotes.titleAndLineRequired')); return; }
+    // A quote can only become an invoice with a lead/customer attached, so
+    // require it up front instead of failing at conversion time.
+    if (!leadId) { toast.error(t('quotes.leadRequired')); return; }
+    if (!(vatRate >= 0 && vatRate <= 100)) { toast.error(t('quotes.vatInvalid')); return; }
     try {
       await createQuote.mutateAsync({
         title, lead_id: leadId || undefined, lines, subtotal, vat_rate: vatRate, vat_amount: vatAmount, total,
@@ -157,8 +169,8 @@ export default function QuotesPage() {
                   {lines.map((line, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <Input value={line.description} onChange={e => updateLine(idx, 'description', e.target.value)} placeholder={t('quotes.descriptionPlaceholder')} className="flex-1" />
-                      <Input type="number" value={line.quantity} onChange={e => updateLine(idx, 'quantity', parseFloat(e.target.value) || 0)} className="w-20" />
-                      <Input type="number" value={line.unit_price} onChange={e => updateLine(idx, 'unit_price', parseFloat(e.target.value) || 0)} className="w-28" />
+                      <DecimalInput value={line.quantity} onValueChange={v => updateLine(idx, 'quantity', v)} className="w-20" />
+                      <DecimalInput value={line.unit_price} onValueChange={v => updateLine(idx, 'unit_price', v)} className="w-28" />
                       <span className="text-sm font-medium w-24 text-right">{formatCurrency(line.quantity * line.unit_price)}</span>
                       {lines.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('common.delete')} onClick={() => removeLine(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
                     </div>
@@ -175,7 +187,7 @@ export default function QuotesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>{t('quotes.validUntil')}</Label><Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} /></div>
-                <div><Label>{t('quotes.vatRate')}</Label><Input type="number" value={vatRate} onChange={e => setVatRate(parseFloat(e.target.value) || 0)} /></div>
+                <div><Label>{t('quotes.vatRate')}</Label><DecimalInput value={vatRate} onValueChange={v => setVatRate(Math.min(100, v))} /></div>
               </div>
 
               <div><Label>{t('quotes.notes')}</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('quotes.notesPlaceholder')} rows={2} /></div>

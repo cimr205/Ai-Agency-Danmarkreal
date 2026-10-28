@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DecimalInput } from '@/components/shared/DecimalInput';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -87,6 +88,15 @@ function buildPdfData(invoice: InvoiceWithCustomer, company: Company | null | un
     locale,
   };
 }
+
+const roundOre = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+// Without a due date an invoice can never become "overdue", so default to
+// the usual Danish 14 days net when none is picked.
+const defaultDueDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toISOString().slice(0, 10);
+};
 
 export default function InvoicesPage() {
   const { t, locale } = useI18n();
@@ -331,10 +341,13 @@ export default function InvoicesPage() {
     return getVatInfo(selectedCustomer.country || 'DK', selectedCustomer.customer_type || 'business');
   }, [selectedCustomer]);
 
-  const lineSubtotal = lines.reduce((s, l) => s + l.total, 0);
-  const subtotal = priceMode === 'incl' ? lineSubtotal / (1 + vatInfo.rate / 100) : lineSubtotal;
-  const vatAmount = subtotal * (vatInfo.rate / 100);
-  const totalAmount = subtotal + vatAmount;
+  // All money is rounded to øre (2 decimals) so stored subtotal + vat_amount
+  // always equals amount — previously vat_amount was saved unrounded
+  // (e.g. 24.9975) and drifted from the total in exports/accounting sync.
+  const lineSubtotal = roundOre(lines.reduce((s, l) => s + l.total, 0));
+  const subtotal = roundOre(priceMode === 'incl' ? lineSubtotal / (1 + vatInfo.rate / 100) : lineSubtotal);
+  const vatAmount = roundOre(subtotal * (vatInfo.rate / 100));
+  const totalAmount = roundOre(subtotal + vatAmount);
 
   const updateLine = (index: number, field: keyof InvoiceLine, value: string | number) => {
     const updated = [...lines];
@@ -375,9 +388,12 @@ export default function InvoicesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedCustomerId || lines.length === 0 || lines.some(l => !l.description || l.total <= 0)) { toast.error(t('pages.invoices.selectError')); return; }
+    if (!selectedCustomerId || lines.length === 0) { toast.error(t('pages.invoices.selectError')); return; }
+    // Say which line is wrong instead of the generic "select a customer"
+    // message, which showed even when a customer was already chosen.
+    if (lines.some(l => !l.description.trim() || l.total <= 0)) { toast.error(t('pages.invoices.lineInvalid')); return; }
     try {
-      await createInvoice.mutateAsync({ customer_id: selectedCustomerId, lines, subtotal, vat_rate: vatInfo.rate, vat_amount: vatAmount, amount: totalAmount, customer_country: selectedCustomer?.country || 'DK', customer_type: selectedCustomer?.customer_type || 'business', vat_note: vatInfo.note || undefined, due_date: dueDate || undefined, notes: notes || undefined });
+      await createInvoice.mutateAsync({ customer_id: selectedCustomerId, lines, subtotal, vat_rate: vatInfo.rate, vat_amount: vatAmount, amount: totalAmount, customer_country: selectedCustomer?.country || 'DK', customer_type: selectedCustomer?.customer_type || 'business', vat_note: vatInfo.note || undefined, due_date: dueDate || defaultDueDate(), notes: notes || undefined });
       toast.success(t('pages.invoices.created_success'));
       resetForm(); setIsCreateOpen(false);
     } catch { toast.error(t('pages.invoices.created_error')); }
@@ -724,8 +740,8 @@ export default function InvoicesPage() {
                     {lines.map((line, i) => (
                       <div key={i} className="grid gap-2 grid-cols-[1fr_80px_100px_100px_32px] items-end">
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.description')}</Label>}<Input value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} placeholder={t('pages.invoices.productPlaceholder')} /></div>
-                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<Input type="number" min={1} value={line.quantity} onChange={e => updateLine(i, 'quantity', Number(e.target.value))} /></div>
-                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<Input type="number" min={0} value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<DecimalInput min={0} value={line.quantity} onValueChange={v => updateLine(i, 'quantity', v)} /></div>
+                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<DecimalInput min={0} value={line.unit_price} onValueChange={v => updateLine(i, 'unit_price', v)} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.lineTotal')}</Label>}<Input value={formatCurrency(line.total)} readOnly className="bg-muted/50" /></div>
                         <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
                       </div>
@@ -880,6 +896,9 @@ export default function InvoicesPage() {
                     <Button variant="ghost" size="icon" title={t('pages.invoices.generatePdf')} onClick={() => handleDownloadPdf(invoice)}>
                       <Download className="h-4 w-4" />
                     </Button>
+                    {/* A paid (booked) invoice must not be deleted — bookkeeping
+                        rules require it to be credited/voided instead. */}
+                    {invoice.status !== 'paid' && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" title={t('common.delete') || 'Slet'} className="text-muted-foreground hover:text-destructive">
@@ -911,6 +930,7 @@ export default function InvoicesPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -1157,15 +1177,13 @@ export default function InvoicesPage() {
                         updated[i] = { ...updated[i], description: e.target.value };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Input type="number" min={1} value={line.quantity} onChange={e => {
+                      <DecimalInput min={0} value={line.quantity} onValueChange={qty => {
                         const updated = [...editingInvoice.editLines];
-                        const qty = Number(e.target.value);
                         updated[i] = { ...updated[i], quantity: qty, total: qty * updated[i].unit_price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Input type="number" min={0} value={line.unit_price} onChange={e => {
+                      <DecimalInput min={0} value={line.unit_price} onValueChange={price => {
                         const updated = [...editingInvoice.editLines];
-                        const price = Number(e.target.value);
                         updated[i] = { ...updated[i], unit_price: price, total: updated[i].quantity * price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
@@ -1190,10 +1208,10 @@ export default function InvoicesPage() {
                     setSavingEdit(true);
                     try {
                       const editLines = editingInvoice.editLines;
-                      const editSubtotal = editLines.reduce((s, l) => s + l.total, 0);
+                      const editSubtotal = roundOre(editLines.reduce((s, l) => s + l.total, 0));
                       const editVatRate = editingInvoice.vat_rate || 25;
-                      const editVatAmount = editSubtotal * (editVatRate / 100);
-                      const editTotal = editSubtotal + editVatAmount;
+                      const editVatAmount = roundOre(editSubtotal * (editVatRate / 100));
+                      const editTotal = roundOre(editSubtotal + editVatAmount);
 
                       const { error } = await supabase.from('invoices').update({
                         lines: editLines as unknown as Tables<'invoices'>['lines'],
