@@ -21,6 +21,9 @@ export interface DashboardData {
     total: number; paid: number; overdue: number; totalValue: number;
     overdueValue: number; monthValue: number; lastMonthValue: number;
   };
+  /** Actual cash received (completed, non-reversed payments) — distinct from
+   * invoices.monthValue, which is the amount *invoiced* this month. */
+  payments: { monthValue: number; lastMonthValue: number };
 }
 
 export interface FocusItem {

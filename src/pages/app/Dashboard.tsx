@@ -40,8 +40,11 @@ export default function Dashboard() {
   const firstName = (profile?.full_name || "").split(" ")[0] || "der";
   const today = new Date().toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "short" }).replace(/\.$/, "");
   const monthValue = d?.invoices?.monthValue ?? 0;
-  const lastMonthValue = d?.invoices?.lastMonthValue ?? 0;
-  const momDelta = lastMonthValue > 0 ? Math.round(((monthValue - lastMonthValue) / lastMonthValue) * 100) : null;
+  // "Cash collected" must be actual received payments, not invoiced amount —
+  // d?.invoices?.monthValue is "Faktureret" (used correctly below) (#004).
+  const cashCollected = d?.payments?.monthValue ?? 0;
+  const lastCashCollected = d?.payments?.lastMonthValue ?? 0;
+  const momDelta = lastCashCollected > 0 ? Math.round(((cashCollected - lastCashCollected) / lastCashCollected) * 100) : null;
   const openDeals = (d?.deals?.total ?? 0) - (d?.deals?.won ?? 0) - (d?.deals?.lost ?? 0);
   const overdueValue = d?.invoices?.overdueValue ?? 0;
   const activeWork = (d?.tasks?.pending ?? 0) + (d?.tasks?.inProgress ?? 0);
@@ -51,7 +54,7 @@ export default function Dashboard() {
   const tasks = d?.today?.tasks ?? [];
 
   const pulse = [
-    { label: "Cash collected", value: isLoading ? null : format(monthValue), detail: typeof momDelta === "number" ? (momDelta >= 0 ? "+" : "-") + Math.abs(momDelta) + "% vs. sidste måned" : "første aktive måned", href: base + "/finance/invoices", tone: momDelta !== null && momDelta < 0 ? "risk" : "blue", icon: Wallet },
+    { label: "Cash collected", value: isLoading ? null : format(cashCollected), detail: typeof momDelta === "number" ? (momDelta >= 0 ? "+" : "-") + Math.abs(momDelta) + "% vs. sidste måned" : "første aktive måned", href: base + "/finance/invoices", tone: momDelta !== null && momDelta < 0 ? "risk" : "blue", icon: Wallet },
     { label: "Pipeline", value: isLoading ? null : format(d?.deals?.openValue ?? 0), detail: openDeals + " åbne muligheder", href: base + "/crm/deals?view=board", tone: "violet", icon: Briefcase },
     { label: "Pressure", value: isLoading ? null : format(overdueValue), detail: (d?.invoices?.overdue ?? 0) + " forfaldne fakturaer", href: base + "/finance/invoices", tone: overdueValue > 0 ? "risk" : "cyan", icon: AlertTriangle },
     { label: "Workload", value: isLoading ? null : String(activeWork), detail: tasks.length + " opgaver i dag", href: base + "/work/tasks", tone: activeWork > 8 ? "risk" : "blue", icon: CheckCircle2 },

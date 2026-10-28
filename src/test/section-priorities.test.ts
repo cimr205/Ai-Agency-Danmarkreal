@@ -26,6 +26,7 @@ function dash(over: Partial<DashboardSummary> = {}): DashboardSummary {
     pipeline: { stages: [] },
     customers: { total: 0 },
     invoices: { total: 0, paid: 0, overdue: 0, totalValue: 0, overdueValue: 0, monthValue: 0, lastMonthValue: 0 },
+    payments: { monthValue: 0, lastMonthValue: 0 },
     revenueByDay: [],
     trends: { leads: [], deals: [], won: [] },
     today: { meetings: [], tasks: [] },
