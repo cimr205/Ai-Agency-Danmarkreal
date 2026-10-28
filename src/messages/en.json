@@ -1122,7 +1122,19 @@
       "connectCrm": "Connect CRM",
       "phoneInvalid": "Enter a valid phone number (digits, spaces, + and - only).",
       "duplicateEmail": "A lead or customer with this email already exists.",
-      "convertedToExisting": "Deal created and linked to an existing contact with the same email/phone."
+      "convertedToExisting": "Deal created and linked to an existing contact with the same email/phone.",
+      "cockpit": {
+        "signal": "Live lead signal",
+        "contacts": "Contacts",
+        "followUp": "Follow up",
+        "new": "New",
+        "stale": "No activity",
+        "title": "Relationships in motion.",
+        "subtitle": "Find the next contact, keep momentum and move the right leads into the pipeline.",
+        "syncedVia": "Synced via",
+        "syncNow": "Sync now",
+        "connectCrm": "Connect CRM"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1312,7 +1324,20 @@
       "assignee": "Assignee",
       "priority": "Priority",
       "bulkComplete": "Complete",
-      "bulkAssignTo": "Assign to"
+      "bulkAssignTo": "Assign to",
+      "views": {
+        "today": "Today",
+        "overdue": "Overdue",
+        "upcoming": "Upcoming",
+        "mine": "Mine",
+        "allActive": "All active",
+        "completed": "Completed",
+        "archived": "Archived"
+      },
+      "selectAll": "Select all",
+      "selectAllVisible": "Select all visible",
+      "selected": "selected",
+      "emptyView": "Nothing in this view — check the other tabs."
     },
     "calendar": {
       "title": "Calendar",
@@ -3199,5 +3224,27 @@
       "time": "Time",
       "requestId": "Request ID"
     }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Follow up with",
+    "prepareError": "Could not prepare the action",
+    "taskCreated": "Task created",
+    "rejected": "Proposal rejected",
+    "actionFailed": "The action failed",
+    "resultTitle": "Follow-up task created",
+    "prepareAgain": "Prepare again",
+    "proposalTitle": "AI suggests an action",
+    "risk": "risk",
+    "what": "What",
+    "why": "Why",
+    "changes": "What changes",
+    "fieldTitle": "Title",
+    "fieldDue": "Due",
+    "fieldPriority": "Priority",
+    "serverSide": "Runs server-side after your approval.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "preparing": "Preparing…",
+    "prepare": "Prepare follow-up (AI)"
   }
 }

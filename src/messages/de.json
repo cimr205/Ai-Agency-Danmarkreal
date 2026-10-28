@@ -1139,7 +1139,19 @@
       "connectCrm": "CRM verbinden",
       "phoneInvalid": "Gib eine gültige Telefonnummer ein (nur Ziffern, Leerzeichen, + und -).",
       "duplicateEmail": "Ein Lead oder Kunde mit dieser E-Mail existiert bereits.",
-      "convertedToExisting": "Deal erstellt und mit einem bestehenden Kontakt mit derselben E-Mail/Telefonnummer verknüpft."
+      "convertedToExisting": "Deal erstellt und mit einem bestehenden Kontakt mit derselben E-Mail/Telefonnummer verknüpft.",
+      "cockpit": {
+        "signal": "Live-Lead-Signal",
+        "contacts": "Kontakte",
+        "followUp": "Nachfassen",
+        "new": "Neu",
+        "stale": "Ohne Aktivität",
+        "title": "Beziehungen in Bewegung.",
+        "subtitle": "Finde den nächsten Kontakt, halte das Momentum und bring die richtigen Leads in die Pipeline.",
+        "syncedVia": "Synchronisiert über",
+        "syncNow": "Jetzt synchronisieren",
+        "connectCrm": "CRM verbinden"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1324,7 +1336,20 @@
       "assignee": "Verantwortlich",
       "priority": "Priorität",
       "bulkComplete": "Abschließen",
-      "bulkAssignTo": "Zuweisen an"
+      "bulkAssignTo": "Zuweisen an",
+      "views": {
+        "today": "Heute",
+        "overdue": "Überfällig",
+        "upcoming": "Anstehend",
+        "mine": "Meine",
+        "allActive": "Alle aktiven",
+        "completed": "Erledigt",
+        "archived": "Archiviert"
+      },
+      "selectAll": "Alle auswählen",
+      "selectAllVisible": "Alle sichtbaren auswählen",
+      "selected": "ausgewählt",
+      "emptyView": "In dieser Ansicht ist nichts — sieh in den anderen Tabs nach."
     },
     "calendar": {
       "title": "Kalender",
@@ -3134,5 +3159,27 @@
       "time": "Zeitpunkt",
       "requestId": "Anfrage-ID"
     }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Nachfassen bei",
+    "prepareError": "Die Aktion konnte nicht vorbereitet werden",
+    "taskCreated": "Aufgabe erstellt",
+    "rejected": "Vorschlag abgelehnt",
+    "actionFailed": "Die Aktion ist fehlgeschlagen",
+    "resultTitle": "Nachfass-Aufgabe erstellt",
+    "prepareAgain": "Erneut vorbereiten",
+    "proposalTitle": "KI schlägt eine Aktion vor",
+    "risk": "Risiko",
+    "what": "Was",
+    "why": "Warum",
+    "changes": "Was sich ändert",
+    "fieldTitle": "Titel",
+    "fieldDue": "Fällig",
+    "fieldPriority": "Priorität",
+    "serverSide": "Wird nach deiner Freigabe serverseitig ausgeführt.",
+    "approve": "Freigeben",
+    "reject": "Ablehnen",
+    "preparing": "Wird vorbereitet…",
+    "prepare": "Nachfassen vorbereiten (KI)"
   }
 }

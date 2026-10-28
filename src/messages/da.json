@@ -1139,7 +1139,19 @@
       "connectCrm": "Forbind CRM",
       "phoneInvalid": "Angiv et gyldigt telefonnummer (kun tal, mellemrum, + og -).",
       "duplicateEmail": "Der findes allerede et lead eller en kunde med denne e-mail.",
-      "convertedToExisting": "Deal oprettet og knyttet til en eksisterende kontakt med samme e-mail/telefon."
+      "convertedToExisting": "Deal oprettet og knyttet til en eksisterende kontakt med samme e-mail/telefon.",
+      "cockpit": {
+        "signal": "Live lead-signal",
+        "contacts": "Kontakter",
+        "followUp": "Følg op",
+        "new": "Nye",
+        "stale": "Uden aktivitet",
+        "title": "Relationer i bevægelse.",
+        "subtitle": "Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.",
+        "syncedVia": "Synkroniseret via",
+        "syncNow": "Synkronisér nu",
+        "connectCrm": "Forbind CRM"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1329,7 +1341,20 @@
       "assignee": "Ansvarlig",
       "priority": "Prioritet",
       "bulkComplete": "Fuldfør",
-      "bulkAssignTo": "Tildel til"
+      "bulkAssignTo": "Tildel til",
+      "views": {
+        "today": "I dag",
+        "overdue": "Forfaldne",
+        "upcoming": "Kommende",
+        "mine": "Mine",
+        "allActive": "Alle aktive",
+        "completed": "Fuldførte",
+        "archived": "Arkiverede"
+      },
+      "selectAll": "Vælg alle",
+      "selectAllVisible": "Vælg alle synlige",
+      "selected": "valgt",
+      "emptyView": "Intet i denne visning — se de andre faner."
     },
     "calendar": {
       "title": "Kalender",
@@ -3157,5 +3182,27 @@
       "time": "Tidspunkt",
       "requestId": "Forespørgsels-id"
     }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Følg op på",
+    "prepareError": "Kunne ikke forberede handlingen",
+    "taskCreated": "Opgave oprettet",
+    "rejected": "Forslag afvist",
+    "actionFailed": "Handlingen fejlede",
+    "resultTitle": "Opfølgningsopgave oprettet",
+    "prepareAgain": "Forbered igen",
+    "proposalTitle": "AI foreslår en handling",
+    "risk": "risiko",
+    "what": "Hvad",
+    "why": "Hvorfor",
+    "changes": "Hvad ændres",
+    "fieldTitle": "Titel",
+    "fieldDue": "Forfald",
+    "fieldPriority": "Prioritet",
+    "serverSide": "Udføres server-side efter din godkendelse.",
+    "approve": "Godkend",
+    "reject": "Afvis",
+    "preparing": "Forbereder…",
+    "prepare": "Forbered opfølgning (AI)"
   }
 }

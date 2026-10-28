@@ -355,13 +355,13 @@ export default function TasksPage() {
           value={view}
           onChange={(v) => { setView(v); clearSelection(); }}
           options={[
-            { value: 'today', label: `I dag ${counts.today > 0 ? `(${counts.today})` : ''}`.trim() },
-            { value: 'overdue', label: `Forfaldne ${counts.overdue > 0 ? `(${counts.overdue})` : ''}`.trim() },
-            { value: 'upcoming', label: `Kommende ${counts.upcoming > 0 ? `(${counts.upcoming})` : ''}`.trim() },
-            { value: 'mine', label: `Mine ${counts.mine > 0 ? `(${counts.mine})` : ''}`.trim() },
-            { value: 'all', label: `Alle aktive (${counts.all})` },
-            { value: 'completed', label: `Fuldførte (${counts.completed})` },
-            { value: 'archived', label: 'Arkiverede' },
+            { value: 'today', label: `${t('pages.tasks.views.today')} ${counts.today > 0 ? `(${counts.today})` : ''}`.trim() },
+            { value: 'overdue', label: `${t('pages.tasks.views.overdue')} ${counts.overdue > 0 ? `(${counts.overdue})` : ''}`.trim() },
+            { value: 'upcoming', label: `${t('pages.tasks.views.upcoming')} ${counts.upcoming > 0 ? `(${counts.upcoming})` : ''}`.trim() },
+            { value: 'mine', label: `${t('pages.tasks.views.mine')} ${counts.mine > 0 ? `(${counts.mine})` : ''}`.trim() },
+            { value: 'all', label: `${t('pages.tasks.views.allActive')} (${counts.all})` },
+            { value: 'completed', label: `${t('pages.tasks.views.completed')} (${counts.completed})` },
+            { value: 'archived', label: t('pages.tasks.views.archived') },
           ]}
         />
       </div>
@@ -372,18 +372,18 @@ export default function TasksPage() {
           <Input placeholder={t('pages.tasks.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Ansvarlig" /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue placeholder={t('pages.tasks.assignee')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle ansvarlige</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allAssignees')}</SelectItem>
             {(teamProfiles ?? []).map(p => (
               <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || p.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Prioritet" /></SelectTrigger>
+          <SelectTrigger className="w-40"><SelectValue placeholder={t('pages.tasks.priority')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle prioriteter</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allPriorities')}</SelectItem>
             {PRIORITY_OPTIONS.map(p => (
               <SelectItem key={p} value={p}>{priorityLabels[p]}</SelectItem>
             ))}
@@ -393,11 +393,11 @@ export default function TasksPage() {
 
       {viewFiltered.length > 0 && (
         <div className="flex items-center gap-3">
-          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label="Vælg alle" />
-          <span className="text-xs text-muted-foreground">Vælg alle synlige ({viewFiltered.length})</span>
+          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label={t('pages.tasks.selectAll')} />
+          <span className="text-xs text-muted-foreground">{t('pages.tasks.selectAllVisible')} ({viewFiltered.length})</span>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-muted-foreground">{selectedIds.size} valgt</span>
+              <span className="text-xs text-muted-foreground">{selectedIds.size} {t('pages.tasks.selected')}</span>
               <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
@@ -419,7 +419,7 @@ export default function TasksPage() {
       ) : error ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.fetchError')}</CardContent></Card>
       ) : viewFiltered.length === 0 ? (
-        <EmptyState icon={CheckCircle} title={t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
+        <EmptyState icon={CheckCircle} title={counts.all > 0 && view !== 'all' ? t('pages.tasks.emptyView') : t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
       ) : (
         <div className="space-y-3">{viewFiltered.map((task) => (<TaskCard key={task.id} task={task} />))}</div>
       )}

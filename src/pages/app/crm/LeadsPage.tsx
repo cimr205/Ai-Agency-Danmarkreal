@@ -569,21 +569,21 @@ export default function LeadsPage() {
       {/* Lead cockpit — now the workspace design language (dark panel + gradient surface) */}
       <WorkspaceFrame className="flex-col lg:flex-row">
         <div className="order-2 w-full shrink-0 rounded-[22px] bg-workspace-panel p-6 text-workspace-ink-on-dark lg:order-1 lg:w-[340px] lg:p-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-workspace-muted-on-dark">Live lead signal</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.signal')}</p>
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Kontakter</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Følg op</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Nye</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Uden aktivitet</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.contacts')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.followUp')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.new')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.stale')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
           </div>
         </div>
         <WorkspaceGradientSurface className="order-1 p-6 sm:p-8 lg:order-2 lg:p-10">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-workspace-ink/70">CRM · Lead cockpit</p>
           <h1 className="mt-4 text-[36px] font-bold leading-[0.96] tracking-[-0.03em] text-workspace-ink sm:text-[46px]">
-            Relationer i bevægelse.
+            {t('pages.leads.cockpit.title')}
           </h1>
           <p className="mt-4 max-w-xl text-[15px] leading-7 text-workspace-ink/75">
-            Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
+            {t('pages.leads.cockpit.subtitle')}
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-2">
           {crmSyncAvailable ? (
@@ -592,9 +592,9 @@ export default function LeadsPage() {
               className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               disabled={syncCrmContacts.isPending}
               onClick={() => syncCrmContacts.mutate()}
-              title={`Synkroniseret via ${crmSyncProvider}`}
+              title={`${t('pages.leads.cockpit.syncedVia')} ${crmSyncProvider}`}
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> Synkronisér nu
+              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> {t('pages.leads.cockpit.syncNow')}
             </Button>
           ) : (
             <Button
@@ -602,7 +602,7 @@ export default function LeadsPage() {
               className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
-              <Plug className="h-3.5 w-3.5" /> Forbind CRM
+              <Plug className="h-3.5 w-3.5" /> {t('pages.leads.cockpit.connectCrm')}
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90">

@@ -417,3 +417,13 @@
   --input: 150 15% 89%;
   --ring: 160 68% 29%;
 }
+
+/* --workspace-panel / --workspace-frame are gradients, but Tailwind's
+   bg-workspace-* colour utilities emit `background-color: var(...)`, which
+   is invalid for a gradient and computes to transparent — the dark lead
+   cockpit panel rendered light, with its white KPI numbers invisible.
+   Paint them as background images instead. */
+@layer utilities {
+  .bg-workspace-panel { background-image: var(--workspace-panel); }
+  .bg-workspace-frame { background: var(--workspace-frame); }
+}
