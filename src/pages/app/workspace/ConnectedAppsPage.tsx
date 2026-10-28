@@ -372,7 +372,7 @@ export default function ConnectedAppsPage() {
                 ) : (
                   connectTarget && (
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setActive(connectTarget)}>
-                      Forbind {connectTarget.name}
+                      {tx("Forbind", "Connect")} {connectTarget.name}
                     </Button>
                   )
                 )}
@@ -669,7 +669,7 @@ function ConnectDialog({
               }
             >
               {createComposioConnection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Forbind {item.name}
+              {tx("Forbind", "Connect")} {item.name}
             </Button>
           )}
         </DialogFooter>

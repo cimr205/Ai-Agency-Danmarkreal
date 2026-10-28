@@ -169,7 +169,7 @@ export function AccountingConnections() {
                 ) : (
                   <Button size="sm" className="gap-1.5" disabled={busy === row.key} onClick={() => handleConnect(row.key)}>
                     {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
-                    Forbind {row.label}
+                    {tx("Forbind", "Connect")} {row.label}
                   </Button>
                 )}
               </div>

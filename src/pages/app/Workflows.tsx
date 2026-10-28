@@ -121,7 +121,7 @@ export default function WorkflowsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            {activeWorkflows.length} aktive
+            {activeWorkflows.length} {tx("aktive", "active")}
           </Badge>
           <Badge variant="secondary" className="text-xs">
             {totalRuns} {tx("kørsler", "runs")}

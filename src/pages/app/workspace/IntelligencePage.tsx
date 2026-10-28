@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da, de, enGB } from "date-fns/locale";
 import { getLocaleFromPath } from "@/lib/i18n";
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 interface LogRow {
   id: string;
@@ -159,7 +159,7 @@ function ActionRow({ log, delay }: { log: LogRow; delay: number }) {
             {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: { da, de }[getLocaleFromPath() as "da" | "de"] ?? enGB })}
           </span>
         </div>
-        <div className="text-sm text-foreground/95 leading-snug">{log.description}</div>
+        <div className="text-sm text-foreground/95 leading-snug">{/* stored in Danish by the AI edge function */}{log.description.replace(/^AI udførte /, t3("AI udførte ", "AI ran ", "KI-Aktion: "))}</div>
         {log.metadata?.tool && (
           <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed font-mono">
             {String(log.metadata.tool)}({Object.keys((log.metadata.input as Record<string, unknown>) ?? {}).join(", ")})

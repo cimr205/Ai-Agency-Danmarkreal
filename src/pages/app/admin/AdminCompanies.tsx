@@ -186,7 +186,7 @@ export default function AdminCompaniesPage() {
                   {isExpanded && (
                     <div className="border-t border-border/50 px-6 py-4 bg-muted/20">
                       <h3 className="font-semibold text-sm mb-3">
-                        Medarbejdere hos {company.name}{' '}
+                        {t3("Medarbejdere hos", "Employees at", "Mitarbeiter bei")} {company.name}{' '}
                         <span className="font-normal text-muted-foreground">
                           (Oprettet: {format(new Date(company.created_at), 'dd-MM-yyyy')})
                         </span>

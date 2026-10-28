@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { da } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type DeletionRequest = {
   id: string;
@@ -116,7 +116,7 @@ export default function AdminDataDeletionRequests() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Anmodet {format(new Date(r.requested_at), 'dd. MMM yyyy HH:mm', { locale: da })}
+                    {t3("Anmodet", "Requested", "Angefragt")} {format(new Date(r.requested_at), 'dd. MMM yyyy HH:mm', { locale: da })}
                     {r.processed_at && ` · Behandlet ${format(new Date(r.processed_at), 'dd. MMM yyyy HH:mm', { locale: da })}`}
                   </p>
                   {r.notes && <p className="text-sm text-foreground mt-1">{r.notes}</p>}

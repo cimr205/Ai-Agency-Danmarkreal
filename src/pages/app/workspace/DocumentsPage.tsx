@@ -98,7 +98,7 @@ export default function DocumentsPage() {
                         <p className="text-sm font-medium truncate">{doc.title}</p>
                         {doc.lastEditedAt && (
                           <p className="text-xs text-muted-foreground">
-                            Redigeret {new Date(doc.lastEditedAt).toLocaleDateString(dateLocaleTag(), { day: "numeric", month: "short", year: "numeric" })}
+                            {t3("Redigeret", "Edited", "Bearbeitet")} {new Date(doc.lastEditedAt).toLocaleDateString(dateLocaleTag(), { day: "numeric", month: "short", year: "numeric" })}
                           </p>
                         )}
                       </div>

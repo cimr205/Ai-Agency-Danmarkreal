@@ -78,7 +78,7 @@ export default function SubscriptionPage() {
 
           {status === 'trialing' && trialDaysLeft > 0 && (
             <div className="bg-warning/10 text-warning rounded-lg px-3 py-2 text-sm">
-              {trialDaysLeft} dage tilbage af din prøveperiode
+              {t3(`${trialDaysLeft} dage tilbage af din prøveperiode`, `${trialDaysLeft} days left of your trial`, `Noch ${trialDaysLeft} Tage Testphase`)}
             </div>
           )}
 
