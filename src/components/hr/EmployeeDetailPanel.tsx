@@ -17,6 +17,7 @@ import {
   MODULE_KEYS, MODULE_LABELS, type ModuleKey,
   useUserModuleRestrictions, useSetModuleRestrictions,
 } from '@/hooks/api/useModuleAccess';
+import { t3 } from '@/lib/inlineI18n';
 
 interface EmployeeDetail {
   id: string;
@@ -61,8 +62,25 @@ export default function EmployeeDetailPanel({ employee, open, onClose }: Props) 
       _employee_id: employee.id, _full_name: edit.full_name, _position: edit.position,
       _department: edit.department, _phone: edit.phone, _is_active: edit.is_active,
     });
-    setSaving(false);
-    if (error) { toast.error(getErrorMessage(error) || t('common.error')); return; }
+    if (error && (error as { code?: string }).code === 'PGRST202') {
+      // The RPC ships in migration 20261028000005; until it is applied only
+      // the phone column is client-writable, so save that and say why the
+      // rest has to wait instead of showing a raw "function not found".
+      const onlyPhoneChanged = edit.full_name === (employee.full_name ?? '') && edit.position === (employee.position ?? '')
+        && edit.department === (employee.department ?? '') && edit.is_active === (employee.is_active !== false);
+      if (onlyPhoneChanged) {
+        const { error: phoneErr } = await supabase.from('employee_profiles').update({ phone: edit.phone.trim() || null }).eq('id', employee.id);
+        setSaving(false);
+        if (phoneErr) { toast.error(getErrorMessage(phoneErr) || t('common.error')); return; }
+      } else {
+        setSaving(false);
+        toast.error(t3('Ændring af navn, stilling, afdeling og status bliver mulig, når databasen er opdateret (supabase db push). Telefonnummer kan allerede gemmes.', 'Changing name, position, department and status becomes available once the database is updated (supabase db push). The phone number can already be saved.', 'Name, Position, Abteilung und Status lassen sich ändern, sobald die Datenbank aktualisiert ist (supabase db push). Die Telefonnummer kann bereits gespeichert werden.'));
+        return;
+      }
+    } else {
+      setSaving(false);
+      if (error) { toast.error(getErrorMessage(error) || t('common.error')); return; }
+    }
     toast.success(t('common.saved'));
     qc.invalidateQueries({ queryKey: ['employees'] });
     onClose();

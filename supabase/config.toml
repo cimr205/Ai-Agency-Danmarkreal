@@ -81,9 +81,6 @@ verify_jwt = false
 [functions.phone-device-relay]
 verify_jwt = false
 
-[functions.process-email-queue]
-verify_jwt = true
-
 [functions.process-campaign-email-jobs]
 verify_jwt = true
 
