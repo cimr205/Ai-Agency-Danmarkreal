@@ -1,6 +1,7 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
+import { normalizePhoneNumber } from "../_shared/normalizePhone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -756,9 +757,32 @@ interface ApifyPlaceItem {
   url?: string;
 }
 
+// Pull the real city out of a formatted address rather than ever trusting
+// the search query's city (#025 — leads whose address parsing failed were
+// silently stamped with the city the user searched for, e.g. every lead
+// showing "Aarhus" even when its address was in Aalborg/Kolding/Odense).
+// Danish addresses carry the city as "<4-digit postal code> <City>",
+// e.g. "Vestergade 1, 8000 Aarhus C, Danmark" — anchor on that pattern first;
+// fall back to the old comma-segment heuristic only as a second attempt.
+// Never falls back to the caller's search city.
+function extractCityFromAddress(address: string | null | undefined): string | null {
+  if (!address) return null;
+  const postalMatch = address.match(/\b\d{4}\s+([^,]+)/);
+  if (postalMatch) {
+    const city = postalMatch[1].trim();
+    if (city) return city;
+  }
+  const addressParts = address.split(",");
+  if (addressParts.length >= 2) {
+    const segment = addressParts[addressParts.length - 2]?.trim().replace(/^\d+\s*/, "");
+    if (segment) return segment;
+  }
+  return null;
+}
+
 function mapApifyGooglePlace(item: ApifyPlaceItem): PlaceResult | null {
   if (!item?.title) return null;
-  const phone = (item.phone || item.phoneUnformatted || "").replace(/\s+/g, "");
+  const phone = normalizePhoneNumber(item.phone || item.phoneUnformatted) || "";
   return {
     place_id: item.placeId || `apify:${item.title}:${item.address || item.street || crypto.randomUUID()}`,
     name: item.title,
@@ -1071,17 +1095,26 @@ async function runPipeline(
         // Validate email
         const emailVerdict = candidateEmail ? await validateEmail(candidateEmail) : "missing";
         const hasUsableEmail = emailVerdict === "verified" || emailVerdict === "likely_valid" || emailVerdict === "catch_all";
-        const hasPhone = !!(details.international_phone_number || details.formatted_phone_number || place.phone || webData.phones[0]);
+        // Normalize before use — raw scraped/API phone strings come in with
+        // inconsistent punctuation, missing/extra digits, etc. (#008); an
+        // unparseable one becomes null (never a guess) rather than garbage
+        // like "323.3454545" stored and shown as if it were a real number.
+        // hasPhone reflects the same normalized value so a lead with nothing
+        // but unparseable phone text doesn't skip the "nothing useful" check
+        // below and get saved with every contact field empty.
+        const phone = normalizePhoneNumber(
+          details.international_phone_number || details.formatted_phone_number || place.phone || webData.phones[0]
+        );
+        const hasPhone = !!phone;
         const hasWebsite = !!(details.website || place.website);
-        
+
         // If must_have_email filter is set, email is REQUIRED — skip without valid email
         if (filters.must_have_email && !hasUsableEmail) {
           totalSkipped++;
           continue;
         }
-        
+
         // If must_have_phone filter is set, phone is REQUIRED
-        const phone = details.international_phone_number || details.formatted_phone_number || place.phone || webData.phones[0] || null;
         if (filters.must_have_phone && !phone) { totalSkipped++; continue; }
         if (filters.must_have_website && !hasWebsite) { totalSkipped++; continue; }
         
@@ -1092,8 +1125,7 @@ async function runPipeline(
         }
 
         const emailType = candidateEmail ? classifyEmailType(candidateEmail) : "missing";
-        const addressParts = (place.formatted_address || "").split(",");
-        const placeCity = addressParts.length >= 2 ? addressParts[addressParts.length - 2]?.trim() : null;
+        const placeCity = extractCityFromAddress(place.formatted_address);
         const contactPerson = webData.contactPersons[0] || null;
         const sources = ["google_maps"];
         if (webData.sources.length > 0) sources.push(...webData.sources);
@@ -1120,7 +1152,9 @@ async function runPipeline(
           domain_confidence: domainConf,
           phone,
           address: place.formatted_address || null,
-          city: placeCity || city || null,
+          // Never fall back to the search query's city — an unparsed address
+          // must show as unknown, not as a guessed, possibly-wrong city (#025).
+          city: placeCity,
           country,
           industry: place.types?.[0]?.replace(/_/g, " ") || null,
           description: webData.description || null,
