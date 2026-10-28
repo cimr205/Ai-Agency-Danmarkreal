@@ -10,7 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
-import { da } from "date-fns/locale";
+import { da, de, enGB } from "date-fns/locale";
+import { getLocaleFromPath } from "@/lib/i18n";
 import { tx } from '@/lib/inlineI18n';
 
 interface LogRow {
@@ -63,7 +64,7 @@ export default function IntelligencePage() {
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground">
               {quiet ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              Stille tilstand
+              {tx("Stille tilstand", "Quiet mode")}
             </div>
             <Switch checked={quiet} onCheckedChange={setQuiet} />
           </div>
@@ -71,10 +72,10 @@ export default function IntelligencePage() {
       </header>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border/30 rounded-xl overflow-hidden">
-        <PulseCell value={String(todayCount)} label="Handlinger i dag" />
+        <PulseCell value={String(todayCount)} label={tx("Handlinger i dag", "Actions today")} />
         <PulseCell value={String(autoCount)} label={tx("Udført automatisk", "Done automatically")} accent />
         <PulseCell value={String(logs.filter(l => l.action_type === "workflow_test").length)} label={tx("Test-kørsler", "Test runs")} />
-        <PulseCell value={String(logs.filter(l => l.metadata?.status === "error").length)} label="Fejlede" />
+        <PulseCell value={String(logs.filter(l => l.metadata?.status === "error").length)} label={tx("Fejlede", "Failed")} />
       </section>
 
       <section className="space-y-6">
@@ -83,12 +84,12 @@ export default function IntelligencePage() {
             {tx("Strøm af handlinger", "Action stream")}
           </div>
           <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/40">
-            opdateres ambient · hvert 15. sek
+            {tx("opdateres ambient · hvert 15. sek", "updates ambiently · every 15 sec")}
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Henter…</div>
+          <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />{tx("Henter…", "Loading…")}</div>
         ) : logs.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/50 p-10 text-center text-muted-foreground">
             {tx("Ingen ambient handlinger endnu. Brug AI-baren øverst eller test et workflow.", "No ambient actions yet. Use the AI bar at the top or test a workflow.")}
@@ -155,7 +156,7 @@ function ActionRow({ log, delay }: { log: LogRow; delay: number }) {
             {log.action_type.replace("_", " ")}
           </span>
           <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/40">
-            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: da })}
+            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: { da, de }[getLocaleFromPath() as "da" | "de"] ?? enGB })}
           </span>
         </div>
         <div className="text-sm text-foreground/95 leading-snug">{log.description}</div>

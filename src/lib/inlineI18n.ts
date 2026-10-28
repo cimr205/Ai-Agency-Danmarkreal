@@ -355,6 +355,21 @@ const DE: Record<string, string> = {
   "Save change": "Änderung speichern",
   "I couldn't finish the answer": "Ich konnte die Antwort nicht fertigstellen",
   "Signing in…": "Anmeldung…",
+  "Make the image sharper and more professional": "Das Bild schärfer und professioneller machen",
+  "Remove the background and replace with white": "Hintergrund entfernen und durch Weiß ersetzen",
+  "Add a warm color tone and increase contrast": "Einen warmen Farbton hinzufügen und den Kontrast erhöhen",
+  "Turn it into an ad with text overlay": "Daraus eine Anzeige mit Text-Overlay machen",
+  "Convert to black and white with high contrast": "In Schwarzweiß mit hohem Kontrast umwandeln",
+  "Professional Facebook ad for a coffee shop with modern design": "Professionelle Facebook-Anzeige für ein Café mit modernem Design",
+  "Instagram post for a tech startup with blue and white palette": "Instagram-Beitrag für ein Tech-Startup in Blau und Weiß",
+  "LinkedIn banner for a consulting firm with corporate style": "LinkedIn-Banner für eine Beratungsfirma im Corporate-Stil",
+  "E-commerce product image of a luxury bag on white background": "E-Commerce-Produktbild einer Luxustasche auf weißem Hintergrund",
+  "Social media campaign image for Black Friday sale": "Social-Media-Kampagnenbild für den Black-Friday-Sale",
+  "Quiet mode": "Ruhemodus",
+  "Actions today": "Aktionen heute",
+  "Failed": "Fehlgeschlagen",
+  "updates ambiently · every 15 sec": "aktualisiert sich alle 15 Sek.",
+  "Loading…": "Lädt…",
 };
 
 export function tl(locale: Locale | string, da: string, en: string): string {
