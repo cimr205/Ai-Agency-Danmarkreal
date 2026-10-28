@@ -21,10 +21,13 @@ import {
 } from "@/hooks/api/useIcp";
 import IcpWizard from "@/components/icp/IcpWizard";
 import IcpScoreBreakdown from "@/components/icp/IcpScoreBreakdown";
+import { ErrorState } from '@/components/shared/ErrorState';
+import { explainError } from '@/lib/errors';
 import { useI18n } from "@/lib/i18n";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { WorkspaceFrame, WorkspaceSurface } from "@/components/workspace/WorkspacePanel";
+import { t3 } from '@/lib/inlineI18n';
 
 function scoreTierBadge(score: number) {
   if (score >= 80) return <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs">Hot</Badge>;
@@ -44,7 +47,7 @@ export default function IcpPage() {
   const deleteIcp = useDeleteIcpProfile();
   const setDefault = useSetDefaultIcp();
   const scoreLeads = useScoreLeadsAgainstIcp();
-  const { data: scores = [], isLoading: scoresLoading } = useLeadIcpScores(selectedIcpId);
+  const { data: scores = [], isLoading: scoresLoading, error: scoresError, refetch: refetchScores } = useLeadIcpScores(selectedIcpId);
 
   const selectedIcp = profiles.find((p) => p.id === selectedIcpId);
   const detailScore = scores.find((s) => s.id === scoreDetailId);
@@ -117,6 +120,8 @@ export default function IcpPage() {
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
+        ) : scoresError ? (
+          <ErrorState title={t3('Kunne ikke hente scorer', 'Could not load scores', 'Bewertungen konnten nicht geladen werden')} message={explainError(scoresError).message} onRetry={() => void refetchScores()} />
         ) : scores.length === 0 ? (
           <EmptyState icon={Target} title={t('icp.noScoresYet')} hint={t('icp.noScoresDesc')} />
         ) : (

@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Check, Plus, X, Target, MapPin, Building2, Users
 import { toast } from "sonner";
 import { useCreateIcpProfile, useUpdateIcpProfile, type IcpProfile, type IcpProfileInput } from "@/hooks/api/useIcp";
 import { useI18n } from "@/lib/i18n";
+import { t3 } from '@/lib/inlineI18n';
 
 const INDUSTRIES = [
   "Cleaning", "Construction", "Landscaping", "Plumbing", "HVAC", "Electrical",
@@ -125,13 +126,21 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
     updateField(key, arr.filter((v) => v !== value) as IcpProfileInput[typeof key]);
   };
 
+  // A range like 50–5 employees can never match anything.
+  const employeeRangeInvalid =
+    (form.min_employees != null && form.min_employees < 0) ||
+    (form.max_employees != null && form.max_employees < 0) ||
+    (form.min_employees != null && form.max_employees != null && form.min_employees > form.max_employees);
+
   const canNext = () => {
     if (step === 0) return form.name.trim().length >= 2;
+    if (step === 2) return !employeeRangeInvalid;
     return true;
   };
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error(t('icp.wizard.pleaseEnterName')); return; }
+    if (employeeRangeInvalid) { setStep(2); toast.error(t3('Min. antal medarbejdere kan ikke være større end maks.', 'Minimum employees cannot be greater than maximum.', 'Die Mindestanzahl an Mitarbeitern darf nicht größer als die Höchstanzahl sein.')); return; }
     if (existing) {
       updateIcp.mutate(
         { id: existing.id, data: form },
@@ -304,6 +313,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
                 <Label>{t('icp.wizard.minEmployees')}</Label>
                 <Input
                   type="number"
+                  min={0}
                   value={form.min_employees ?? ""}
                   onChange={(e) => updateField("min_employees", e.target.value ? Number(e.target.value) : null)}
                   placeholder="e.g. 5"
@@ -314,6 +324,7 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
                 <Label>{t('icp.wizard.maxEmployees')}</Label>
                 <Input
                   type="number"
+                  min={0}
                   value={form.max_employees ?? ""}
                   onChange={(e) => updateField("max_employees", e.target.value ? Number(e.target.value) : null)}
                   placeholder="e.g. 50"
@@ -321,6 +332,9 @@ export default function IcpWizard({ existing, onClose, onSaved }: Props) {
                 />
               </div>
             </div>
+            {employeeRangeInvalid && (
+              <p className="text-xs text-destructive">{t3('Min. antal medarbejdere kan ikke være større end maks.', 'Minimum employees cannot be greater than maximum.', 'Die Mindestanzahl an Mitarbeitern darf nicht größer als die Höchstanzahl sein.')}</p>
+            )}
             <div>
               <Label className="mb-2 block">{t('icp.wizard.budgetLevel')}</Label>
               <Select value={form.budget_level} onValueChange={(v) => updateField("budget_level", v)}>

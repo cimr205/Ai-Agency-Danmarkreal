@@ -141,12 +141,22 @@ Deno.serve(withSentry("gmail-sync", async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    if (err instanceof ReconnectRequiredError) {
+      return new Response(JSON.stringify({
+        error: "Gmail-forbindelsen er udløbet. Forbind Gmail igen. / The Gmail connection has expired. Reconnect Gmail.",
+        code: "GMAIL_RECONNECT_REQUIRED",
+      }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     console.error("gmail-sync error:", err);
     return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 }));
+
+class ReconnectRequiredError extends Error {
+  constructor() { super("GMAIL_RECONNECT_REQUIRED"); }
+}
 
 async function refreshAccessToken(refreshToken: string, supabaseAdmin: SupabaseClient, accountId: string): Promise<string> {
   const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID")!;
@@ -165,6 +175,13 @@ async function refreshAccessToken(refreshToken: string, supabaseAdmin: SupabaseC
 
   const data = await res.json();
   if (data.error) {
+    if (data.error === "invalid_grant") {
+      // The refresh token was revoked or expired (Google expires them after
+      // 7 days while the OAuth app is in "Testing"). No retry can fix that —
+      // flag the account so the UI asks the user to reconnect.
+      await supabaseAdmin.from("email_accounts").update({ status: "reconnect_required" }).eq("id", accountId);
+      throw new ReconnectRequiredError();
+    }
     throw new Error(`Token refresh failed: ${data.error}`);
   }
 
