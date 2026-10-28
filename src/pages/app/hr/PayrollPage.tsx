@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Banknote } from 'lucide-react';
+import { Plus, Search, Banknote, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useQueryClient } from '@tanstack/react-query';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -41,6 +43,7 @@ export default function PayrollPage() {
   const currentPeriod = format(new Date(), 'yyyy-MM');
   const { data, isLoading, error } = usePayroll({ period: currentPeriod });
   const createPayroll = useCreatePayroll();
+  const queryClient = useQueryClient();
   const { data: employees } = useEmployees();
 
   const handleCreate = async () => {
@@ -113,10 +116,10 @@ export default function PayrollPage() {
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchEmployeePlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 
       <Card><CardContent className="p-0">
-        <Table><TableHeader><TableRow><TableHead>{t('hr.employee')}</TableHead><TableHead>{t('hr.salary')}</TableHead><TableHead>{t('hr.period')}</TableHead></TableRow></TableHeader>
+        <Table><TableHeader><TableRow><TableHead>{t('hr.employee')}</TableHead><TableHead>{t('hr.salary')}</TableHead><TableHead>{t('hr.period')}</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
           <TableBody>
             {isLoading ? Array.from({ length: 5 }).map((_, i) => (<TableRow key={i}><TableCell><Skeleton className="h-4 w-32" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell><TableCell><Skeleton className="h-4 w-24" /></TableCell></TableRow>))
-            : filteredPayroll.length === 0 ? (<TableRow><TableCell colSpan={3}>
+            : filteredPayroll.length === 0 ? (<TableRow><TableCell colSpan={4}>
                 <EmptyState
                   bare
                   icon={Banknote}
@@ -130,6 +133,28 @@ export default function PayrollPage() {
                 <TableCell className="font-medium">{record.employee_profiles?.full_name || t('hr.unknown')}</TableCell>
                 <TableCell className="font-medium text-success">{formatCurrency(record.net_salary)}</TableCell>
                 <TableCell className="text-muted-foreground">{record.period}</TableCell>
+                <TableCell className="text-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={t('common.delete')} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('hr.deletePayrollTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>{record.employee_profiles?.full_name} · {record.period} · {formatCurrency(record.net_salary)}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={async () => {
+                          const { error: delErr } = await supabase.from('payroll').delete().eq('id', record.id);
+                          if (delErr) { toast.error(t('common.error')); return; }
+                          toast.success(t('common.deleted') || 'Deleted');
+                          queryClient.invalidateQueries({ queryKey: ['payroll'] });
+                        }}>{t('common.delete')}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

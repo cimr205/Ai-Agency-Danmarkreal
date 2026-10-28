@@ -736,7 +736,10 @@
     "departmentRequired": "Abteilung ist erforderlich",
     "salaryPositive": "Das Gehalt muss größer als 0 sein.",
     "payrollDuplicate": "Für diesen Mitarbeiter gibt es für diesen Zeitraum bereits eine Lohnabrechnung.",
-    "leaveEndBeforeStart": "Das Enddatum darf nicht vor dem Startdatum liegen."
+    "leaveEndBeforeStart": "Das Enddatum darf nicht vor dem Startdatum liegen.",
+    "editEmployee": "Mitarbeiter bearbeiten",
+    "fullName": "Vollständiger Name",
+    "deletePayrollTitle": "Diese Lohnabrechnung löschen?"
   },
   "aiInbox": {
     "title": "AI Inbox",

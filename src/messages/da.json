@@ -736,7 +736,10 @@
     "departmentRequired": "Afdeling er påkrævet",
     "salaryPositive": "Lønnen skal være større end 0.",
     "payrollDuplicate": "Medarbejderen har allerede en lønregistrering for den periode.",
-    "leaveEndBeforeStart": "Slutdatoen kan ikke ligge før startdatoen."
+    "leaveEndBeforeStart": "Slutdatoen kan ikke ligge før startdatoen.",
+    "editEmployee": "Redigér medarbejder",
+    "fullName": "Fulde navn",
+    "deletePayrollTitle": "Slet denne lønregistrering?"
   },
   "aiInbox": {
     "title": "AI Inbox",

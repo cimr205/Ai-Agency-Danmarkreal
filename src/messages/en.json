@@ -719,7 +719,10 @@
     "departmentRequired": "Department is required",
     "salaryPositive": "Salary must be greater than 0.",
     "payrollDuplicate": "This employee already has a payroll record for that period.",
-    "leaveEndBeforeStart": "The end date can't be before the start date."
+    "leaveEndBeforeStart": "The end date can't be before the start date.",
+    "editEmployee": "Edit employee",
+    "fullName": "Full name",
+    "deletePayrollTitle": "Delete this payroll record?"
   },
   "aiInbox": {
     "title": "AI Inbox",

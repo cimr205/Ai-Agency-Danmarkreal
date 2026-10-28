@@ -8442,6 +8442,17 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_update_employee: {
+        Args: {
+          _employee_id: string
+          _full_name: string
+          _position: string
+          _department: string
+          _phone: string
+          _is_active: boolean
+        }
+        Returns: undefined
+      }
       regenerate_activation_code: {
         Args: { _company_id: string }
         Returns: string
