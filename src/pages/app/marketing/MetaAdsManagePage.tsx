@@ -23,13 +23,13 @@ export default function MetaAdsManagePage() {
   const [activeSection, setActiveSection] = useState<MetaSection>("overview");
   const [wizardOpen, setWizardOpen] = useState(false);
 
-  const sections: { id: MetaSection; label: string }[] = [
-    { id: "overview", label: t('pages.meta.overview') },
-    { id: "campaigns", label: t('pages.meta.campaigns') },
-    { id: "adsets", label: t('pages.meta.adSets') },
-    { id: "insights", label: t('pages.meta.insights') },
-    { id: "reports", label: t('pages.meta.reports') },
-    { id: "media", label: t('pages.meta.aiMedia') },
+  const sections: { value: MetaSection; label: string }[] = [
+    { value: "overview", label: t('pages.meta.overview') },
+    { value: "campaigns", label: t('pages.meta.campaigns') },
+    { value: "adsets", label: t('pages.meta.adSets') },
+    { value: "insights", label: t('pages.meta.insights') },
+    { value: "reports", label: t('pages.meta.reports') },
+    { value: "media", label: t('pages.meta.aiMedia') },
   ];
 
   return (
