@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface OwnerInfo {
   user_id: string;
@@ -212,7 +213,7 @@ export default function AdminOverviewPage() {
             <KpiCard icon={Users} label="Brugere" value={totalUsers.toString()} color="text-primary" />
             <KpiCard icon={UserCheck} label="Medarbejdere" value={totalEmployees.toString()} color="text-success" />
             <KpiCard icon={CreditCard} label="Betalende" value={payingCompanies.toString()} color="text-success" />
-            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString('da-DK')} color="text-warning" />
+            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString(dateLocaleTag())} color="text-warning" />
             <KpiCard icon={AlertTriangle} label="Deaktiverede" value={disabledCompanies.toString()} color="text-destructive" />
           </>
         )}
@@ -224,14 +225,14 @@ export default function AdminOverviewPage() {
             <CardContent className="p-5">
               <p className="text-sm font-medium text-success mb-1">💰 Betalende kunder</p>
               <p className="text-3xl font-bold">{payingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString('da-DK')} DKK/md omsætning</p>
+              <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString(dateLocaleTag())} DKK/md omsætning</p>
             </CardContent>
           </Card>
           <Card className="rounded-lg border-warning/20">
             <CardContent className="p-5">
               <p className="text-sm font-medium text-warning mb-1">⏳ Prøveperiode</p>
               <p className="text-3xl font-bold">{trialingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString('da-DK')} DKK/md</p>
+              <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString(dateLocaleTag())} DKK/md</p>
             </CardContent>
           </Card>
           <Card className="rounded-lg border-destructive/20">

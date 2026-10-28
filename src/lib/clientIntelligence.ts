@@ -2,6 +2,8 @@
 // No external calls — pure derivations from the data we already have.
 import type { TimelineEvent } from "@/hooks/useClientGraph";
 import type { Tables } from "@/integrations/supabase/types";
+import { tx } from '@/lib/inlineI18n';
+import { getLocaleFromPath } from '@/lib/i18n';
 
 export type Signal = {
   id: string;
@@ -33,15 +35,15 @@ export function deriveClientSignals(input: {
     out.push({
       id: "stale-touch",
       kind: "risk",
-      title: `Ingen kontakt i ${daysSinceTouch} dage`,
-      detail: "Send en kort opfølgning for at holde relationen varm.",
+      title: tx(`Ingen kontakt i ${daysSinceTouch} dage`, `No contact for ${daysSinceTouch} days`),
+      detail: tx("Send en kort opfølgning for at holde relationen varm.", "Send a short follow-up to keep the relationship warm."),
     });
   } else if (lastTouchAt && daysSinceTouch <= 2) {
     out.push({
       id: "fresh-touch",
       kind: "info",
-      title: "Aktiv samtale",
-      detail: "I har talt sammen for nylig — momentum er højt.",
+      title: tx("Aktiv samtale", "Active conversation"),
+      detail: tx("I har talt sammen for nylig — momentum er højt.", "You spoke recently — momentum is high."),
     });
   }
 
@@ -50,8 +52,8 @@ export function deriveClientSignals(input: {
     out.push({
       id: "overdue",
       kind: "risk",
-      title: `${stats.overdueInvoices} forfalden faktura${stats.overdueInvoices > 1 ? "er" : ""}`,
-      detail: "Send venlig påmindelse eller ring direkte.",
+      title: tx(`${stats.overdueInvoices} forfalden faktura${stats.overdueInvoices > 1 ? "er" : ""}`, `${stats.overdueInvoices} overdue invoice${stats.overdueInvoices > 1 ? "s" : ""}`),
+      detail: tx("Send venlig påmindelse eller ring direkte.", "Send a friendly reminder or call directly."),
     });
   }
 
@@ -65,8 +67,8 @@ export function deriveClientSignals(input: {
     out.push({
       id: "stalled-deals",
       kind: "risk",
-      title: `${stalled.length} deal${stalled.length > 1 ? "s" : ""} står stille`,
-      detail: "Ingen bevægelse i 3+ uger. Bekræft næste skridt.",
+      title: tx(`${stalled.length} deal${stalled.length > 1 ? "s" : ""} står stille`, `${stalled.length} deal${stalled.length > 1 ? "s" : ""} stalled`),
+      detail: tx("Ingen bevægelse i 3+ uger. Bekræft næste skridt.", "No movement for 3+ weeks. Confirm the next step."),
     });
   }
 
@@ -75,8 +77,8 @@ export function deriveClientSignals(input: {
     out.push({
       id: "upsell",
       kind: "opportunity",
-      title: "Mulig mersalg",
-      detail: "Eksisterende kunde uden åben pipeline — foreslå næste leverance.",
+      title: tx("Mulig mersalg", "Possible upsell"),
+      detail: tx("Eksisterende kunde uden åben pipeline — foreslå næste leverance.", "Existing customer with no open pipeline — propose the next delivery."),
     });
   }
 
@@ -85,8 +87,8 @@ export function deriveClientSignals(input: {
     out.push({
       id: "high-value",
       kind: "opportunity",
-      title: "Højværdi pipeline",
-      detail: "Prioritér denne klient i ugens fokus.",
+      title: tx("Højværdi pipeline", "High-value pipeline"),
+      detail: tx("Prioritér denne klient i ugens fokus.", "Prioritise this client in this week's focus."),
     });
   }
 
@@ -99,8 +101,8 @@ export function deriveClientSignals(input: {
     out.push({
       id: "meeting-suggest",
       kind: "suggestion",
-      title: "Foreslå et møde",
-      detail: "I har ikke mødtes længe — book 30 min.",
+      title: tx("Foreslå et møde", "Suggest a meeting"),
+      detail: tx("I har ikke mødtes længe — book 30 min.", "You haven't met in a while — book 30 min."),
     });
   }
 
@@ -110,10 +112,10 @@ export function deriveClientSignals(input: {
 export function relationshipTemperature(daysSinceTouch: number): {
   label: string; tone: "hot" | "warm" | "cool" | "cold";
 } {
-  if (daysSinceTouch <= 3) return { label: "Aktiv", tone: "hot" };
-  if (daysSinceTouch <= 10) return { label: "Varm", tone: "warm" };
-  if (daysSinceTouch <= 30) return { label: "Køler af", tone: "cool" };
-  return { label: "Inaktiv", tone: "cold" };
+  if (daysSinceTouch <= 3) return { label: tx("Aktiv", "Active"), tone: "hot" };
+  if (daysSinceTouch <= 10) return { label: tx("Varm", "Warm"), tone: "warm" };
+  if (daysSinceTouch <= 30) return { label: tx("Køler af", "Cooling"), tone: "cool" };
+  return { label: tx("Inaktiv", "Inactive"), tone: "cold" };
 }
 
 export function buildAiSummary(input: {
@@ -122,23 +124,33 @@ export function buildAiSummary(input: {
   signals: Signal[];
 }): string {
   const { customer, stats, signals } = input;
+  const loc = getLocaleFromPath();
   const parts: string[] = [];
-
-  if (stats.openDeals > 0) {
-    parts.push(`${stats.openDeals} åben${stats.openDeals > 1 ? "e" : ""} deal${stats.openDeals > 1 ? "s" : ""}`);
-  }
-  if (stats.invoicedThisYear > 0) {
-    parts.push(`faktureret i år`);
-  }
-  if (stats.overdueInvoices > 0) {
-    parts.push(`med ${stats.overdueInvoices} forfalden faktura`);
+  const n = stats.openDeals, o = stats.overdueInvoices;
+  if (loc === "da") {
+    if (n > 0) parts.push(`${n} åben${n > 1 ? "e" : ""} deal${n > 1 ? "s" : ""}`);
+    if (stats.invoicedThisYear > 0) parts.push(`faktureret i år`);
+    if (o > 0) parts.push(`med ${o} forfalden faktura`);
+  } else if (loc === "de") {
+    if (n > 0) parts.push(`${n} offene${n > 1 ? "" : "r"} Deal${n > 1 ? "s" : ""}`);
+    if (stats.invoicedThisYear > 0) parts.push(`dieses Jahr fakturiert`);
+    if (o > 0) parts.push(`mit ${o} überfällige${o > 1 ? "n Rechnungen" : "r Rechnung"}`);
+  } else {
+    if (n > 0) parts.push(`${n} open deal${n > 1 ? "s" : ""}`);
+    if (stats.invoicedThisYear > 0) parts.push(`invoiced this year`);
+    if (o > 0) parts.push(`with ${o} overdue invoice${o > 1 ? "s" : ""}`);
   }
 
   const risk = signals.find(s => s.kind === "risk");
   const opp = signals.find(s => s.kind === "opportunity");
+  const tail = parts.length ? " — " + parts.join(", ") : "";
 
-  let sentence = `${customer.name} er en ${parts.length ? "aktiv" : "rolig"} relation${parts.length ? " — " + parts.join(", ") : ""}.`;
-  if (risk) sentence += ` Vær opmærksom: ${risk.title.toLowerCase()}.`;
-  else if (opp) sentence += ` Mulighed: ${opp.title.toLowerCase()}.`;
+  let sentence = loc === "da"
+    ? `${customer.name} er en ${parts.length ? "aktiv" : "rolig"} relation${tail}.`
+    : loc === "de"
+      ? `${customer.name} ist eine ${parts.length ? "aktive" : "ruhige"} Beziehung${tail}.`
+      : `${customer.name} is ${parts.length ? "an active" : "a quiet"} relationship${tail}.`;
+  if (risk) sentence += ` ${tx("Vær opmærksom", "Watch out")}: ${risk.title.toLowerCase()}.`;
+  else if (opp) sentence += ` ${tx("Mulighed", "Opportunity")}: ${opp.title.toLowerCase()}.`;
   return sentence;
 }

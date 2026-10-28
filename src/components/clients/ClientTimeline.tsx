@@ -1,6 +1,8 @@
 import { Mail, FileText, CreditCard, Calendar, Briefcase, Activity, CheckSquare } from "lucide-react";
 import type { TimelineEvent } from "@/hooks/useClientGraph";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { getLocaleFromPath } from '@/lib/i18n';
 
 const ICONS = {
   email: Mail, invoice: FileText, payment: CreditCard,
@@ -11,11 +13,11 @@ function groupKey(d: Date): string {
   const today = new Date(); today.setHours(0,0,0,0);
   const dt = new Date(d); dt.setHours(0,0,0,0);
   const diff = Math.floor((+today - +dt) / 86400000);
-  if (diff === 0) return "I dag";
-  if (diff === 1) return "I går";
-  if (diff < 7) return d.toLocaleDateString("da-DK", { weekday: "long" });
-  if (diff < 30) return `For ${diff} dage siden`;
-  return d.toLocaleDateString("da-DK", { month: "long", year: "numeric" });
+  if (diff === 0) return tx("I dag", "Today");
+  if (diff === 1) return tx("I går", "Yesterday");
+  if (diff < 7) return d.toLocaleDateString(dateLocaleTag(), { weekday: "long" });
+  if (diff < 30) { const l = getLocaleFromPath(); return l === "da" ? `For ${diff} dage siden` : l === "de" ? `Vor ${diff} Tagen` : `${diff} days ago`; }
+  return d.toLocaleDateString(dateLocaleTag(), { month: "long", year: "numeric" });
 }
 
 export function ClientTimeline({ events }: { events: TimelineEvent[] }) {
@@ -23,7 +25,7 @@ export function ClientTimeline({ events }: { events: TimelineEvent[] }) {
   if (events.length === 0) {
     return (
       <div className="text-[13px] text-muted-foreground py-12 text-center border border-dashed border-border/50 rounded-md">
-        Ingen aktivitet registreret endnu.
+        {tx("Ingen aktivitet registreret endnu.", "No activity recorded yet.")}
       </div>
     );
   }
@@ -62,7 +64,7 @@ export function ClientTimeline({ events }: { events: TimelineEvent[] }) {
                     )}
                   </div>
                   <div className="text-[10.5px] font-mono text-muted-foreground/50 pt-1 shrink-0">
-                    {new Date(e.at).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(e.at).toLocaleTimeString(dateLocaleTag(), { hour: "2-digit", minute: "2-digit" })}
                   </div>
                 </li>
               );

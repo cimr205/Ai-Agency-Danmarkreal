@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useIssueMcpToken, useMcpTokens, useRevokeMcpToken } from "@/hooks/api/useMcpTokens";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-server`;
 
@@ -176,7 +177,7 @@ export function AiClientsPanel() {
                   </div>
                 </div>
                 <div className="text-[11px] text-muted-foreground">
-                  {t.last_used_at ? `brugt ${new Date(t.last_used_at).toLocaleString("da-DK")}` : "aldrig brugt"}
+                  {t.last_used_at ? `brugt ${new Date(t.last_used_at).toLocaleString(dateLocaleTag())}` : "aldrig brugt"}
                 </div>
                 {!t.revoked_at && (
                   <Button

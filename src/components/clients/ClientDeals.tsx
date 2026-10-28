@@ -1,15 +1,16 @@
 import { useCurrency } from "@/contexts/CurrencyContext";
 import type { Tables } from "@/integrations/supabase/types";
+import { tx } from '@/lib/inlineI18n';
 
 const STAGE_LABELS: Record<string, string> = {
-  discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
-  negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
+  get discovery() { return "Discovery"; }, get qualification() { return tx("Kvalificering", "Qualification"); }, get proposal() { return tx("Tilbud", "Proposal"); },
+  get negotiation() { return tx("Forhandling", "Negotiation"); }, get won() { return tx("Vundet", "Won"); }, get lost() { return tx("Tabt", "Lost"); },
 };
 
 export function ClientDeals({ deals }: { deals: Tables<"deals">[] }) {
   const { format } = useCurrency();
   if (deals.length === 0) {
-    return <div className="text-[12.5px] text-muted-foreground/70">Ingen deals endnu.</div>;
+    return <div className="text-[12.5px] text-muted-foreground/70">{tx("Ingen deals endnu.", "No deals yet.")}</div>;
   }
   return (
     <ul className="divide-y divide-border/40">

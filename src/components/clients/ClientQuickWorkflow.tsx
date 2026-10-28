@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateTask } from "@/hooks/api/useTasks";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
+import { tx } from '@/lib/inlineI18n';
 
 interface Props {
   customer: { id: string; name: string };
@@ -12,10 +13,10 @@ interface Props {
 
 type DueKey = "today" | "tomorrow" | "3d" | "1w";
 const DUE_LABELS: Record<DueKey, string> = {
-  today: "I dag",
-  tomorrow: "I morgen",
-  "3d": "Om 3 dage",
-  "1w": "Næste uge",
+  get today() { return tx("I dag", "Today"); },
+  get tomorrow() { return tx("I morgen", "Tomorrow"); },
+  get "3d"() { return tx("Om 3 dage", "In 3 days"); },
+  get "1w"() { return tx("Næste uge", "Next week"); },
 };
 
 function dueDate(key: DueKey): string {
@@ -26,9 +27,9 @@ function dueDate(key: DueKey): string {
 }
 
 const AUTOMATIONS: { id: string; label: string; taskTitle: string; hint: string }[] = [
-  { id: "followup",  label: "Planlæg opfølgning", taskTitle: "Følg op med kunde", hint: "Opretter en konkret opgave" },
-  { id: "nurture",   label: "Start nurture-flow", taskTitle: "Start nurture-flow", hint: "Opretter en konkret opgave" },
-  { id: "handoff",   label: "Overdrag til sælger", taskTitle: "Overdrag kunde til sælger", hint: "Opretter en konkret opgave" },
+  { id: "followup",  get label() { return tx("Planlæg opfølgning", "Plan follow-up"); }, get taskTitle() { return tx("Følg op med kunde", "Follow up with customer"); }, get hint() { return tx("Opretter en konkret opgave", "Creates a concrete task"); } },
+  { id: "nurture",   get label() { return tx("Start nurture-flow", "Start nurture flow"); }, get taskTitle() { return tx("Start nurture-flow", "Start nurture flow"); }, get hint() { return tx("Opretter en konkret opgave", "Creates a concrete task"); } },
+  { id: "handoff",   get label() { return tx("Overdrag til sælger", "Hand over to sales rep"); }, get taskTitle() { return tx("Overdrag kunde til sælger", "Hand customer over to sales rep"); }, get hint() { return tx("Opretter en konkret opgave", "Creates a concrete task"); } },
 ];
 
 export function ClientQuickWorkflow({ customer }: Props) {
@@ -41,9 +42,9 @@ export function ClientQuickWorkflow({ customer }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
 
   const submitTask = async (kind: "action" | "task") => {
-    const t = title.trim() || (kind === "action" ? `Næste skridt med ${customer.name}` : "");
+    const t = title.trim() || (kind === "action" ? `${tx("Næste skridt med", "Next step with")} ${customer.name}` : "");
     if (!t) {
-      toast({ title: "Skriv en titel", variant: "destructive" });
+      toast({ title: tx("Skriv en titel", "Enter a title"), variant: "destructive" });
       return;
     }
     try {
@@ -56,11 +57,11 @@ export function ClientQuickWorkflow({ customer }: Props) {
         // customers(id)) so it is traceable on the customer timeline and in Tasks.
         lead_id: customer.id,
       });
-      toast({ title: kind === "action" ? "Næste skridt gemt" : "Opgave oprettet", description: `${t} · ${DUE_LABELS[due]}` });
+      toast({ title: kind === "action" ? tx("Næste skridt gemt", "Next step saved") : tx("Opgave oprettet", "Task created"), description: `${t} · ${DUE_LABELS[due]}` });
       setTitle("");
       setOpen(false);
     } catch (e) {
-      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
+      toast({ title: tx("Fejl", "Error"), description: getErrorMessage(e) || String(e), variant: "destructive" });
     }
   };
 
@@ -73,18 +74,18 @@ export function ClientQuickWorkflow({ customer }: Props) {
         due_date: dueDate("tomorrow"),
         priority: "high",
       });
-      toast({ title: "Handling oprettet", description: a.label });
+      toast({ title: tx("Handling oprettet", "Action created"), description: a.label });
       setOpen(false);
     } catch (e) {
-      toast({ title: "Fejl", description: getErrorMessage(e) || String(e), variant: "destructive" });
+      toast({ title: tx("Fejl", "Error"), description: getErrorMessage(e) || String(e), variant: "destructive" });
     } finally {
       setBusy(null);
     }
   };
 
   const tabs: { id: typeof tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: "action",     label: "Næste skridt", icon: ArrowRight },
-    { id: "task",       label: "Opgave",       icon: CheckCircle2 },
+    { id: "action",     label: tx("Næste skridt", "Next step"), icon: ArrowRight },
+    { id: "task",       label: tx("Opgave", "Task"),       icon: CheckCircle2 },
     { id: "automation", label: "Automation",   icon: Webhook },
   ];
 
@@ -120,13 +121,13 @@ export function ClientQuickWorkflow({ customer }: Props) {
               <Input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder={tab === "action" ? `Næste skridt med ${customer.name}…` : "Opgave-titel…"}
+                placeholder={tab === "action" ? `${tx("Næste skridt med", "Next step with")} ${customer.name}…` : tx("Opgave-titel…", "Task title…")}
                 className="h-9 text-[13px]"
                 autoFocus
               />
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground/60 mb-1.5 inline-flex items-center gap-1">
-                  <CalIcon className="h-3 w-3" /> Forfald
+                  <CalIcon className="h-3 w-3" /> {tx("Forfald", "Due")}
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   {(Object.keys(DUE_LABELS) as DueKey[]).map(k => (
@@ -148,7 +149,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
               {tab === "task" && (
                 <div>
                   <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground/60 mb-1.5 inline-flex items-center gap-1">
-                    <Flag className="h-3 w-3" /> Prioritet
+                    <Flag className="h-3 w-3" /> {tx("Prioritet", "Priority")}
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {(["low", "medium", "high"] as const).map(p => (
@@ -161,7 +162,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
                             : "border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
                         }`}
                       >
-                        {p === "low" ? "Lav" : p === "medium" ? "Mellem" : "Høj"}
+                        {p === "low" ? tx("Lav", "Low") : p === "medium" ? tx("Mellem", "Medium") : tx("Høj", "High")}
                       </button>
                     ))}
                   </div>
@@ -174,7 +175,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
                 className="w-full h-9 rounded-md bg-primary text-primary-foreground text-[12.5px] font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {createTask.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                {tab === "action" ? "Gem næste skridt" : "Opret opgave"}
+                {tab === "action" ? tx("Gem næste skridt", "Save next step") : tx("Opret opgave", "Create task")}
               </button>
             </>
           )}
@@ -182,7 +183,7 @@ export function ClientQuickWorkflow({ customer }: Props) {
           {tab === "automation" && (
             <div className="space-y-1">
               <p className="text-[11.5px] text-muted-foreground/80 mb-2 leading-relaxed">
-                Udløs en konfigureret automation for {customer.name}.
+                {tx("Udløs en konfigureret automation for", "Trigger a configured automation for")} {customer.name}.
               </p>
               {AUTOMATIONS.map(a => (
                 <button

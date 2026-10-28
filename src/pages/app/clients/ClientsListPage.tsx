@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CvrLookupField } from "@/components/shared/CvrLookupField";
 import { isValidEmail, isValidPhone, MAX_NAME_LENGTH } from "@/lib/validation";
 import { WorkspaceFrame, WorkspaceSurface } from "@/components/workspace/WorkspacePanel";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export default function ClientsListPage() {
   const { t } = useI18n();
@@ -154,7 +155,7 @@ export default function ClientsListPage() {
                       <div className="text-[11.5px] text-workspace-surface-label truncate">{c.email}</div>
                     </div>
                     <span className="text-[10.5px] font-mono text-workspace-surface-label hidden sm:block">
-                      {new Date(c.created_at).toLocaleDateString("da-DK", { month: "short", year: "numeric" })}
+                      {new Date(c.created_at).toLocaleDateString(dateLocaleTag(), { month: "short", year: "numeric" })}
                     </span>
                     <ArrowUpRight className="h-4 w-4 text-workspace-surface-label group-hover:text-workspace-ink transition-colors" />
                   </Link>

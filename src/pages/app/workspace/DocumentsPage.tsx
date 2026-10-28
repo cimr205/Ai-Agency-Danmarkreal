@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { FileText, Loader2, ExternalLink, Plug } from "lucide-react";
 import { useModuleAvailability, useDocuments } from "@/hooks/api/useIntegrations";
 import { useI18n } from "@/lib/i18n";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 // The first product module built on top of the Capability Engine
 // (Connected Apps → capabilities → module). This page never mentions
@@ -97,7 +98,7 @@ export default function DocumentsPage() {
                         <p className="text-sm font-medium truncate">{doc.title}</p>
                         {doc.lastEditedAt && (
                           <p className="text-xs text-muted-foreground">
-                            Redigeret {new Date(doc.lastEditedAt).toLocaleDateString("da-DK", { day: "numeric", month: "short", year: "numeric" })}
+                            Redigeret {new Date(doc.lastEditedAt).toLocaleDateString(dateLocaleTag(), { day: "numeric", month: "short", year: "numeric" })}
                           </p>
                         )}
                       </div>

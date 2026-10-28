@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link, useParams } from "react-router-dom";
 import { isLocale } from "@/lib/i18n";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 type DayMode = "morning" | "day" | "evening" | "night";
 
@@ -81,7 +82,7 @@ export function LivingHeader() {
   if (pulse) {
     if (pulse.meetingCount > 0) {
       const meetingTime = pulse.firstMeeting?.start_time
-        ? new Date(pulse.firstMeeting.start_time).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })
+        ? new Date(pulse.firstMeeting.start_time).toLocaleTimeString(dateLocaleTag(), { hour: "2-digit", minute: "2-digit" })
         : null;
       fragments.push({
         text: pulse.meetingCount === 1
@@ -105,7 +106,7 @@ export function LivingHeader() {
     }
   }
 
-  const dateLine = new Date().toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "long" });
+  const dateLine = new Date().toLocaleDateString(dateLocaleTag(), { weekday: "long", day: "numeric", month: "long" });
 
   return (
     <section className="pt-2 pb-10 border-b border-border/30">

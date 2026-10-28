@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import type { Tables } from "@/integrations/supabase/types";
+import { tx, dateLocaleTag } from '@/lib/inlineI18n';
 
 const LEAD_SOURCE_LABEL: Record<string, string> = {
   meta_ads: "Meta Ads",
@@ -40,11 +41,11 @@ interface Props {
 function relTime(iso?: string) {
   if (!iso) return "—";
   const days = Math.floor((Date.now() - +new Date(iso)) / 86400000);
-  if (days === 0) return "i dag";
-  if (days === 1) return "i går";
-  if (days < 30) return `${days}d siden`;
-  if (days < 365) return `${Math.floor(days / 30)}m siden`;
-  return `${Math.floor(days / 365)}å siden`;
+  if (days === 0) return tx("i dag", "today");
+  if (days === 1) return tx("i går", "yesterday");
+  if (days < 30) return `${days}${tx("d siden", "d ago")}`;
+  if (days < 365) return `${Math.floor(days / 30)}${tx("m siden", "mo ago")}`;
+  return `${Math.floor(days / 365)}${tx("å siden", "y ago")}`;
 }
 
 export function ClientHeader({ customer, stats }: Props) {
@@ -54,7 +55,7 @@ export function ClientHeader({ customer, stats }: Props) {
   const locale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${locale}/app`;
   const initials = customer.name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase();
-  const memberSince = new Date(customer.created_at).toLocaleDateString("da-DK", { month: "short", year: "numeric" });
+  const memberSince = new Date(customer.created_at).toLocaleDateString(dateLocaleTag(), { month: "short", year: "numeric" });
 
   const { data: campaignNames } = useCampaignNames();
   const sourceLabel = customer.lead_source
@@ -102,17 +103,17 @@ export function ClientHeader({ customer, stats }: Props) {
   };
 
   const pulseParts = [
-    `${stats.openDeals} ${stats.openDeals === 1 ? "åben deal" : "åbne deals"}`,
-    stats.overdueInvoices > 0 ? `${stats.overdueInvoices} forfaldne fakturaer` : null,
-    stats.lastTouch ? `kontakt ${relTime(stats.lastTouch)}` : "ingen aktivitet endnu",
+    `${stats.openDeals} ${stats.openDeals === 1 ? tx("åben deal", "open deal") : tx("åbne deals", "open deals")}`,
+    stats.overdueInvoices > 0 ? `${stats.overdueInvoices} ${tx("forfaldne fakturaer", "overdue invoices")}` : null,
+    stats.lastTouch ? `${tx("kontakt", "contact")} ${relTime(stats.lastTouch)}` : tx("ingen aktivitet endnu", "no activity yet"),
   ].filter(Boolean);
 
   const actions = [
     { icon: Mail,      label: "Mail",     onClick: () => customer.email && (window.location.href = `mailto:${customer.email}`) },
-    { icon: Phone,     label: "Ring",     onClick: () => customer.phone && (window.location.href = `tel:${customer.phone}`) },
-    { icon: Calendar,  label: "Møde",     onClick: () => navigate(`${base}/work/calendar?create=true&customer=${customer.id}`) },
-    { icon: Briefcase, label: "Ny deal",  onClick: () => navigate(`${base}/crm/deals?create=true&customer=${customer.id}`) },
-    { icon: FileText,  label: "Faktura",  onClick: () => navigate(`${base}/finance/invoices?create=true&customer=${customer.id}`) },
+    { icon: Phone,     label: tx("Ring", "Call"),     onClick: () => customer.phone && (window.location.href = `tel:${customer.phone}`) },
+    { icon: Calendar,  label: tx("Møde", "Meeting"),     onClick: () => navigate(`${base}/work/calendar?create=true&customer=${customer.id}`) },
+    { icon: Briefcase, label: tx("Ny deal", "New deal"),  onClick: () => navigate(`${base}/crm/deals?create=true&customer=${customer.id}`) },
+    { icon: FileText,  label: tx("Faktura", "Invoice"),  onClick: () => navigate(`${base}/finance/invoices?create=true&customer=${customer.id}`) },
   ];
 
   return (
@@ -147,13 +148,13 @@ export function ClientHeader({ customer, stats }: Props) {
               {customer.address && (
                 <span className="inline-flex items-center gap-1.5 min-w-0"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate max-w-[240px]">{customer.address}</span></span>
               )}
-              <span className="text-muted-foreground/70 shrink-0">Klient siden {memberSince}</span>
+              <span className="text-muted-foreground/70 shrink-0">{tx("Klient siden", "Client since")} {memberSince}</span>
             </div>
             {(sourceLabel || customer.converted_from_lead_id) && (
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {sourceLabel && <RelationshipChip icon={Radio} label={t('pages.leads.sourceLabel')} value={sourceLabel} />}
                 {customer.converted_from_lead_id && (
-                  <RelationshipChip label="Lead" value="Se oprindelig lead" href={`${base}/crm/leads?leadId=${customer.converted_from_lead_id}`} />
+                  <RelationshipChip label="Lead" value={tx("Se oprindelig lead", "View original lead")} href={`${base}/crm/leads?leadId=${customer.converted_from_lead_id}`} />
                 )}
               </div>
             )}
@@ -178,7 +179,7 @@ export function ClientHeader({ customer, stats }: Props) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                title="Mere"
+                title={tx("Mere", "More")}
                 className="grid place-items-center h-8 w-8 rounded-md border border-border/50 bg-background/30 hover:bg-foreground/[0.04] hover:border-border text-muted-foreground/70 hover:text-foreground transition-colors"
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
@@ -197,7 +198,7 @@ export function ClientHeader({ customer, stats }: Props) {
       </div>
 
       <p className="text-[13px] text-muted-foreground border-l-2 border-border/60 pl-4">
-        <span className="text-foreground/70 font-mono uppercase tracking-[0.1em] text-[10px] mr-2">Puls</span>
+        <span className="text-foreground/70 font-mono uppercase tracking-[0.1em] text-[10px] mr-2">{tx("Puls", "Pulse")}</span>
         {pulseParts.join(" · ")}
       </p>
 

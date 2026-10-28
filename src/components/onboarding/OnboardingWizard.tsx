@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -275,7 +276,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   ))}
                   <div className="flex items-center justify-between pt-3 border-t text-sm font-medium">
                     <span>{t('wizard.moduleTotalLabel')}</span>
-                    <span>{moduleTotal.toLocaleString('da-DK')} kr./md.</span>
+                    <span>{moduleTotal.toLocaleString(dateLocaleTag())} kr./md.</span>
                   </div>
                 </div>
               )}

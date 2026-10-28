@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface Company {
   id: string;
@@ -101,7 +102,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
     if (hours < 24) return `${hours}t siden`;
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}d siden`;
-    return d.toLocaleDateString('da-DK');
+    return d.toLocaleDateString(dateLocaleTag());
   };
 
   const panelContent = (

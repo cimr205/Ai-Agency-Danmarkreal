@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface EmployeeInfo {
   id: string;
@@ -145,7 +146,7 @@ export default function AdminCompaniesPage() {
             <KpiCard label="Aktive Virksomheder" value={totalCompanies.toString()} />
             <KpiCard label="Aktive Brugere" value={totalUsers.toString()} />
             <KpiCard label="Samlet Brugstid" value={formatDuration(totalSeconds)} />
-            <KpiCard label="Cold Caller Brug" value={totalColdCaller.toLocaleString('da-DK')} />
+            <KpiCard label="Cold Caller Brug" value={totalColdCaller.toLocaleString(dateLocaleTag())} />
           </>
         )}
       </div>

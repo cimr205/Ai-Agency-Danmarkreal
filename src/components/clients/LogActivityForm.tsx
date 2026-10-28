@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateActivity, type CrmActivityType } from "@/hooks/api/useActivities";
 import { useToast } from "@/components/ui/use-toast";
+import { tx } from '@/lib/inlineI18n';
 
-const LOGGABLE_TYPES: { value: CrmActivityType; label: string }[] = [
-  { value: "call", label: "Opkald" },
-  { value: "meeting", label: "Møde" },
-  { value: "note", label: "Note" },
+const LOGGABLE_TYPES: { value: CrmActivityType; readonly label: string }[] = [
+  { value: "call", get label() { return tx("Opkald", "Call"); } },
+  { value: "meeting", get label() { return tx("Møde", "Meeting"); } },
+  { value: "note", get label() { return tx("Note", "Note"); } },
 ];
 
 export function LogActivityForm({ entityType, entityId }: { entityType: "customer" | "deal"; entityId: string }) {
@@ -31,9 +32,9 @@ export function LogActivityForm({ entityType, entityId }: { entityType: "custome
       });
       setBody("");
       setNextStepAt("");
-      toast({ title: "Aktivitet logget" });
+      toast({ title: tx("Aktivitet logget", "Activity logged") });
     } catch (e) {
-      toast({ title: "Kunne ikke logge aktivitet", description: e instanceof Error ? e.message : undefined, variant: "destructive" });
+      toast({ title: tx("Kunne ikke logge aktivitet", "Could not log activity"), description: e instanceof Error ? e.message : undefined, variant: "destructive" });
     }
   };
 
@@ -55,18 +56,18 @@ export function LogActivityForm({ entityType, entityId }: { entityType: "custome
           value={nextStepAt}
           onChange={(e) => setNextStepAt(e.target.value)}
           className="h-8 w-44 text-[12.5px]"
-          placeholder="Opfølgning (valgfri)"
+          placeholder={tx("Opfølgning (valgfri)", "Follow-up (optional)")}
         />
       </div>
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Hvad skete der?"
+        placeholder={tx("Hvad skete der?", "What happened?")}
         className="min-h-[60px] text-[13px]"
       />
       <div className="flex justify-end">
         <Button size="sm" onClick={handleSubmit} disabled={createActivity.isPending || (!body.trim() && !nextStepAt)}>
-          Log aktivitet
+          {tx("Log aktivitet", "Log activity")}
         </Button>
       </div>
     </div>

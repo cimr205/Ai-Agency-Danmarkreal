@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 const FEATURES = [
   'Ubegrænsede leads & deals',
@@ -83,7 +84,7 @@ export default function SubscriptionPage() {
 
           {periodEnd && subscribed && (
             <p className="text-xs text-muted-foreground">
-              Næste betaling: {new Date(periodEnd).toLocaleDateString('da-DK')}
+              Næste betaling: {new Date(periodEnd).toLocaleDateString(dateLocaleTag())}
             </p>
           )}
 

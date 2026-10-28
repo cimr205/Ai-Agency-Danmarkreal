@@ -19,6 +19,7 @@ import {
 } from "@/hooks/api/useAutopilot";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 const AGENT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autopilot-agent`;
 
@@ -155,7 +156,7 @@ function SignalFeed({ events, loading }: { events: WorkspaceEvent[]; loading: bo
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium font-mono">{e.type}</span>
                       <span className="text-[10px] text-muted-foreground/60">
-                        {new Date(e.created_at).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(e.created_at).toLocaleTimeString(dateLocaleTag(), { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                     <SignalSummary event={e} />
@@ -430,7 +431,7 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                     )}
                     <div className="flex items-center gap-2">
                       <StatusBadge status={a.status} className="text-[10px]" />
-                      <span className="text-[10px] font-mono text-muted-foreground/50">{new Date(a.created_at).toLocaleString("da-DK")}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground/50">{new Date(a.created_at).toLocaleString(dateLocaleTag())}</span>
                     </div>
                   </div>
                 </div>

@@ -14,6 +14,7 @@ import { Shield, Users, Loader2, Crown, UserCog, User, Eye, Mail, Copy, Clock, X
 import { ROLE_LABELS, ROLE_HIERARCHY, canManageRole } from "@/lib/auth";
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface UserWithRole {
   user_id: string;
@@ -326,7 +327,7 @@ export default function AdminUsers() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(u.created_at).toLocaleDateString("da-DK")}
+                    {new Date(u.created_at).toLocaleDateString(dateLocaleTag())}
                   </TableCell>
                 </TableRow>
               ))}
@@ -365,10 +366,10 @@ export default function AdminUsers() {
                   </TableCell>
                   <TableCell>{getStatusBadge(inv.status, inv.expires_at)}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(inv.created_at).toLocaleDateString("da-DK")}
+                    {new Date(inv.created_at).toLocaleDateString(dateLocaleTag())}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(inv.expires_at).toLocaleDateString("da-DK")}
+                    {new Date(inv.expires_at).toLocaleDateString(dateLocaleTag())}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">

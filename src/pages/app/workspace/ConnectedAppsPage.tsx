@@ -20,6 +20,7 @@ import {
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { isLocale } from "@/lib/i18n";
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -586,7 +587,7 @@ function ConnectDialog({
                 {isConnected ? "Forbundet" : "Afventer bekræftelse"}
               </div>
               {isConnected && existing?.connected_at && (
-                <span>Forbundet {new Date(existing.connected_at).toLocaleDateString("da-DK")}</span>
+                <span>Forbundet {new Date(existing.connected_at).toLocaleDateString(dateLocaleTag())}</span>
               )}
               {isPending && <span>Forbindelsen mangler stadig at blive bekræftet hos {item.name}.</span>}
             </div>

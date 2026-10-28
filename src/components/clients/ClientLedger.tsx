@@ -1,5 +1,6 @@
 import { useCurrency } from "@/contexts/CurrencyContext";
 import type { Tables } from "@/integrations/supabase/types";
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 const STATUS_TONE: Record<string, string> = {
   paid: "text-emerald-500/90",
@@ -14,7 +15,7 @@ const STATUS_TONE: Record<string, string> = {
 export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<"invoices">[]; payments: Tables<"payments">[]; quotes: Tables<"quotes">[] }) {
   const { format } = useCurrency();
   if (invoices.length === 0 && payments.length === 0 && quotes.length === 0) {
-    return <div className="text-[12.5px] text-muted-foreground/70">Ingen økonomiske bevægelser.</div>;
+    return <div className="text-[12.5px] text-muted-foreground/70">{tx("Ingen økonomiske bevægelser.", "No financial activity.")}</div>;
   }
 
   type Row = { id: string; date: string; label: string; tone?: string; amount: number; sign: 1 | -1 };
@@ -23,7 +24,7 @@ export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<
     rows.push({
       id: `q-${q.id}`,
       date: q.accepted_at || q.sent_at || q.created_at,
-      label: `Tilbud: ${q.title}`,
+      label: `${tx("Tilbud", "Quote")}: ${q.title}`,
       tone: STATUS_TONE[q.status] || STATUS_TONE.draft,
       amount: Number(q.total), sign: 1,
     });
@@ -33,7 +34,7 @@ export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<
     rows.push({
       id: `i-${i.id}`,
       date: i.issued_at || i.created_at,
-      label: `Faktura #${i.invoice_number}`,
+      label: `${tx("Faktura", "Invoice")} #${i.invoice_number}`,
       tone: STATUS_TONE[overdue ? "overdue" : i.status],
       amount: Number(i.amount), sign: 1,
     });
@@ -41,7 +42,7 @@ export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<
   for (const p of payments) {
     if (!p.paid_at) continue;
     rows.push({
-      id: `p-${p.id}`, date: p.paid_at, label: "Betaling",
+      id: `p-${p.id}`, date: p.paid_at, label: tx("Betaling", "Payment"),
       tone: STATUS_TONE.paid, amount: Number(p.amount), sign: -1,
     });
   }
@@ -52,7 +53,7 @@ export function ClientLedger({ invoices, payments, quotes }: { invoices: Tables<
       {rows.map(r => (
         <li key={r.id} className="py-3 flex items-baseline gap-4">
           <span className="text-[10.5px] font-mono text-muted-foreground/60 w-20 shrink-0">
-            {new Date(r.date).toLocaleDateString("da-DK", { day: "2-digit", month: "short" })}
+            {new Date(r.date).toLocaleDateString(dateLocaleTag(), { day: "2-digit", month: "short" })}
           </span>
           <span className="flex-1 text-[13px] text-foreground/90 truncate">{r.label}</span>
           <span className={`font-mono text-[12.5px] tabular-nums ${r.tone || "text-foreground/80"}`}>
