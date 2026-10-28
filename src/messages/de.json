@@ -205,7 +205,7 @@
     "featureTasksDesc": "Aufgaben zuweisen, Deadlines setzen und Fortschritte über Projekte hinweg verfolgen.",
     "featureInbox": "Posteingang",
     "featureInboxDesc": "Einheitliche Kommunikation mit Kunden und Kollegen direkt in der Plattform.",
-    "featureMarketing": "Marketing & Ads",
+    "featureMarketing": "Marketing & Anzeigen",
     "featureMarketingDesc": "Meta Ads-Verwaltung, Kampagnenerstellung und KI-generierter Anzeigeninhalt.",
     "featureAi": "KI-Assistent",
     "featureAiDesc": "Dein persönlicher PA, der bei allem hilft, von E-Mails bis zu Berichten.",
@@ -1655,7 +1655,7 @@
     "subNone": "Keine"
   },
   "pipeline": {
-    "title": "Sales Pipeline",
+    "title": "Vertriebspipeline",
     "subtitle": "Übersicht über deine Leads und Vertriebsprozesse",
     "listTab": "Liste",
     "calendarTab": "Kalender",

@@ -205,7 +205,7 @@
     "featureTasksDesc": "Tildel opgaver, sæt deadlines og følg fremskridt på tværs af projekter.",
     "featureInbox": "Inbox",
     "featureInboxDesc": "Samlet kommunikation med kunder og kollegaer direkte i platformen.",
-    "featureMarketing": "Marketing & Ads",
+    "featureMarketing": "Marketing og annoncer",
     "featureMarketingDesc": "Meta Ads-styring, kampagne-oprettelse og AI-genereret annonceindhold.",
     "featureAi": "AI-Assistent",
     "featureAiDesc": "Din personlige PA der hjælper med alt fra emails til rapporter.",
@@ -754,7 +754,7 @@
     "companyTitle": "Virksomhedsindstillinger",
     "companySubtitle": "Administrer dine virksomhedsoplysninger",
     "updateCta": "Gem ændringer",
-    "sendInvitation": "Send invitation"
+    "sendInvitation": "Send invitationen"
   },
   "admin": {
     "title": "Admin overblik",
@@ -1675,7 +1675,7 @@
     "scoreRange": "Score",
     "topSeller": "Top sælger",
     "closed": "lukket",
-    "totalPipeline": "Total pipeline",
+    "totalPipeline": "Samlet pipeline",
     "sellers": "Sælgere",
     "avgDays": "Gns. dage",
     "days": "dage",
@@ -2555,9 +2555,9 @@
     "securityDesc": "Sikkerhedsindstillinger for systemet",
     "twoFactor": "To-faktor godkendelse",
     "twoFactorDesc": "Kræv 2FA for alle administratorer",
-    "sessionTimeout": "Session timeout",
+    "sessionTimeout": "Session-timeout",
     "sessionTimeoutDesc": "Log automatisk ud efter inaktivitet",
-    "apiIntegration": "API Integration",
+    "apiIntegration": "API-integration",
     "apiIntegrationDesc": "Konfigurer forbindelse til ekstern backend",
     "apiIntegrationNote": "Backend-integration er konfigureret via Lovable Cloud.",
     "settingSaved": "Indstilling gemt"
