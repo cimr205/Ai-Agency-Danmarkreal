@@ -46,8 +46,15 @@ export function DecimalInput({ value, onValueChange, min = 0, ...rest }: Decimal
       type="text"
       inputMode="decimal"
       value={text}
+      onBlur={e => {
+        // Tidy what's shown ("010" → "10", "5," → "5") once the user leaves the field.
+        setText(toText(value));
+        rest.onBlur?.(e);
+      }}
       onChange={e => {
-        const raw = e.target.value;
+        // A rejected keystroke (e.g. "-" where negatives aren't allowed) must
+        // not leave a stray leading zero behind: "0" + "10" became "010".
+        const raw = e.target.value.replace(/^(-?)0+(?=\d)/, '$1');
         if (!pattern.test(raw)) return;
         setText(raw);
         const parsed = parseDecimal(raw);

@@ -32,6 +32,23 @@ type ViewKey = 'today' | 'upcoming' | 'overdue' | 'mine' | 'all' | 'completed' |
 
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent'] as const;
 
+// Workflow-created tasks store "Created by <event.key>" as description.
+const EVENT_TEXT: Record<string, [string, string, string]> = {
+  'lead.created': ['en ny lead', 'a new lead', 'einen neuen Lead'],
+  'deal.won': ['en vundet deal', 'a won deal', 'einen gewonnenen Deal'],
+  'deal.lost': ['en tabt deal', 'a lost deal', 'einen verlorenen Deal'],
+  'invoice.paid': ['en betalt faktura', 'a paid invoice', 'eine bezahlte Rechnung'],
+  'invoice.created': ['en ny faktura', 'a new invoice', 'eine neue Rechnung'],
+  'email.replied': ['et e-mailsvar', 'an email reply', 'eine E-Mail-Antwort'],
+  'task.completed': ['en færdig opgave', 'a completed task', 'eine erledigte Aufgabe'],
+};
+function describeTask(description: string): string {
+  const m = /^Created by ([a-z_]+\.[a-z_]+)$/.exec(description.trim());
+  if (!m) return description;
+  const ev = EVENT_TEXT[m[1]];
+  return ev ? t3(`Oprettet automatisk ved ${ev[0]}`, `Created automatically by ${ev[1]}`, `Automatisch erstellt durch ${ev[2]}`) : description;
+}
+
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -212,7 +229,10 @@ export default function TasksPage() {
   };
 
   const TaskCard = ({ task }: { task: Task }) => {
-    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+    // Due today is not overdue — only a date before today is. Comparing the
+    // timestamp made every task due today (stored as midnight) red.
+    const isOverdue = !!task.due_date && task.status !== 'completed'
+      && new Date(task.due_date) < new Date() && !isSameDay(new Date(task.due_date), new Date());
     const assigneeName = task.assigned_profile?.full_name;
     return (
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
@@ -234,7 +254,7 @@ export default function TasksPage() {
                 )}
                 {task.archived && <Badge variant="outline">Arkiveret</Badge>}
               </div>
-              {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>}
+              {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{describeTask(task.description)}</p>}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {assigneeName && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
