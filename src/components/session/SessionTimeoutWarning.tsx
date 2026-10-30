@@ -35,9 +35,16 @@ export function SessionTimeoutWarning() {
     }, IDLE_TIMEOUT_MS - WARNING_BEFORE_MS);
   }, []);
 
+  // Activity only resets the idle timer while no warning is showing. This used
+  // to depend on `showWarning`, so opening the warning re-ran the effect, whose
+  // cleanup cleared the countdown and called resetTimer() — the warning closed
+  // immediately and an idle session was never signed out.
+  const showWarningRef = useRef(false);
+  showWarningRef.current = showWarning;
+
   useEffect(() => {
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    const handler = () => { if (!showWarning) resetTimer(); };
+    const handler = () => { if (!showWarningRef.current) resetTimer(); };
     events.forEach(e => window.addEventListener(e, handler, { passive: true }));
     resetTimer();
     return () => {
@@ -45,7 +52,7 @@ export function SessionTimeoutWarning() {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [resetTimer, showWarning]);
+  }, [resetTimer]);
 
   const handleContinue = () => {
     supabase.auth.getSession(); // refresh token
