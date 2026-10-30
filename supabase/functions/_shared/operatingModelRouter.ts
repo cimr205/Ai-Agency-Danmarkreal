@@ -2,7 +2,7 @@
 // OpenAI-compatible model abstraction for the Operating Manager.
 // All text generation resolves to the shared platform-level LLM endpoint
 // configured in _shared/aiConnection.ts (currently OpenRouter).
-import { getCompanyAI, describeOpenAIError, type CompanyAI } from "./aiConnection.ts";
+import { getCompanyAI, describeOpenAIError, MAX_MODELS, type CompanyAI } from "./aiConnection.ts";
 
 // deno-lint-ignore no-explicit-any
 type DbClient = any;
@@ -49,7 +49,7 @@ export async function resolveModel(
   return {
     provider: companyAI.provider,
     model,
-    models: [model, ...companyAI.models.filter((m) => m !== model)],
+    models: [model, ...companyAI.models.filter((m) => m !== model)].slice(0, MAX_MODELS),
     endpoint: companyAI.url,
     apiKey: companyAI.apiKey,
     tier,

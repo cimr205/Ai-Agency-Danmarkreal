@@ -30,13 +30,16 @@ export interface CompanyAI {
   provider: "local";
 }
 
+// OpenRouter rejects the whole request when `models` has more entries than this.
+export const MAX_MODELS = 3;
+
 // Deduplicating, order-preserving parse of the comma-separated fallback list,
 // always led by the primary model so it's tried first.
 function resolveModelList(primary: string): string[] {
   const extra = (Deno.env.get("LOCAL_LLM_FALLBACK_MODELS") ?? "")
     .split(",").map((m) => m.trim()).filter(Boolean);
   const seen = new Set<string>();
-  return [primary, ...extra].filter((m) => (seen.has(m) ? false : (seen.add(m), true)));
+  return [primary, ...extra].filter((m) => (seen.has(m) ? false : (seen.add(m), true))).slice(0, MAX_MODELS);
 }
 
 function normalizeEndpoint(url: string) {
