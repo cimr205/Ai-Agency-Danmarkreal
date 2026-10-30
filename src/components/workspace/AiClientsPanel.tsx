@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useIssueMcpToken, useMcpTokens, useRevokeMcpToken } from "@/hooks/api/useMcpTokens";
-import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-server`;
 
@@ -88,7 +88,7 @@ export function AiClientsPanel() {
   const copy = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(key);
-    toast.success("Kopieret");
+    toast.success(t3("Kopieret", "Copied", "Kopiert"));
     setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500);
   };
 

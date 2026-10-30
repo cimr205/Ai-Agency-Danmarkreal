@@ -135,7 +135,7 @@ export default function AdminUsers() {
     try {
       const { error } = await supabase.rpc("revoke_invitation", { invitation_id: id });
       if (error) throw error;
-      toast.success("Invitation tilbagekaldt");
+      toast.success(t3("Invitation tilbagekaldt", "Invitation revoked", "Einladung widerrufen"));
       fetchInvitations();
     } catch (error) {
       toast.error(getErrorMessage(error) || t3("Kunne ikke tilbagekalde invitation", "Could not revoke invitation", "Einladung konnte nicht widerrufen werden"));

@@ -65,7 +65,7 @@ export default function AdminDataDeletionRequests() {
         })
         .eq('id', id);
       if (error) throw error;
-      toast.success('Markeret som behandlet');
+      toast.success(t3('Markeret som behandlet', 'Marked as processed', 'Als bearbeitet markiert'));
       await load();
     } catch (e) {
       toast.error(getErrorMessage(e) || tx("Kunne ikke opdatere anmodning", "Could not update the request"));

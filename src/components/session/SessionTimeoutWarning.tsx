@@ -6,6 +6,8 @@ import { useI18n } from '@/lib/i18n';
 
 const IDLE_TIMEOUT_MS = 25 * 60 * 1000; // 25 min
 const WARNING_BEFORE_MS = 5 * 60 * 1000; // 5 min warning
+const LAST_ACTIVITY_KEY = 'last_activity_at';
+const ACTIVITY_THROTTLE_MS = 5000;
 
 export function SessionTimeoutWarning() {
   const { t } = useI18n();
@@ -18,6 +20,8 @@ export function SessionTimeoutWarning() {
     setShowWarning(false);
     if (countdownRef.current) clearInterval(countdownRef.current);
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    // "Stay signed in" on the login page opts out of the idle sign-out.
+    if (localStorage.getItem('remember_me') === 'true') return;
 
     idleTimerRef.current = setTimeout(() => {
       setShowWarning(true);
@@ -43,12 +47,24 @@ export function SessionTimeoutWarning() {
   showWarningRef.current = showWarning;
 
   useEffect(() => {
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    const handler = () => { if (!showWarningRef.current) resetTimer(); };
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    let lastHandled = 0;
+    const handler = () => {
+      if (showWarningRef.current || Date.now() - lastHandled < ACTIVITY_THROTTLE_MS) return;
+      lastHandled = Date.now();
+      resetTimer();
+      // signOut() ends the session in every tab, so activity in one tab must keep the others alive.
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(lastHandled));
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LAST_ACTIVITY_KEY) resetTimer();
+    };
     events.forEach(e => window.addEventListener(e, handler, { passive: true }));
+    window.addEventListener('storage', onStorage);
     resetTimer();
     return () => {
       events.forEach(e => window.removeEventListener(e, handler));
+      window.removeEventListener('storage', onStorage);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };

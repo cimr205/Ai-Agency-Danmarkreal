@@ -62,7 +62,7 @@ export function useDisconnectIntegration() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Forbindelse afbrudt");
+      toast.success(t3("Forbindelse afbrudt", "Disconnected", "Verbindung getrennt"));
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
     onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke afbryde", "Could not disconnect", "Trennen fehlgeschlagen")),
@@ -131,7 +131,7 @@ export function useConnectWebhook() {
       }
     },
     onSuccess: (_d, v) => {
-      toast.success(`${v.name} forbundet`);
+      toast.success(t3(`${v.name} forbundet`, `${v.name} connected`, `${v.name} verbunden`));
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
     onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke forbinde", "Could not connect", "Verbindung fehlgeschlagen")),
@@ -158,7 +158,7 @@ export function useTestConnection() {
       }).catch(() => null);
       if (!res || !res.ok) throw new Error(`${t3("Webhook svarede ikke OK", "Webhook did not respond OK", "Webhook hat nicht mit OK geantwortet")}${res ? ` (${res.status})` : ""}`);
     },
-    onSuccess: () => toast.success("Webhook svarede 200 — forbindelsen virker"),
+    onSuccess: () => toast.success(t3("Webhook svarede 200 — forbindelsen virker", "Webhook responded 200 — the connection works", "Webhook hat mit 200 geantwortet — die Verbindung funktioniert")),
     onError: (e: Error) => toast.error(e?.message ?? t3("Test fejlede", "Test failed", "Test fehlgeschlagen")),
   });
 }
@@ -216,7 +216,7 @@ export function useDisconnectComposioConnection() {
     mutationFn: (integrationId: string) => callComposioIntegration("disconnect-connection", { integrationId }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      toast.success("Forbindelse afbrudt");
+      toast.success(t3("Forbindelse afbrudt", "Disconnected", "Verbindung getrennt"));
     },
     onError: (e) => showError(e, { module: "composio-integration" }),
   });

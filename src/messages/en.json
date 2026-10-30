@@ -40,7 +40,12 @@
     "account": "Account",
     "create": "Create",
     "selectAllVisible": "Select all visible ({count})",
-    "selected": "{count} selected"
+    "selected": "{count} selected",
+    "done": "Done",
+    "edit": "Edit",
+    "no": "No",
+    "of": "of",
+    "yes": "Yes"
   },
   "language": {
     "label": "Language",
@@ -723,7 +728,16 @@
     "leaveEndBeforeStart": "The end date can't be before the start date.",
     "editEmployee": "Edit employee",
     "fullName": "Full name",
-    "deletePayrollTitle": "Delete this payroll record?"
+    "deletePayrollTitle": "Delete this payroll record?",
+    "department": "Department",
+    "description": "Description",
+    "requirements": "Requirements",
+    "salaryRange": "Salary range",
+    "empty": "No employees yet.",
+    "orgChart": "Org chart",
+    "orgChartDesc": "See how your team is organized.",
+    "orgChartEmpty": "No employees to show",
+    "orgChartEmptyDesc": "Add employees to build your org chart."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -904,7 +918,11 @@
       "expired": "Expired"
     },
     "expired": "Expired — can no longer be accepted",
-    "duplicateNumber": "A quote with this number already exists."
+    "duplicateNumber": "A quote with this number already exists.",
+    "markSent": "Mark as sent",
+    "markAccepted": "Mark as accepted",
+    "markRejected": "Mark as rejected",
+    "createInvoice": "Create invoice"
   },
   "roles": {
     "employee": "Employee",

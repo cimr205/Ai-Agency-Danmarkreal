@@ -40,7 +40,12 @@
     "selected": "{count} ausgewählt",
     "back": "Zurück",
     "copied": "In die Zwischenablage kopiert",
-    "copy": "Kopieren"
+    "copy": "Kopieren",
+    "done": "Fertig",
+    "edit": "Bearbeiten",
+    "no": "Nein",
+    "of": "von",
+    "yes": "Ja"
   },
   "language": {
     "label": "Sprache",
@@ -743,7 +748,16 @@
     "leaveEndBeforeStart": "Das Enddatum darf nicht vor dem Startdatum liegen.",
     "editEmployee": "Mitarbeiter bearbeiten",
     "fullName": "Vollständiger Name",
-    "deletePayrollTitle": "Diese Lohnabrechnung löschen?"
+    "deletePayrollTitle": "Diese Lohnabrechnung löschen?",
+    "department": "Abteilung",
+    "description": "Beschreibung",
+    "requirements": "Anforderungen",
+    "salaryRange": "Gehaltsspanne",
+    "empty": "Noch keine Mitarbeitenden.",
+    "orgChart": "Organigramm",
+    "orgChartDesc": "Sieh, wie dein Team organisiert ist.",
+    "orgChartEmpty": "Keine Mitarbeitenden vorhanden",
+    "orgChartEmptyDesc": "Füge Mitarbeitende hinzu, um das Organigramm aufzubauen."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -924,7 +938,11 @@
       "expired": "Abgelaufen"
     },
     "expired": "Abgelaufen — kann nicht mehr angenommen werden",
-    "duplicateNumber": "Ein Angebot mit dieser Nummer existiert bereits."
+    "duplicateNumber": "Ein Angebot mit dieser Nummer existiert bereits.",
+    "markSent": "Als gesendet markieren",
+    "markAccepted": "Als angenommen markieren",
+    "markRejected": "Als abgelehnt markieren",
+    "createInvoice": "Rechnung erstellen"
   },
   "roles": {
     "employee": "Mitarbeiter",

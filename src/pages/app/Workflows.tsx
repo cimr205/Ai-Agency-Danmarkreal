@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { getErrorMessage } from '@/lib/errors';
-import { tx } from '@/lib/inlineI18n';
+import { t3, tx } from '@/lib/inlineI18n';
 
 const eventLabels = (): Record<string, string> => ({
   "lead.created": tx("Lead oprettet", "Lead created"),
@@ -299,7 +299,7 @@ export default function WorkflowsPage() {
                               className="h-6 w-6"
                               onClick={() => {
                                 deleteMutation.mutate(wf.id);
-                                toast.success("Workflow slettet");
+                                toast.success(t3("Workflow slettet", "Workflow deleted", "Workflow gelöscht"));
                               }}
                             >
                               <Trash2 className="h-3 w-3 text-destructive" />

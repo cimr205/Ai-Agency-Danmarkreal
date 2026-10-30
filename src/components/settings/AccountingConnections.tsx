@@ -101,7 +101,7 @@ export function AccountingConnections() {
     try {
       const data = await invokeFunction<{ error?: string }>('accounting-disconnect', { body: { provider } });
       if (data?.error) throw new Error(data.error);
-      toast.success(provider === 'dinero' ? 'Dinero afbrudt' : 'e-conomic afbrudt');
+      toast.success(t3(`${provider === 'dinero' ? 'Dinero' : 'e-conomic'} afbrudt`, `${provider === 'dinero' ? 'Dinero' : 'e-conomic'} disconnected`, `${provider === 'dinero' ? 'Dinero' : 'e-conomic'} getrennt`));
       await fetchConnections();
     } catch (e) {
       showError(e, { module: 'accounting' });

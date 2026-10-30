@@ -11,7 +11,7 @@ import {
   useOperatingAction, useOperatingBrief, useOperatingCommand,
   type OperatingAction, type OperatingSignal,
 } from "@/hooks/api/useOperatingManager";
-import { tx } from '@/lib/inlineI18n';
+import { dateLocaleTag, tx } from '@/lib/inlineI18n';
 
 type View = "today" | "approvals" | "signals" | "history";
 
@@ -31,7 +31,7 @@ const SEVERITY_STYLE: Record<string, string> = {
 };
 
 function formatTime(value: string) {
-  return new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat(dateLocaleTag(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
 export function OperatingManagerPanel() {

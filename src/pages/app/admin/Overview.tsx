@@ -163,7 +163,7 @@ export default function AdminOverviewPage() {
       case 'active': return <Badge className="bg-success/20 text-success border-success/30">Betaler</Badge>;
       case 'trialing': return <Badge className="bg-warning/20 text-warning border-warning/30">Prøveperiode</Badge>;
       case 'canceled': return <Badge variant="destructive">Annulleret</Badge>;
-      default: return <Badge variant="secondary">Ingen</Badge>;
+      default: return <Badge variant="secondary">{t3("Ingen", "None", "Keine")}</Badge>;
     }
   };
 
@@ -300,7 +300,7 @@ export default function AdminOverviewPage() {
                           <CreditCard className="h-3.5 w-3.5" /> Betaling
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <InfoCell label="Abonnement" value={company.subscription_status || 'Ingen'} />
+                          <InfoCell label="Abonnement" value={company.subscription_status || t3('Ingen', 'None', 'Keine')} />
                           <InfoCell label={t3("Stripe-kunde", "Stripe customer", "Stripe-Kunde")} value={company.stripe_customer_id ? `✅ ${t3("Tilknyttet", "Linked", "Verknüpft")}` : `❌ ${t3("Mangler", "Missing", "Fehlt")}`} />
                           <InfoCell label={t3("Stripe-abonnement", "Stripe subscription", "Stripe-Abonnement")} value={company.stripe_subscription_id ? `✅ ${t3("Aktiv", "Active", "Aktiv")}` : `❌ ${t3("Ingen", "None", "Keins")}`} />
                           <InfoCell label={t3("Prøveperiode udløber", "Trial ends", "Testphase endet")} value={company.trial_ends_at ? format(new Date(company.trial_ends_at), 'dd/MM/yyyy') : '—'} />

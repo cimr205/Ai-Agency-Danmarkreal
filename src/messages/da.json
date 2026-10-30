@@ -40,7 +40,12 @@
     "selected": "{count} valgt",
     "back": "Tilbage",
     "copied": "Kopieret til udklipsholder",
-    "copy": "Kopiér"
+    "copy": "Kopiér",
+    "done": "Færdig",
+    "edit": "Rediger",
+    "no": "Nej",
+    "of": "af",
+    "yes": "Ja"
   },
   "language": {
     "label": "Sprog",
@@ -743,7 +748,16 @@
     "leaveEndBeforeStart": "Slutdatoen kan ikke ligge før startdatoen.",
     "editEmployee": "Redigér medarbejder",
     "fullName": "Fulde navn",
-    "deletePayrollTitle": "Slet denne lønregistrering?"
+    "deletePayrollTitle": "Slet denne lønregistrering?",
+    "department": "Afdeling",
+    "description": "Beskrivelse",
+    "requirements": "Krav",
+    "salaryRange": "Lønniveau",
+    "empty": "Ingen medarbejdere endnu.",
+    "orgChart": "Organisationsdiagram",
+    "orgChartDesc": "Se hvordan jeres team er organiseret.",
+    "orgChartEmpty": "Ingen medarbejdere at vise",
+    "orgChartEmptyDesc": "Tilføj medarbejdere for at opbygge organisationsdiagrammet."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -924,7 +938,11 @@
       "expired": "Udløbet"
     },
     "expired": "Udløbet — kan ikke længere accepteres",
-    "duplicateNumber": "Der findes allerede et tilbud med dette nummer."
+    "duplicateNumber": "Der findes allerede et tilbud med dette nummer.",
+    "markSent": "Markér som sendt",
+    "markAccepted": "Markér som accepteret",
+    "markRejected": "Markér som afvist",
+    "createInvoice": "Opret faktura"
   },
   "roles": {
     "employee": "Medarbejder",

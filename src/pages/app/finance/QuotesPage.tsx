@@ -262,16 +262,16 @@ export default function QuotesPage() {
                     <TableCell className="text-muted-foreground">{new Date(quote.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.sent')}</Button>}
+                        {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.markSent')}</Button>}
                         {/* An expired quote can't be accepted any more — the offer has lapsed. */}
                         {quote.status === 'sent' && quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10) && (
                           <span className="text-xs text-muted-foreground self-center">{t('quotes.expired')}</span>
                         )}
                         {quote.status === 'sent' && !(quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10)) && <>
-                          <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'accepted' })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t('quotes.accepted')}</Button>
-                          <Button size="sm" variant="ghost" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'rejected' })}>{t('quotes.rejected')}</Button>
+                          <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'accepted' })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t('quotes.markAccepted')}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'rejected' })}>{t('quotes.markRejected')}</Button>
                         </>}
-                        {quote.status === 'accepted' && !quote.converted_invoice_id && <Button size="sm" onClick={() => convertQuote.mutate(quote.id)}><FileText className="h-3.5 w-3.5 mr-1" />{t('invoices.createInvoice')}</Button>}
+                        {quote.status === 'accepted' && !quote.converted_invoice_id && <Button size="sm" onClick={() => convertQuote.mutate(quote.id)}><FileText className="h-3.5 w-3.5 mr-1" />{t('quotes.createInvoice')}</Button>}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -198,7 +198,7 @@ export default function TasksPage() {
   const handleBulkArchive = async () => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { archived: view !== 'archived' } });
-      toast.success('Opdateret');
+      toast.success(t3('Opdateret', 'Updated', 'Aktualisiert'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -206,7 +206,7 @@ export default function TasksPage() {
   const handleBulkReassign = async (userId: string) => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { assigned_to: userId } });
-      toast.success('Opdateret');
+      toast.success(t3('Opdateret', 'Updated', 'Aktualisiert'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -215,7 +215,7 @@ export default function TasksPage() {
     if (!confirm(t3(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`, `Delete ${selectedIds.size} task(s)? This cannot be undone.`, `${selectedIds.size} Aufgabe(n) löschen? Das kann nicht rückgängig gemacht werden.`))) return;
     try {
       await bulkDelete.mutateAsync(Array.from(selectedIds));
-      toast.success('Slettet');
+      toast.success(t3('Slettet', 'Deleted', 'Gelöscht'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -224,7 +224,7 @@ export default function TasksPage() {
     if (!confirm(t3('Slet denne opgave? Dette kan ikke fortrydes.', 'Delete this task? This cannot be undone.', 'Diese Aufgabe löschen? Das kann nicht rückgängig gemacht werden.'))) return;
     try {
       await deleteTask.mutateAsync(id);
-      toast.success('Slettet');
+      toast.success(t3('Slettet', 'Deleted', 'Gelöscht'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
@@ -291,7 +291,7 @@ export default function TasksPage() {
                   <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive focus:text-destructive">
-                  <Trash2 className="h-3.5 w-3.5 mr-2" />Slet
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />{t3("Slet", "Delete", "Löschen")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -435,7 +435,7 @@ export default function TasksPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}</Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>{t3("Slet", "Delete", "Löschen")}</Button>
             </div>
           )}
         </div>

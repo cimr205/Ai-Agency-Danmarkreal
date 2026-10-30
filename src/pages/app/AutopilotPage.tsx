@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { dateLocaleTag, tx } from '@/lib/inlineI18n';
+import { payloadValueText, statusChangeSummary, workspaceEventLabel } from '@/lib/workspaceEvents';
 import { invalidRecipient } from '@/lib/autopilot/recipients';
 
 const AGENT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autopilot-agent`;
@@ -153,7 +154,7 @@ function SignalFeed({ events, loading }: { events: WorkspaceEvent[]; loading: bo
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium font-mono">{e.type}</span>
+                      <span className="text-xs font-medium">{workspaceEventLabel(e.type)}</span>
                       <span className="text-[10px] text-muted-foreground/60">
                         {new Date(e.created_at).toLocaleTimeString(dateLocaleTag(), { hour: "2-digit", minute: "2-digit" })}
                       </span>
@@ -175,11 +176,11 @@ function SignalSummary({ event }: { event: WorkspaceEvent }) {
   const summary = (() => {
     switch (event.type) {
       case "lead.created": return `${p.name ?? "Lead"} · ${p.company ?? ""} · score ${p.score ?? 0}`;
-      case "lead.status_changed": return `${p.name}: ${p.from} → ${p.to}`;
+      case "lead.status_changed": return statusChangeSummary(p.name, p.from, p.to);
       case "deal.created": return `${p.title} · ${formatMoney(p.value)}`;
       case "deal.won": return `🏆 ${p.title} ${tx("vundet", "won")} · ${formatMoney(p.value)}`;
       case "deal.lost": return `${p.title} ${tx("tabt", "lost")}`;
-      case "deal.stage_changed": return `${p.title}: ${p.from} → ${p.to}`;
+      case "deal.stage_changed": return statusChangeSummary(p.title, p.from, p.to);
       case "invoice.created": return `${tx("Faktura", "Invoice")} ${p.number} · ${formatMoney(p.amount)}`;
       case "invoice.paid": return `${tx("Betalt", "Paid")}: ${p.number} · ${formatMoney(p.amount)}`;
       case "task.created": return `${tx("Opgave", "Task")}: ${p.title}`;
@@ -191,7 +192,7 @@ function SignalSummary({ event }: { event: WorkspaceEvent }) {
         const obj = (p.current && typeof p.current === "object" ? p.current : p) as Record<string, unknown>;
         const label = obj.title ?? obj.name ?? obj.subject ?? obj.number ?? obj.invoice_number ?? obj.email;
         const amount = obj.amount ?? obj.value;
-        return [label, typeof amount === "number" ? formatMoney(amount) : null].filter(Boolean).join(" · ") || event.type.replace(/[._]/g, " ");
+        return [label, typeof amount === "number" ? formatMoney(amount) : null].filter(Boolean).join(" · ") || workspaceEventLabel(event.type);
       }
     }
   })();
@@ -201,7 +202,7 @@ function SignalSummary({ event }: { event: WorkspaceEvent }) {
 function formatMoney(v: unknown) {
   const n = Number(v);
   if (!Number.isFinite(n)) return "";
-  return new Intl.NumberFormat("da-DK", { style: "currency", currency: "DKK", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat(dateLocaleTag(), { style: "currency", currency: "DKK", maximumFractionDigits: 0 }).format(n);
 }
 
 // ─── AGENT CHAT ───────────────────────────────────────────────────────────
@@ -422,8 +423,8 @@ function ActionQueue({ actions, loading }: { actions: AutopilotAction[]; loading
                         <dl className="mt-1 space-y-0.5 pl-2 border-l border-border/40">
                           {Object.entries(a.payload).map(([key, value]) => (
                             <div key={key} className="flex gap-2">
-                              <dt className="text-muted-foreground/60 shrink-0">{key}:</dt>
-                              <dd className="truncate text-foreground/80">{typeof value === "object" ? JSON.stringify(value) : String(value)}</dd>
+                              <dt className="text-muted-foreground/60 shrink-0">{key.replace(/_/g, " ")}:</dt>
+                              <dd className="truncate text-foreground/80">{payloadValueText(value)}</dd>
                             </div>
                           ))}
                         </dl>

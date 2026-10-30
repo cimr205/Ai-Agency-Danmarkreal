@@ -120,7 +120,7 @@ export default function WorkforceReportsPage() {
       }
 
       doc.save(`tidsrapport-${startStr}-${endStr}.pdf`);
-      toast.success('PDF rapport downloadet');
+      toast.success(t3('PDF-rapport downloadet', 'PDF report downloaded', 'PDF-Bericht heruntergeladen'));
     } catch (err) {
       console.error('PDF generation failed', err);
       reportError(err, { module: 'hr', action: 'generate_report_pdf' });

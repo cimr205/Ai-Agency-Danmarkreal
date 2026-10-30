@@ -108,7 +108,7 @@ function useDeleteEmailTemplate() {
 }
 
 export default function EmailTemplatesPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [search, setSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
@@ -219,7 +219,7 @@ export default function EmailTemplatesPage() {
                   if (!session) return;
                   const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', session.user.id).single();
                   if (!profile?.company_id) return;
-                  const isDa = t('common.language') === 'Dansk' || document.documentElement.lang === 'da';
+                  const isDa = locale === 'da';
                   const inserts = STARTER_TEMPLATES.map(tpl => ({
                     name: isDa ? tpl.name_da : tpl.name,
                     subject: isDa ? tpl.subject_da : tpl.subject,
