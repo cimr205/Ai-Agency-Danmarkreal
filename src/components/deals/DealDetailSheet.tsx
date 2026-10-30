@@ -15,7 +15,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import type { StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { DecimalInput } from '@/components/shared/DecimalInput';
-import { dateLocaleTag, tl } from '@/lib/inlineI18n';
+import { dateLocaleTag, t3, tl } from '@/lib/inlineI18n';
 
 type Customer = Tables<'customers'>;
 
@@ -68,7 +68,11 @@ export function DealDetailSheet({
                       onValueChange={() => { /* committed on blur */ }}
                       onBlur={e => {
                         const n = Number(e.currentTarget.value.replace(',', '.'));
-                        if (Number.isFinite(n) && n >= 0 && n !== Number(deal.value || 0)) onValueUpdate(deal.id, n);
+                        if (Number.isFinite(n) && n < 0) {
+                          toast.error(t3('Værdien kan ikke være negativ.', 'The value cannot be negative.', 'Der Wert darf nicht negativ sein.'));
+                          return;
+                        }
+                        if (Number.isFinite(n) && n !== Number(deal.value || 0)) onValueUpdate(deal.id, n);
                       }}
                       aria-label={t('pages.deals.value')}
                       title={formatCurrency(deal.value)}

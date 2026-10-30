@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useProposeFollowup, useReviewAction, type ProposedAction } from '@/hooks/api/useLeadAssist';
 import { getErrorMessage } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
+import { localDateString } from '@/lib/localDate';
 
 /**
  * Contextual AI-assisted action on a lead: "Prepare a follow-up". AI prepares a
@@ -24,7 +25,7 @@ export function LeadFollowupAction({ leadId, leadName, suggestedTitle }: { leadI
   const [proposal, setProposal] = useState<ProposedAction | null>(null);
   const [createdTitle, setCreatedTitle] = useState<string | null>(null);
 
-  const dueDate = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+  const dueDate = localDateString(new Date(Date.now() + 3 * 86_400_000));
   const title = (suggestedTitle?.trim() || `${t('leadFollowup.defaultTitle')} ${leadName}`).slice(0, 120);
 
   const prepare = async () => {

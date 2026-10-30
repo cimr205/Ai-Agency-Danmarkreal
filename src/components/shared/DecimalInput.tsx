@@ -37,8 +37,9 @@ export function DecimalInput({ value, onValueChange, min = 0, ...rest }: Decimal
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const allowNegative = min === null || min < 0;
-  const pattern = allowNegative ? /^-?\d*[.,]?\d*$/ : /^\d*[.,]?\d*$/;
+  // "-" stays visible even when negatives aren't allowed: dropping it silently
+  // turned "-5000" into a positive 5000. The value itself is still clamped to min.
+  const pattern = /^-?\d*[.,]?\d*$/;
 
   return (
     <Input

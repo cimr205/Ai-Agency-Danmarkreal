@@ -127,7 +127,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `q:${q.id}`, kind: "invoice",
           at: q.accepted_at || q.sent_at || q.created_at,
-          title: `Tilbud: ${q.title}`,
+          title: `${t3("Tilbud", "Quote", "Angebot")}: ${q.title}`,
           meta: q.accepted_at ? activityTypeLabels().quote_accepted : q.sent_at ? activityTypeLabels().quote_sent : q.status,
           amount: Number(q.total),
         });
@@ -146,7 +146,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `p:${p.id}`, kind: "payment",
           at: p.paid_at,
-          title: "Betaling modtaget",
+          title: t3("Betaling modtaget", "Payment received", "Zahlung erhalten"),
           amount: Number(p.amount),
         });
       }

@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import { t3 } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 function BigTimer({ checkIn }: { checkIn: string }) {
   const [display, setDisplay] = useState('0:00:00');
@@ -126,7 +127,7 @@ export default function TimeTrackingPage() {
   }, [session, clockOut, t]);
 
   // History - last 14 days
-  const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+  const twoWeeksAgo = localDateString(new Date(Date.now() - 14 * 86400000));
   const { data: history, isLoading: historyLoading } = useTimeEntries({
     startDate: twoWeeksAgo,
     endDate: format(today, 'yyyy-MM-dd'),

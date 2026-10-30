@@ -39,6 +39,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
 import { dateLocaleTag, t3, tl } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 type Lead = Tables<'leads'>;
 
@@ -95,7 +96,7 @@ const roundOre = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 const defaultDueDate = () => {
   const d = new Date();
   d.setDate(d.getDate() + 14);
-  return d.toISOString().slice(0, 10);
+  return localDateString(d);
 };
 
 export default function InvoicesPage() {
@@ -915,7 +916,7 @@ export default function InvoicesPage() {
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                             <AlertDialogAction onClick={async () => {
-                              try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
+                              try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t3('Markeret som betalt', 'Marked as paid', 'Als bezahlt markiert')); } catch { toast.error(t('common.error')); }
                             }}>{t('profile.markAsPaid')}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

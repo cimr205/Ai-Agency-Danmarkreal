@@ -6,6 +6,7 @@ import { useCreateTask } from "@/hooks/api/useTasks";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
 import { tx } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 interface Props {
   customer: { id: string; name: string };
@@ -23,7 +24,7 @@ function dueDate(key: DueKey): string {
   const d = new Date();
   const add = key === "today" ? 0 : key === "tomorrow" ? 1 : key === "3d" ? 3 : 7;
   d.setDate(d.getDate() + add);
-  return d.toISOString().slice(0, 10);
+  return localDateString(d);
 }
 
 const AUTOMATIONS: { id: string; label: string; taskTitle: string; hint: string }[] = [

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { localDateString } from '@/lib/localDate';
 
 type EmployeeSummary = Pick<Tables<'employee_profiles'>, 'full_name' | 'department' | 'position'>;
 export type WorkSchedule = Tables<'work_schedules'> & { employee_profiles: EmployeeSummary | null };
@@ -256,7 +257,7 @@ export function useWorkforceLive() {
     queryKey: ['workforce-live'],
     refetchInterval: 30000,
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateString();
 
       // Get all today's attendance
       const { data: todayLogs, error } = await supabase
@@ -343,7 +344,7 @@ export function useWorkforceReport(params: { startDate: string; endDate: string 
       ((logs || []) as unknown as AttendanceLog[]).forEach(l => {
         const empId = l.employee_profile_id;
         if (!dayMap.has(empId)) dayMap.set(empId, new Set());
-        dayMap.get(empId)!.add(new Date(l.check_in).toISOString().split('T')[0]);
+        dayMap.get(empId)!.add(localDateString(new Date(l.check_in)));
       });
       dayMap.forEach((days, empId) => {
         const e = employeeMap.get(empId);

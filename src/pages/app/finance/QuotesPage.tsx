@@ -21,6 +21,7 @@ import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import type { Json } from '@/integrations/supabase/types';
 import { dateLocaleTag } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 type QuoteLine = { description: string; quantity: number; unit_price: number };
 
@@ -264,10 +265,10 @@ export default function QuotesPage() {
                       <div className="flex justify-end gap-1">
                         {quote.status === 'draft' && <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'sent' })}><ArrowRight className="h-3.5 w-3.5 mr-1" />{t('quotes.markSent')}</Button>}
                         {/* An expired quote can't be accepted any more — the offer has lapsed. */}
-                        {quote.status === 'sent' && quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10) && (
+                        {quote.status === 'sent' && quote.valid_until && quote.valid_until < localDateString() && (
                           <span className="text-xs text-muted-foreground self-center">{t('quotes.expired')}</span>
                         )}
-                        {quote.status === 'sent' && !(quote.valid_until && quote.valid_until < new Date().toISOString().slice(0, 10)) && <>
+                        {quote.status === 'sent' && !(quote.valid_until && quote.valid_until < localDateString()) && <>
                           <Button size="sm" variant="outline" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'accepted' })}><CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t('quotes.markAccepted')}</Button>
                           <Button size="sm" variant="ghost" onClick={() => transitionQuote.mutate({ id: quote.id, status: 'rejected' })}>{t('quotes.markRejected')}</Button>
                         </>}
