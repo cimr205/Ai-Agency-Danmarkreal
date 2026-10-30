@@ -12,6 +12,8 @@ interface ExtendedAuth {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSystemAdmin: boolean;
+  /** Single effective role resolved by fixed precedence (QA #19). */
+  primaryRole: string | null;
   roles: { role: string; can_grant_permissions: boolean }[];
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>;

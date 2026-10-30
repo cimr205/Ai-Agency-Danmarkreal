@@ -20,6 +20,14 @@ interface AuthContextType {
   roles: { role: string; can_grant_permissions: boolean }[];
   isAdmin: boolean;
   isSystemAdmin: boolean;
+  /**
+   * The single effective role, resolved from the user's (possibly multiple)
+   * roles by a fixed precedence. The owner account holds system_admin +
+   * company_admin + employee at once (QA #19); use this — never roles[0] — wherever
+   * one role must be shown or decided, so every call site agrees. Mirrors the
+   * DB function get_user_primary_role().
+   */
+  primaryRole: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<{ needsEmailConfirmation: boolean }>;
   loginWithGoogle: () => Promise<void>;
@@ -166,6 +174,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSystemAdmin = roles.some(r => r.role === 'system_admin');
   const isAdmin = isSystemAdmin || roles.some(r => r.role === 'company_admin');
 
+  // QA #19: a user can hold several roles at once. Resolve the one effective role
+  // by a fixed precedence so single-role checks/labels are consistent everywhere.
+  const ROLE_PRECEDENCE = ['system_admin', 'owner', 'company_admin', 'manager', 'employee', 'readonly', 'partner'];
+  const primaryRole = ROLE_PRECEDENCE.find(r => roles.some(ur => ur.role === r)) ?? null;
+
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
@@ -216,6 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roles,
       isAdmin,
       isSystemAdmin,
+      primaryRole,
       login,
       signup,
       loginWithGoogle,

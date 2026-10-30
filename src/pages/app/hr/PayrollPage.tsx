@@ -19,6 +19,27 @@ import { useI18n } from '@/lib/i18n';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { WorkspaceTile } from '@/components/workspace/Tile';
 import { supabase } from '@/integrations/supabase/client';
+import { t3 } from '@/lib/inlineI18n';
+
+// QA #89: payroll used to be a single number with no deductions. This is a
+// bounded first version — a gross-to-net ESTIMATE using adjustable Danish
+// default rates. It is explicitly not an authorised payroll calculation.
+const AM_RATE = 0.08;        // AM-bidrag (labour-market contribution), statutory 8%
+const DEFAULT_TAX_RATE = 38; // A-skat, % of the AM-reduced base — adjustable per employee
+const ATP_EMPLOYEE = 99;     // ATP employee share, DKK/month (full-time, approx.)
+
+function computePayrollBreakdown(gross: number, taxPct: number, pensionPct: number) {
+  const amContribution = Math.round(gross * AM_RATE * 100) / 100;
+  const pension = Math.round(gross * (pensionPct / 100) * 100) / 100;
+  const taxableBase = Math.max(0, gross - amContribution - pension);
+  const incomeTax = Math.round(taxableBase * (taxPct / 100) * 100) / 100;
+  const atp = gross > 0 ? ATP_EMPLOYEE : 0;
+  const net = Math.round((gross - amContribution - pension - incomeTax - atp) * 100) / 100;
+  // Holiday pay (feriepenge) is accrued by the employer on top — shown for
+  // information, not deducted from net.
+  const holidayAccrual = Math.round(gross * 0.125 * 100) / 100;
+  return { gross, amContribution, pension, taxableBase, incomeTax, atp, net: Math.max(0, net), holidayAccrual };
+}
 
 const DATE_LOCALES = { da, de, en: enUS } as const;
 const LOCALE_CURRENCY: Record<string, { currency: string; locale: string }> = {
@@ -34,6 +55,8 @@ export default function PayrollPage() {
   const [search, setSearch] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newPayroll, setNewPayroll] = useState({ employee_id: '', salary: '', period: new Date().toISOString().slice(0, 7) });
+  const [taxRate, setTaxRate] = useState(String(DEFAULT_TAX_RATE));
+  const [pensionRate, setPensionRate] = useState('0');
 
   const dateFnsLocale = DATE_LOCALES[locale] || enUS;
   const currConfig = LOCALE_CURRENCY[locale] || LOCALE_CURRENCY.da;
@@ -59,13 +82,27 @@ export default function PayrollPage() {
       .eq('period', newPayroll.period)
       .limit(1);
     if (existing && existing.length > 0) { toast.error(t('hr.payrollDuplicate')); return; }
+    const b = computePayrollBreakdown(salary, parseFloat(taxRate.replace(',', '.')) || 0, parseFloat(pensionRate.replace(',', '.')) || 0);
     try {
-      await createPayroll.mutateAsync({ employee_profile_id: newPayroll.employee_id, base_salary: salary, net_salary: salary, period: newPayroll.period });
+      await createPayroll.mutateAsync({
+        employee_profile_id: newPayroll.employee_id,
+        base_salary: b.gross,
+        deductions: Math.round((b.gross - b.net) * 100) / 100,
+        net_salary: b.net,
+        period: newPayroll.period,
+      });
       toast.success(t('hr.payrollRegistered'));
       setNewPayroll({ employee_id: '', salary: '', period: new Date().toISOString().slice(0, 7) });
+      setTaxRate(String(DEFAULT_TAX_RATE));
+      setPensionRate('0');
       setIsCreateOpen(false);
     } catch { toast.error(t('hr.payrollRegisterError')); }
   };
+
+  const grossForPreview = parseFloat((newPayroll.salary || '').replace(',', '.'));
+  const previewBreakdown = grossForPreview > 0
+    ? computePayrollBreakdown(grossForPreview, parseFloat(taxRate.replace(',', '.')) || 0, parseFloat(pensionRate.replace(',', '.')) || 0)
+    : null;
 
   const payrolls = data ?? [];
   const filteredPayroll = payrolls.filter(record => (record.employee_profiles?.full_name || '').toLowerCase().includes(search.toLowerCase()));
@@ -95,8 +132,24 @@ export default function PayrollPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>{t('hr.salaryLabel')}</Label><Input type="number" value={newPayroll.salary} onChange={(e) => setNewPayroll({ ...newPayroll, salary: e.target.value })} placeholder="35000" /></div>
+              <div className="space-y-2"><Label>{t3('Bruttoløn (md.)', 'Gross salary (month)', 'Bruttogehalt (Monat)')}</Label><Input type="number" value={newPayroll.salary} onChange={(e) => setNewPayroll({ ...newPayroll, salary: e.target.value })} placeholder="35000" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>{t3('A-skat %', 'Income tax %', 'Lohnsteuer %')}</Label><Input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} placeholder="38" /></div>
+                <div className="space-y-2"><Label>{t3('Pension %', 'Pension %', 'Rente %')}</Label><Input type="number" value={pensionRate} onChange={(e) => setPensionRate(e.target.value)} placeholder="0" /></div>
+              </div>
               <div className="space-y-2"><Label>{t('hr.periodLabel')}</Label><Input type="month" value={newPayroll.period} onChange={(e) => setNewPayroll({ ...newPayroll, period: e.target.value })} /></div>
+              {previewBreakdown && (
+                <div className="rounded-md border border-border bg-muted/40 p-3 text-sm space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t3('Bruttoløn', 'Gross', 'Brutto')}</span><span>{formatCurrency(previewBreakdown.gross)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t3('AM-bidrag (8%)', 'Labour-market contribution (8%)', 'Arbeitsmarktbeitrag (8%)')}</span><span>−{formatCurrency(previewBreakdown.amContribution)}</span></div>
+                  {previewBreakdown.pension > 0 && <div className="flex justify-between"><span className="text-muted-foreground">{t3('Pension', 'Pension', 'Rente')}</span><span>−{formatCurrency(previewBreakdown.pension)}</span></div>}
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t3('A-skat', 'Income tax', 'Lohnsteuer')}</span><span>−{formatCurrency(previewBreakdown.incomeTax)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">ATP</span><span>−{formatCurrency(previewBreakdown.atp)}</span></div>
+                  <div className="flex justify-between font-semibold border-t border-border pt-1 mt-1"><span>{t3('Nettoløn', 'Net salary', 'Nettogehalt')}</span><span className="text-success">{formatCurrency(previewBreakdown.net)}</span></div>
+                  <div className="flex justify-between text-xs text-muted-foreground"><span>{t3('Feriepenge hensat (12,5%)', 'Holiday pay accrued (12.5%)', 'Urlaubsgeld (12,5%)')}</span><span>{formatCurrency(previewBreakdown.holidayAccrual)}</span></div>
+                  <p className="text-xs text-muted-foreground pt-1">{t3('Estimat — ikke en autoriseret lønberegning. Satser kan justeres ovenfor.', 'Estimate — not an authorised payroll calculation. Rates are adjustable above.', 'Schätzung — keine autorisierte Lohnabrechnung. Sätze oben anpassbar.')}</p>
+                </div>
+              )}
               <Button onClick={handleCreate} disabled={createPayroll.isPending} className="w-full">{createPayroll.isPending ? t('hr.registering') : t('hr.registerPayrollBtn')}</Button>
             </div>
           </DialogContent>

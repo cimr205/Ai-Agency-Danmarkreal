@@ -15,8 +15,14 @@ Legende: ⬜ ikke startet · 🟡 i gang · ✅ rettet i kode · ⏸ venter på 
 - ✅ #130 CVR (kode): label+aria allerede t3/aria på branchen; rettet resterende dansk toast ("Fandt:")
 
 ## Batch B — beslutninger (kode-del, §4)
-- ⬜ #19 roller: én central rolle-funktion med fast rækkefølge
-- ⬜ #89 løn: afgrænset v1 med justérbare satser, tydeligt mærket estimat
+- ✅ #19 roller: `primaryRole` i AuthContext (fast rækkefølge) + DB-funktion get_user_primary_role (migration 20261030000004) ⏸ prod
+- ✅ #89 løn: gross→net estimat med justérbare danske satser (AM 8%, A-skat, ATP, pension, feriepenge) + tydeligt "estimat"; gemmer base/deductions/net. Timeløn-fra-timeseddel kræver hourly_rate-felt (follow-up, skema)
+
+### Resterende åbne (ejer / opsætning)
+- ⏸ #76 testdata-oprydning: først #112 (migration present), derefter data-oprydning ⏸ prod/ejer
+- ⏸ #96 credits-top-up: ejer fylder OpenRouter-konto
+- ⏸ #130 CVR betalt nøgle: ejer skaffer nøgle
+- ⏸ #127 Gmail OAuth → produktion: ejer i Google Cloud Console
 
 ## Batch C — de 34 "rettet i kode, ikke bevist" (gen-tjek + ret hvor faktisk forkert)
 (fyldes ud under gennemgang)
