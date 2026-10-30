@@ -955,7 +955,7 @@ ${contextData}${pageSnapshotSection}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: ai.model,
+          model: ai.model, models: ai.models,
           reasoning: { effort: "none" },
           messages: aiMessages,
           tools,
@@ -1036,7 +1036,7 @@ ${contextData}${pageSnapshotSection}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: aiMessages,
         stream: true,

@@ -62,7 +62,7 @@ Deno.serve(withSentry("workflow-runner", async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: ai.model,
+            model: ai.model, models: ai.models,
             reasoning: { effort: "none" },
             messages: [
               { role: "system", content: "Du er et workflow-AI-trin. Svar kort og konkret." },

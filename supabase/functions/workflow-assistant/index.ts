@@ -461,7 +461,7 @@ VIGTIGT:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: aiMessages,
         tools,
@@ -506,7 +506,7 @@ VIGTIGT:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: ai.model,
+          model: ai.model, models: ai.models,
           reasoning: { effort: "none" },
           messages: aiMessages,
           tools,

@@ -52,7 +52,7 @@ Generate compelling ad copy with multiple variations.`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: ai.model,
+          model: ai.model, models: ai.models,
           reasoning: { effort: "none" },
           messages: [
             { role: "system", content: systemPrompt },
@@ -147,7 +147,7 @@ Answer concisely and actionably. Use specific numbers. Keep answers under 150 wo
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: ai.model,
+          model: ai.model, models: ai.models,
           reasoning: { effort: "none" },
           messages: [
             { role: "system", content: systemPrompt },
