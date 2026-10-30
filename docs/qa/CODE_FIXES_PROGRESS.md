@@ -24,10 +24,20 @@ Legende: ⬜ ikke startet · 🟡 i gang · ✅ rettet i kode · ⏸ venter på 
 - ⏸ #130 CVR betalt nøgle: ejer skaffer nøgle
 - ⏸ #127 Gmail OAuth → produktion: ejer i Google Cloud Console
 
-## Batch C — de 34 "rettet i kode, ikke bevist" (gen-tjek + ret hvor faktisk forkert)
-(fyldes ud under gennemgang)
+## Batch C — de 34 "rettet i kode, ikke bevist"
+Disse er allerede kodet på qa-round18-branchen. Statisk gen-tjek:
+- ☑️ #28 ingen rester af `useLeadsPaginated`/`public.leads` i frontend
+- ☑️ #121 deploy-workflow bruger prod-ref `vbxlpxhvojlaisxcipyh` (config.toml's `inyrw` er lokalt stack-navn, overrides af `--project-ref` i CI)
+- Resten kræver kørende app mod prod/staging for ægte bevis (porten holdt) → står på ejer-listen.
 
-## Batch D — de 55 verificerede (kun regressions-gen-tjek til sidst)
+## Batch D — de 55 verificerede: regressions-dækket af gate-suiten (se nedenfor).
 
-## Gates
-- type-check / lint / build / vitest: (køres efter hver batch)
+## Gates (2026-10-30, branch fix/qa-114-code)
+- type-check: ✅ 0 fejl
+- lint: ✅ 0 errors (2 præeksisterende warnings i AuthContext)
+- build: ✅ built in ~1m
+- vitest: ✅ 360 passed, 7 skipped, 0 failed (kræver VITE_SUPABASE_URL/_PUBLISHABLE_KEY i env — ellers fejler 3 filer på "supabaseUrl is required", et kendt CI-env-krav, ikke en kodefejl)
+
+## Overdragelse — kræver ejer / prod (porten holdt)
+1. Afprøvet PITR/backup på prod `vbxlpxhvojlaisxcipyh` → DEREFTER kør de 5 nye + eksisterende migrationer og deploy de 11 edge functions.
+2. #96 fyld credits på OpenRouter-kontoen. 3. #130 betalt CVR-nøgle. 4. #127 Gmail OAuth → produktion i Google Cloud Console. 5. GitHub-secrets SUPABASE_ACCESS_TOKEN/SUPABASE_DB_PASSWORD for auto-deploy.
