@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMyActiveSession, useClockIn, useClockOut, useTimeEntries, type AttendanceLog } from '@/hooks/api/useWorkforce';
+import { useMyActiveSession, useClockIn, useClockOut, useTimeEntries, loggedHours, type AttendanceLog } from '@/hooks/api/useWorkforce';
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useAuth } from '@/hooks/useAuth';
 import { Play, Square, Clock, Calendar, Timer, TrendingUp, AlertCircle } from 'lucide-react';
@@ -288,7 +288,8 @@ export default function TimeTrackingPage() {
                   {history!.map((entry: AttendanceLog) => {
                     const ci = new Date(entry.check_in);
                     const co = entry.check_out ? new Date(entry.check_out) : null;
-                    const hrs = co ? ((co.getTime() - ci.getTime()) / 3600000).toFixed(1) : ((Date.now() - ci.getTime()) / 3600000).toFixed(1);
+                    // Open sessions capped at MAX_SHIFT_HOURS so a missing check-out can't read as 161h.
+                    const hrs = loggedHours(entry).toFixed(1);
                     return (
                       <tr key={entry.id} className="border-b border-border/20">
                         <td className="py-2.5">{format(ci, 'dd/MM/yyyy')}</td>

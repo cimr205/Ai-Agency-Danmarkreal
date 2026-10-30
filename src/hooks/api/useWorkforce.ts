@@ -7,6 +7,21 @@ export type WorkSchedule = Tables<'work_schedules'> & { employee_profiles: Emplo
 export type AttendanceLog = Tables<'attendance_logs'> & { employee_profiles: EmployeeSummary | null };
 export type ActiveSession = (Tables<'attendance_logs'> & { active?: undefined }) | { employee_profile_id: string; active: false };
 
+// A shift that is still open can never legitimately be longer than this. Without
+// a cap, an attendance row whose check_out was never recorded reads as hundreds
+// of hours (e.g. 161 t) and poisons every hour total. Mirror the server-side
+// auto-close window (see migration 20261030000002_auto_close_attendance).
+export const MAX_SHIFT_HOURS = 16;
+
+/** Worked hours for one log, capping an open (no check_out) session at MAX_SHIFT_HOURS. */
+export function loggedHours(log: Pick<Tables<'attendance_logs'>, 'check_in' | 'check_out'>): number {
+  if (!log.check_in) return 0;
+  const start = new Date(log.check_in).getTime();
+  const rawEnd = log.check_out ? new Date(log.check_out).getTime() : Date.now();
+  const end = Math.min(rawEnd, start + MAX_SHIFT_HOURS * 3600000);
+  return Math.max(0, (end - start) / 3600000);
+}
+
 // ─── Workforce Settings ───
 export function useWorkforceSettings() {
   return useQuery({
@@ -272,11 +287,10 @@ export function useWorkforceLive() {
       // Missing checkout is informational only — NEVER auto-close sessions
       const missingCheckout: AttendanceLog[] = [];
 
-      // Calculate total hours today
+      // Calculate total hours today (open sessions capped at MAX_SHIFT_HOURS)
       let totalHoursToday = 0;
       logs.forEach(l => {
-        const end = l.check_out ? new Date(l.check_out).getTime() : Date.now();
-        totalHoursToday += (end - new Date(l.check_in).getTime()) / 3600000;
+        totalHoursToday += loggedHours(l);
       });
 
       return {
@@ -332,8 +346,7 @@ export function useWorkforceReport(params: { startDate: string; endDate: string 
           daysWorked: 0,
           entries: 0,
         };
-        const end = l.check_out ? new Date(l.check_out).getTime() : Date.now();
-        existing.actualHours += (end - new Date(l.check_in).getTime()) / 3600000;
+        existing.actualHours += loggedHours(l);
         existing.entries += 1;
         employeeMap.set(empId, existing);
       });

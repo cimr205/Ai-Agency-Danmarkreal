@@ -97,8 +97,12 @@ Deno.serve(withSentry("economic-sync", async (req) => {
 
       let customerNumber = invoice.customers?.economic_customer_number;
       if (!customerNumber && invoice.customers) {
+        // Never invent a customer number: an epoch-based fallback could collide
+        // with (and overwrite) an existing e-conomic customer. Ask e-conomic for the
+        // next free number and fail loudly if it cannot provide one.
         const nextNumberData = await economicFetch(appSecretToken, grantToken, `/customers/next-available-number`).catch(() => null);
-        customerNumber = nextNumberData?.customerNumber || Math.floor(Date.now() / 1000) % 100000;
+        customerNumber = nextNumberData?.customerNumber;
+        if (!customerNumber) throw new Error("e-conomic did not return a free customer number");
         await economicFetch(appSecretToken, grantToken, `/customers`, {
           method: "POST",
           body: JSON.stringify({

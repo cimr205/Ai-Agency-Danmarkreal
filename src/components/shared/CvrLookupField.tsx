@@ -42,7 +42,7 @@ export function CvrLookupField({ onResult, className }: CvrLookupFieldProps) {
       const company = results[0];
       const address = [company.address, company.zipcode, company.city].filter(Boolean).join(', ');
       onResult({ name: company.name || '', address, cvr: company.cvr || term.replace(/\D/g, '') });
-      toast.success(`Fandt: ${company.name}`);
+      toast.success(t3(`Fandt: ${company.name}`, `Found: ${company.name}`, `Gefunden: ${company.name}`));
     } catch (e) {
       showError(e, { action: t3('slå CVR op', 'look up CVR', 'CVR nachschlagen'), module: 'cvr' });
     } finally {

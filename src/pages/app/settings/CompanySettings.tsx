@@ -32,9 +32,19 @@ export default function CompanySettingsPage() {
     if (!user?.company_id) { setLoading(false); return; }
     setLoading(true);
     if (isAdmin) {
-      // Admins get full company data including activation_code, stripe fields
-      supabase.from('companies').select('*').eq('id', user.company_id).single()
-        .then(({ data }) => { setCompany(data); setLoading(false); });
+      // activation_code is no longer readable through a plain REST select (QA #15:
+      // a system_admin could otherwise read every company's join code). Fetch the
+      // editable profile columns, then the own-company code via the SECURITY
+      // DEFINER reader, which authorises company_admin on the caller's own company.
+      Promise.all([
+        supabase.from('companies')
+          .select('id, name, cvr, address, phone, email, website, mode, status')
+          .eq('id', user.company_id).single(),
+        supabase.rpc('get_company_activation_code', { _company_id: user.company_id }),
+      ]).then(([{ data }, { data: code }]) => {
+        setCompany(data ? { ...data, activation_code: code ?? null } : null);
+        setLoading(false);
+      });
     } else {
       // Non-admins get safe subset via security definer function
       supabase.rpc('get_company_for_user', { _company_id: user.company_id })

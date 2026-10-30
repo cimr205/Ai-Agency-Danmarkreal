@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useWorkforceLive, type AttendanceLog } from '@/hooks/api/useWorkforce';
+import { useWorkforceLive, loggedHours, type AttendanceLog } from '@/hooks/api/useWorkforce';
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { Users, Clock, AlertTriangle, Activity, UserCheck, UserX, Timer, TrendingUp } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
@@ -176,9 +176,8 @@ export default function WorkforceDashboardPage() {
                   {live!.logs.map((entry: AttendanceLog) => {
                     const checkInTime = new Date(entry.check_in);
                     const checkOutTime = entry.check_out ? new Date(entry.check_out) : null;
-                    const hours = checkOutTime
-                      ? ((checkOutTime.getTime() - checkInTime.getTime()) / 3600000).toFixed(1)
-                      : ((Date.now() - checkInTime.getTime()) / 3600000).toFixed(1);
+                    // Cap an open session so a missing check-out can't read as 161h.
+                    const hours = loggedHours(entry).toFixed(1);
                     return (
                       <tr key={entry.id} className="border-b border-border/20">
                         <td className="py-2.5 font-medium">{entry.employee_profiles?.full_name}</td>

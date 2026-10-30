@@ -80,10 +80,28 @@ Deno.serve(withSentry("webhook-dispatch", async (req) => {
   }
 }));
 
+// Returns true when an IP literal (v4 or v6) falls in a loopback/link-local/
+// private/reserved range that must never be reachable from our edge runtime.
+export function isPrivateIp(ip: string): boolean {
+  const host = ip.toLowerCase().replace(/^\[|\]$/g, "");
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+  }
+  if (host.includes(":")) {
+    // Covers unspecified (::), loopback (::1), unique-local (fc00::/7 → fc/fd),
+    // link-local (fe80::/10) and IPv4-mapped (::ffff:) addresses.
+    return host === "::" || host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80") || host.startsWith("::ffff:");
+  }
+  return false;
+}
+
 // Tenant-supplied webhook URLs are fetched from our edge runtime, so they
 // must not be able to reach loopback/link-local/private networks (SSRF) or
-// use plain http. Hostnames are checked literally; IP literals are checked
-// against the private ranges.
+// use plain http. This is the synchronous first gate: scheme, embedded creds,
+// obvious local hostnames and IP literals. DNS-based rebinding (a public
+// hostname that resolves to a private IP) is caught by assertPublicDnsOrThrow.
 export function isSafeWebhookUrl(raw: string): boolean {
   let url: URL;
   try { url = new URL(raw); } catch { return false; }
@@ -91,15 +109,29 @@ export function isSafeWebhookUrl(raw: string): boolean {
   if (url.username || url.password) return false;
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (!host || host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return false;
-  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (v4) {
-    const [a, b] = [Number(v4[1]), Number(v4[2])];
-    if (a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224) return false;
-  }
-  if (host.includes(":")) {
-    if (host === "::" || host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80") || host.startsWith("::ffff:")) return false;
-  }
+  if (isPrivateIp(host)) return false;
   return true;
+}
+
+// Resolves the webhook hostname and rejects it if any A/AAAA record points to a
+// private/loopback range. Called immediately before each fetch so a hostname
+// that only resolves to an internal IP at request time (DNS rebinding) is
+// blocked. A hostname that is already an IP literal has been checked by
+// isSafeWebhookUrl and needs no lookup.
+async function assertPublicDnsOrThrow(rawUrl: string): Promise<void> {
+  const host = new URL(rawUrl).hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (isPrivateIp(host)) throw new Error("Blocked: webhook URL resolves to a private address");
+  if (/^[0-9.]+$/.test(host) || host.includes(":")) return; // already an IP literal
+  const records: string[] = [];
+  for (const kind of ["A", "AAAA"] as const) {
+    try {
+      records.push(...await Deno.resolveDns(host, kind));
+    } catch { /* no record of this type */ }
+  }
+  if (records.length === 0) throw new Error("Blocked: webhook hostname does not resolve");
+  for (const ip of records) {
+    if (isPrivateIp(ip)) throw new Error("Blocked: webhook URL resolves to a private address");
+  }
 }
 
 async function deliverWithRetry(
@@ -133,6 +165,9 @@ async function deliverWithRetry(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
+      // Re-check DNS right before each attempt to defeat rebinding: a hostname
+      // that passed the literal guard could still resolve to an internal IP now.
+      await assertPublicDnsOrThrow(webhook.url);
 
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (webhook.secret_key) {

@@ -127,19 +127,35 @@ serve(withSentry("ai-generate", async (req) => {
     });
 
     if (!aiResponse.ok) {
-      const errStatus = aiResponse.status;
-      let errMsg = "AI generation failed";
-      if (errStatus === 429) errMsg = "Rate limit nået, prøv igen om lidt.";
-      if (errStatus === 402) errMsg = "Credits opbrugt.";
+      const providerStatus = aiResponse.status;
+      // The customer never buys image credits directly — a 402 means OUR platform
+      // account with the image provider is out of credits. Surface it as a
+      // temporary service outage on our side (503 → generic, non-blaming i18n
+      // message on the client) and log it loudly so we get alerted to top up.
+      // Only a genuine rate limit (429) is passed through as a 429.
+      let clientStatus = providerStatus;
+      let internalMessage = `Image provider returned HTTP ${providerStatus}`;
+      if (providerStatus === 402) {
+        clientStatus = 503;
+        internalMessage = "Image provider account out of credits (HTTP 402) — top up required";
+        console.error("[ai-generate] ALERT: image provider account is out of credits (402). Platform top-up required.");
+      } else if (providerStatus === 429) {
+        internalMessage = "Image provider rate limit reached (HTTP 429)";
+      } else {
+        clientStatus = 502;
+      }
 
       await adminClient.from("ai_generations").update({
-        status: "failed", error_message: errMsg,
+        status: "failed", error_message: internalMessage,
         completed_at: new Date().toISOString(),
         duration_ms: Date.now() - startTime,
       }).eq("id", genId);
 
-      return new Response(JSON.stringify({ error: errMsg }), {
-        status: errStatus, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      // No custom `error` string: the client maps clientStatus to a translated,
+      // non-blaming message via its error-bucket system (503/502 → server-side,
+      // 429 → rate limited).
+      return new Response(JSON.stringify({ error: internalMessage }), {
+        status: clientStatus, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

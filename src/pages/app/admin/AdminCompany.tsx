@@ -13,7 +13,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export default function AdminCompany() {
   const { t } = useI18n();
   const { profile } = useAuth();
-  const [company, setCompany] = useState<Tables<'companies'> | null>(null);
+  const [company, setCompany] = useState<Pick<Tables<'companies'>, 'id' | 'name' | 'cvr' | 'email' | 'phone' | 'address' | 'website'> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -22,7 +22,7 @@ export default function AdminCompany() {
 
   useEffect(() => {
     if (!profile?.company_id) { setLoading(false); return; }
-    supabase.from('companies').select('*').eq('id', profile.company_id).single()
+    supabase.from('companies').select('id, name, cvr, email, phone, address, website').eq('id', profile.company_id).single()
       .then(({ data, error }) => {
         if (error) { toast.error(t('adminCompany.fetchError')); }
         if (data) {

@@ -8453,6 +8453,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_company_activation_code: {
+        Args: { _company_id: string }
+        Returns: string
+      }
       regenerate_activation_code: {
         Args: { _company_id: string }
         Returns: string
