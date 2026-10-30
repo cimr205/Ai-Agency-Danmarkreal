@@ -18,7 +18,25 @@ export interface CompanyAI {
   url: string;
   apiKey: string;
   model: string;
+  /**
+   * Ordered fallback list for OpenRouter: the primary model first, then free
+   * alternatives. Sent as the request's `models` array so OpenRouter
+   * automatically routes to the next model when one is rate-limited (429),
+   * down, or removed — instead of the whole AI feature failing. Free models
+   * have low rate limits, so this keeps AI working under load without paid
+   * credits. Configured via LOCAL_LLM_FALLBACK_MODELS (comma-separated).
+   */
+  models: string[];
   provider: "local";
+}
+
+// Deduplicating, order-preserving parse of the comma-separated fallback list,
+// always led by the primary model so it's tried first.
+function resolveModelList(primary: string): string[] {
+  const extra = (Deno.env.get("LOCAL_LLM_FALLBACK_MODELS") ?? "")
+    .split(",").map((m) => m.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  return [primary, ...extra].filter((m) => (seen.has(m) ? false : (seen.add(m), true)));
 }
 
 function normalizeEndpoint(url: string) {
@@ -39,6 +57,7 @@ export async function getCompanyAI(
     url: normalizeEndpoint(baseUrl),
     apiKey: Deno.env.get("LOCAL_LLM_API_KEY") ?? "ollama",
     model,
+    models: resolveModelList(model),
     provider: "local",
   };
 }

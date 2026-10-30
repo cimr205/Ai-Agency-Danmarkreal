@@ -371,7 +371,7 @@ async function aiPrioritize(emails: SyncedEmail[], supabaseAdmin: SupabaseClient
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [
           {

@@ -12,6 +12,8 @@ export type ModelPurpose = "route" | "extract" | "plan" | "summarize";
 export interface RoutedModel {
   provider: string;
   model: string;
+  /** Ordered free-model fallback list (tier model first) for OpenRouter routing. */
+  models: string[];
   endpoint: string;
   apiKey: string;
   tier: "fast" | "reasoning";
@@ -47,6 +49,7 @@ export async function resolveModel(
   return {
     provider: companyAI.provider,
     model,
+    models: [model, ...companyAI.models.filter((m) => m !== model)],
     endpoint: companyAI.url,
     apiKey: companyAI.apiKey,
     tier,
@@ -71,6 +74,7 @@ export async function generateStructured(
       },
       body: JSON.stringify({
         model: model.model,
+        models: model.models,
         reasoning: { effort: "none" },
         temperature: 0.1,
         max_tokens: 192,
@@ -116,6 +120,7 @@ export async function generateText(
       },
       body: JSON.stringify({
         model: model.model,
+        models: model.models,
         reasoning: { effort: "none" },
         temperature: 0.1,
         max_tokens: maxTokens,
