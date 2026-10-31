@@ -49,7 +49,7 @@ serve(withSentry("create-checkout", async (req) => {
 
     const { data: company } = await supabaseClient
       .from("companies")
-      .select("id, name, seat_limit_trial, stripe_customer_id, stripe_subscription_id")
+      .select("id, name, seat_limit_trial, trial_ends_at, stripe_customer_id, stripe_subscription_id")
       .eq("id", profile.company_id)
       .single();
 
@@ -114,7 +114,7 @@ serve(withSentry("create-checkout", async (req) => {
 
     const origin = req.headers.get("origin") || "https://bridge-orbit-core.lovable.app";
 
-    // Create checkout session with 14-day trial
+    // One free trial per company. A company that already had one pays from day one.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: lineItems,
@@ -122,23 +122,19 @@ serve(withSentry("create-checkout", async (req) => {
       payment_method_collection: "always",
       locale: locale === "en" ? "en" : "da",
       subscription_data: {
-        trial_period_days: 14,
+        ...(company.trial_ends_at ? {} : { trial_period_days: 14 }),
         metadata: { company_id: company.id, currency, billing_mode: billingMode },
       },
-      success_url: `${origin}/${locale}/app/dashboard?subscription=success`,
+      success_url: `${origin}/${locale}/app/subscription?subscription=success`,
       cancel_url: `${origin}/${locale}/app/onboarding?subscription=cancelled`,
     });
 
-    // Update company with trial info
-    const trialEnds = new Date();
-    trialEnds.setDate(trialEnds.getDate() + 14);
-
+    // Opening checkout grants nothing. check-subscription sets the trial and the
+    // status from Stripe once the subscription exists.
     await supabaseClient
       .from("companies")
       .update({
         seat_limit_trial: totalSeats,
-        trial_ends_at: trialEnds.toISOString(),
-        subscription_status: "trialing",
         billing_mode: billingMode,
       })
       .eq("id", company.id);

@@ -208,3 +208,43 @@ Nye fund:
 | R20-24 | Lav | Abonnementssiden viser "Ingen abonnement" og "Start 14-dages gratis prøveperiode", selv om prøveperioden løber til 2099. |
 
 R20-21 til R20-24 er rettet. På abonnementssiden skjules startknappen under en prøveperiode givet direkte på virksomheden, fordi `create-checkout` ellers ville overskrive `trial_ends_at` med 14 dage.
+
+## Lanceringsblokeringer, 31. oktober 2026
+
+Branch: `claude/launch-blockers-2026-10-31`. Intet herfra er udrullet.
+
+### Funktioner hentet fra produktion
+
+De 14 funktioner, der kun fandtes i produktion, ligger nu i repoet sammen med de delte filer, de bruger (`_shared/ai/`, `integration-taxonomy.ts`, `verificationProvider.ts`). `verify_jwt` står i `config.toml` med de live værdier. Scanningen fandt ingen hårdkodede hemmeligheder. Repoets `_shared/auth.ts` er bevaret. Den afviger fra produktions bundle med en fastlåst supabase-js-version og en bredere brugertype.
+
+Kendte huller:
+
+- Fire typefiler findes ikke i den udrullede bundle og er derfor ikke i repoet: `capability.types.ts`, `execution.types.ts`, `model.types.ts`, `provider.types.ts` under `_shared/ai/`. De bruges kun som `import type`, men `ai-message` består ikke `deno check` uden dem. Test en udrulning af `ai-message`, før den bruges som kilde.
+- `deno check` består for 9 af 15 kontrollerede funktioner. Fejlene i `cold-caller`, `create-invoice-checkout-session`, `meta-leadgen-webhook`, `phone-identity-verify` og `stripe-webhook` er typefejl i den kode, der allerede kører i produktion. De er ikke rettet.
+
+### Tenant-isolation
+
+- CI kører `tenant-isolation.integration.test.ts` mod en lokal database med hele migrationshistorikken. Den består.
+- Produktion, skrivebeskyttet: RLS er slået til på alle 128 tabeller. Ingen politik på tabeller med `company_id` er åben for alle indloggede. Alle views bruger `security_invoker`.
+- `oauth_states`, `phone_pairing_rate_limits` og `telnyx_webhook_events` har RLS uden politik og er dermed lukket for klienter.
+- Uden login gav 117 tabeller ingen kundedata. Den ene række i `onboarding_templates` er den globale standardskabelon.
+- Mangler: læsning af andre virksomheders rækker som indlogget bruger og skriveforsøg på tværs af virksomheder i produktion. Den indloggede test kræver login.
+
+### Prøveperiode
+
+- `hasSubscriptionAccess` (`src/lib/subscriptionAccess.ts`) giver adgang ved `active` eller en fremtidig `trial_ends_at`. Status `trialing` alene giver ikke adgang.
+- `create-checkout` sætter ikke længere `trialing` og `trial_ends_at`, når betalingssiden oprettes. Status kommer fra Stripe via `check-subscription`.
+- En virksomhed, der allerede har haft en prøveperiode, får ikke en ny.
+- Kunden sendes tilbage til abonnementssiden efter betaling og videre til dashboardet, når status er synkroniseret.
+- Håndhævelsen rammer 3 virksomheder: OpenAI, Visual Review Co og Debug Test Company. De har hver 1 bruger og 0 leads.
+- Runde 20's rettelse af `check-subscription` gjorde et afbrudt checkout til gratis adgang uden udløb. Denne ændring lukker det hul.
+- Spærringen ligger kun i frontenden. RLS og edge functions afviser ikke en virksomhed med udløbet prøveperiode.
+
+### Nye fund
+
+| Id | Alvor | Fund |
+|---|---|---|
+| R20-25 | High | `STRIPE_WEBHOOK_SECRET` mangler i produktion. `stripe-webhook` svarer 500, så fakturabetalinger via Stripe bliver ikke registreret. Kræver webhook-endpoint i Stripe og secret. |
+| R20-26 | Medium | `stripe-webhook` håndterer kun fakturabetalinger. Abonnementsstatus opdateres først, når nogen åbner appen og `check-subscription` kører. |
+| R20-27 | Medium | `verify-admin-code` sammenligner koden uden begrænsning på antal forsøg, og enhver indlogget bruger kan kalde den. |
+| R20-28 | Lav | `create-checkout` falder tilbage til `bridge-orbit-core.lovable.app`, hvis `Origin` mangler. |

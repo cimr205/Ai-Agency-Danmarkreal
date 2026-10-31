@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, Crown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +24,16 @@ const FEATURES = [
 
 export default function SubscriptionPage() {
   const { subscribed, status, trialEndsAt, periodEnd, isLoading, startCheckout, openPortal, checkSubscription } = useSubscription();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnedFromCheckout = searchParams.get('subscription') === 'success';
+
+  // Stripe sends the customer back here, because the paywall only opens once
+  // check-subscription has synced the new subscription.
+  useEffect(() => {
+    if (returnedFromCheckout && subscribed) navigate(`/${locale}/app/dashboard`, { replace: true });
+  }, [returnedFromCheckout, subscribed, navigate, locale]);
 
   const handleSubscribe = async () => {
     try {
@@ -45,8 +56,11 @@ export default function SubscriptionPage() {
     ? new Date(trialEndsAt).toLocaleDateString(dateLocaleTag())
     : null;
 
+  const trialExpired = !!trialEndsAt && new Date(trialEndsAt).getTime() <= Date.now();
+
   const getStatusBadge = () => {
     if (grantedTrialEnd) return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
+    if (status === 'trialing' && trialExpired) return <Badge variant="destructive">{t3("Prøveperiode udløbet", "Trial ended", "Testphase beendet")}</Badge>;
     switch (status) {
       case 'active': return <Badge className="bg-success text-success-foreground">Aktiv</Badge>;
       case 'trialing': return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
@@ -117,7 +131,9 @@ export default function SubscriptionPage() {
             ) : !grantedTrialEnd && (
               <Button onClick={handleSubscribe} disabled={isLoading}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}
+                {trialEndsAt
+                  ? t3("Start abonnement", "Start subscription", "Abonnement starten")
+                  : tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}
               </Button>
             )}
             <Button variant="ghost" onClick={checkSubscription} disabled={isLoading}>
