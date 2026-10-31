@@ -179,3 +179,30 @@ Prioritet: 🔴 gør først, 🟠 gør snart, 🟢 når der er tid. Alle er fors
 98. 🟢 Automatisk end-to-end-test af flowet lead → betaling i CI mod et staging-miljø.
 99. 🟢 Eget staging-miljø med testdata, så QA ikke skal skrive i produktion.
 100. 🟢 Reducér `index`-bundlet på 680 KB med mere opdeling.
+
+## Opdatering 31. oktober 2026: udrulning af edge functions
+
+Udrullet til produktion (`vbxlpxhvojlaisxcipyh`) efter brugerens ja: de 20 funktioner, der bruger `_shared/aiConnection.ts` eller `_shared/operatingModelRouter.ts`, plus `check-subscription`. Alle 20 fik ny version og står som ACTIVE. Ingen andre funktioner og ingen `verify_jwt`-værdier ændrede sig. De øvrige 43 funktioner er ikke rørt, fordi deres kode ikke er ændret.
+
+Verificeret i produktion:
+
+- `ai-health`: 200, online.
+- `check-subscription`: 200, returnerer `status: none` og `trial_ends_at: 2099-12-31`. Abonnementssiden låser ikke længere appen.
+- Deal Coach på QA-TEST-deal: virker.
+- Relationsopsummering på QA-TEST-lead: virker, på dansk.
+- `workflow-assistant`: 200, svar på dansk (skrivebeskyttet spørgsmål).
+
+Ikke verificeret: `Test-kør` i Workflow Studio, fordi de fire flows ikke er QA-TEST-data, og de øvrige AI-funktioner. Meta Ads er uden for testen, men `meta-ads-ai` er udrullet med samme rettelse.
+
+Rettelse til rapporten: ikke 3, men 14 funktioner findes kun i produktion og ikke i repoet: `ai-connection`, `ai-message`, `cold-caller`, `create-invoice-checkout-session`, `integration-intelligence`, `meta-leadgen-webhook`, `mobile-pairing`, `phone-identity-verify`, `stripe-webhook`, `telephony-connections`, `telnyx-credential`, `telnyx-numbers`, `telnyx-webhook`, `verify-admin-code`.
+
+Nye fund:
+
+| Id | Alvor | Fund |
+|---|---|---|
+| R20-19 | Medium | `supabase/config.toml` peger på `inyrwsygghdjhmqejgwk`, som ikke er på kontoens projektliste. Produktion skal altid udrulles med `--project-ref vbxlpxhvojlaisxcipyh`. |
+| R20-20 | Medium | `voice-telephony` har `verify_jwt=false` i produktion, men config.toml giver `true`. En fuld udrulning ville slå JWT-krav til. Afklar hvilken værdi der er rigtig, før funktionen udrulles. |
+| R20-21 | Medium | Deal Coach svarer på engelsk i den danske brugerflade. |
+| R20-22 | Lav | Rå status vises: `paid` på kundens tidslinje og `won` under Deals på lead-arket. |
+| R20-23 | Lav | Dobbelt præfiks på tidslinjen: "Deal: Deal: QA-TEST Lead R20". |
+| R20-24 | Lav | Abonnementssiden viser "Ingen abonnement" og "Start 14-dages gratis prøveperiode", selv om prøveperioden løber til 2099. |
