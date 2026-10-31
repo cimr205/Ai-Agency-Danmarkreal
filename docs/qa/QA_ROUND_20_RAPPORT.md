@@ -219,7 +219,7 @@ De 14 funktioner, der kun fandtes i produktion, ligger nu i repoet sammen med de
 
 Kendte huller:
 
-- Fire typefiler findes ikke i den udrullede bundle og er derfor ikke i repoet: `capability.types.ts`, `execution.types.ts`, `model.types.ts`, `provider.types.ts` under `_shared/ai/`. De bruges kun som `import type`, men `ai-message` består ikke `deno check` uden dem. Test en udrulning af `ai-message`, før den bruges som kilde.
+- Fire typefiler under `_shared/ai/` fandtes ikke i den udrullede bundle, fordi de kun bruges som `import type`. De er hentet fra git-historikken. `supabase start` fejler uden dem.
 - `deno check` består for 9 af 15 kontrollerede funktioner. Fejlene i `cold-caller`, `create-invoice-checkout-session`, `meta-leadgen-webhook`, `phone-identity-verify` og `stripe-webhook` er typefejl i den kode, der allerede kører i produktion. De er ikke rettet.
 
 ### Tenant-isolation
