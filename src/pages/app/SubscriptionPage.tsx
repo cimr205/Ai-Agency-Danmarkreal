@@ -40,7 +40,13 @@ export default function SubscriptionPage() {
     }
   };
 
+  // A trial granted on the company itself has no Stripe status. Starting checkout would replace it with 14 days.
+  const grantedTrialEnd = status === 'none' && trialEndsAt && new Date(trialEndsAt).getTime() > Date.now()
+    ? new Date(trialEndsAt).toLocaleDateString(dateLocaleTag())
+    : null;
+
   const getStatusBadge = () => {
+    if (grantedTrialEnd) return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
     switch (status) {
       case 'active': return <Badge className="bg-success text-success-foreground">Aktiv</Badge>;
       case 'trialing': return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
@@ -82,6 +88,12 @@ export default function SubscriptionPage() {
             </div>
           )}
 
+          {grantedTrialEnd && (
+            <div className="bg-warning/10 text-warning rounded-lg px-3 py-2 text-sm">
+              {t3(`Din prøveperiode gælder til ${grantedTrialEnd}`, `Your trial is valid until ${grantedTrialEnd}`, `Ihre Testphase gilt bis ${grantedTrialEnd}`)}
+            </div>
+          )}
+
           {periodEnd && subscribed && (
             <p className="text-xs text-muted-foreground">
               Næste betaling: {new Date(periodEnd).toLocaleDateString(dateLocaleTag())}
@@ -102,7 +114,7 @@ export default function SubscriptionPage() {
               <Button onClick={handleManage} variant="outline">
                 Administrer abonnement
               </Button>
-            ) : (
+            ) : !grantedTrialEnd && (
               <Button onClick={handleSubscribe} disabled={isLoading}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}

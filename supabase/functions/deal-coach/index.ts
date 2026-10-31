@@ -32,7 +32,7 @@ serve(withSentry("deal-coach", async (req) => {
     const ai = await getCompanyAI(supabase, profile.company_id);
     if (!ai) return new Response(JSON.stringify({ error: AI_NOT_CONNECTED_MESSAGE }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { deal_id } = await req.json();
+    const { deal_id, locale } = await req.json();
     if (!deal_id) return new Response(JSON.stringify({ error: "deal_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Fetch deal with related data, scoped to the caller's own company
@@ -66,6 +66,8 @@ serve(withSentry("deal-coach", async (req) => {
     const daysSinceCreation = Math.floor((Date.now() - new Date(deal.created_at).getTime()) / (1000 * 60 * 60 * 24));
     const lastActivity = activities?.[0]?.created_at ? Math.floor((Date.now() - new Date(activities[0].created_at).getTime()) / (1000 * 60 * 60 * 24)) : null;
 
+    const language = ({ en: "English", de: "German" } as Record<string, string>)[locale] ?? "Danish";
+
     const prompt = `You are an experienced sales coach for a CRM system. Analyze this deal and give concrete, action-oriented advice.
 
 DEAL DATA:
@@ -91,6 +93,8 @@ Return a JSON object with these exact keys:
 - "summary": string (1-2 sentences assessment)
 - "actions": array of exactly 3 concrete action strings
 - "insights": array of 2-3 observation strings
+
+Write "summary", "actions" and "insights" in ${language}. Keep the JSON keys and the "risk_level" value in English.
 
 IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fences, just raw JSON.`;
 

@@ -35,6 +35,8 @@ import { AppError, invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
 import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
+import { usePipelineStages } from '@/hooks/api/usePipelineStages';
+import { getStageLabelFor } from '@/lib/deals/stages';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -121,6 +123,7 @@ export default function LeadsPage() {
   const params = useParams();
   const { user } = useAuth();
   const locale = isLocale(params.locale) ? params.locale : 'en';
+  const { data: pipelineStages } = usePipelineStages();
   const { data: moduleAvailability } = useModuleAvailability();
   const crmSyncModule = moduleAvailability?.modules.find((m) => m.module === 'crmSync');
   const crmSyncAvailable = !!crmSyncModule?.available;
@@ -1348,7 +1351,7 @@ export default function LeadsPage() {
                       <div key={d.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">{d.title}</span>
-                        <Badge variant="outline" className="ml-auto text-xs">{d.stage}</Badge>
+                        <Badge variant="outline" className="ml-auto text-xs">{getStageLabelFor(d.stage, locale, pipelineStages)}</Badge>
                       </div>
                     ))}
                   </div>

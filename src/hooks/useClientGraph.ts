@@ -33,6 +33,22 @@ const dealStageLabels = (): Record<string, string> => ({
   lost: t3("Tabt", "Lost", "Verloren"),
 });
 
+const invoiceStatusLabels = (): Record<string, string> => ({
+  draft: t3("Kladde", "Draft", "Entwurf"),
+  sent: t3("Sendt", "Sent", "Gesendet"),
+  paid: t3("Betalt", "Paid", "Bezahlt"),
+  overdue: t3("Forfalden", "Overdue", "Überfällig"),
+  cancelled: t3("Annulleret", "Cancelled", "Storniert"),
+});
+
+const quoteStatusLabels = (): Record<string, string> => ({
+  draft: t3("Kladde", "Draft", "Entwurf"),
+  sent: t3("Sendt", "Sent", "Gesendet"),
+  accepted: t3("Accepteret", "Accepted", "Angenommen"),
+  rejected: t3("Afvist", "Rejected", "Abgelehnt"),
+  expired: t3("Udløbet", "Expired", "Abgelaufen"),
+});
+
 export interface TimelineEvent {
   id: string;
   kind: TimelineKind;
@@ -128,7 +144,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `q:${q.id}`, kind: "invoice",
           at: q.accepted_at || q.sent_at || q.created_at,
           title: `${t3("Tilbud", "Quote", "Angebot")}: ${q.title}`,
-          meta: q.accepted_at ? activityTypeLabels().quote_accepted : q.sent_at ? activityTypeLabels().quote_sent : q.status,
+          meta: q.accepted_at ? activityTypeLabels().quote_accepted : q.sent_at ? activityTypeLabels().quote_sent : quoteStatusLabels()[q.status] || q.status,
           amount: Number(q.total),
         });
       }
@@ -137,7 +153,7 @@ export function useClientGraph(customerId: string | undefined) {
           id: `i:${inv.id}`, kind: "invoice",
           at: inv.issued_at || inv.created_at,
           title: `${t3("Faktura", "Invoice", "Rechnung")} #${inv.invoice_number}`,
-          meta: inv.status,
+          meta: invoiceStatusLabels()[inv.status] || inv.status,
           amount: Number(inv.amount),
         });
       }
@@ -162,7 +178,7 @@ export function useClientGraph(customerId: string | undefined) {
         tl.push({
           id: `d:${d.id}`, kind: "deal",
           at: d.created_at,
-          title: `Deal: ${d.title}`,
+          title: /^deal:/i.test(d.title) ? d.title : `Deal: ${d.title}`,
           meta: dealStageLabels()[d.stage] || d.stage,
           amount: Number(d.value),
         });
@@ -176,7 +192,7 @@ export function useClientGraph(customerId: string | undefined) {
         });
       }
       for (const task of tasks) {
-        const statusLabel = task.status === "completed" ? "Afsluttet" : task.status === "in_progress" ? "I gang" : "Afventer";
+        const statusLabel = task.status === "completed" ? t3("Afsluttet", "Completed", "Abgeschlossen") : task.status === "in_progress" ? t3("I gang", "In progress", "In Arbeit") : t3("Afventer", "Pending", "Ausstehend");
         const who = task.assigned_profile?.full_name || task.assigned_profile?.email;
         tl.push({
           id: `t:${task.id}`, kind: "task",

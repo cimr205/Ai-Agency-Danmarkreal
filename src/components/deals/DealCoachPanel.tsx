@@ -22,7 +22,7 @@ interface DealCoachPanelProps {
 }
 
 export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [analysis, setAnalysis] = useState<DealCoachAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +30,7 @@ export function DealCoachPanel({ dealId, dealTitle }: DealCoachPanelProps) {
     setLoading(true);
     try {
       const data = await invokeFunction<DealCoachAnalysis & { error?: string }>('deal-coach', {
-        body: { deal_id: dealId },
+        body: { deal_id: dealId, locale },
       });
       if (data?.error) throw new Error(data.error);
       setAnalysis(data);

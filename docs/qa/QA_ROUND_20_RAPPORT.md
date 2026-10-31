@@ -206,3 +206,5 @@ Nye fund:
 | R20-22 | Lav | Rå status vises: `paid` på kundens tidslinje og `won` under Deals på lead-arket. |
 | R20-23 | Lav | Dobbelt præfiks på tidslinjen: "Deal: Deal: QA-TEST Lead R20". |
 | R20-24 | Lav | Abonnementssiden viser "Ingen abonnement" og "Start 14-dages gratis prøveperiode", selv om prøveperioden løber til 2099. |
+
+R20-21 til R20-24 er rettet. På abonnementssiden skjules startknappen under en prøveperiode givet direkte på virksomheden, fordi `create-checkout` ellers ville overskrive `trial_ends_at` med 14 dage.
