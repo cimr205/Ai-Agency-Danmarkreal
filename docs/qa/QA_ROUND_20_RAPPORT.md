@@ -27,6 +27,10 @@ Status: `fixed` = rettet og på main, `fixed-deploy-fn` = rettet i koden, men kr
 | R20-15 | Config | CVR | Gratis CVR-kvote er brugt, så opslag giver 502. | Tilføj kunde → CVR-opslag | config: kræver betalt CVRAPI-nøgle |
 | R20-16 | Decision | Betaling | Betalingsmuren ser kun på status. Virksomheder med udløbet prøveperiode kan stadig have adgang. | Se forbedring 3 | decision |
 | R20-17 | Low | Produktion | 3 deployede functions findes ikke i repoet: `stripe-webhook`, `meta-leadgen-webhook`, `create-invoice-checkout-session`. | Sammenlign deployede functions med `supabase/functions` | decision |
+| R20-18 | Med | Skrifttyper | CSP blokerer `onload` på skrifttypen i `index.html`, så Inter sandsynligvis ikke indlæses. PR #4 (åben siden oktober) handler om samme fejl. | Læs konsollen på en vilkårlig side | decision: gennemgå PR #4 |
+
+**Verificeret i produktion (`index-D9bwrKUW.js`):** R20-07 (stillingsdialog på dansk), R20-05 (forfaldsdato 14/11 kl. 01:01), R20-10 (ingen rå koder eller `null`), R20-12 (tidslinje på /en), R20-13 (cache-header). 
+**Ikke verificeret i produktion:** R20-04, R20-06, R20-08, R20-09, R20-11 og R20-14 er kun kode-, type- og CI-tjekket.
 
 ## 2. Testet og godkendt
 
