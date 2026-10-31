@@ -182,7 +182,7 @@ Prioritet: 🔴 gør først, 🟠 gør snart, 🟢 når der er tid. Alle er fors
 
 ## Opdatering 31. oktober 2026: udrulning af edge functions
 
-Udrullet til produktion (`vbxlpxhvojlaisxcipyh`) efter brugerens ja: de 20 funktioner, der bruger `_shared/aiConnection.ts` eller `_shared/operatingModelRouter.ts`, plus `check-subscription`. Alle 20 fik ny version og står som ACTIVE. Ingen andre funktioner og ingen `verify_jwt`-værdier ændrede sig. De øvrige 43 funktioner er ikke rørt, fordi deres kode ikke er ændret.
+Udrullet til produktion (`vbxlpxhvojlaisxcipyh`) efter brugerens ja: 20 funktioner i alt: de 19, der bruger `_shared/aiConnection.ts` eller `_shared/operatingModelRouter.ts`, plus `check-subscription`. Alle 20 fik ny version og står som ACTIVE. Ingen andre funktioner og ingen `verify_jwt`-værdier ændrede sig. De øvrige 43 funktioner er ikke rørt, fordi deres kode ikke er ændret.
 
 Verificeret i produktion:
 
