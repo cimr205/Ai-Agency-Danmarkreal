@@ -29,14 +29,18 @@ export function ContextBar({ onOpenPalette }: Props) {
   const { t } = useI18n();
   const { currency, setCurrency, allCurrencies } = useCurrency();
 
-  // USD is used in English-speaking markets — switch the UI language to
-  // match so a user picking USD doesn't end up with a Danish/German page
-  // showing dollar amounts.
+  // Each currency implies a market, so switch the UI language to match —
+  // only en/da/de exist, so GBP/SEK/NOK fall back to English alongside USD.
+  const CURRENCY_LOCALE: Record<Currency, typeof locale> = {
+    DKK: "da", EUR: "de", USD: "en", GBP: "en", SEK: "en", NOK: "en",
+  };
+
   const handleSelectCurrency = (c: Currency) => {
     setCurrency(c);
-    if (c === "USD" && locale !== "en") {
+    const target = CURRENCY_LOCALE[c];
+    if (target !== locale) {
       const rest = location.pathname.split("/").slice(2).join("/");
-      navigate(`/en/${rest}${location.search}`);
+      navigate(`/${target}/${rest}${location.search}`);
     }
   };
 
