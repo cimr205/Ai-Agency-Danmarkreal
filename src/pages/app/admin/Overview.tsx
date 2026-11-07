@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/lib/i18n';
 
 interface OwnerInfo {
   user_id: string;
@@ -63,6 +64,7 @@ interface CompanyFull {
 
 export default function AdminOverviewPage() {
   const { isSystemAdmin, isLoading: authLoading } = useAuth();
+  const { t } = useI18n();
   const [companies, setCompanies] = useState<CompanyFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -174,12 +176,12 @@ export default function AdminOverviewPage() {
             <Shield className="h-6 w-6 text-destructive" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Admin Overblik</h1>
-            <p className="text-sm text-muted-foreground">Komplet oversigt over alle virksomheder</p>
+            <h1 className="text-2xl font-bold">{t('adminOverview.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('adminOverview.subtitle')}</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={loadAll} className="gap-1.5">
-          <RefreshCw className="h-3.5 w-3.5" /> Opdater
+          <RefreshCw className="h-3.5 w-3.5" /> {t('adminOverview.refresh')}
         </Button>
       </div>
 
@@ -247,7 +249,7 @@ export default function AdminOverviewPage() {
       {loading ? (
         <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}</div>
       ) : companies.length === 0 ? (
-        <Card className="rounded-lg"><CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent></Card>
+        <Card className="rounded-lg"><CardContent className="py-12 text-center text-muted-foreground">{t('adminOverview.noCompanies')}</CardContent></Card>
       ) : (
         <div className="space-y-4">
           {companies.map(company => {
@@ -308,10 +310,10 @@ export default function AdminOverviewPage() {
 
                       <div>
                         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                          <Crown className="h-3.5 w-3.5 text-warning" /> Ejere ({company.owners.length})
+                          <Crown className="h-3.5 w-3.5 text-warning" /> {t('adminOverview.owners')} ({company.owners.length})
                         </h3>
                         {company.owners.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Ingen ejere registreret</p>
+                          <p className="text-sm text-muted-foreground">{t('adminOverview.noOwners')}</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {company.owners.map(owner => (

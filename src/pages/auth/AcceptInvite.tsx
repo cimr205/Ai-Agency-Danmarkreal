@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from '@/lib/errors';
+import { useI18n } from '@/lib/i18n';
 
 type InvitationPreview = {
   email: string;
@@ -22,6 +23,7 @@ export default function AcceptInvite() {
   const navigate = useNavigate();
   const { locale } = useParams();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { t } = useI18n();
 
   const [status, setStatus] = useState<"loading" | "ready" | "accepting" | "success" | "error">("loading");
   const [invitation, setInvitation] = useState<InvitationPreview | null>(null);
@@ -31,7 +33,7 @@ export default function AcceptInvite() {
   useEffect(() => {
     if (!token) {
       setStatus("error");
-      setErrorMsg("Intet invitation-token fundet i linket.");
+      setErrorMsg(t('acceptInvite.noTokenInLink'));
       return;
     }
 
@@ -41,17 +43,17 @@ export default function AcceptInvite() {
         const inv = data?.[0];
         if (error || !inv) {
           setStatus("error");
-          setErrorMsg("Ugyldigt invitation-link.");
+          setErrorMsg(t('acceptInvite.invalidLink'));
           return;
         }
         if (inv.status !== "pending") {
           setStatus("error");
-          setErrorMsg("Denne invitation er allerede brugt eller tilbagekaldt.");
+          setErrorMsg(t('acceptInvite.alreadyUsedOrRevoked'));
           return;
         }
         if (new Date(inv.expires_at) < new Date()) {
           setStatus("error");
-          setErrorMsg("Denne invitation er udløbet.");
+          setErrorMsg(t('acceptInvite.expired'));
           return;
         }
         setInvitation(inv);
@@ -79,14 +81,14 @@ export default function AcceptInvite() {
       const { error } = await supabase.rpc("accept_invitation", { invite_token: token });
       if (error) throw error;
       setStatus("success");
-      toast.success("Du er nu tilknyttet virksomheden!");
+      toast.success(t('acceptInvite.nowLinkedToCompany'));
       // Refresh profile and redirect after short delay
       setTimeout(() => {
         window.location.href = `/${locale || "en"}/app/dashboard`;
       }, 2000);
     } catch (error) {
       setStatus("error");
-      setErrorMsg((getErrorMessage(error) || "Kunne ikke acceptere invitationen."));
+      setErrorMsg((getErrorMessage(error) || t('acceptInvite.acceptError')));
     }
   };
 
@@ -98,7 +100,7 @@ export default function AcceptInvite() {
     );
   }
 
-  const companyName = invitation?.company_name || "Virksomheden";
+  const companyName = invitation?.company_name || t('acceptInvite.defaultCompanyName');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -107,22 +109,22 @@ export default function AcceptInvite() {
           {status === "success" ? (
             <>
               <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-              <CardTitle>Velkommen!</CardTitle>
-              <CardDescription>Du er nu tilknyttet {companyName}. Du bliver omdirigeret...</CardDescription>
+              <CardTitle>{t('acceptInvite.welcome')}</CardTitle>
+              <CardDescription>{t('acceptInvite.nowLinkedRedirecting').replace('{company}', companyName)}</CardDescription>
             </>
           ) : status === "error" ? (
             <>
               <XCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
-              <CardTitle>Invitation fejlede</CardTitle>
+              <CardTitle>{t('acceptInvite.invitationFailed')}</CardTitle>
               <CardDescription>{errorMsg}</CardDescription>
             </>
           ) : (
             <>
               <Mail className="h-12 w-12 text-primary mx-auto mb-2" />
-              <CardTitle>Du er inviteret!</CardTitle>
+              <CardTitle>{t('acceptInvite.youAreInvited')}</CardTitle>
               <CardDescription>
-                Du er blevet inviteret til at slutte dig til <strong>{companyName}</strong> som{" "}
-                <strong>{invitation?.role === "company_admin" ? "administrator" : "medarbejder"}</strong>.
+                {t('acceptInvite.invitedToJoinAs')} <strong>{companyName}</strong> {t('acceptInvite.as')}{" "}
+                <strong>{invitation?.role === "company_admin" ? t('acceptInvite.roleAdministrator') : t('acceptInvite.roleEmployee')}</strong>.
               </CardDescription>
             </>
           )}
@@ -131,11 +133,11 @@ export default function AcceptInvite() {
           {status === "ready" && isAuthenticated && (
             <>
               <p className="text-sm text-muted-foreground text-center">
-                Logget ind som <strong>{user?.email}</strong>
+                {t('acceptInvite.loggedInAs')} <strong>{user?.email}</strong>
               </p>
               {user?.email?.toLowerCase() !== invitation?.email?.toLowerCase() && (
                 <p className="text-sm text-amber-600 text-center">
-                  ⚠️ Din e-mail matcher ikke invitationens e-mail ({invitation?.email}). Du skal logge ind med den korrekte e-mail.
+                  ⚠️ {t('acceptInvite.emailMismatch').replace('{email}', invitation?.email ?? '')}
                 </p>
               )}
               <Button
@@ -143,7 +145,7 @@ export default function AcceptInvite() {
                 className="w-full"
                 disabled={user?.email?.toLowerCase() !== invitation?.email?.toLowerCase()}
               >
-                Acceptér invitation
+                {t('acceptInvite.acceptInvitation')}
               </Button>
             </>
           )}
@@ -152,7 +154,7 @@ export default function AcceptInvite() {
           )}
           {status === "error" && (
             <Button variant="outline" onClick={() => navigate(`/${locale || "en"}/auth/login`)}>
-              Gå til login
+              {t('acceptInvite.goToLogin')}
             </Button>
           )}
         </CardContent>

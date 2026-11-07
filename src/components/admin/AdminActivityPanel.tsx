@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/lib/i18n';
 
 interface Company {
   id: string;
@@ -38,6 +39,7 @@ interface Profile {
 
 export default function AdminActivityPanel({ basePath }: { basePath: string }) {
   const location = useLocation();
+  const { t } = useI18n();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [employeesByCompany, setEmployeesByCompany] = useState<Record<string, Employee[]>>({});
   const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
@@ -124,13 +126,13 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
         <div>
           <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <UserCircle className="h-3.5 w-3.5" />
-            Nye brugere ({recentProfiles.length})
+            {t('adminActivity.newUsers')} ({recentProfiles.length})
           </div>
           <div className="mt-1 space-y-0.5">
             {loading ? (
               <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
             ) : recentProfiles.length === 0 ? (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen brugere endnu</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('adminActivity.noUsersYet')}</p>
             ) : (
               recentProfiles.map(p => (
                 <div key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">
@@ -150,13 +152,13 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
         <div>
           <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <UserPlus className="h-3.5 w-3.5" />
-            Nye medarbejdere ({recentEmployees.length})
+            {t('adminActivity.newEmployees')} ({recentEmployees.length})
           </div>
           <div className="mt-1 space-y-0.5">
             {loading ? (
               <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
             ) : recentEmployees.length === 0 ? (
-              <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen medarbejdere endnu</p>
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('adminActivity.noEmployeesYet')}</p>
             ) : (
               recentEmployees.map(e => (
                 <div key={e.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">
@@ -176,12 +178,12 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
         <div>
           <div className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5" />
-            Virksomheder ({companies.length})
+            {t('adminActivity.companies')} ({companies.length})
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
           ) : companies.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen virksomheder</p>
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('adminActivity.noCompanies')}</p>
           ) : (
             <div className="space-y-0.5 mt-1">
               {companies.map((company) => {
@@ -208,10 +210,10 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
                       <div className="ml-5 pl-3 border-l border-border/50 mt-0.5 space-y-0.5">
                         {isLoadingEmps ? (
                           <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" /> Henter medarbejdere...
+                            <Loader2 className="h-3 w-3 animate-spin" /> {t('adminActivity.loadingEmployees')}
                           </div>
                         ) : employees.length === 0 ? (
-                          <p className="px-2 py-1.5 text-xs text-muted-foreground">Ingen medarbejdere</p>
+                          <p className="px-2 py-1.5 text-xs text-muted-foreground">{t('adminActivity.noEmployees')}</p>
                         ) : (
                           employees.map((emp) => (
                             <div key={emp.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/50 transition-colors">
@@ -245,7 +247,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
       <aside className="hidden lg:flex lg:flex-col w-72 border-r border-border bg-card/50">
         <div className="p-3 border-b border-border flex items-center gap-2">
           <Activity className="h-4 w-4 text-destructive" />
-          <span className="text-sm font-semibold">Aktivitet</span>
+          <span className="text-sm font-semibold">{t('adminActivity.activity')}</span>
         </div>
         <div className="flex-1 min-h-0">
           {panelContent}
@@ -262,7 +264,7 @@ export default function AdminActivityPanel({ basePath }: { basePath: string }) {
         <SheetContent side="right" className="w-80 p-0">
           <div className="p-3 border-b border-border flex items-center gap-2">
             <Activity className="h-4 w-4 text-destructive" />
-            <span className="text-sm font-semibold">Aktivitet</span>
+            <span className="text-sm font-semibold">{t('adminActivity.activity')}</span>
           </div>
           {panelContent}
         </SheetContent>

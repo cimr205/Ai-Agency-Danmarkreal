@@ -565,10 +565,10 @@ export default function LeadsPage() {
         <div className="order-2 w-full shrink-0 rounded-[22px] bg-workspace-panel p-6 text-workspace-ink-on-dark lg:order-1 lg:w-[340px] lg:p-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-workspace-muted-on-dark">Live lead signal</p>
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Kontakter</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Følg op</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Nye</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
-            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">Uden aktivitet</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('leads.contactsLabel')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('leads.followUpLabel')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('leads.newLabel')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('leads.noActivityLabel')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
           </div>
         </div>
         <WorkspaceGradientSurface className="order-1 p-6 sm:p-8 lg:order-2 lg:p-10">

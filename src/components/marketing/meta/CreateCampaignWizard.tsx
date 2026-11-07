@@ -19,6 +19,7 @@ import { showError } from "@/lib/showError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
+import { useI18n } from '@/lib/i18n';
 
 type WizardMode = "simple" | "advanced" | "ai";
 type BudgetLevel = "campaign" | "adset";
@@ -136,6 +137,7 @@ interface Props {
 
 export function CreateCampaignWizard({ open, onOpenChange }: Props) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [mode, setMode] = useState<WizardMode | null>(null);
   const [step, setStep] = useState(0);
   const [data, setData] = useState<CampaignData>({ ...defaultData });
@@ -393,13 +395,13 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">Opret ny kampagne</DialogTitle>
+            <DialogTitle className="text-xl">{t('campaignWizard.dialogTitle')}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground mb-4">Vælg hvordan du vil oprette din kampagne</p>
+          <p className="text-sm text-muted-foreground mb-4">{t('campaignWizard.dialogSubtitle')}</p>
           <div className="grid grid-cols-3 gap-4">
-            <ModeCard icon={Zap} title="Simpel" desc="3 hurtige trin: Info → Annonce → Publicér" onClick={() => { setMode("simple"); setStep(0); }} accent="text-emerald-600" />
-            <ModeCard icon={Settings2} title="Avanceret" desc="5 trin med fuld kontrol, A/B test varianter" onClick={() => { setMode("advanced"); setStep(0); }} accent="text-primary" />
-            <ModeCard icon={Wand2} title="AI-drevet" desc="AI genererer 2+ A/B varianter automatisk" onClick={() => { setMode("ai"); setStep(0); }} accent="text-purple-600" />
+            <ModeCard icon={Zap} title={t('campaignWizard.modeSimple')} desc={t('campaignWizard.modeSimpleDesc')} onClick={() => { setMode("simple"); setStep(0); }} accent="text-emerald-600" />
+            <ModeCard icon={Settings2} title={t('campaignWizard.modeAdvanced')} desc={t('campaignWizard.modeAdvancedDesc')} onClick={() => { setMode("advanced"); setStep(0); }} accent="text-primary" />
+            <ModeCard icon={Wand2} title={t('campaignWizard.modeAi')} desc={t('campaignWizard.modeAiDesc')} onClick={() => { setMode("ai"); setStep(0); }} accent="text-purple-600" />
           </div>
         </DialogContent>
       </Dialog>

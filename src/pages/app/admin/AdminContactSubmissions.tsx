@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Mail, Check, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
-import { da } from 'date-fns/locale';
+import { da, de, enUS } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n';
 
 type Submission = {
   id: string;
@@ -18,6 +19,8 @@ type Submission = {
 };
 
 export default function AdminContactSubmissions() {
+  const { t, locale } = useI18n();
+  const dateLocale = locale === 'da' ? da : locale === 'de' ? de : enUS;
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,19 +47,19 @@ export default function AdminContactSubmissions() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">Kontaktformularer</h2>
+          <h2 className="text-lg font-semibold">{t('adminContact.title')}</h2>
           {unreadCount > 0 && (
-            <Badge variant="destructive" className="text-xs">{unreadCount} ny(e)</Badge>
+            <Badge variant="destructive" className="text-xs">{unreadCount} {t('adminContact.newSuffix')}</Badge>
           )}
         </div>
         <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-          Opdater
+          {t('adminContact.refresh')}
         </Button>
       </div>
 
       {submissions.length === 0 && !loading && (
-        <p className="text-sm text-muted-foreground">Ingen henvendelser endnu.</p>
+        <p className="text-sm text-muted-foreground">{t('adminContact.empty')}</p>
       )}
 
       <div className="space-y-3">
@@ -67,18 +70,18 @@ export default function AdminContactSubmissions() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{s.name}</span>
-                    {!s.read && <Badge className="text-[10px] h-4 bg-blue-600">Ny</Badge>}
+                    {!s.read && <Badge className="text-[10px] h-4 bg-blue-600">{t('adminContact.newBadge')}</Badge>}
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</span>
                     {s.phone && <span>{s.phone}</span>}
-                    <span>{format(new Date(s.created_at), 'dd. MMM yyyy HH:mm', { locale: da })}</span>
+                    <span>{format(new Date(s.created_at), 'dd. MMM yyyy HH:mm', { locale: dateLocale })}</span>
                   </div>
                   <p className="text-sm text-foreground mt-2">{s.message}</p>
                 </div>
                 {!s.read && (
                   <Button variant="ghost" size="sm" onClick={() => markRead(s.id)} className="shrink-0">
-                    <Check className="w-4 h-4 mr-1" /> Læst
+                    <Check className="w-4 h-4 mr-1" /> {t('adminContact.markRead')}
                   </Button>
                 )}
               </div>

@@ -9,12 +9,14 @@ import { toast } from 'sonner';
 import { Users, Key, Shield, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/errors';
+import { useI18n } from '@/lib/i18n';
 
 /** Invitation shape safe to expose to the client — never the token or its hash. */
 type SafeInvitation = { id: string; email: string; role: string; status: string; created_at: string; expires_at: string };
 
 export default function AdminEmployees() {
   const { isAdmin, profile } = useAuth();
+  const { t } = useI18n();
   // Invite tokens are never read back (only token_hash is stored, and the raw
   // one-time token is shown once at creation), so we never select them.
   const [invitations, setInvitations] = useState<SafeInvitation[]>([]);
@@ -40,11 +42,11 @@ export default function AdminEmployees() {
       const token = data;
       const link = `${window.location.origin}/en/invite?token=${token}`;
       await navigator.clipboard.writeText(link);
-      toast.success('Invitation oprettet og link kopieret!');
+      toast.success(t('adminEmployees.invitationCreatedAndCopied'));
       setEmail('');
       await loadInvitations();
     } catch (err) {
-      toast.error((getErrorMessage(err) || 'Kunne ikke oprette invitation'));
+      toast.error((getErrorMessage(err) || t('adminEmployees.createInvitationError')));
     } finally {
       setCreating(false);
     }
@@ -55,8 +57,8 @@ export default function AdminEmployees() {
     return (
       <div className="p-8"><Card><CardContent className="py-12 text-center">
         <Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Adgang nægtet</h2>
-        <p className="text-muted-foreground">Kun administratorer kan se denne side.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('adminEmployees.accessDenied')}</h2>
+        <p className="text-muted-foreground">{t('adminEmployees.adminsOnly')}</p>
       </CardContent></Card></div>
     );
   }
@@ -67,25 +69,25 @@ export default function AdminEmployees() {
 
   return (
     <div className="p-8 space-y-6">
-      <div><h1 className="text-2xl font-bold">Tilføj medarbejdere</h1><p className="text-muted-foreground">Inviter nye medarbejdere via email</p></div>
+      <div><h1 className="text-2xl font-bold">{t('adminEmployees.title')}</h1><p className="text-muted-foreground">{t('adminEmployees.subtitle')}</p></div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Key className="w-5 h-5" />Inviter medarbejder</CardTitle>
-          <CardDescription>Indtast email-adressen på den medarbejder du vil invitere</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Key className="w-5 h-5" />{t('adminEmployees.inviteEmployee')}</CardTitle>
+          <CardDescription>{t('adminEmployees.inviteEmployeeDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input placeholder="medarbejder@firma.dk" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleCreateInvitation()} />
             <Button onClick={handleCreateInvitation} disabled={creating || !email.trim()}>
               {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Inviter
+              {t('adminEmployees.invite')}
             </Button>
           </div>
 
           {invitations.length > 0 && (
             <div className="pt-4 border-t space-y-2">
-              <Label>Seneste invitationer</Label>
+              <Label>{t('adminEmployees.recentInvitations')}</Label>
               <div className="space-y-1">
                 {invitations.map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between p-2 rounded bg-muted/30 text-sm">
@@ -105,10 +107,10 @@ export default function AdminEmployees() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />Medarbejdere</CardTitle>
-          <CardDescription>Se og administrer medarbejdere under HR → Medarbejdere</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />{t('adminUsers.employees')}</CardTitle>
+          <CardDescription>{t('adminEmployees.manageEmployeesDesc')}</CardDescription>
         </CardHeader>
-        <CardContent><Button variant="outline" asChild><a href="/en/app/hr/employees">Gå til medarbejderliste</a></Button></CardContent>
+        <CardContent><Button variant="outline" asChild><a href="/en/app/hr/employees">{t('adminEmployees.goToEmployeeList')}</a></Button></CardContent>
       </Card>
     </div>
   );

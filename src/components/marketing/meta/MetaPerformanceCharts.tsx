@@ -37,7 +37,7 @@ export function MetaPerformanceCharts() {
       <div className="h-28 flex items-center justify-center rounded-lg bg-muted/40 border border-border/50">
         <div className="text-center">
           <BarChart3 className="h-6 w-6 text-muted-foreground/40 mx-auto mb-1" />
-          <p className="text-[11px] text-muted-foreground/70">Ingen kampagnedata endnu</p>
+          <p className="text-[11px] text-muted-foreground/70">{t('metaAds.noDataYet')}</p>
         </div>
       </div>
 

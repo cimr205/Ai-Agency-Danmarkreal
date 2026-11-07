@@ -43,22 +43,22 @@ export default function MonitoringPage() {
   const { t } = useI18n();
 
   const cards = [
-    { title: 'Aktive brugere', value: metrics?.totalUsers ?? '-', icon: Users, color: 'text-primary' },
-    { title: 'Total leads', value: metrics?.totalLeads ?? '-', icon: Database, color: 'text-success' },
-    { title: 'Aktiviteter (24t)', value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-chart-cyan' },
-    { title: 'Emails sendt (24t)', value: metrics?.emailsSent24h ?? '-', icon: Mail, color: 'text-primary' },
+    { title: t('monitoring.cardActiveUsers'), value: metrics?.totalUsers ?? '-', icon: Users, color: 'text-primary' },
+    { title: t('monitoring.cardTotalLeads'), value: metrics?.totalLeads ?? '-', icon: Database, color: 'text-success' },
+    { title: t('monitoring.cardActivities24h'), value: metrics?.activitiesLast24h ?? '-', icon: Activity, color: 'text-chart-cyan' },
+    { title: t('monitoring.cardEmailsSent24h'), value: metrics?.emailsSent24h ?? '-', icon: Mail, color: 'text-primary' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Systemovervågning</h1>
-          <p className="text-sm text-muted-foreground">Realtids systemstatus og performance metrics</p>
+          <h1 className="text-2xl font-bold">{t('monitoring.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('monitoring.subtitle')}</p>
         </div>
         <Badge variant="outline" className="gap-1.5">
           <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
-          System operationelt
+          {t('monitoring.operational')}
         </Badge>
       </div>
 
@@ -80,7 +80,7 @@ export default function MonitoringPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="w-4 h-4" /> Email-levering
+            <Mail className="w-4 h-4" /> {t('monitoring.emailDeliveryTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -88,22 +88,22 @@ export default function MonitoringPage() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-success" />
               <div>
-                <p className="text-sm font-medium">{metrics?.emailsSent24h ?? 0} sendt</p>
-                <p className="text-xs text-muted-foreground">Sidste 24 timer</p>
+                <p className="text-sm font-medium">{metrics?.emailsSent24h ?? 0} {t('monitoring.sentSuffix')}</p>
+                <p className="text-xs text-muted-foreground">{t('monitoring.last24h')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-destructive" />
               <div>
-                <p className="text-sm font-medium">{metrics?.emailsFailed24h ?? 0} fejlet</p>
-                <p className="text-xs text-muted-foreground">Sidste 24 timer</p>
+                <p className="text-sm font-medium">{metrics?.emailsFailed24h ?? 0} {t('monitoring.failedSuffix')}</p>
+                <p className="text-xs text-muted-foreground">{t('monitoring.last24h')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-warning" />
               <div>
-                <p className="text-sm font-medium">{metrics?.emailDeliveryRate ?? 100}% levering</p>
-                <p className="text-xs text-muted-foreground">Leveringsrate</p>
+                <p className="text-sm font-medium">{metrics?.emailDeliveryRate ?? 100}% {t('monitoring.deliverySuffix')}</p>
+                <p className="text-xs text-muted-foreground">{t('monitoring.deliveryRate')}</p>
               </div>
             </div>
           </div>
@@ -114,25 +114,25 @@ export default function MonitoringPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Database className="w-4 h-4" /> Databasestatus
+            <Database className="w-4 h-4" /> {t('monitoring.dbStatsTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-xs text-muted-foreground">Leads</p>
+              <p className="text-xs text-muted-foreground">{t('monitoring.leadsLabel')}</p>
               <p className="text-lg font-semibold">{metrics?.totalLeads ?? '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Emails</p>
+              <p className="text-xs text-muted-foreground">{t('monitoring.emailsLabel')}</p>
               <p className="text-lg font-semibold">{metrics?.totalEmails ?? '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Brugere</p>
+              <p className="text-xs text-muted-foreground">{t('monitoring.usersLabel')}</p>
               <p className="text-lg font-semibold">{metrics?.totalUsers ?? '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Aktiviteter (24t)</p>
+              <p className="text-xs text-muted-foreground">{t('monitoring.cardActivities24h')}</p>
               <p className="text-lg font-semibold">{metrics?.activitiesLast24h ?? '-'}</p>
             </div>
           </div>

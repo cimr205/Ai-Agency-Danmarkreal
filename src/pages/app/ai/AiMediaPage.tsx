@@ -17,6 +17,7 @@ import {
   XCircle, Eye, Wand2,
 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/errors';
+import { useI18n } from '@/lib/i18n';
 
 interface AiMediaPageProps {
   /** false when embedded under the unified Studio page, which renders its own title. */
@@ -24,6 +25,7 @@ interface AiMediaPageProps {
 }
 
 export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
+  const { t } = useI18n();
   const [prompt, setPrompt] = useState('');
   const [genType, setGenType] = useState<string>('image');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -35,11 +37,11 @@ export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast.error('Indtast en beskrivelse af det billede du vil generere');
+      toast.error(t('aiMedia.enterPromptError'));
       return;
     }
     if (genType === 'video') {
-      toast.info('Video-generering kræver en dedikeret GPU-server. Kontakt din administrator.');
+      toast.info(t('aiMedia.videoRequiresGpu'));
       return;
     }
     try {
@@ -47,11 +49,11 @@ export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
         prompt: prompt.trim(),
         generation_type: genType,
       });
-      toast.success(`Billede genereret på ${((result.duration_ms || 0) / 1000).toFixed(1)}s!`);
+      toast.success(t('aiMedia.imageGeneratedIn').replace('{seconds}', ((result.duration_ms || 0) / 1000).toFixed(1)));
       setPrompt('');
       setActiveTab('gallery');
     } catch (err) {
-      toast.error((getErrorMessage(err) || 'Generering fejlede'));
+      toast.error((getErrorMessage(err) || t('aiMedia.generationFailed')));
     }
   };
 
@@ -95,8 +97,8 @@ export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold">AI Media Studio</h1>
-              <p className="text-sm text-muted-foreground">Generer billeder og annoncer med AI direkte i dit workspace</p>
+              <h1 className="text-2xl font-semibold">{t('aiMedia.title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('aiMedia.subtitle')}</p>
             </div>
           </div>
         ) : <div />}
@@ -206,9 +208,9 @@ export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <ImageIcon className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">Ingen genererede billeder endnu</p>
+                <p className="text-muted-foreground">{t('aiMedia.noImagesYet')}</p>
                 <Button variant="outline" className="mt-4" onClick={() => setActiveTab('generate')}>
-                  Generer dit første billede
+                  {t('aiMedia.generateFirstImage')}
                 </Button>
               </CardContent>
             </Card>
@@ -277,7 +279,7 @@ export default function AiMediaPage({ showHeader = true }: AiMediaPageProps) {
                   {[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-lg" />)}
                 </div>
               ) : generations.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Ingen genereringer endnu</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t('aiMedia.noGenerationsYet')}</p>
               ) : (
                 <div className="space-y-2">
                   {generations.map(gen => (

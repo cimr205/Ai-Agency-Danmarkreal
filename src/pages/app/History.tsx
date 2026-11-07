@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, UserPlus, FileText, CreditCard, Users, CheckCircle2, Mail, Zap, Activity } from 'lucide-react';
 import { useActivityLogs } from '@/hooks/api/useActivityLogs';
 import { formatDistanceToNow } from 'date-fns';
-import { da } from 'date-fns/locale';
+import { da, de, enUS } from 'date-fns/locale';
 
 const iconMap: Record<string, { icon: React.ElementType; color: string }> = {
   lead: { icon: UserPlus, color: 'text-primary bg-primary/10' },
@@ -21,8 +21,9 @@ const iconMap: Record<string, { icon: React.ElementType; color: string }> = {
 const defaultIcon = { icon: Activity, color: 'text-muted-foreground bg-muted' };
 
 export default function HistoryPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { data: activities, isLoading } = useActivityLogs(100);
+  const dateLocale = locale === 'da' ? da : locale === 'de' ? de : enUS;
 
   const todayCount = (activities ?? []).filter(a => {
     const diff = Date.now() - new Date(a.created_at).getTime();
@@ -39,15 +40,15 @@ export default function HistoryPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">I dag</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : todayCount}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : (activities?.length ?? 0)}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Kategorier</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : types.length}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Status</p><Badge variant="outline" className="mt-1">Live</Badge></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('history.today')}</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : todayCount}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('history.total')}</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : (activities?.length ?? 0)}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('history.categories')}</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : types.length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('common.status')}</p><Badge variant="outline" className="mt-1">{t('history.live')}</Badge></CardContent></Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Aktivitetslog</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> {t('history.activityLog')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -57,7 +58,7 @@ export default function HistoryPage() {
               ))}
             </div>
           ) : !activities || activities.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Ingen aktivitet registreret endnu.</p>
+            <p className="text-center text-muted-foreground py-8">{t('history.empty')}</p>
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="relative">
@@ -74,7 +75,7 @@ export default function HistoryPage() {
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm">{activity.action_type}</p>
                             <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: da })}
+                              {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: dateLocale })}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground">{activity.description ?? '–'}</p>

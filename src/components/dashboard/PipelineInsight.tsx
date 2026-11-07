@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export interface PipelineStage {
   name: string;
@@ -22,6 +23,7 @@ export function PipelineInsight({
   format: (v: number) => string;
 }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const active = stages.filter((s) => s.count > 0);
   const totalValue = active.reduce((sum, s) => sum + s.value, 0);
   const totalCount = active.reduce((sum, s) => sum + s.count, 0);
@@ -34,12 +36,12 @@ export function PipelineInsight({
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">Pipeline</p>
           <h2 id="pipeline-heading" className="mt-1 text-[19px] font-semibold tracking-tight text-foreground">
-            Sådan fordeler salget sig
+            {t('pipelineInsight.heading')}
           </h2>
         </div>
         {active.length > 0 && (
           <Link to={pipelineHref} className="shrink-0 text-[12.5px] font-medium text-primary hover:underline">
-            Åbn pipeline →
+            {t('pipelineInsight.openPipeline')} →
           </Link>
         )}
       </div>
@@ -55,15 +57,15 @@ export function PipelineInsight({
         </div>
       ) : active.length === 0 ? (
         <div className="rounded-[10px] bg-muted/40 px-5 py-5">
-          <p className="text-[13.5px] text-foreground">Ingen deals i pipeline endnu.</p>
+          <p className="text-[13.5px] text-foreground">{t('pipelineInsight.noDealsYet')}</p>
           <p className="mt-1 text-[12.5px] text-muted-foreground">
-            Opret den første deal for at se, hvordan salget bevæger sig gennem faserne.
+            {t('pipelineInsight.createFirstDealHint')}
           </p>
           <button
             onClick={() => navigate(`${base}/crm/deals?create=true`)}
             className="mt-3 text-[12.5px] font-medium text-primary hover:underline"
           >
-            Opret første deal →
+            {t('pipelineInsight.createFirstDeal')} →
           </button>
         </div>
       ) : (
@@ -72,10 +74,9 @@ export function PipelineInsight({
             <div className="mb-4 flex items-start gap-2.5 rounded-[8px] bg-warning/10 px-4 py-3">
               <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" aria-hidden />
               <p className="text-[12.5px] leading-snug text-foreground">
-                {worstStalled.stalled} deal{worstStalled.stalled === 1 ? "" : "s"} i {worstStalled.name} har stået
-                stille i over en uge.{" "}
+                {t('pipelineInsight.stalledWarning').replace('{count}', String(worstStalled.stalled)).replace('{dealWord}', t(worstStalled.stalled === 1 ? 'pipelineInsight.dealSingular' : 'pipelineInsight.dealPlural')).replace('{stage}', worstStalled.name)}{" "}
                 <button onClick={() => navigate(pipelineHref)} className="font-medium text-primary hover:underline">
-                  Følg op →
+                  {t('pipelineInsight.followUp')} →
                 </button>
               </p>
             </div>

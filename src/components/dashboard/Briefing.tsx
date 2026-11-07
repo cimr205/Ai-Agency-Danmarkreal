@@ -1,36 +1,47 @@
 import type { FocusItem } from "@/hooks/api/useDashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
-const FOCUS_CTA: Record<FocusItem["kind"], string> = {
-  invoice: "Send rykker",
-  deal: "Følg op",
-  lead: "Ring",
-  followup: "Åbn",
-};
+function focusLabel(kind: FocusItem["kind"], t: (key: string) => string): string {
+  const keys: Record<FocusItem["kind"], string> = {
+    invoice: "briefing.labelInvoice",
+    deal: "briefing.labelDeal",
+    lead: "briefing.labelLead",
+    followup: "briefing.labelFollowup",
+  };
+  return t(keys[kind]);
+}
 
-const FOCUS_LABEL: Record<FocusItem["kind"], string> = {
-  invoice: "Faktura",
-  deal: "Deal",
-  lead: "Lead",
-  followup: "Opfølgning",
-};
+function focusCta(kind: FocusItem["kind"], t: (key: string) => string): string {
+  const keys: Record<FocusItem["kind"], string> = {
+    invoice: "briefing.ctaInvoice",
+    deal: "briefing.ctaDeal",
+    lead: "briefing.ctaLead",
+    followup: "briefing.ctaFollowup",
+  };
+  return t(keys[kind]);
+}
 
-function focusItemText(item: FocusItem): string {
+function focusItemText(item: FocusItem, t: (key: string) => string): string {
+  const dayWord = t(item.days === 1 ? "briefing.dayWordSingular" : "briefing.dayWordPlural");
   if (item.kind === "invoice") {
-    return `Faktura #${item.label} er ${item.days} dag${item.days === 1 ? "" : "e"} forfalden${item.company ? ` — ${item.company}` : ""}`;
+    const key = item.company ? "briefing.invoiceOverdueWithCompany" : "briefing.invoiceOverdueNoCompany";
+    return t(key).replace("{label}", item.label).replace("{days}", String(item.days)).replace("{dayWord}", dayWord).replace("{company}", item.company ?? "");
   }
   if (item.kind === "deal") {
-    return `Deal "${item.label}" har stået i ${item.stage} i ${item.days} dag${item.days === 1 ? "" : "e"}`;
+    return t("briefing.dealStuck").replace("{label}", item.label).replace("{stage}", item.stage).replace("{days}", String(item.days)).replace("{dayWord}", dayWord);
   }
   if (item.kind === "followup") {
     const who = item.company ? ` — ${item.company}` : "";
     return item.overdue
-      ? `Opfølgning overskredet med ${item.days} dag${item.days === 1 ? "" : "e"}${who}: ${item.label}`
-      : `Opfølgning i dag${who}: ${item.label}`;
+      ? t("briefing.followupOverdue").replace("{days}", String(item.days)).replace("{dayWord}", dayWord).replace("{who}", who).replace("{label}", item.label)
+      : t("briefing.followupToday").replace("{who}", who).replace("{label}", item.label);
   }
-  const who = item.company ? `${item.label} hos ${item.company}` : item.label;
-  return item.overdue ? `${who} — opfølgning er overskredet` : `${who} — ${item.days} dage uden kontakt`;
+  const who = item.company ? t("briefing.leadAtCompany").replace("{label}", item.label).replace("{company}", item.company) : item.label;
+  return item.overdue
+    ? t("briefing.leadOverdue").replace("{who}", who)
+    : t("briefing.leadNoContact").replace("{who}", who).replace("{days}", String(item.days));
 }
 
 function focusItemHref(item: FocusItem, base: string): string {
@@ -53,14 +64,15 @@ export function Briefing({
   emptyContext: string;
   onNavigate: (href: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <section aria-labelledby="briefing-heading">
       <div className="mb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
-          Dagens briefing
+          {t('briefing.eyebrow')}
         </p>
         <h2 id="briefing-heading" className="mt-1 font-serif text-[24px] italic leading-tight text-foreground sm:text-[28px]">
-          Det ville jeg tage først
+          {t('briefing.heading')}
         </h2>
       </div>
 
@@ -79,7 +91,7 @@ export function Briefing({
         </ul>
       ) : items.length === 0 ? (
         <div className="py-2">
-          <p className="text-[15px] text-foreground">Alt vigtigt er fulgt op.</p>
+          <p className="text-[15px] text-foreground">{t('briefing.allCaughtUp')}</p>
           <p className="mt-1 text-[13px] text-muted-foreground">{emptyContext}</p>
         </div>
       ) : (
@@ -106,9 +118,9 @@ export function Briefing({
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[14px] leading-snug text-foreground">{focusItemText(item)}</p>
+                    <p className="text-[14px] leading-snug text-foreground">{focusItemText(item, t)}</p>
                     <p className="mt-1 text-[10.5px] font-medium uppercase tracking-[0.1em] text-muted-foreground/60">
-                      {FOCUS_LABEL[item.kind]}
+                      {focusLabel(item.kind, t)}
                     </p>
                   </div>
                 </div>
@@ -116,7 +128,7 @@ export function Briefing({
                   onClick={() => onNavigate(href)}
                   className="shrink-0 self-start pl-8 text-[12.5px] font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:self-center sm:pl-0"
                 >
-                  {FOCUS_CTA[item.kind]} →
+                  {focusCta(item.kind, t)} →
                 </button>
               </li>
             );

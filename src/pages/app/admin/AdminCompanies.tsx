@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import { useI18n } from '@/lib/i18n';
 
 interface EmployeeInfo {
   id: string;
@@ -37,6 +38,8 @@ interface ColdCallerAgg {
 
 export default function AdminCompaniesPage() {
   const { isSystemAdmin, isLoading: authLoading } = useAuth();
+  const { t, locale } = useI18n();
+  const dateTag = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -120,19 +123,19 @@ export default function AdminCompaniesPage() {
   const totalColdCaller = Array.from(coldCallerData.values()).reduce((s, v) => s + v.count, 0);
 
   const formatDuration = (seconds: number) => {
-    if (seconds < 60) return `${seconds} sek`;
+    if (seconds < 60) return `${seconds} ${t('adminCompanies.secondsAbbr')}`;
     const mins = Math.floor(seconds / 60);
     const hrs = Math.floor(mins / 60);
-    if (hrs > 0) return `${hrs} t ${mins % 60} m`;
-    return `${mins} min`;
+    if (hrs > 0) return `${hrs} ${t('adminCompanies.hoursAbbr')} ${mins % 60} ${t('adminCompanies.minutesAbbr')}`;
+    return `${mins} ${t('adminCompanies.minAbbr')}`;
   };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Virksomheder</h1>
+        <h1 className="text-2xl font-bold">{t('adminCompanies.title')}</h1>
         <Button variant="outline" size="sm" onClick={loadData} className="gap-1.5">
-          <RefreshCw className="h-3.5 w-3.5" /> Opdater
+          <RefreshCw className="h-3.5 w-3.5" /> {t('adminContact.refresh')}
         </Button>
       </div>
 
@@ -142,10 +145,10 @@ export default function AdminCompaniesPage() {
           [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)
         ) : (
           <>
-            <KpiCard label="Aktive Virksomheder" value={totalCompanies.toString()} />
-            <KpiCard label="Aktive Brugere" value={totalUsers.toString()} />
-            <KpiCard label="Samlet Brugstid" value={formatDuration(totalSeconds)} />
-            <KpiCard label="Cold Caller Brug" value={totalColdCaller.toLocaleString('da-DK')} />
+            <KpiCard label={t('adminCompanies.kpiActiveCompanies')} value={totalCompanies.toString()} />
+            <KpiCard label={t('adminCompanies.kpiActiveUsers')} value={totalUsers.toString()} />
+            <KpiCard label={t('adminCompanies.kpiTotalUsageTime')} value={formatDuration(totalSeconds)} />
+            <KpiCard label={t('adminCompanies.kpiColdCallerUsage')} value={totalColdCaller.toLocaleString(dateTag)} />
           </>
         )}
       </div>
@@ -155,7 +158,7 @@ export default function AdminCompaniesPage() {
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
       ) : companies.length === 0 ? (
         <Card className="rounded-xl">
-          <CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{t('adminCompanies.noCompaniesFound')}</CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -168,7 +171,7 @@ export default function AdminCompaniesPage() {
                     <div>
                       <p className="font-semibold text-base">{company.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Oprettet: {format(new Date(company.created_at), 'dd-MM-yyyy')}
+                        {t('adminCompanies.created')}: {format(new Date(company.created_at), 'dd-MM-yyyy')}
                       </p>
                     </div>
                     <Button
@@ -177,7 +180,7 @@ export default function AdminCompaniesPage() {
                       className="gap-1.5"
                       onClick={() => setExpandedId(isExpanded ? null : company.id)}
                     >
-                      Vis medarbejdere
+                      {t('adminCompanies.showEmployees')}
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </Button>
                   </div>
@@ -185,24 +188,24 @@ export default function AdminCompaniesPage() {
                   {isExpanded && (
                     <div className="border-t border-border/50 px-6 py-4 bg-muted/20">
                       <h3 className="font-semibold text-sm mb-3">
-                        Medarbejdere hos {company.name}{' '}
+                        {t('adminCompanies.employeesAt').replace('{company}', company.name)}{' '}
                         <span className="font-normal text-muted-foreground">
-                          (Oprettet: {format(new Date(company.created_at), 'dd-MM-yyyy')})
+                          ({t('adminCompanies.created')}: {format(new Date(company.created_at), 'dd-MM-yyyy')})
                         </span>
                       </h3>
 
                       {company.employees.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4">Ingen medarbejdere registreret</p>
+                        <p className="text-sm text-muted-foreground py-4">{t('adminCompanies.noEmployeesRegistered')}</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="text-left text-xs text-muted-foreground border-b border-border/40">
-                                <th className="pb-2 pr-4 font-medium">Navn</th>
-                                <th className="pb-2 pr-4 font-medium">Oprettet</th>
-                                <th className="pb-2 pr-4 font-medium">Brug af Cold Caller</th>
-                                <th className="pb-2 pr-4 font-medium">Brugstid</th>
-                                <th className="pb-2 font-medium">Sidst aktiv</th>
+                                <th className="pb-2 pr-4 font-medium">{t('common.name')}</th>
+                                <th className="pb-2 pr-4 font-medium">{t('adminCompanies.created')}</th>
+                                <th className="pb-2 pr-4 font-medium">{t('adminCompanies.coldCallerUsage')}</th>
+                                <th className="pb-2 pr-4 font-medium">{t('adminCompanies.usageTime')}</th>
+                                <th className="pb-2 font-medium">{t('adminCompanies.lastActive')}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -216,13 +219,13 @@ export default function AdminCompaniesPage() {
                                       {format(new Date(emp.created_at), 'dd-MM-yyyy HH:mm:ss')}
                                     </td>
                                     <td className="py-2.5 pr-4 text-muted-foreground">
-                                      {cc ? `${cc.count} Sprays` : '0 Sprays'}
+                                      {cc ? `${cc.count} ${t('adminCompanies.spraysUnit')}` : `0 ${t('adminCompanies.spraysUnit')}`}
                                     </td>
                                     <td className="py-2.5 pr-4 text-muted-foreground">
-                                      {sess ? formatDuration(sess.total_seconds) : '0 min'}
+                                      {sess ? formatDuration(sess.total_seconds) : `0 ${t('adminCompanies.minAbbr')}`}
                                     </td>
                                     <td className="py-2.5 text-muted-foreground">
-                                      {sess ? `Sidst aktiv: ${format(new Date(sess.last_active), 'dd-MM-yyyy HH:mm:ss')}` : '—'}
+                                      {sess ? `${t('adminCompanies.lastActive')}: ${format(new Date(sess.last_active), 'dd-MM-yyyy HH:mm:ss')}` : '—'}
                                     </td>
                                   </tr>
                                 );

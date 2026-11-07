@@ -8,6 +8,7 @@ import { invokeFunction } from "@/lib/functions";
 import { showError } from "@/lib/showError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 
 type MetaConnection = {
   id: string;
@@ -30,15 +31,28 @@ type MetaAdAccount = {
   account_status: number | null;
 };
 
-const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  connected: { label: "Forbundet", color: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400", icon: CheckCircle2 },
-  disconnected: { label: "Ikke forbundet", color: "border-muted bg-muted text-muted-foreground", icon: XCircle },
-  error: { label: "Fejl", color: "border-destructive/30 bg-destructive/10 text-destructive", icon: AlertCircle },
-  pending: { label: "Afventer", color: "border-amber-500/30 bg-amber-500/10 text-amber-400", icon: Loader2 },
+const statusColor: Record<string, string> = {
+  connected: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  disconnected: "border-muted bg-muted text-muted-foreground",
+  error: "border-destructive/30 bg-destructive/10 text-destructive",
+  pending: "border-amber-500/30 bg-amber-500/10 text-amber-400",
+};
+const statusIcon: Record<string, typeof CheckCircle2> = {
+  connected: CheckCircle2,
+  disconnected: XCircle,
+  error: AlertCircle,
+  pending: Loader2,
+};
+const statusLabelKey: Record<string, string> = {
+  connected: "metaAds.statusConnected",
+  disconnected: "metaAds.statusDisconnected",
+  error: "metaAds.statusError",
+  pending: "metaAds.statusPending",
 };
 
 export function MetaAccountConnection() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const companyId = user?.company_id;
   const [connection, setConnection] = useState<MetaConnection | null>(null);
   const [adAccounts, setAdAccounts] = useState<MetaAdAccount[]>([]);
@@ -70,7 +84,7 @@ export function MetaAccountConnection() {
     try {
       const data = await invokeFunction<{ error?: string; detail?: string; authorization_url?: string }>("meta-oauth-start", { body: {} });
       if (data?.error) throw new Error(data.detail || data.error);
-      if (!data?.authorization_url) throw new Error("Meta authorization URL mangler");
+      if (!data?.authorization_url) throw new Error(t('metaAds.authUrlMissing'));
       window.location.assign(data.authorization_url);
     } catch (err) {
       showError(err, { module: "meta-oauth-start" });
@@ -83,7 +97,7 @@ export function MetaAccountConnection() {
     try {
       const data = await invokeFunction<{ error?: string; detail?: string; records_synced?: number }>("meta-sync", { body: {} });
       if (data?.error) throw new Error(data.detail || data.error);
-      toast({ title: "Meta Ads opdateret", description: `${data.records_synced} poster synkroniseret.` });
+      toast({ title: t('metaAds.updatedToast'), description: t('metaAds.recordsSynced').replace('{count}', String(data.records_synced)) });
       await fetchConnection();
     } catch (err) {
       showError(err, { module: "meta-sync" });
@@ -95,7 +109,7 @@ export function MetaAccountConnection() {
     setDisconnecting(true);
     try {
       await invokeFunction("meta-disconnect", { body: { company_id: companyId } });
-      toast({ title: "Meta Ads afbrudt" });
+      toast({ title: t('metaAds.disconnectedToast') });
       await fetchConnection();
     } catch (err) {
       showError(err, { module: "meta-disconnect" });
@@ -105,8 +119,9 @@ export function MetaAccountConnection() {
   };
 
   const isConnected = connection?.status === "connected";
-  const cfg = statusConfig[connection?.status || "disconnected"] || statusConfig.disconnected;
-  const StatusIcon = cfg.icon;
+  const statusKey = connection?.status || "disconnected";
+  const cfg = { color: statusColor[statusKey] ?? statusColor.disconnected, label: t(statusLabelKey[statusKey] ?? statusLabelKey.disconnected) };
+  const StatusIcon = statusIcon[statusKey] ?? statusIcon.disconnected;
 
   if (loading) {
     return (
@@ -122,21 +137,21 @@ export function MetaAccountConnection() {
     <Card className="border border-border/60 shadow-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-[14px] font-medium">Meta Ads Forbindelse</CardTitle>
+          <CardTitle className="text-[14px] font-medium">{t('metaAds.connectionTitle')}</CardTitle>
           {!isConnected ? (
             <Button size="sm" className="gap-2" onClick={handleConnect}>
               <Link2 className="h-4 w-4" />
-              Forbind Meta Ads
+              {t('metaAds.connectMetaAds')}
             </Button>
           ) : (
             <div className="flex items-center gap-2">
               <Button size="sm" variant="ghost" className="gap-2 text-muted-foreground" onClick={handleSync}>
                 <RefreshCw className="h-3.5 w-3.5" />
-                Opdater
+                {t('adminContact.refresh')}
               </Button>
               <Button size="sm" variant="outline" className="gap-2 text-muted-foreground hover:text-destructive" onClick={handleDisconnect} disabled={disconnecting}>
                 {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-                Afbryd
+                {t('metaAds.disconnect')}
               </Button>
             </div>
           )}
@@ -148,9 +163,9 @@ export function MetaAccountConnection() {
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
               <Link2 className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-foreground">Ingen konto forbundet</p>
+            <p className="text-sm font-medium text-foreground">{t('metaAds.noAccountConnected')}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Forbind din Meta Ads konto for at administrere kampagner
+              {t('metaAds.connectAccountToManageCampaigns')}
             </p>
           </div>
         ) : (
@@ -163,7 +178,7 @@ export function MetaAccountConnection() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {connection.meta_user_name || "Meta bruger"}
+                    {connection.meta_user_name || t('metaAds.metaUser')}
                   </p>
                   <p className="text-xs text-muted-foreground">ID: {connection.meta_user_id}</p>
                 </div>
@@ -178,7 +193,7 @@ export function MetaAccountConnection() {
             {adAccounts.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
-                  Annonce-konti ({adAccounts.length})
+                  {t('metaAds.adAccounts')} ({adAccounts.length})
                 </p>
                 <div className="space-y-2">
                   {adAccounts.map((acc) => (
@@ -204,7 +219,7 @@ export function MetaAccountConnection() {
                             : "border-amber-200 bg-amber-50 text-amber-700"
                         }`}
                       >
-                        {acc.account_status === 1 ? "Aktiv" : "Inaktiv"}
+                        {acc.account_status === 1 ? t('metaAds.active') : t('metaAds.inactive')}
                       </Badge>
                     </div>
                   ))}
@@ -216,7 +231,7 @@ export function MetaAccountConnection() {
               <div className="text-center py-4">
                 <AlertCircle className="h-5 w-5 text-amber-500 mx-auto mb-1" />
                 <p className="text-xs text-muted-foreground">
-                  Ingen annonce-konti fundet. Tjek at din Meta-bruger har adgang til annonce-konti.
+                  {t('metaAds.noAdAccountsFound')}
                 </p>
               </div>
             )}
