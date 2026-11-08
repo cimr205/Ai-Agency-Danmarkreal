@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Enums, Tables } from '@/integrations/supabase/types';
+import { EMPLOYEE_ID_ATTEMPTS, generateEmployeeId, isEmployeeIdConflict } from '@/lib/employeeId';
 
 type EmployeeName = { employee_profiles: Pick<Tables<'employee_profiles'>, 'full_name'> | null };
 export type LeaveRequestWithEmployee = Tables<'leave_requests'> & EmployeeName;
@@ -53,13 +54,9 @@ export function useCreateEmployee() {
         .eq('user_id', session.user.id)
         .single();
       if (!profile?.company_id) throw new Error('No company');
-      // Generate a short employee ID like EMP-001
-      // Highest short EMP-NNN number in use. Taking "the latest row" and
-      // stripping non-digits turned a legacy epoch-style id into
-      // EMP-1787148209 and every id after it kept growing from there.
       const { data: existingEmps } = await supabase
         .from('employee_profiles')
-        .select('employee_id, department, email, full_name')
+        .select('department, email, full_name')
         .eq('company_id', profile.company_id);
       // One person = one employee record. The same person had been created
       // three times ("Cimraan Farah", "cimraan farah", "cimraan").
@@ -72,11 +69,6 @@ export function useCreateEmployee() {
         const match = (existingEmps ?? []).find(e => e.department && e.department.toLowerCase() === input.department!.toLowerCase());
         if (match?.department) input.department = match.department;
       }
-      const lastNum = (existingEmps ?? []).reduce((max, e) => {
-        const m = /^EMP-(\d{1,5})$/.exec(e.employee_id ?? '');
-        return m ? Math.max(max, Number(m[1])) : max;
-      }, 0);
-      const nextId = `EMP-${String(lastNum + 1).padStart(3, '0')}`;
 
       // If someone with this email already has portal access in this company,
       // link the new employee record to their account so they show up as
@@ -92,19 +84,25 @@ export function useCreateEmployee() {
         .ilike('email', escapedEmail)
         .maybeSingle();
 
-      const { data, error } = await supabase
-        .from('employee_profiles')
-        .insert({
-          ...input,
-          employee_id: nextId,
-          company_id: profile.company_id,
-          created_by: session.user.id,
-          user_id: matchingProfile?.user_id ?? null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      // employee_id is unique across ALL companies, while RLS only shows this
+      // company's rows, so a per-company counter (EMP-001 ...) collided with
+      // other companies. Use a random ID (src/lib/employeeId.ts) and retry
+      // with a fresh one on the rare collision.
+      for (let attempt = 1; ; attempt++) {
+        const { data, error } = await supabase
+          .from('employee_profiles')
+          .insert({
+            ...input,
+            employee_id: generateEmployeeId(),
+            company_id: profile.company_id,
+            created_by: session.user.id,
+            user_id: matchingProfile?.user_id ?? null,
+          })
+          .select()
+          .single();
+        if (!error) return data;
+        if (!isEmployeeIdConflict(error) || attempt >= EMPLOYEE_ID_ATTEMPTS) throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
   });
