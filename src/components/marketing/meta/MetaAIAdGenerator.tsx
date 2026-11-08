@@ -96,7 +96,7 @@ export function MetaAIAdGenerator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-xs">{isDa ? 'Tilbud' : 'Offer'}</Label>
-              <Input placeholder={isDa ? 'f.eks. Gratis 14-dages prøve' : 'e.g. Free 14-day trial'} className="text-sm" value={offer} onChange={(e) => setOffer(e.target.value)} maxLength={150} />
+              <Input placeholder={isDa ? 'f.eks. Gratis 3-dages prøve' : 'e.g. Free 3-day trial'} className="text-sm" value={offer} onChange={(e) => setOffer(e.target.value)} maxLength={150} />
             </div>
             <div className="space-y-2">
               <Label className="text-xs">{isDa ? 'Formål' : 'Objective'}</Label>

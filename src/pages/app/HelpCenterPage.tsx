@@ -60,7 +60,7 @@ const HELP_ARTICLES: HelpArticle[] = [
   {
     id: '8', category: 'Billing & Abonnement',
     title: 'Hvad sker der efter prøveperioden?',
-    content: 'Din 14-dages prøveperiode giver fuld adgang. Herefter skal du tilføje en betalingsmetode for at fortsætte. Du mister ingen data.',
+    content: 'Din 3-dages prøveperiode giver fuld adgang. Herefter skal du tilføje en betalingsmetode for at fortsætte. Du mister ingen data.',
     tags: ['trial', 'prøveperiode', 'betaling'],
   },
   {

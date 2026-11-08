@@ -114,7 +114,7 @@ serve(withSentry("create-checkout", async (req) => {
 
     const origin = req.headers.get("origin") || "https://bridge-orbit-core.lovable.app";
 
-    // Create checkout session with 14-day trial
+    // Create checkout session with 3-day trial
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: lineItems,
@@ -122,7 +122,7 @@ serve(withSentry("create-checkout", async (req) => {
       payment_method_collection: "always",
       locale: locale === "en" ? "en" : "da",
       subscription_data: {
-        trial_period_days: 14,
+        trial_period_days: 3,
         metadata: { company_id: company.id, currency, billing_mode: billingMode },
       },
       success_url: `${origin}/${locale}/app/dashboard?subscription=success`,
@@ -131,7 +131,7 @@ serve(withSentry("create-checkout", async (req) => {
 
     // Update company with trial info
     const trialEnds = new Date();
-    trialEnds.setDate(trialEnds.getDate() + 14);
+    trialEnds.setDate(trialEnds.getDate() + 3);
 
     await supabaseClient
       .from("companies")
