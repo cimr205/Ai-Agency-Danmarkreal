@@ -257,7 +257,7 @@
     "pricingF8": "Bulk email",
     "pricingF9": "Salgspipeline",
     "pricingF10": "Privatlivs- og databehandlervilkår",
-    "pricingNote": "14 dages gratis prøveperiode. Ingen demo-opkald. Fuld adgang fra dag ét.",
+    "pricingNote": "3 dages gratis prøveperiode. Ingen demo-opkald. Fuld adgang fra dag ét.",
     "footerRights": "Alle rettigheder forbeholdes."
   },
   "leadAi": {
@@ -983,10 +983,10 @@
     "currency": "kr./md.",
     "numberOfUsers": "Antal brugere",
     "estimatedPrice": "Estimeret pris efter prøveperiode",
-    "trialNote": "Du betaler kun for aktive brugere ved prøveperiodens udløb. De første 14 dage er helt gratis.",
+    "trialNote": "Du betaler kun for aktive brugere ved prøveperiodens udløb. De første 3 dage er helt gratis.",
     "readyTitle": "Du er klar!",
     "readyDesc": "Vi opretter {company} med plads til {seats} brugere.",
-    "trialFreeDesc": "Du får 14 dages gratis adgang. Derefter betaler du kun for de aktive brugere.",
+    "trialFreeDesc": "Du får 3 dages gratis adgang. Derefter betaler du kun for de aktive brugere.",
     "back": "Tilbage",
     "next": "Næste",
     "creating": "Opretter...",

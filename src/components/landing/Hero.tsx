@@ -130,8 +130,8 @@ export function Hero() {
             {/* Concrete trust facts */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-7 border-t border-foreground/[0.08] max-w-[520px]">
               {(isDa
-                ? ['14 dages gratis prøve', 'CVR 45949923', 'Dansk support']
-                : ['14-day free trial', 'CVR 45949923', 'Danish support']
+                ? ['3 dages gratis prøve', 'CVR 45949923', 'Dansk support']
+                : ['3-day free trial', 'CVR 45949923', 'Danish support']
               ).map((item) => (
                 <span key={item} className="text-[12px] text-muted-foreground font-mono">
                   {item}

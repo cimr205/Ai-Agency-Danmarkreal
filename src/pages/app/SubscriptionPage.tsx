@@ -40,7 +40,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  // A trial granted on the company itself has no Stripe status. Starting checkout would replace it with 14 days.
+  // A trial granted on the company itself has no Stripe status. Starting checkout would replace it with 3 days.
   const grantedTrialEnd = status === 'none' && trialEndsAt && new Date(trialEndsAt).getTime() > Date.now()
     ? new Date(trialEndsAt).toLocaleDateString(dateLocaleTag())
     : null;
@@ -117,7 +117,7 @@ export default function SubscriptionPage() {
             ) : !grantedTrialEnd && (
               <Button onClick={handleSubscribe} disabled={isLoading}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}
+                {tx("Start 3-dages gratis prøveperiode", "Start 3-day free trial")}
               </Button>
             )}
             <Button variant="ghost" onClick={checkSubscription} disabled={isLoading}>

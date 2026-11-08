@@ -54,7 +54,7 @@ export function Pricing() {
           <div className="col-span-12 lg:col-span-5 lg:py-2 flex flex-col justify-between">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-                {isDa ? 'Platform · 14 dages prøve' : 'Platform · 14-day trial'}
+                {isDa ? 'Platform · 3 dages prøve' : 'Platform · 3-day trial'}
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em]">

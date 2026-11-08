@@ -44,7 +44,7 @@ export function Footer() {
               to={`/${locale}/auth/register-company`}
               className="group inline-flex items-center justify-between border-b border-foreground/15 hover:border-foreground transition-colors pb-3 text-[15px] font-display font-medium text-foreground"
             >
-              <span>{isDa ? 'Start din 14-dages prøve' : 'Start your 14-day trial'}</span>
+              <span>{isDa ? 'Start din 3-dages prøve' : 'Start your 3-day trial'}</span>
               <ArrowUpRight className="w-4 h-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.5} />
             </Link>
             <p className="mt-4 text-[12.5px] text-muted-foreground/80 leading-[1.5]">
