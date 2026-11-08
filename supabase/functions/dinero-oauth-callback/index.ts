@@ -71,7 +71,9 @@ Deno.serve(withSentry("dinero-oauth-callback", async (req) => {
 
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error("Dinero token exchange failed:", tokenData);
+      // Never log the raw token response — on some failure modes a
+      // provider still echoes a real access/refresh token in the body.
+      console.error("Dinero token exchange failed:", { status: tokenRes.status, error: tokenData?.error, error_description: tokenData?.error_description });
       return errorRedirect(returnUrl, "token_exchange_failed");
     }
 

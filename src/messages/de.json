@@ -2587,7 +2587,21 @@
     "total": "Gesamt",
     "duplicatesSkipped": "{count} Duplikate übersprungen (bestehende E-Mails)",
     "aiClassified": "KI hat Ihre Leads mit Score und Status klassifiziert",
-    "importFailed": "Import fehlgeschlagen"
+    "importFailed": "Import fehlgeschlagen",
+    "requirementsTitle": "CSV-Importanforderungen",
+    "reqFileType": "Die Datei muss .csv (UTF-8) sein. Komma",
+    "reqOr": "oder Semikolon",
+    "reqHeaderRow": "Die erste Zeile muss Spaltenüberschriften enthalten (z. B.",
+    "reqRequiredCols": "Erforderliche Spalten:",
+    "and": "und",
+    "reqSkippedRows": "Zeilen ohne eines von beiden werden übersprungen.",
+    "reqOptionalCols": "Optional:",
+    "reqDuplicates": "Duplikate (gleiche E-Mail innerhalb Ihres Unternehmens) werden automatisch übersprungen.",
+    "reqMaxRows": "Empfohlenes Maximum: 5.000 Zeilen pro Datei. Größere Dateien bitte aufteilen.",
+    "exampleRow": "Beispielzeile:",
+    "downloadExample": "Beispiel-CSV herunterladen",
+    "failed": "Fehlgeschlagen",
+    "failedRows": "{count} Zeilen konnten aufgrund eines Serverfehlers nicht importiert werden."
   },
   "aiMedia": {
     "title": "AI Media Studio",

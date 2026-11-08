@@ -28,7 +28,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
   const [csvRows, setCsvRows] = useState<Record<string, string>[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [useAi, setUseAi] = useState(true);
-  const [result, setResult] = useState<{ imported: number; duplicates: number; total: number; ai_classified: boolean } | null>(null);
+  const [result, setResult] = useState<{ imported: number; duplicates: number; failed: number; errors: string[]; total: number; ai_classified: boolean } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -138,7 +138,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
   const handleImport = async () => {
     setStep('importing');
     try {
-      const data = await invokeFunction<{ imported: number; duplicates: number; total: number; ai_classified: boolean; error?: string }>('csv-import-leads', {
+      const data = await invokeFunction<{ imported: number; duplicates: number; failed: number; errors: string[]; total: number; ai_classified: boolean; error?: string }>('csv-import-leads', {
         body: { rows: csvRows, mapping, useAi },
       });
 
@@ -193,18 +193,18 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
               <div className="flex items-center gap-2 font-semibold mb-2">
                 <Info className="h-4 w-4 text-primary" />
-                CSV import requirements
+                {t('csvImport.requirementsTitle')}
               </div>
               <ol className="space-y-1.5 list-decimal list-inside text-foreground/80">
-                <li>File must be <strong>.csv</strong> (UTF-8). Comma <code className="px-1 bg-muted rounded">,</code> or semicolon <code className="px-1 bg-muted rounded">;</code> separator works.</li>
-                <li>First row must be <strong>column headers</strong> (e.g. <code className="px-1 bg-muted rounded">name,email,phone</code>).</li>
-                <li><strong>Required columns:</strong> <code className="px-1 bg-muted rounded">name</code> and <code className="px-1 bg-muted rounded">email</code> — rows missing either are skipped.</li>
-                <li><strong>Optional:</strong> phone, company_name, address, city, value, currency, notes, score (0–5), industry, tags (comma-separated), status.</li>
-                <li>Duplicates (same email within your company) are auto-skipped.</li>
-                <li>Max recommended: 5,000 rows per file. Larger files? Split them.</li>
+                <li>{t('csvImport.reqFileType')} <code className="px-1 bg-muted rounded">,</code> {t('csvImport.reqOr')} <code className="px-1 bg-muted rounded">;</code></li>
+                <li>{t('csvImport.reqHeaderRow')} <code className="px-1 bg-muted rounded">name,email,phone</code>)</li>
+                <li><strong>{t('csvImport.reqRequiredCols')}</strong> <code className="px-1 bg-muted rounded">name</code> {t('csvImport.and')} <code className="px-1 bg-muted rounded">email</code> — {t('csvImport.reqSkippedRows')}</li>
+                <li><strong>{t('csvImport.reqOptionalCols')}</strong> phone, company_name, address, city, value, currency, notes, score (0–5), industry, tags, status.</li>
+                <li>{t('csvImport.reqDuplicates')}</li>
+                <li>{t('csvImport.reqMaxRows')}</li>
               </ol>
               <div className="mt-3 pt-3 border-t border-primary/20">
-                <p className="text-xs text-muted-foreground mb-2">Example row:</p>
+                <p className="text-xs text-muted-foreground mb-2">{t('csvImport.exampleRow')}</p>
                 <code className="block text-xs bg-muted p-2 rounded overflow-x-auto whitespace-nowrap">
                   name,email,phone,company_name,address,city,value<br />
                   Anders Hansen,anders@firma.dk,+4512345678,Firma ApS,Hovedgaden 1,København,50000
@@ -226,7 +226,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
                   }}
                 >
                   <Download className="h-3 w-3 mr-2" />
-                  Download example CSV
+                  {t('csvImport.downloadExample')}
                 </Button>
               </div>
             </div>
@@ -353,7 +353,7 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
           <div className="py-6 text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
             <p className="text-lg font-medium">{t('csvImport.importComplete')}</p>
-            <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+            <div className={`grid gap-4 max-w-sm mx-auto ${result.failed > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{result.imported}</div>
                 <div className="text-xs text-muted-foreground">{t('csvImport.imported')}</div>
@@ -362,6 +362,12 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
                 <div className="text-2xl font-bold text-amber-500">{result.duplicates}</div>
                 <div className="text-xs text-muted-foreground">{t('csvImport.duplicates')}</div>
               </div>
+              {result.failed > 0 && (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-destructive">{result.failed}</div>
+                  <div className="text-xs text-muted-foreground">{t('csvImport.failed')}</div>
+                </div>
+              )}
               <div className="text-center">
                 <div className="text-2xl font-bold">{result.total}</div>
                 <div className="text-xs text-muted-foreground">{t('csvImport.total')}</div>
@@ -371,6 +377,19 @@ export function CsvImportWizard({ open, onOpenChange, onSuccess }: CsvImportWiza
               <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
                 <AlertTriangle className="h-4 w-4" />
                 {t('csvImport.duplicatesSkipped').replace('{count}', String(result.duplicates))}
+              </div>
+            )}
+            {result.failed > 0 && (
+              <div className="max-w-md mx-auto space-y-1.5">
+                <div className="flex items-center justify-center gap-2 text-sm text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  {t('csvImport.failedRows').replace('{count}', String(result.failed))}
+                </div>
+                {result.errors?.length > 0 && (
+                  <ul className="text-xs text-muted-foreground text-left bg-destructive/5 rounded-lg p-3 space-y-1">
+                    {result.errors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                )}
               </div>
             )}
             {result.ai_classified && (

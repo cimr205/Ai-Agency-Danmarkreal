@@ -2587,7 +2587,21 @@
     "total": "Total",
     "duplicatesSkipped": "{count} dubletter sprunget over (eksisterende emails)",
     "aiClassified": "AI har klassificeret dine leads med score og status",
-    "importFailed": "Import fejlede"
+    "importFailed": "Import fejlede",
+    "requirementsTitle": "Krav til CSV-import",
+    "reqFileType": "Filen skal være .csv (UTF-8). Komma",
+    "reqOr": "eller semikolon",
+    "reqHeaderRow": "Første række skal være kolonneoverskrifter (fx",
+    "reqRequiredCols": "Påkrævede kolonner:",
+    "and": "og",
+    "reqSkippedRows": "rækker uden begge springes over.",
+    "reqOptionalCols": "Valgfrit:",
+    "reqDuplicates": "Dubletter (samme email i jeres virksomhed) springes automatisk over.",
+    "reqMaxRows": "Anbefalet maks: 5.000 rækker pr. fil. Større filer? Opdel dem.",
+    "exampleRow": "Eksempelrække:",
+    "downloadExample": "Download eksempel-CSV",
+    "failed": "Fejlede",
+    "failedRows": "{count} rækker kunne ikke importeres på grund af en serverfejl."
   },
   "aiMedia": {
     "title": "AI Media Studio",

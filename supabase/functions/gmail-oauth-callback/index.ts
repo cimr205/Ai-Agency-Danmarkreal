@@ -80,7 +80,10 @@ Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
 
     const tokenData = await tokenRes.json();
     if (tokenData.error) {
-      console.error("Token exchange error:", tokenData);
+      // Never log the raw token response, even on the error path — if a
+      // provider ever echoes a partial/short-lived token alongside an
+      // error field, this must not land in logs.
+      console.error("Token exchange error:", { error: tokenData.error, error_description: tokenData.error_description });
       return redirectWithError(tokenData.error_description || tokenData.error);
     }
 

@@ -165,8 +165,12 @@ serve(withSentry("csv-import-leads", async (req) => {
       }
     }
 
-    // Insert in batches of 50
+    // Insert in batches of 50. A failed batch used to be silently dropped —
+    // `imported` would come out lower than `total - duplicates` with no
+    // indication why. Track failures explicitly so the UI can report them.
     let imported = 0;
+    let failed = 0;
+    const importErrors: string[] = [];
     for (let i = 0; i < newLeads.length; i += 50) {
       const batch = newLeads.slice(i, i + 50);
       const { error: insertError, data: inserted } = await adminClient
@@ -176,6 +180,10 @@ serve(withSentry("csv-import-leads", async (req) => {
 
       if (insertError) {
         console.error("Insert error:", insertError);
+        failed += batch.length;
+        if (importErrors.length < 5) {
+          importErrors.push(`Rows ${i + 1}-${i + batch.length}: ${insertError.message}`);
+        }
         continue;
       }
       imported += inserted?.length || 0;
@@ -184,6 +192,8 @@ serve(withSentry("csv-import-leads", async (req) => {
     return new Response(JSON.stringify({
       imported,
       duplicates: duplicateCount,
+      failed,
+      errors: importErrors,
       total: leads.length,
       batch_id: batchId,
       ai_classified: useAi,

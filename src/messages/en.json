@@ -2587,7 +2587,21 @@
     "total": "Total",
     "duplicatesSkipped": "{count} duplicates skipped (existing emails)",
     "aiClassified": "AI has classified your leads with score and status",
-    "importFailed": "Import failed"
+    "importFailed": "Import failed",
+    "requirementsTitle": "CSV import requirements",
+    "reqFileType": "File must be .csv (UTF-8). Comma",
+    "reqOr": "or semicolon",
+    "reqHeaderRow": "First row must be column headers (e.g.",
+    "reqRequiredCols": "Required columns:",
+    "and": "and",
+    "reqSkippedRows": "rows missing either are skipped.",
+    "reqOptionalCols": "Optional:",
+    "reqDuplicates": "Duplicates (same email within your company) are auto-skipped.",
+    "reqMaxRows": "Max recommended: 5,000 rows per file. Larger files? Split them.",
+    "exampleRow": "Example row:",
+    "downloadExample": "Download example CSV",
+    "failed": "Failed",
+    "failedRows": "{count} rows could not be imported due to a server error."
   },
   "aiMedia": {
     "title": "AI Media Studio",
