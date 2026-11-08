@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { isLocale, useI18n } from '@/lib/i18n';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { signupSchema } from '@/lib/validations';
 import { PasswordStrength } from '@/components/auth/PasswordStrength';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 import { describeAuthError } from '@/lib/authErrors';
+import { describeValidationError } from '@/lib/validationErrors';
 
 export default function SignupPage() {
   const { signup, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -17,10 +20,12 @@ export default function SignupPage() {
   const { t } = useI18n();
   const { toast } = useToast();
 
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const stuckTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -38,11 +43,11 @@ export default function SignupPage() {
     e.preventDefault();
     setErrors({});
 
-    const result = signupSchema.safeParse({ fullName, email, password, confirmPassword });
+    const result = signupSchema.safeParse({ firstName, lastName, email, password, confirmPassword, acceptTerms });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach(err => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+        if (err.path[0]) fieldErrors[err.path[0] as string] = describeValidationError(err.message, t);
       });
       setErrors(fieldErrors);
       return;
@@ -50,6 +55,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const { needsEmailConfirmation } = await signup(email, password, fullName);
       if (needsEmailConfirmation) {
         toast({ title: t('auth.checkEmail'), description: t('auth.checkEmailConfirm') });
@@ -106,22 +112,49 @@ export default function SignupPage() {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-            <div>
-              <Input placeholder={t('auth.fullName')} value={fullName} onChange={e => setFullName(e.target.value)} required aria-invalid={!!errors.fullName} className="h-11" />
-              {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Input placeholder={t('auth.firstName')} value={firstName} onChange={e => setFirstName(e.target.value)} required aria-invalid={!!errors.firstName} className="h-11" />
+                {errors.firstName && <p className="text-xs text-destructive mt-1">{errors.firstName}</p>}
+              </div>
+              <div>
+                <Input placeholder={t('auth.lastName')} value={lastName} onChange={e => setLastName(e.target.value)} required aria-invalid={!!errors.lastName} className="h-11" />
+                {errors.lastName && <p className="text-xs text-destructive mt-1">{errors.lastName}</p>}
+              </div>
             </div>
             <div>
               <Input placeholder={t('auth.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required aria-invalid={!!errors.email} className="h-11" />
               {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
-              <Input placeholder={t('auth.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.password} className="h-11" />
+              <PasswordInput placeholder={t('auth.password')} value={password} onChange={e => setPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.password} className="h-11" />
               <PasswordStrength password={password} />
-              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+              {errors.password ? (
+                <p className="text-xs text-destructive mt-1">{errors.password}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">{t('auth.passwordRequirements')}</p>
+              )}
             </div>
             <div>
-              <Input placeholder={t('auth.confirmPassword')} type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.confirmPassword} className="h-11" />
+              <PasswordInput placeholder={t('auth.confirmPassword')} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.confirmPassword} className="h-11" />
               {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
+            </div>
+            <div>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <Checkbox
+                  checked={acceptTerms}
+                  onCheckedChange={v => setAcceptTerms(v === true)}
+                  aria-invalid={!!errors.acceptTerms}
+                  className="mt-0.5"
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  {t('auth.acceptTermsPrefix')}{' '}
+                  <Link to={`/${locale}/terms`} target="_blank" className="text-primary hover:underline">{t('auth.termsOfService')}</Link>
+                  {' '}{t('auth.and')}{' '}
+                  <Link to={`/${locale}/privacy`} target="_blank" className="text-primary hover:underline">{t('auth.privacyPolicy')}</Link>
+                </span>
+              </label>
+              {errors.acceptTerms && <p className="text-xs text-destructive mt-1">{errors.acceptTerms}</p>}
             </div>
             <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading ? t('auth.creatingAccount') : t('auth.signupCta')}
