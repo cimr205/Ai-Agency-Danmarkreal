@@ -177,7 +177,8 @@
     "emailAlreadyRegistered": "An account with this email already exists. Try signing in instead.",
     "passwordTooWeak": "Please choose a stronger password.",
     "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
-    "networkError": "Network error. Check your connection and try again."
+    "networkError": "Network error. Check your connection and try again.",
+    "invitedEmailLocked": "This is the email your invitation was sent to and can't be changed here."
   },
   "session": {
     "timeoutTitle": "Session expiring",
@@ -2391,7 +2392,11 @@
     "invitationLinkCopied": "Invitation link copied!",
     "couldNotCreate": "Could not create invitation",
     "couldNotRevoke": "Could not revoke invitation",
-    "emailRequired": "Email is required"
+    "emailRequired": "Email is required",
+    "copyLinkNowOnce": "Copy this invite link now — it is shown only once.",
+    "seatsFullWarning": "All paid seats are in use. You can still send an invite, but it can only be accepted once a seat frees up or you add more.",
+    "seatsUsed": "Seats used",
+    "resend": "Resend invitation"
   },
   "webhooks": {
     "title": "Webhooks & Integrations",

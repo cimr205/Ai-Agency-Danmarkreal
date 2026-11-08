@@ -70,7 +70,8 @@ export default function AcceptInvite() {
     if (!isAuthenticated && status === "ready" && token) {
       localStorage.setItem('pending_invite_token', token);
       const returnUrl = `/${locale || "en"}/invite?token=${token}`;
-      navigate(`/${locale || "en"}/auth/signup?redirect=${encodeURIComponent(returnUrl)}`);
+      const emailParam = invitation?.email ? `&email=${encodeURIComponent(invitation.email)}` : '';
+      navigate(`/${locale || "en"}/auth/signup?redirect=${encodeURIComponent(returnUrl)}${emailParam}`);
     }
   }, [isAuthenticated, authLoading, status]);
 

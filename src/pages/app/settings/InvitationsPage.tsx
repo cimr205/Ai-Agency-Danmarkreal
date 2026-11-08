@@ -39,6 +39,7 @@ export default function InvitationsPage() {
   const [creating, setCreating] = useState(false);
   // The one-time invite link, shown only right after creation.
   const [createdLink, setCreatedLink] = useState<string | null>(null);
+  const [seatUsage, setSeatUsage] = useState<{ seat_limit: number; used: number } | null>(null);
 
   const loadInvitations = async () => {
     setLoading(true);
@@ -50,7 +51,37 @@ export default function InvitationsPage() {
     setLoading(false);
   };
 
-  useEffect(() => { loadInvitations(); }, []);
+  const loadSeatUsage = async () => {
+    // get_seat_usage() ships in a migration pending approval — not yet live.
+    const { data } = await (supabase.rpc as unknown as (
+      fn: 'get_seat_usage'
+    ) => Promise<{ data: Array<{ seat_limit: number; used: number }> | null }>)('get_seat_usage');
+    if (data?.[0]) setSeatUsage(data[0]);
+  };
+
+  useEffect(() => { loadInvitations(); loadSeatUsage(); }, []);
+
+  const seatsFull = seatUsage !== null && seatUsage.used >= seatUsage.seat_limit;
+
+  const handleResend = async (email: string, role: string) => {
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.rpc('create_invitation', {
+        invite_email: email,
+        invite_role: role as Enums<'app_role'>,
+      });
+      if (error) throw error;
+      const rawToken = data as string;
+      setCreatedLink(`${window.location.origin}/${locale || 'en'}/invite?token=${rawToken}`);
+      setIsCreateOpen(true);
+      toast.success(t('invitations.invitationSentTo').replace('{email}', email));
+      await loadInvitations();
+    } catch (err) {
+      toast.error(getErrorMessage(err) || t('invitations.couldNotCreate'));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!newEmail.trim() || !newEmail.includes('@')) {
@@ -72,6 +103,7 @@ export default function InvitationsPage() {
       setNewEmail('');
       setNewRole('employee');
       await loadInvitations();
+      await loadSeatUsage();
     } catch (err) {
       toast.error(getErrorMessage(err) || t('invitations.couldNotCreate'));
     } finally {
@@ -131,7 +163,7 @@ export default function InvitationsPage() {
               <div className="space-y-4">
                 <div className="flex items-start gap-2 text-sm text-success">
                   <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>Copy this invite link now — it is shown only once.</span>
+                  <span>{t('invitations.copyLinkNowOnce')}</span>
                 </div>
                 <div className="flex gap-2">
                   <Input readOnly value={createdLink} data-testid="invite-link" className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
@@ -145,6 +177,11 @@ export default function InvitationsPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {seatsFull && (
+                  <p className="text-sm text-warning bg-warning/10 rounded-lg px-3 py-2">
+                    {t('invitations.seatsFullWarning')}
+                  </p>
+                )}
                 <div className="space-y-2">
                   <Label>{t('auth.email')} *</Label>
                   <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="colleague@company.com" />
@@ -170,10 +207,11 @@ export default function InvitationsPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.pending')}</p><p className="text-2xl font-bold text-warning">{invitations.filter(i => i.status === 'pending' && new Date(i.expires_at) > new Date()).length}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.accepted')}</p><p className="text-2xl font-bold text-success">{invitations.filter(i => i.status === 'accepted').length}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.total')}</p><p className="text-2xl font-bold">{invitations.length}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t('invitations.seatsUsed')}</p><p className={`text-2xl font-bold ${seatsFull ? 'text-destructive' : ''}`}>{seatUsage ? `${seatUsage.used}/${seatUsage.seat_limit}` : '—'}</p></CardContent></Card>
       </div>
 
       <Card>
@@ -216,6 +254,11 @@ export default function InvitationsPage() {
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (
                           <Button size="sm" variant="ghost" onClick={() => handleRevoke(inv.id)} className="text-destructive hover:text-destructive" title={t('invitations.revoke')}>
                             <XCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {(inv.status === 'expired' || (inv.status === 'pending' && new Date(inv.expires_at) < new Date())) && (
+                          <Button size="sm" variant="ghost" disabled={creating} onClick={() => handleResend(inv.email, inv.role)} title={t('invitations.resend')}>
+                            <Mail className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>

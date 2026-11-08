@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,10 +19,16 @@ export default function SignupPage() {
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const { t } = useI18n();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  // Arriving from an invitation link (AcceptInvite stashes the invited
+  // email here) — lock the field so the new account can't end up with a
+  // different email than the invitation, which would otherwise leave the
+  // user stuck on a disabled "accept" button with no clue why.
+  const invitedEmail = searchParams.get('email');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(invitedEmail || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -123,7 +129,8 @@ export default function SignupPage() {
               </div>
             </div>
             <div>
-              <Input placeholder={t('auth.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required aria-invalid={!!errors.email} className="h-11" />
+              <Input placeholder={t('auth.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required readOnly={!!invitedEmail} aria-invalid={!!errors.email} className="h-11" />
+              {invitedEmail && <p className="text-xs text-muted-foreground mt-1">{t('auth.invitedEmailLocked')}</p>}
               {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>

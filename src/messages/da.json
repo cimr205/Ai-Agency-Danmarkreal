@@ -177,7 +177,8 @@
     "emailAlreadyRegistered": "Der findes allerede en konto med denne email. Prøv at logge ind i stedet.",
     "passwordTooWeak": "Vælg venligst en stærkere adgangskode.",
     "tooManyRequests": "For mange forsøg. Vent et øjeblik og prøv igen.",
-    "networkError": "Netværksfejl. Tjek din forbindelse og prøv igen."
+    "networkError": "Netværksfejl. Tjek din forbindelse og prøv igen.",
+    "invitedEmailLocked": "Dette er den email, din invitation blev sendt til, og den kan ikke ændres her."
   },
   "session": {
     "timeoutTitle": "Session udløber",
@@ -2445,7 +2446,11 @@
     "invitationLinkCopied": "Invitationslink kopieret!",
     "couldNotCreate": "Kunne ikke oprette invitation",
     "couldNotRevoke": "Kunne ikke tilbagekalde invitation",
-    "emailRequired": "Email er påkrævet"
+    "emailRequired": "Email er påkrævet",
+    "copyLinkNowOnce": "Kopiér dette invitationslink nu — det vises kun denne ene gang.",
+    "seatsFullWarning": "Alle betalte pladser er i brug. Du kan stadig sende en invitation, men den kan først accepteres, når en plads frigøres, eller I køber flere.",
+    "seatsUsed": "Pladser i brug",
+    "resend": "Gensend invitation"
   },
   "webhooks": {
     "title": "Webhooks & Integrationer",

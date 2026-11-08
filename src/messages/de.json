@@ -177,7 +177,8 @@
     "emailAlreadyRegistered": "Es existiert bereits ein Konto mit dieser E-Mail. Versuchen Sie sich stattdessen anzumelden.",
     "passwordTooWeak": "Bitte wählen Sie ein stärkeres Passwort.",
     "tooManyRequests": "Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
-    "networkError": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    "networkError": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "invitedEmailLocked": "Dies ist die E-Mail-Adresse, an die Ihre Einladung gesendet wurde, und kann hier nicht geändert werden."
   },
   "session": {
     "timeoutTitle": "Sitzung läuft ab",
@@ -2445,7 +2446,11 @@
     "invitationLinkCopied": "Einladungslink kopiert!",
     "couldNotCreate": "Einladung konnte nicht erstellt werden",
     "couldNotRevoke": "Einladung konnte nicht widerrufen werden",
-    "emailRequired": "E-Mail ist erforderlich"
+    "emailRequired": "E-Mail ist erforderlich",
+    "copyLinkNowOnce": "Kopieren Sie diesen Einladungslink jetzt — er wird nur einmal angezeigt.",
+    "seatsFullWarning": "Alle bezahlten Plätze sind belegt. Sie können trotzdem eine Einladung senden, aber sie kann erst angenommen werden, wenn ein Platz frei wird oder Sie weitere hinzufügen.",
+    "seatsUsed": "Belegte Plätze",
+    "resend": "Einladung erneut senden"
   },
   "webhooks": {
     "title": "Webhooks & Integrationen",
