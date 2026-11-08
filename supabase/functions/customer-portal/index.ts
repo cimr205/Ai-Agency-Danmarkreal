@@ -35,6 +35,17 @@ serve(withSentry("customer-portal", async (req) => {
 
     if (!profile?.company_id) throw new Error("No company");
 
+    // Only the owner/company admin may open the billing portal — it allows
+    // cancelling the subscription and changing payment details, which any
+    // company member could otherwise do with no role check at all.
+    const { data: isAdmin } = await supabaseClient.rpc("is_company_admin", { _user_id: userData.user.id });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Only the company owner or admin can manage billing" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: company } = await supabaseClient
       .from("companies")
       .select("stripe_customer_id")
@@ -48,9 +59,12 @@ serve(withSentry("customer-portal", async (req) => {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
     const origin = req.headers.get("origin") || "https://bridge-orbit-core.lovable.app";
 
+    const requestBody = await req.json().catch(() => ({} as { locale?: string }));
+    const locale = ["en", "da", "de"].includes(requestBody.locale) ? requestBody.locale : "da";
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: company.stripe_customer_id,
-      return_url: `${origin}/en/app/settings/company`,
+      return_url: `${origin}/${locale}/app/settings/company`,
     });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {

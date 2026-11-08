@@ -3429,7 +3429,14 @@
     "feature7": "Invoicing & payments",
     "feature8": "Meta Ads integration",
     "feature9": "AI Assistant (ClowdBot)",
-    "feature10": "Webhooks & automation"
+    "feature10": "Webhooks & automation",
+    "seatCount": "{n} purchased user seats",
+    "seatMismatch": "You have {active} active users but only {purchased} paid seats. Confirm to update your subscription to match.",
+    "confirmSeatSync": "Update seat count",
+    "checkoutSuccessTitle": "Subscription activated",
+    "checkoutSuccessDesc": "Your payment went through — welcome aboard!",
+    "checkoutCancelledTitle": "Checkout cancelled",
+    "checkoutCancelledDesc": "No payment was made. You can start a subscription any time from the Subscription page."
   },
   "monitoring": {
     "title": "System monitoring",

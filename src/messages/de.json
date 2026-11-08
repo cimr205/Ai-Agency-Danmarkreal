@@ -3429,7 +3429,14 @@
     "feature7": "Rechnungsstellung & Zahlungen",
     "feature8": "Meta Ads-Integration",
     "feature9": "KI-Assistent (ClowdBot)",
-    "feature10": "Webhooks & Automatisierung"
+    "feature10": "Webhooks & Automatisierung",
+    "seatCount": "{n} bezahlte Benutzerplätze",
+    "seatMismatch": "Sie haben {active} aktive Benutzer, aber nur {purchased} bezahlte Plätze. Bestätigen Sie, um Ihr Abonnement zu aktualisieren.",
+    "confirmSeatSync": "Platzanzahl aktualisieren",
+    "checkoutSuccessTitle": "Abonnement aktiviert",
+    "checkoutSuccessDesc": "Ihre Zahlung ist eingegangen — willkommen an Bord!",
+    "checkoutCancelledTitle": "Zahlung abgebrochen",
+    "checkoutCancelledDesc": "Es wurde keine Zahlung vorgenommen. Sie können jederzeit über die Abonnementseite ein Abonnement starten."
   },
   "monitoring": {
     "title": "Systemüberwachung",

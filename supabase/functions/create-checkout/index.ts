@@ -60,6 +60,17 @@ serve(withSentry("create-checkout", async (req) => {
       throw new Error("Company already has a subscription");
     }
 
+    // Only the owner/company admin may start a subscription for the
+    // company. bootstrap_company() makes the creating user company_admin
+    // atomically, so this doesn't block the normal onboarding flow.
+    const { data: isAdmin } = await supabaseClient.rpc("is_company_admin", { _user_id: user.id });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Only the company owner or admin can start a subscription" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json().catch(() => ({}));
     const currency = (body.currency || "dkk").toLowerCase() === "usd" ? "usd" : "dkk";
     const locale = body.locale === "en" ? "en" : "da";

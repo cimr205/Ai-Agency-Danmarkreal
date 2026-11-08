@@ -3429,7 +3429,14 @@
     "feature7": "Fakturering & betalinger",
     "feature8": "Meta Ads integration",
     "feature9": "AI Assistent (ClowdBot)",
-    "feature10": "Webhooks & automatisering"
+    "feature10": "Webhooks & automatisering",
+    "seatCount": "{n} betalte brugerpladser",
+    "seatMismatch": "Du har {active} aktive brugere, men kun {purchased} betalte pladser. Bekræft for at opdatere dit abonnement.",
+    "confirmSeatSync": "Opdater antal pladser",
+    "checkoutSuccessTitle": "Abonnement aktiveret",
+    "checkoutSuccessDesc": "Din betaling er gennemført — velkommen ombord!",
+    "checkoutCancelledTitle": "Betaling afbrudt",
+    "checkoutCancelledDesc": "Der blev ikke gennemført nogen betaling. Du kan starte et abonnement når som helst fra abonnementssiden."
   },
   "monitoring": {
     "title": "Systemovervågning",

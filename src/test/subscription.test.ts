@@ -9,10 +9,15 @@ describe('Subscription tiers', () => {
     expect(PRODUCT_ID).toMatch(/^prod_/);
   });
 
-  it('should have correct price (499 DKK)', () => {
-    const priceInCents = 49900;
-    expect(priceInCents / 100).toBe(499);
-  });
+  // There used to be a "should have correct price (499 DKK)" test here that
+  // asserted `49900 / 100 === 499` — that only checks arithmetic, not the
+  // actual Stripe price, so it could never fail even if the real configured
+  // amount drifted from the 499 kr. shown across the UI (landing page,
+  // onboarding wizard, subscription page, legal docs). This repo has no
+  // Stripe API credentials available to fetch the live price and assert
+  // against it. The 499 kr. figure is UNVERIFIED — confirm the actual
+  // amount for PRICE_ID in the Stripe Dashboard before trusting any UI
+  // copy that quotes it. See docs/onboarding/03-stripe-subscriptions.md.
 });
 
 describe('Retry with backoff', () => {

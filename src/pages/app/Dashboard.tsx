@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, ArrowRight, Briefcase, Calendar, CheckCircle2, Clock3, FileText, Mail, PhoneCall, RadioTower, ShieldCheck, Target, Users, Wallet } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RTooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +49,26 @@ export default function Dashboard() {
   const { t, locale } = useI18n();
   const dateTag = dateFnsLocaleTag(locale);
   const showOnboardingBanner = isAdmin && !isOnboardingComplete();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // Returning from Stripe Checkout (success or cancel) previously landed
+  // here with the query param simply ignored — no confirmation, no error,
+  // nothing to tell the user whether their subscription went through.
+  useEffect(() => {
+    const subscriptionResult = searchParams.get("subscription");
+    if (subscriptionResult === "success") {
+      toast({ title: t("subscription.checkoutSuccessTitle"), description: t("subscription.checkoutSuccessDesc") });
+    } else if (subscriptionResult === "cancelled") {
+      toast({ variant: "destructive", title: t("subscription.checkoutCancelledTitle"), description: t("subscription.checkoutCancelledDesc") });
+    }
+    if (subscriptionResult) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("subscription");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const firstName = (profile?.full_name || "").split(" ")[0] || "der";
   const today = new Date().toLocaleDateString(dateTag, { weekday: "long", day: "numeric", month: "short" }).replace(/\.$/, "");

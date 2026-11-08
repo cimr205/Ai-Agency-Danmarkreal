@@ -60,6 +60,32 @@ serve(withSentry("check-subscription", async (req) => {
     if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
+    // Explicit, admin-only seat-count confirmation — the only path that is
+    // allowed to actually change what Stripe bills. Must come from a real
+    // request body, not be inferred automatically.
+    let body: { confirm_seat_sync?: boolean } = {};
+    try { body = await req.clone().json(); } catch { /* GET-style poll, no body */ }
+    if (body.confirm_seat_sync) {
+      const { data: isAdmin } = await supabaseClient.rpc("is_company_admin", { _user_id: userData.user.id });
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "Only the company owner or admin can change seat count" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (company.stripe_subscription_id) {
+        const sub = await stripe.subscriptions.retrieve(company.stripe_subscription_id);
+        const { count } = await supabaseClient
+          .from("profiles")
+          .select("*", { count: "exact", head: true })
+          .eq("company_id", profile.company_id);
+        const activeUsers = count || 1;
+        await stripe.subscriptions.update(sub.id, {
+          items: [{ id: sub.items.data[0].id, quantity: activeUsers }],
+        });
+      }
+    }
+
     // Check Stripe for current subscription status
     const subscriptions = await stripe.subscriptions.list({
       customer: company.stripe_customer_id,
@@ -88,14 +114,20 @@ serve(withSentry("check-subscription", async (req) => {
       trial_ends_at: trialEnd || company.trial_ends_at,
     }).eq("id", profile.company_id);
 
-    // If trial is about to end, count active users and update quantity
+    // Report (don't silently act on) a trial-ending seat mismatch: this
+    // endpoint is called by any company member, including on a 60s poll —
+    // it must stay read-only. Previously it called stripe.subscriptions
+    // .update() here directly, which meant any employee's routine page
+    // load could change what the company is billed, with no owner
+    // approval and no role check. Surface the mismatch so the UI can
+    // prompt an admin to confirm the seat-count change explicitly instead.
+    let seatMismatch: { activeUsers: number; purchasedSeats: number } | null = null;
     if (status === "trialing" && sub.trial_end) {
       const trialEndDate = new Date(sub.trial_end * 1000);
       const now = new Date();
       const daysUntilEnd = (trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
       if (daysUntilEnd <= 3) {
-        // Count active users in the company
         const { count } = await supabaseClient
           .from("profiles")
           .select("*", { count: "exact", head: true })
@@ -103,10 +135,7 @@ serve(withSentry("check-subscription", async (req) => {
 
         const activeUsers = count || 1;
         if (activeUsers !== currentQuantity) {
-          await stripe.subscriptions.update(sub.id, {
-            items: [{ id: sub.items.data[0].id, quantity: activeUsers }],
-          });
-          console.log(`[CHECK-SUB] Updated quantity from ${currentQuantity} to ${activeUsers}`);
+          seatMismatch = { activeUsers, purchasedSeats: currentQuantity };
         }
       }
     }
@@ -118,6 +147,7 @@ serve(withSentry("check-subscription", async (req) => {
       period_end: periodEnd,
       seat_limit: currentQuantity,
       purchased_seats: status === "active" ? currentQuantity : 0,
+      seat_mismatch: seatMismatch,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

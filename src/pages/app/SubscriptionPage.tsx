@@ -1,8 +1,9 @@
-import { Check, Crown, Loader2 } from 'lucide-react';
+import { Check, Crown, Loader2, Users, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
 import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
 
@@ -20,7 +21,8 @@ const FEATURE_KEYS = [
 ];
 
 export default function SubscriptionPage() {
-  const { subscribed, status, trialEndsAt, periodEnd, isLoading, startCheckout, openPortal, checkSubscription } = useSubscription();
+  const { subscribed, status, trialEndsAt, periodEnd, seatLimit, seatMismatch, isLoading, startCheckout, openPortal, checkSubscription, confirmSeatSync } = useSubscription();
+  const { isAdmin } = useAuth();
   const { t, locale } = useI18n();
 
   const handleSubscribe = async () => {
@@ -36,6 +38,14 @@ export default function SubscriptionPage() {
       await openPortal();
     } catch (e) {
       showError(e, { module: 'customer-portal' });
+    }
+  };
+
+  const handleConfirmSeatSync = async () => {
+    try {
+      await confirmSeatSync();
+    } catch (e) {
+      showError(e, { module: 'check-subscription' });
     }
   };
 
@@ -75,9 +85,30 @@ export default function SubscriptionPage() {
             <span className="text-muted-foreground">{t('subscription.priceSuffix')}</span>
           </div>
 
+          {subscribed && seatLimit > 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="w-4 h-4" />
+              {t('subscription.seatCount').replace('{n}', String(seatLimit))}
+            </div>
+          )}
+
           {status === 'trialing' && trialDaysLeft > 0 && (
             <div className="bg-warning/10 text-warning rounded-lg px-3 py-2 text-sm">
               {t('subscription.trialDaysLeft').replace('{days}', String(trialDaysLeft))}
+            </div>
+          )}
+
+          {seatMismatch && isAdmin && (
+            <div className="flex items-start gap-3 bg-warning/10 text-warning rounded-lg px-3 py-2.5 text-sm">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p>{t('subscription.seatMismatch')
+                  .replace('{active}', String(seatMismatch.activeUsers))
+                  .replace('{purchased}', String(seatMismatch.purchasedSeats))}</p>
+                <Button size="sm" variant="outline" className="mt-2" onClick={handleConfirmSeatSync} disabled={isLoading}>
+                  {t('subscription.confirmSeatSync')}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -107,7 +138,7 @@ export default function SubscriptionPage() {
                 {t('subscription.startTrial')}
               </Button>
             )}
-            <Button variant="ghost" onClick={checkSubscription} disabled={isLoading}>
+            <Button variant="ghost" onClick={() => checkSubscription()} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('subscription.refreshStatus')}
             </Button>
           </div>
