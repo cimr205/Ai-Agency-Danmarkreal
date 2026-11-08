@@ -50,29 +50,29 @@ export function ConversationList({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="space-y-3 border-b border-border p-3">
+      <div className="space-y-3 border-b border-white/10 p-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-workspace-muted-on-dark" />
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t('pages.inbox.searchPlaceholder')}
             aria-label={t('pages.inbox.searchPlaceholder')}
-            className="h-9 pl-8"
+            className="h-9 border-white/10 bg-workspace-panel-row pl-8 text-workspace-ink-on-dark placeholder:text-workspace-muted-on-dark"
           />
         </div>
         <div className="flex items-center justify-between gap-2">
           <Tabs value={filter} onValueChange={(v) => onFilterChange(v as FilterTab)}>
-            <TabsList className="h-8">
-              <TabsTrigger value="all" className="h-6 px-2.5 text-xs">{t('pages.inbox.filterAll')}</TabsTrigger>
-              <TabsTrigger value="unread" className="h-6 px-2.5 text-xs">{t('pages.inbox.filterUnread')}</TabsTrigger>
+            <TabsList className="h-8 bg-workspace-panel-row">
+              <TabsTrigger value="all" className="h-6 px-2.5 text-xs text-workspace-label-on-dark data-[state=active]:bg-white data-[state=active]:text-workspace-ink">{t('pages.inbox.filterAll')}</TabsTrigger>
+              <TabsTrigger value="unread" className="h-6 px-2.5 text-xs text-workspace-label-on-dark data-[state=active]:bg-white data-[state=active]:text-workspace-ink">{t('pages.inbox.filterUnread')}</TabsTrigger>
             </TabsList>
           </Tabs>
           <button
             type="button"
             onClick={onNewConversation}
             aria-label={t('pages.inbox.newConversation')}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/10 text-workspace-label-on-dark transition-colors hover:bg-workspace-panel-row hover:text-workspace-ink-on-dark"
           >
             <MessageSquarePlus className="h-4 w-4" />
           </button>
@@ -91,7 +91,7 @@ export function ConversationList({
             />
           </div>
         ) : (
-          <ul>
+          <ul className="flex flex-col gap-1 p-2">
             {filtered.map((c) => {
               const isSelected = c.participant.user_id === selectedId;
               const isUnread = c.unreadCount > 0;
@@ -102,32 +102,32 @@ export function ConversationList({
                     type="button"
                     onClick={() => onSelect(c.participant.user_id)}
                     className={cn(
-                      'flex w-full items-start gap-3 border-b border-border/50 px-3 py-3 text-left transition-colors hover:bg-muted/50',
-                      isSelected && 'bg-primary/10 hover:bg-primary/10'
+                      'flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-workspace-panel-row',
+                      isSelected && 'bg-workspace-panel-row'
                     )}
                   >
                     <Avatar className="h-9 w-9 shrink-0">
                       <AvatarImage src={c.participant.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                      <AvatarFallback className="bg-workspace-accent/20 text-xs text-workspace-accent">
                         {getInitials(c.participant.full_name, c.participant.email)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={cn('truncate text-sm', isUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/90')}>
+                        <span className={cn('truncate text-sm', isUnread ? 'font-semibold text-workspace-ink-on-dark' : 'font-medium text-workspace-label-on-dark')}>
                           {displayName(c.participant.full_name, c.participant.email, t('pages.inbox.unknownColleague'))}
                         </span>
-                        <span className="shrink-0 text-[10px] text-muted-foreground">
+                        <span className="shrink-0 text-[10px] text-workspace-muted-on-dark">
                           {formatDistanceToNowStrict(new Date(c.lastMessage.created_at), { addSuffix: true, locale: dateFnsLocale })}
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
-                        {c.pinned && <Pin className="h-3 w-3 shrink-0 fill-current text-muted-foreground/60" />}
-                        <p className={cn('truncate text-xs', isUnread ? 'text-foreground/80' : 'text-muted-foreground')}>
+                        {c.pinned && <Pin className="h-3 w-3 shrink-0 fill-current text-workspace-muted-on-dark" />}
+                        <p className={cn('truncate text-xs', isUnread ? 'text-workspace-label-on-dark' : 'text-workspace-muted-on-dark')}>
                           {youPrefix}{c.lastMessage.content}
                         </p>
                         {isUnread && (
-                          <Badge variant="default" className="ml-auto h-4 min-w-4 shrink-0 justify-center rounded-full px-1 text-[10px]">
+                          <Badge className="ml-auto h-4 min-w-4 shrink-0 justify-center rounded-full bg-workspace-accent px-1 text-[10px] text-white hover:bg-workspace-accent">
                             {c.unreadCount}
                           </Badge>
                         )}

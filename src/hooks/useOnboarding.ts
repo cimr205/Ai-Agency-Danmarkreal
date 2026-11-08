@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { tx } from '@/lib/inlineI18n';
 
 export const ONBOARDING_STEPS = [
   { id: 'company', title: 'Virksomhed', description: 'Udfyld virksomhedsoplysninger' },
-  { id: 'team', title: 'Team', description: 'Inviter dine kollegaer' },
-  { id: 'leads', title: 'Leads', description: 'Opret dit første kundeemne' },
+  { id: 'team', title: 'Team', get description() { return tx('Inviter dine kollegaer', 'Invite your colleagues'); } },
+  { id: 'leads', title: 'Leads', get description() { return tx('Opret dit første kundeemne', 'Create your first lead'); } },
   { id: 'hr', title: 'HR', description: 'Tilføj medarbejderinformation' },
-  { id: 'done', title: 'Færdig', description: 'Du er klar til at bruge systemet' },
+  { id: 'done', get title() { return tx('Færdig', 'Done'); }, get description() { return tx('Du er klar til at bruge systemet', 'You are ready to use the system'); } },
 ];
 
 export function useOnboarding() {

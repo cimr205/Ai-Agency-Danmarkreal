@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
+import { t3 } from '@/lib/inlineI18n';
 
 export type SignalSeverity = "critical" | "high" | "medium" | "low" | "info";
 
@@ -66,16 +69,7 @@ interface CommandResult {
 }
 
 async function invoke<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("ai-operating-manager", { body });
-  if (error) {
-    const context = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context;
-    if (context?.json) {
-      const detail = await context.json().catch(() => null);
-      if (detail?.error) throw new Error(detail.error);
-    }
-    throw error;
-  }
-  return data as T;
+  return invokeFunction<T>("ai-operating-manager", { body });
 }
 
 export function useOperatingBrief() {
@@ -109,7 +103,7 @@ export function useOperatingCommand() {
   return useMutation({
     mutationFn: (text: string) => invoke<CommandResult>({ operation: "command", text }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["operating-manager"] }),
-    onError: (error: Error) => toast.error(error.message || "Kommandoen kunne ikke behandles"),
+    onError: (error) => showError(error, { module: "ai-operating-manager" }),
   });
 }
 
@@ -119,10 +113,10 @@ export function useOperatingAction() {
     mutationFn: ({ operation, actionId, input }: { operation: "approve" | "reject" | "retry" | "edit"; actionId: string; input?: Record<string, unknown> }) =>
       invoke<{ action?: OperatingAction; status?: string }>({ operation, actionId, ...(input ? { input } : {}) }),
     onSuccess: (_data, variables) => {
-      toast.success(variables.operation === "reject" ? "Forslaget er afvist" : variables.operation === "edit" ? "Forslaget er opdateret" : "Handlingen er udført og verificeret");
+      toast.success(variables.operation === "reject" ? t3("Forslaget er afvist", "The suggestion was rejected", "Der Vorschlag wurde abgelehnt") : variables.operation === "edit" ? t3("Forslaget er opdateret", "The suggestion was updated", "Der Vorschlag wurde aktualisiert") : t3("Handlingen er udført og verificeret", "The action was completed and verified", "Die Aktion wurde ausgeführt und geprüft"));
       queryClient.invalidateQueries({ queryKey: ["operating-manager"] });
       queryClient.invalidateQueries({ queryKey: ["autopilot-actions"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Handlingen fejlede"),
+    onError: (error) => showError(error, { module: "ai-operating-manager" }),
   });
 }

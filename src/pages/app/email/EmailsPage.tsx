@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Mail, RefreshCw, Star, AlertTriangle, CalendarDays, FileText, Clock, CheckCircle2, LogOut, Loader2, Info, ArrowRight, Reply } from 'lucide-react';
 import { openAmbientAI } from '@/components/workspace/AmbientAIBar';
@@ -19,6 +19,8 @@ import { MailSidebar, type FolderId } from '@/components/email/MailSidebar';
 import { EmailListPane, type Email, type ReadFilter } from '@/components/email/EmailListPane';
 import { EmailReaderPane } from '@/components/email/EmailReaderPane';
 import { ComposeDialog, type ComposeMode, type ComposePayload, parseRecipients } from '@/components/email/ComposeDialog';
+import { WorkspaceFrame } from '@/components/workspace/WorkspacePanel';
+import { t3 } from '@/lib/inlineI18n';
 
 export default function EmailsPage() {
   const { t, locale } = useI18n();
@@ -153,6 +155,8 @@ export default function EmailsPage() {
       toast.error(getErrorMessage(err) || t('pages.email.gmailConnectError'));
     }
   }, [connectGmail, t]);
+  const handleConnectRef = useRef(handleConnect);
+  handleConnectRef.current = handleConnect;
 
   const handleDisconnect = useCallback(async () => {
     try {
@@ -169,7 +173,17 @@ export default function EmailsPage() {
       const result = await syncEmails.mutateAsync(30);
       toast.success(t('pages.email.emailsSynced').replace('{count}', String(result.synced)));
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('pages.email.syncError'));
+      const msg = getErrorMessage(err) || '';
+      // Google revoked/expired the refresh token (invalid_grant) — syncing
+      // can never succeed again until the user signs in to Google again.
+      if (/invalid_grant|RECONNECT_REQUIRED/i.test(msg) || (err as { code?: string })?.code === 'GMAIL_RECONNECT_REQUIRED') {
+        toast.error(t3('Gmail-forbindelsen er udløbet. Forbind Gmail igen for at fortsætte synkroniseringen.', 'The Gmail connection has expired. Reconnect Gmail to keep syncing.', 'Die Gmail-Verbindung ist abgelaufen. Verbinden Sie Gmail erneut, um weiter zu synchronisieren.'), {
+          duration: 15000,
+          action: { label: t3('Forbind igen', 'Reconnect', 'Neu verbinden'), onClick: () => { void handleConnectRef.current(); } },
+        });
+        return;
+      }
+      toast.error(msg || t('pages.email.syncError'));
     }
   }, [syncEmails, t]);
 
@@ -300,7 +314,7 @@ export default function EmailsPage() {
   // inbox UI before we actually know the connection state.
   if (gmailAccount.isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
         </div>
@@ -315,7 +329,7 @@ export default function EmailsPage() {
   // Not connected
   if (!isConnected) {
     return (
-      <div className="space-y-6">
+      <div className="workspace-theme space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.email.smartInbox')}</h1>
           <p className="text-muted-foreground">{t('pages.email.connectSyncDesc')}</p>
@@ -389,16 +403,16 @@ export default function EmailsPage() {
       </div>
 
       {/* Three-pane inbox */}
-      <Card className="flex-1 overflow-hidden p-0">
-        <div className="flex h-[calc(100vh-14rem)] min-h-[560px] w-full">
+      <WorkspaceFrame className="flex-1 overflow-hidden">
+        <div className="flex h-[calc(100vh-14rem)] min-h-[560px] w-full gap-[10px]">
           {!isMobile && (
-            <div className="w-60 shrink-0 border-r border-border">
+            <div className="w-60 shrink-0 overflow-hidden rounded-[22px]">
               {sidebar}
             </div>
           )}
 
           {(!isMobile || mobileView === 'list') && (
-            <div className={`${isMobile ? 'w-full' : 'w-[360px] shrink-0 border-r border-border'}`}>
+            <div className={`overflow-hidden rounded-[22px] bg-background ${isMobile ? 'w-full' : 'w-[360px] shrink-0'}`}>
               <EmailListPane
                 title={folderTitle}
                 emails={visibleEmails}
@@ -421,7 +435,7 @@ export default function EmailsPage() {
           )}
 
           {(!isMobile || mobileView === 'reader') && (
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-[22px] bg-background">
               <EmailReaderPane
                 email={selectedEmail}
                 dateLocale={dateLocale}
@@ -447,7 +461,7 @@ export default function EmailsPage() {
             </div>
           )}
         </div>
-      </Card>
+      </WorkspaceFrame>
 
       {/* Mobile folder navigation */}
       <Sheet open={mobileFoldersOpen} onOpenChange={setMobileFoldersOpen}>

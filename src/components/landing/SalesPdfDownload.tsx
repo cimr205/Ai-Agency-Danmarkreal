@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
+import { tl } from '@/lib/inlineI18n';
 
 export function SalesPdfDownload() {
   const { t, locale } = useI18n();
@@ -44,15 +45,13 @@ export function SalesPdfDownload() {
     y += 30;
     doc.setFontSize(36);
     doc.setFont('helvetica', 'bold');
-    const title = locale === 'da' ? 'Din virksomhed.\nÉt system.' : 'Your business.\nOne system.';
+    const title = tl(locale, 'Din virksomhed.\nÉt system.', 'Your business.\nOne system.');
     doc.text(title, margin, y);
 
     y += 30;
     doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
-    const subtitle = locale === 'da'
-      ? 'CRM, HR, fakturering, marketing, AI, opgaver,\nkalender og email samlet i én platform.'
-      : 'CRM, HR, invoicing, marketing, AI, tasks,\ncalendar and email in one platform.';
+    const subtitle = tl(locale, 'CRM, HR, fakturering, marketing, AI, opgaver,\nkalender og email samlet i én platform.', 'CRM, HR, invoicing, marketing, AI, tasks,\ncalendar and email in one platform.');
     doc.text(subtitle, margin, y);
 
     y = h - 60;
@@ -74,7 +73,7 @@ export function SalesPdfDownload() {
     y = 30;
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Problemet' : 'The Problem', margin, y);
+    doc.text(tl(locale, 'Problemet', 'The Problem'), margin, y);
 
     y += 12;
     doc.setFontSize(11);
@@ -99,7 +98,7 @@ export function SalesPdfDownload() {
     doc.setTextColor(...dark);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Løsningen' : 'The Solution', margin, y);
+    doc.text(tl(locale, 'Løsningen', 'The Solution'), margin, y);
 
     y += 12;
     doc.setFontSize(11);
@@ -133,13 +132,13 @@ export function SalesPdfDownload() {
     doc.setTextColor(...dark);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Alt inkluderet' : 'Everything Included', margin, y);
+    doc.text(tl(locale, 'Alt inkluderet', 'Everything Included'), margin, y);
 
     y += 5;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...gray);
-    doc.text(locale === 'da' ? 'Én pris. Alle moduler. Ingen skjulte gebyrer.' : 'One price. All modules. No hidden fees.', margin, y);
+    doc.text(tl(locale, 'Én pris. Alle moduler. Ingen skjulte gebyrer.', 'One price. All modules. No hidden fees.'), margin, y);
 
     y += 15;
     const modules = locale === 'da' ? [
@@ -193,7 +192,7 @@ export function SalesPdfDownload() {
     doc.setTextColor(...dark);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Hvorfor os?' : 'Why Us?', margin, y);
+    doc.text(tl(locale, 'Hvorfor os?', 'Why Us?'), margin, y);
 
     y += 15;
     const whyUs = locale === 'da' ? [
@@ -228,17 +227,17 @@ export function SalesPdfDownload() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Simpel og gennemsigtig pris' : 'Simple and transparent pricing', margin + 15, y + 15);
+    doc.text(tl(locale, 'Simpel og gennemsigtig pris', 'Simple and transparent pricing'), margin + 15, y + 15);
 
     doc.setFontSize(32);
     doc.text('499 DKK', margin + 15, y + 35);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(locale === 'da' ? 'per bruger / måned' : 'per user / month', margin + 100, y + 35);
+    doc.text(tl(locale, 'per bruger / måned', 'per user / month'), margin + 100, y + 35);
 
     doc.setFontSize(10);
-    doc.text(locale === 'da' ? 'Alt inkluderet. Ingen bindingsperiode. Ingen skjulte gebyrer.' : 'Everything included. No commitment. No hidden fees.', margin + 15, y + 48);
+    doc.text(tl(locale, 'Alt inkluderet. Ingen bindingsperiode. Ingen skjulte gebyrer.', 'Everything included. No commitment. No hidden fees.'), margin + 15, y + 48);
 
     // ─── Page 5: CTA ────────────────
     doc.addPage();
@@ -249,16 +248,14 @@ export function SalesPdfDownload() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
-    const ctaTitle = locale === 'da' ? 'Klar til at forenkle\ndin virksomhed?' : 'Ready to simplify\nyour business?';
+    const ctaTitle = tl(locale, 'Klar til at forenkle\ndin virksomhed?', 'Ready to simplify\nyour business?');
     doc.text(ctaTitle, w / 2, y, { align: 'center' });
 
     y += 30;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(200, 210, 230);
-    const ctaSub = locale === 'da'
-      ? 'Start i dag og oplev forskellen fra dag ét.'
-      : 'Start today and experience the difference from day one.';
+    const ctaSub = tl(locale, 'Start i dag og oplev forskellen fra dag ét.', 'Start today and experience the difference from day one.');
     doc.text(ctaSub, w / 2, y, { align: 'center' });
 
     // CTA button
@@ -268,7 +265,7 @@ export function SalesPdfDownload() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(locale === 'da' ? 'Kom i gang nu →' : 'Get started now →', w / 2, y + 9.5, { align: 'center' });
+    doc.text(tl(locale, 'Kom i gang nu →', 'Get started now →'), w / 2, y + 9.5, { align: 'center' });
 
     y = h - 40;
     doc.setFontSize(10);

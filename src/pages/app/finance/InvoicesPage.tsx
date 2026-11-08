@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DecimalInput } from '@/components/shared/DecimalInput';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,17 +24,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, FileText, DollarSign, Printer, Trash2, Send, Mail, AlertCircle, ExternalLink, Upload, Download, UserPlus, Building2, User, Palette, Users, Check, Plug, RefreshCw, Briefcase, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 import { useLeads } from '@/hooks/api/useLeads';
 import { useDeals } from '@/hooks/api/useDeals';
 import { RelationshipChip } from '@/components/shared/RelationshipChip';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { toast } from 'sonner';
 import { useI18n, type Locale } from '@/lib/i18n';
-import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDocumentAmount } from '@/contexts/CurrencyContext';
 import { generateInvoicePdf, downloadPdf, getTemplateOptions, type InvoiceTemplate, type InvoicePdfData } from '@/lib/invoicePdf';
 import type { Tables } from '@/integrations/supabase/types';
 import { getErrorMessage } from '@/lib/errors';
 import { reportError } from '@/lib/sentry';
+import { dateLocaleTag, t3, tl } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 type Lead = Tables<'leads'>;
 
@@ -53,8 +59,7 @@ function getVatInfo(country: string, customerType: string): { rate: number; note
 }
 
 function useFormatCurrency() {
-  const { format } = useCurrency();
-  return useCallback((amount: number) => format(amount), [format]);
+  return useCallback((amount: number) => formatDocumentAmount(amount), []);
 }
 
 function buildPdfData(invoice: InvoiceWithCustomer, company: Company | null | undefined, formatCurrency: (n: number) => string, locale: string, statusLabels: Record<string, string>): InvoicePdfData {
@@ -85,6 +90,15 @@ function buildPdfData(invoice: InvoiceWithCustomer, company: Company | null | un
   };
 }
 
+const roundOre = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+// Without a due date an invoice can never become "overdue", so default to
+// the usual Danish 14 days net when none is picked.
+const defaultDueDate = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return localDateString(d);
+};
+
 export default function InvoicesPage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
@@ -111,7 +125,8 @@ export default function InvoicesPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [lines, setLines] = useState<InvoiceLine[]>([{ description: '', quantity: 1, unit_price: 0, total: 0 }]);
-  const [dueDate, setDueDate] = useState('');
+  // Prefilled with the 14-day default so the user sees the date that will be saved.
+  const [dueDate, setDueDate] = useState(defaultDueDate);
   const [notes, setNotes] = useState('');
   const [priceMode, setPriceMode] = useState<'excl' | 'incl'>('excl');
   const [createStep, setCreateStep] = useState<'details' | 'lines'>('details');
@@ -135,7 +150,12 @@ export default function InvoicesPage() {
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
       setIsCreateOpen(true);
+      // Client page → "Faktura" passes ?customer=<id>; preselect it instead
+      // of making the user pick the same client again.
+      const customerParam = searchParams.get('customer');
+      if (customerParam) setSelectedCustomerId(customerParam);
       searchParams.delete('create');
+      searchParams.delete('customer');
       setSearchParams(searchParams, { replace: true });
     }
   }, []);
@@ -240,7 +260,7 @@ export default function InvoicesPage() {
     setEmailTo(customerEmail);
     const companyName = company?.name || 'Company';
     setEmailSubject(t('pages.invoices.emailSubjectDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{company}}', companyName));
-    setEmailMessage(t('pages.invoices.emailMessageDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{amount}}', formatCurrency(Number(invoice.amount))).replace('{{dueDate}}', invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '–').replace('{{company}}', companyName));
+    setEmailMessage(t('pages.invoices.emailMessageDefault').replace('{{invoiceNo}}', invoice.invoice_number).replace('{{amount}}', formatCurrency(Number(invoice.amount))).replace('{{dueDate}}', invoice.due_date ? new Date(invoice.due_date).toLocaleDateString(dateLocaleTag()) : '–').replace('{{company}}', companyName));
     setEmailDialogInvoice(invoice);
   };
 
@@ -267,7 +287,7 @@ export default function InvoicesPage() {
 
       // Build HTML email with PDF link
       const htmlBody = emailMessage.replace(/\n/g, '<br/>') +
-        (pdfUrl ? `<br/><br/><a href="${pdfUrl}" style="display:inline-block;padding:12px 24px;background:#1e40af;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">📄 ${locale === 'da' ? 'Download faktura PDF' : 'Download Invoice PDF'}</a>` : '');
+        (pdfUrl ? `<br/><br/><a href="${pdfUrl}" style="display:inline-block;padding:12px 24px;background:#1e40af;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">📄 ${tl(locale, 'Download faktura PDF', 'Download Invoice PDF')}</a>` : '');
 
       await sendEmail.mutateAsync({ to: emailTo, subject: emailSubject, message: htmlBody });
       if (emailDialogInvoice?.status === 'draft') await updateStatus.mutateAsync({ id: emailDialogInvoice.id, status: 'sent' });
@@ -328,10 +348,13 @@ export default function InvoicesPage() {
     return getVatInfo(selectedCustomer.country || 'DK', selectedCustomer.customer_type || 'business');
   }, [selectedCustomer]);
 
-  const lineSubtotal = lines.reduce((s, l) => s + l.total, 0);
-  const subtotal = priceMode === 'incl' ? lineSubtotal / (1 + vatInfo.rate / 100) : lineSubtotal;
-  const vatAmount = subtotal * (vatInfo.rate / 100);
-  const totalAmount = subtotal + vatAmount;
+  // All money is rounded to øre (2 decimals) so stored subtotal + vat_amount
+  // always equals amount — previously vat_amount was saved unrounded
+  // (e.g. 24.9975) and drifted from the total in exports/accounting sync.
+  const lineSubtotal = roundOre(lines.reduce((s, l) => s + l.total, 0));
+  const subtotal = roundOre(priceMode === 'incl' ? lineSubtotal / (1 + vatInfo.rate / 100) : lineSubtotal);
+  const vatAmount = roundOre(subtotal * (vatInfo.rate / 100));
+  const totalAmount = roundOre(subtotal + vatAmount);
 
   const updateLine = (index: number, field: keyof InvoiceLine, value: string | number) => {
     const updated = [...lines];
@@ -342,7 +365,7 @@ export default function InvoicesPage() {
 
   const addLine = () => setLines([...lines, { description: '', quantity: 1, unit_price: 0, total: 0 }]);
   const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
-  const resetForm = () => { setSelectedCustomerId(''); setLines([{ description: '', quantity: 1, unit_price: 0, total: 0 }]); setDueDate(''); setNotes(''); setPriceMode('excl'); setCreateStep('details'); setShowNewCustomer(false); setLeadSearch(''); };
+  const resetForm = () => { setSelectedCustomerId(''); setLines([{ description: '', quantity: 1, unit_price: 0, total: 0 }]); setDueDate(defaultDueDate()); setNotes(''); setPriceMode('excl'); setCreateStep('details'); setShowNewCustomer(false); setLeadSearch(''); };
 
   // Create invoice directly from a lead — auto-creates a customer if needed
   const handleSelectLead = async (lead: Lead) => {
@@ -372,9 +395,12 @@ export default function InvoicesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedCustomerId || lines.length === 0 || lines.some(l => !l.description || l.total <= 0)) { toast.error(t('pages.invoices.selectError')); return; }
+    if (!selectedCustomerId || lines.length === 0) { toast.error(t('pages.invoices.selectError')); return; }
+    // Say which line is wrong instead of the generic "select a customer"
+    // message, which showed even when a customer was already chosen.
+    if (lines.some(l => !l.description.trim() || l.total <= 0)) { toast.error(t('pages.invoices.lineInvalid')); return; }
     try {
-      await createInvoice.mutateAsync({ customer_id: selectedCustomerId, lines, subtotal, vat_rate: vatInfo.rate, vat_amount: vatAmount, amount: totalAmount, customer_country: selectedCustomer?.country || 'DK', customer_type: selectedCustomer?.customer_type || 'business', vat_note: vatInfo.note || undefined, due_date: dueDate || undefined, notes: notes || undefined });
+      await createInvoice.mutateAsync({ customer_id: selectedCustomerId, lines, subtotal, vat_rate: vatInfo.rate, vat_amount: vatAmount, amount: totalAmount, customer_country: selectedCustomer?.country || 'DK', customer_type: selectedCustomer?.customer_type || 'business', vat_note: vatInfo.note || undefined, due_date: dueDate || defaultDueDate(), notes: notes || undefined });
       toast.success(t('pages.invoices.created_success'));
       resetForm(); setIsCreateOpen(false);
     } catch { toast.error(t('pages.invoices.created_error')); }
@@ -388,7 +414,7 @@ export default function InvoicesPage() {
   }), [invoices]);
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.invoices.title')}</h1>
@@ -464,7 +490,7 @@ export default function InvoicesPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                       <Palette className="h-4 w-4" />
-                      {locale === 'da' ? 'Vælg fakturadesign' : 'Choose invoice design'}
+                      {tl(locale, 'Vælg fakturadesign', 'Choose invoice design')}
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                       {templateOptions.map(o => {
@@ -533,6 +559,14 @@ export default function InvoicesPage() {
                           {company?.email && <p className="text-sm text-muted-foreground">{company.email}</p>}
                         </div>
                       </div>
+                      {/* A Danish invoice must show the seller's CVR and address. */}
+                      {(!company?.cvr || !company?.address) && (
+                        <p className="mt-3 flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                          {t('pages.invoices.senderIncomplete')}
+                          <a className="ml-auto underline" href={`/${locale}/app/settings/company`}>{t('pages.invoices.senderIncompleteLink')}</a>
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -547,21 +581,21 @@ export default function InvoicesPage() {
                         <>
                           {/* Lead picker — search and pick a lead to invoice */}
                           <div className="space-y-2">
-                            <Label className="flex items-center gap-2"><Users className="h-3.5 w-3.5" />{locale === 'da' ? 'Find lead' : 'Find lead'}</Label>
+                            <Label className="flex items-center gap-2"><Users className="h-3.5 w-3.5" />{tl(locale, 'Find lead', 'Find lead')}</Label>
                             <Popover open={leadPickerOpen} onOpenChange={setLeadPickerOpen}>
                               <PopoverTrigger asChild>
                                 <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
                                   <span className="flex items-center gap-2 text-muted-foreground">
                                     <Search className="h-3.5 w-3.5" />
-                                    {locale === 'da' ? 'Søg efter et lead at fakturere…' : 'Search a lead to invoice…'}
+                                    {tl(locale, 'Søg efter et lead at fakturere…', 'Search a lead to invoice…')}
                                   </span>
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                 <Command shouldFilter={false}>
-                                  <CommandInput placeholder={locale === 'da' ? 'Søg navn, email, firma…' : 'Search name, email, company…'} value={leadSearch} onValueChange={setLeadSearch} />
+                                  <CommandInput placeholder={tl(locale, 'Søg navn, email, firma…', 'Search name, email, company…')} value={leadSearch} onValueChange={setLeadSearch} />
                                   <CommandList>
-                                    <CommandEmpty>{locale === 'da' ? 'Ingen leads fundet' : 'No leads found'}</CommandEmpty>
+                                    <CommandEmpty>{tl(locale, 'Ingen leads fundet', 'No leads found')}</CommandEmpty>
                                     <CommandGroup>
                                       {leads.slice(0, 25).map((lead: Lead) => (
                                         <CommandItem key={lead.id} value={lead.id} onSelect={() => handleSelectLead(lead)} className="flex items-start justify-between gap-3">
@@ -577,7 +611,7 @@ export default function InvoicesPage() {
                                 </Command>
                               </PopoverContent>
                             </Popover>
-                            <p className="text-xs text-muted-foreground">{locale === 'da' ? 'Vælger du et lead, oprettes en kunde automatisk.' : 'Picking a lead auto-creates a customer.'}</p>
+                            <p className="text-xs text-muted-foreground">{tl(locale, 'Vælger du et lead, oprettes en kunde automatisk.', 'Picking a lead auto-creates a customer.')}</p>
                           </div>
 
                           <Separator />
@@ -598,9 +632,9 @@ export default function InvoicesPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                   <Command>
-                                    <CommandInput placeholder={locale === 'da' ? 'Søg klient…' : 'Search client…'} value={customerSearch} onValueChange={setCustomerSearch} />
+                                    <CommandInput placeholder={tl(locale, 'Søg klient…', 'Search client…')} value={customerSearch} onValueChange={setCustomerSearch} />
                                     <CommandList>
-                                      <CommandEmpty>{locale === 'da' ? 'Ingen klienter fundet' : 'No clients found'}</CommandEmpty>
+                                      <CommandEmpty>{tl(locale, 'Ingen klienter fundet', 'No clients found')}</CommandEmpty>
                                       <CommandGroup>
                                         {(customers ?? []).map(c => (
                                           <CommandItem
@@ -657,22 +691,20 @@ export default function InvoicesPage() {
                               </Select>
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">{locale === 'da' ? 'Telefon' : 'Phone'} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
+                              <Label className="text-xs">{tl(locale, 'Telefon', 'Phone')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
                               <Input value={newCust.phone} onChange={e => setNewCust({ ...newCust, phone: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">{t('pages.invoices.newCustomerVat')} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
+                              <Label className="text-xs">{t('pages.invoices.newCustomerVat')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
                               <Input value={newCust.vat_number} onChange={e => setNewCust({ ...newCust, vat_number: e.target.value })} />
                             </div>
                             <div className="space-y-1 sm:col-span-2">
-                              <Label className="text-xs">{locale === 'da' ? 'Adresse' : 'Address'} <span className="text-muted-foreground">({locale === 'da' ? 'valgfri' : 'optional'})</span></Label>
-                              <Input value={newCust.address} onChange={e => setNewCust({ ...newCust, address: e.target.value })} placeholder={locale === 'da' ? 'Hovedgaden 1, 1000 København' : 'Main St 1, 1000 Copenhagen'} />
+                              <Label className="text-xs">{tl(locale, 'Adresse', 'Address')} <span className="text-muted-foreground">({tl(locale, 'valgfri', 'optional')})</span></Label>
+                              <Input value={newCust.address} onChange={e => setNewCust({ ...newCust, address: e.target.value })} placeholder={tl(locale, 'Hovedgaden 1, 1000 København', 'Main St 1, 1000 Copenhagen')} />
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {locale === 'da'
-                              ? 'Bekræft kunden nedenfor, før du kan fortsætte til fakturalinjer.'
-                              : 'Confirm the customer below before you can continue to invoice lines.'}
+                            {tl(locale, 'Bekræft kunden nedenfor, før du kan fortsætte til fakturalinjer.', 'Confirm the customer below before you can continue to invoice lines.')}
                           </p>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={handleCreateCustomerInline} disabled={createCustomer.isPending || !newCust.name || !newCust.email}>
@@ -721,8 +753,8 @@ export default function InvoicesPage() {
                     {lines.map((line, i) => (
                       <div key={i} className="grid gap-2 grid-cols-[1fr_80px_100px_100px_32px] items-end">
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.description')}</Label>}<Input value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} placeholder={t('pages.invoices.productPlaceholder')} /></div>
-                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<Input type="number" min={1} value={line.quantity} onChange={e => updateLine(i, 'quantity', Number(e.target.value))} /></div>
-                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<Input type="number" min={0} value={line.unit_price} onChange={e => updateLine(i, 'unit_price', Number(e.target.value))} /></div>
+                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.quantity')}</Label>}<DecimalInput min={0} value={line.quantity} onValueChange={v => updateLine(i, 'quantity', v)} /></div>
+                        <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.unitPrice')}</Label>}<DecimalInput min={0} value={line.unit_price} onValueChange={v => updateLine(i, 'unit_price', v)} /></div>
                         <div>{i === 0 && <Label className="text-xs text-muted-foreground">{t('pages.invoices.lineTotal')}</Label>}<Input value={formatCurrency(line.total)} readOnly className="bg-muted/50" /></div>
                         <Button variant="ghost" size="icon" aria-label={t('common.delete')} onClick={() => removeLine(i)} disabled={lines.length <= 1} className="h-10 w-10"><Trash2 className="h-4 w-4" /></Button>
                       </div>
@@ -753,12 +785,16 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><FileText className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalInvoices')}</p><p className="text-2xl font-bold">{invoiceStats.total}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-success" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.paid')}</p><p className="text-2xl font-bold text-success">{formatCurrency(invoiceStats.paid)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-6 w-6 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.totalAmount')}</p><p className="text-2xl font-bold">{formatCurrency(invoiceStats.totalAmount)}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center"><FileText className="h-6 w-6 text-destructive" /></div><div><p className="text-sm text-muted-foreground">{t('pages.invoices.overdue')}</p><p className="text-2xl font-bold text-destructive">{invoiceStats.overdue}</p></div></div></CardContent></Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-4">
+            <WorkspaceTile label={t('pages.invoices.totalInvoices')} value={invoiceStats.total} active />
+            <WorkspaceTile label={t('pages.invoices.paid')} value={formatCurrency(invoiceStats.paid)} />
+            <WorkspaceTile label={t('pages.invoices.totalAmount')} value={formatCurrency(invoiceStats.totalAmount)} />
+            <WorkspaceTile label={t('pages.invoices.overdue')} value={invoiceStats.overdue} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Search & Filter */}
       <div className="flex items-center gap-4 flex-wrap">
@@ -766,15 +802,18 @@ export default function InvoicesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder={t('pages.invoices.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList>
-            <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
-            <TabsTrigger value="draft">{t('pages.invoices.statusDraft')}</TabsTrigger>
-            <TabsTrigger value="sent">{t('pages.invoices.statusSent')}</TabsTrigger>
-            <TabsTrigger value="paid">{t('pages.invoices.statusPaid')}</TabsTrigger>
-            <TabsTrigger value="overdue">{t('pages.invoices.statusOverdue')}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <SegmentedControl
+          layoutId="invoicesStatusPill"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: 'all', label: t('common.all') },
+            { value: 'draft', label: t('pages.invoices.statusDraft') },
+            { value: 'sent', label: t('pages.invoices.statusSent') },
+            { value: 'paid', label: t('pages.invoices.statusPaid') },
+            { value: 'overdue', label: t('pages.invoices.statusOverdue') },
+          ]}
+        />
       </div>
 
       {draftIdsVisible.length > 0 && (
@@ -844,11 +883,11 @@ export default function InvoicesPage() {
                 <TableCell className="text-right">{formatCurrency(Number(invoice.vat_amount || 0))}</TableCell>
                 <TableCell className="text-right font-medium">{formatCurrency(Number(invoice.amount))}</TableCell>
                 <TableCell><StatusBadge status={effStatus(invoice)} label={statusLabels[effStatus(invoice)]} /></TableCell>
-                <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : '–'}</TableCell>
+                <TableCell className="text-muted-foreground">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString(dateLocaleTag()) : '–'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
                     {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                      <Button variant="ghost" size="icon" title={locale === 'da' ? 'Åbn Stripe-betaling' : 'Open Stripe payment'} onClick={async () => {
+                      <Button variant="ghost" size="icon" title={tl(locale, 'Åbn Stripe-betaling', 'Open Stripe payment')} onClick={async () => {
                         try {
                           const checkout = await createCheckout.mutateAsync(invoice.id);
                           window.open(checkout.checkout_url, '_blank', 'noopener,noreferrer');
@@ -858,11 +897,30 @@ export default function InvoicesPage() {
                       </Button>
                     )}
                     {invoice.status !== 'paid' && (
-                      <Button variant="ghost" size="icon" title={t('profile.markAsPaid')} onClick={async () => {
-                        try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t('profile.markAsPaid')); } catch { toast.error(t('common.error')); }
-                      }}>
-                        <DollarSign className="h-4 w-4 text-success" />
-                      </Button>
+                      // Registers a payment for the full remaining amount, so ask
+                      // first — it used to happen on a single stray click, even
+                      // on drafts that were never sent.
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" title={t('profile.markAsPaid')}>
+                            <DollarSign className="h-4 w-4 text-success" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('pages.invoices.confirmMarkPaidTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('pages.invoices.confirmMarkPaidDesc')} ({invoice.invoice_number} · {formatCurrency(Number(invoice.amount))}){invoice.status === 'draft' ? ' — ' + t('pages.invoices.confirmMarkPaidDraft') : ''}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={async () => {
+                              try { await updateStatus.mutateAsync({ id: invoice.id, status: 'paid' }); toast.success(t3('Markeret som betalt', 'Marked as paid', 'Als bezahlt markiert')); } catch { toast.error(t('common.error')); }
+                            }}>{t('profile.markAsPaid')}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                     <Button variant="ghost" size="icon" title={t('pages.invoices.sendEmail')} onClick={() => openEmailDialog(invoice)}>
                       <Send className="h-4 w-4" />
@@ -870,6 +928,9 @@ export default function InvoicesPage() {
                     <Button variant="ghost" size="icon" title={t('pages.invoices.generatePdf')} onClick={() => handleDownloadPdf(invoice)}>
                       <Download className="h-4 w-4" />
                     </Button>
+                    {/* A paid (booked) invoice must not be deleted — bookkeeping
+                        rules require it to be credited/voided instead. */}
+                    {invoice.status !== 'paid' && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" title={t('common.delete') || 'Slet'} className="text-muted-foreground hover:text-destructive">
@@ -878,9 +939,9 @@ export default function InvoicesPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>{t('common.confirmDelete') || 'Slet faktura?'}</AlertDialogTitle>
+                          <AlertDialogTitle>{t('common.confirmDelete') || t3("Slet faktura?", "Delete invoice?", "Rechnung löschen?")}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {(t('common.confirmDeleteDesc') || 'Denne handling kan ikke fortrydes.')} ({invoice.invoice_number})
+                            {(t('common.confirmDeleteDesc') || t3("Denne handling kan ikke fortrydes.", "This action cannot be undone.", "Diese Aktion kann nicht rückgängig gemacht werden."))} ({invoice.invoice_number})
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -901,6 +962,7 @@ export default function InvoicesPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -939,13 +1001,13 @@ export default function InvoicesPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <FileText className="h-3.5 w-3.5" />
-                  {locale === 'da' ? 'PDF vedhæftes som link' : 'PDF attached as link'}
+                  {tl(locale, 'PDF vedhæftes som link', 'PDF attached as link')}
                 </div>
               </div>
 
               {/* Template selector for email PDF */}
               <div className="flex items-center gap-2">
-                <Label className="text-xs whitespace-nowrap">{locale === 'da' ? 'PDF skabelon' : 'PDF Template'}:</Label>
+                <Label className="text-xs whitespace-nowrap">{tl(locale, 'PDF skabelon', 'PDF Template')}:</Label>
                 <Select value={pdfTemplate} onValueChange={(v) => setPdfTemplate(v as InvoiceTemplate)}>
                   <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1015,7 +1077,7 @@ export default function InvoicesPage() {
                 {(selectedInvoice.quotes || selectedInvoice.quotes?.deal_id) && (
                   <div className="flex flex-wrap gap-1.5">
                     {selectedInvoice.quotes && (
-                      <RelationshipChip icon={FileText} label={locale === 'da' ? 'Tilbud' : 'Quote'} value={selectedInvoice.quotes.title} />
+                      <RelationshipChip icon={FileText} label={tl(locale, 'Tilbud', 'Quote')} value={selectedInvoice.quotes.title} />
                     )}
                     {selectedInvoice.quotes?.deal_id && (() => {
                       const deal = allDeals?.find((d) => d.id === selectedInvoice.quotes!.deal_id);
@@ -1030,11 +1092,11 @@ export default function InvoicesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.invoices.issued')}</Label>
-                    <p className="text-sm font-medium">{selectedInvoice.issued_at ? new Date(selectedInvoice.issued_at).toLocaleDateString() : '–'}</p>
+                    <p className="text-sm font-medium">{selectedInvoice.issued_at ? new Date(selectedInvoice.issued_at).toLocaleDateString(dateLocaleTag()) : '–'}</p>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">{t('pages.invoices.dueDate')}</Label>
-                    <p className="text-sm font-medium">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : '–'}</p>
+                    <p className="text-sm font-medium">{selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString(dateLocaleTag()) : '–'}</p>
                   </div>
                 </div>
 
@@ -1091,7 +1153,7 @@ export default function InvoicesPage() {
                           <div key={p.id} className="flex items-center gap-2 text-sm">
                             <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                             <span className="flex-1">{formatCurrency(Number(p.amount))}</span>
-                            <span className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '–'}</span>
+                            <span className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString(dateLocaleTag()) : '–'}</span>
                             <StatusBadge status={p.status} />
                           </div>
                         ))}
@@ -1147,15 +1209,13 @@ export default function InvoicesPage() {
                         updated[i] = { ...updated[i], description: e.target.value };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Input type="number" min={1} value={line.quantity} onChange={e => {
+                      <DecimalInput min={0} value={line.quantity} onValueChange={qty => {
                         const updated = [...editingInvoice.editLines];
-                        const qty = Number(e.target.value);
                         updated[i] = { ...updated[i], quantity: qty, total: qty * updated[i].unit_price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
-                      <Input type="number" min={0} value={line.unit_price} onChange={e => {
+                      <DecimalInput min={0} value={line.unit_price} onValueChange={price => {
                         const updated = [...editingInvoice.editLines];
-                        const price = Number(e.target.value);
                         updated[i] = { ...updated[i], unit_price: price, total: updated[i].quantity * price };
                         setEditingInvoice({ ...editingInvoice, editLines: updated });
                       }} />
@@ -1180,17 +1240,17 @@ export default function InvoicesPage() {
                     setSavingEdit(true);
                     try {
                       const editLines = editingInvoice.editLines;
-                      const editSubtotal = editLines.reduce((s, l) => s + l.total, 0);
+                      const editSubtotal = roundOre(editLines.reduce((s, l) => s + l.total, 0));
                       const editVatRate = editingInvoice.vat_rate || 25;
-                      const editVatAmount = editSubtotal * (editVatRate / 100);
-                      const editTotal = editSubtotal + editVatAmount;
+                      const editVatAmount = roundOre(editSubtotal * (editVatRate / 100));
+                      const editTotal = roundOre(editSubtotal + editVatAmount);
 
                       const { error } = await supabase.from('invoices').update({
                         lines: editLines as unknown as Tables<'invoices'>['lines'],
                         subtotal: editSubtotal,
                         vat_amount: editVatAmount,
                         amount: editTotal,
-                        due_date: editingInvoice.editDueDate || null,
+                        due_date: editingInvoice.editDueDate || defaultDueDate(),
                         notes: editingInvoice.editNotes || null,
                       }).eq('id', editingInvoice.id);
                       if (error) throw error;

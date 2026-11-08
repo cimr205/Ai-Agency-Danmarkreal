@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Copy, Check, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
+import { explainError } from "@/lib/errors";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
-import { getErrorMessage } from '@/lib/errors';
 
 type AdOutput = {
   headlines: string[];
@@ -47,18 +48,15 @@ export function MetaAIAdGenerator() {
     setOutput(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("meta-ads-ai", {
+      const data = await invokeFunction<AdOutput & { error?: string }>("meta-ads-ai", {
         body: { type: "generate", product, audience, offer, objective, tone, cta },
       });
-
-      if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.error);
 
-      setOutput(data as AdOutput);
+      setOutput(data);
     } catch (e) {
-      const msg = (getErrorMessage(e) || (isDa ? "Generering fejlede" : "Generation failed"));
-      setError(msg);
-      toast({ title: isDa ? "AI-genereringsfejl" : "AI Generation Error", description: msg, variant: "destructive" });
+      setError(explainError(e).message);
+      showError(e, { module: "meta-ads-ai" });
     } finally {
       setLoading(false);
     }

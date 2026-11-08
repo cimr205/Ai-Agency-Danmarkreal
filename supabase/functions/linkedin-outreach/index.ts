@@ -142,7 +142,7 @@ Svar KUN med gyldig JSON med nøglerne "connection_note" og "followup_message".`
           const response = await fetch(ai.url, {
             method: "POST",
             headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: ai.model, reasoning: { effort: "none" }, messages: [{ role: "user", content: prompt }] }),
+            body: JSON.stringify({ model: ai.model, models: ai.models, reasoning: { effort: "none" }, messages: [{ role: "user", content: prompt }] }),
           });
           if (!response.ok) {
             const { message } = await describeOpenAIError(response, ai.provider);

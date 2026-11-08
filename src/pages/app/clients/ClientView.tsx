@@ -30,8 +30,10 @@ export default function ClientView() {
     if (!data) return null;
     const signals = deriveClientSignals(data);
     const summary = buildAiSummary({ customer: data.customer, stats: data.stats, signals });
-    const lastTouchAt = data.stats.lastTouch ? new Date(data.stats.lastTouch).getTime() : 0;
-    const days = lastTouchAt ? Math.floor((Date.now() - lastTouchAt) / 86400000) : 999;
+    // A client never touched yet is measured from when it was created — a
+    // brand-new client used to read as "INAKTIV RELATION" (999 days).
+    const lastTouchAt = data.stats.lastTouch ? new Date(data.stats.lastTouch).getTime() : new Date(data.customer.created_at).getTime();
+    const days = Number.isFinite(lastTouchAt) ? Math.max(0, Math.floor((Date.now() - lastTouchAt) / 86400000)) : 999;
     return { signals, summary, daysSinceTouch: days };
   }, [data]);
 

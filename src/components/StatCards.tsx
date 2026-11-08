@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export type StatCard = {
   title: string;
@@ -37,7 +38,7 @@ function AnimatedNumber({ value }: { value: string }) {
       if (isDecimal) {
         setDisplay(`${prefix}${current.toFixed(1).replace('.', ',')}${suffix}`);
       } else {
-        const formatted = Math.round(current).toLocaleString('da-DK');
+        const formatted = Math.round(current).toLocaleString(dateLocaleTag());
         setDisplay(`${prefix}${formatted}${suffix}`);
       }
 

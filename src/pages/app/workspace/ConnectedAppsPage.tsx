@@ -20,6 +20,7 @@ import {
 import { AiClientsPanel } from "@/components/workspace/AiClientsPanel";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { isLocale } from "@/lib/i18n";
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 // Topic buckets tailored to this app's own modules (CRM, Marketing, Finance,
 // HR, workspace tools) so the same grouping the user already thinks in
@@ -183,7 +184,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "calendar",
     title: "Kalender",
-    outcome: "Jeres møder fra Google Calendar eller Outlook vises automatisk på Kalender-siden.",
+    outcome: tx("Jeres møder fra Google Calendar eller Outlook vises automatisk på Kalender-siden.", "Your meetings from Google Calendar or Outlook appear automatically on the Calendar page."),
     providers: ["googlecalendar", "outlook"],
     pageLink: "work/calendar",
     icon: Calendar,
@@ -191,7 +192,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "documents",
     title: "Dokumenter",
-    outcome: "Jeres sider fra Notion vises automatisk på Dokumenter-siden.",
+    outcome: tx("Jeres sider fra Notion vises automatisk på Dokumenter-siden.", "Your Notion pages appear automatically on the Documents page."),
     providers: ["notion"],
     pageLink: "workspace/documents",
     icon: FileText,
@@ -199,7 +200,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "crmSync",
     title: "CRM-synkronisering",
-    outcome: "Kontakter fra HubSpot importeres automatisk som leads på CRM-siden.",
+    outcome: tx("Kontakter fra HubSpot importeres automatisk som leads på CRM-siden.", "HubSpot contacts are imported automatically as leads in the CRM."),
     providers: ["hubspot", "pipedrive", "salesforce"],
     pageLink: "crm/leads",
     icon: Database,
@@ -207,7 +208,7 @@ const LIVE_MODULES: LiveModule[] = [
   {
     module: "finance",
     title: "Betalinger",
-    outcome: "Stripe-betalinger matches automatisk til jeres fakturaer og markerer dem betalt.",
+    outcome: tx("Stripe-betalinger matches automatisk til jeres fakturaer og markerer dem betalt.", "Stripe payments are matched to your invoices automatically and mark them paid."),
     providers: ["stripe"],
     pageLink: "finance/invoices",
     icon: CreditCard,
@@ -215,14 +216,14 @@ const LIVE_MODULES: LiveModule[] = [
 ];
 
 const catalog: Catalog[] = [
-  { provider: "gmail",          name: "Gmail",           surface: "Indbakke · Email · Tråde",   icon: Mail,           category: "Communication" },
+  { provider: "gmail",          name: "Gmail",           surface: tx("Indbakke · Email · Tråde", "Inbox · Email · Threads"),   icon: Mail,           category: "Communication" },
   { provider: "outlook",        name: "Outlook",         surface: "Mail · Kalender",             icon: Mail,           category: "Communication" },
   { provider: "slack",          name: "Slack",           surface: "Beskeder · Notifikationer",   icon: MessagesSquare, category: "Communication" },
-  { provider: "googlecalendar", name: "Google Calendar", surface: "Møder · Booking",             icon: Calendar,       category: "Calendar" },
+  { provider: "googlecalendar", name: "Google Calendar", surface: tx("Møder · Booking", "Meetings · Booking"),             icon: Calendar,       category: "Calendar" },
   { provider: "stripe",         name: "Stripe",          surface: "Payments · Subscriptions",    icon: CreditCard,     category: "Finance" },
   { provider: "hubspot",        name: "HubSpot",         surface: "CRM sync · Leads",            icon: Database,       category: "Sales" },
   { provider: "pipedrive",      name: "Pipedrive",       surface: "CRM sync · Deals",            icon: Database,       category: "Sales" },
-  { provider: "notion",         name: "Notion",          surface: "Dokumenter · Klient-noter",   icon: FileText,       category: "Documents" },
+  { provider: "notion",         name: "Notion",          get surface() { return tx("Dokumenter · Klient-noter", "Documents · Client notes"); }, icon: FileText,       category: "Documents" },
   { provider: "googledrive",    name: "Google Drive",    surface: "Filer · Klient-data",         icon: Cloud,          category: "Documents" },
   { provider: "github",         name: "GitHub",          surface: "Issues · Releases",           icon: Github,         category: "Developer" },
   { provider: "linkedin",       name: "LinkedIn",        surface: "Outreach · Berigelse",        icon: Linkedin,       category: "Marketing" },
@@ -303,29 +304,28 @@ export default function ConnectedAppsPage() {
     <div className="space-y-14 pb-20">
       <header className="space-y-6">
         <div className="text-[10px] font-mono uppercase tracking-[0.24em] text-muted-foreground/50">
-          Workspace · Integrationslag
+          Workspace · {tx("Integrationslag", "Integration layer")}
         </div>
         <div className="flex items-end justify-between gap-8 flex-wrap">
           <div className="space-y-3 max-w-2xl">
             <h1 className="text-4xl font-semibold tracking-tight font-display">
-              Forbundne apps
+              {tx("Forbundne apps", "Connected apps")}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Fire ting herunder gør faktisk noget lige nu — Kalender, Dokumenter, CRM-synkronisering og Betalinger —
-              resten af kataloget kan I forbinde, men det er ikke koblet til en funktion i CRM'et endnu.
+              {tx("Fire ting herunder gør faktisk noget lige nu — Kalender, Dokumenter, CRM-synkronisering og Betalinger — resten af kataloget kan I forbinde, men det er ikke koblet til en funktion i CRM'et endnu.", "Four things below actually do something right now — Calendar, Documents, CRM sync and Payments. You can connect the rest of the catalogue, but it isn't wired to a CRM feature yet.")}
             </p>
           </div>
           <div className="flex items-center gap-8 text-sm">
             <Pulse value={liveCount} label="Live forbindelser" />
-            <Pulse value={fullCatalog.length - liveCount} label="Tilgængelige" muted />
-            <Pulse value={fullCatalog.length} label={toolkitsLoading ? "Henter…" : "I kataloget"} muted />
+            <Pulse value={fullCatalog.length - liveCount} label={tx("Tilgængelige", "Available")} muted />
+            <Pulse value={fullCatalog.length} label={toolkitsLoading ? tx("Henter…", "Loading…") : tx("I kataloget", "In the catalogue")} muted />
           </div>
         </div>
 
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
           <Input
-            placeholder="Søg systemer, signaler, datakilder…"
+            placeholder={tx("Søg systemer, signaler, datakilder…", "Search systems, signals, data sources…")}
             value={q} onChange={(e) => setQ(e.target.value)}
             className="pl-9 bg-card/40 border-border/40 focus-visible:ring-1 focus-visible:ring-primary/40"
           />
@@ -334,13 +334,13 @@ export default function ConnectedAppsPage() {
 
       {error && (
         <ErrorState
-          title="Kunne ikke hente jeres forbindelser — modulerne nedenfor kan vise forkert status indtil dette virker igen."
+          title={tx("Kunne ikke hente jeres forbindelser — modulerne nedenfor kan vise forkert status indtil dette virker igen.", "Could not load your connections — the modules below may show the wrong status until this works again.")}
           onRetry={() => refetch()}
         />
       )}
 
       <section className="space-y-3">
-        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">Aktive moduler</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50">{tx("Aktive moduler", "Active modules")}</div>
         <div className="grid gap-3 sm:grid-cols-2">
           {LIVE_MODULES.map((m) => {
             const modAvail = availability?.modules.find((x) => x.module === m.module);
@@ -357,9 +357,9 @@ export default function ConnectedAppsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{m.title}</span>
                       {isOn ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500"><CheckCircle2 className="h-3 w-3" /> Aktiv via {activeProvider}</span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-500"><CheckCircle2 className="h-3 w-3" /> {tx("Aktiv via", "Active via")} {activeProvider}</span>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">Ikke forbundet</span>
+                        <span className="text-[10px] text-muted-foreground">{tx("Ikke forbundet", "Not connected")}</span>
                       )}
                     </div>
                   </div>
@@ -367,12 +367,12 @@ export default function ConnectedAppsPage() {
                 <p className="text-xs text-muted-foreground leading-relaxed">{m.outcome}</p>
                 {isOn ? (
                   <Link to={`/${locale}/app/${m.pageLink}`} className="inline-flex items-center gap-1 text-xs text-emerald-500 hover:underline">
-                    Gå til {m.title} <ArrowRight className="h-3 w-3" />
+                    {tx("Gå til", "Go to")} {m.title} <ArrowRight className="h-3 w-3" />
                   </Link>
                 ) : (
                   connectTarget && (
                     <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setActive(connectTarget)}>
-                      Forbind {connectTarget.name}
+                      {tx("Forbind", "Connect")} {connectTarget.name}
                     </Button>
                   )
                 )}
@@ -384,7 +384,7 @@ export default function ConnectedAppsPage() {
 
       {isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Henter forbindelser…
+          <Loader2 className="h-4 w-4 animate-spin" /> {tx("Henter forbindelser…", "Loading connections…")}
         </div>
       )}
 
@@ -415,7 +415,7 @@ export default function ConnectedAppsPage() {
           onClick={() => setShowFullCatalog(true)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full justify-between rounded-xl border border-border/30 px-4 py-3 transition-colors"
         >
-          <span>Vis resten af kataloget ({fullCatalog.length - LIVE_MODULES.reduce((n, m) => n + m.providers.length, 0)} apps, endnu ikke koblet til en funktion)</span>
+          <span>{tx("Vis resten af kataloget", "Show the rest of the catalogue")} ({fullCatalog.length - LIVE_MODULES.reduce((n, m) => n + m.providers.length, 0)} {tx("apps, endnu ikke koblet til en funktion", "apps, not yet linked to a feature")})</span>
           <ChevronRight className="h-4 w-4 shrink-0" />
         </button>
       ) : (
@@ -425,7 +425,7 @@ export default function ConnectedAppsPage() {
               onClick={() => setShowFullCatalog(false)}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground -mb-6"
             >
-              <ChevronDown className="h-3.5 w-3.5" /> Skjul katalog
+              <ChevronDown className="h-3.5 w-3.5" /> {tx("Skjul katalog", "Hide catalogue")}
             </button>
           )}
           {grouped.map(([cat, items]) => (
@@ -464,7 +464,7 @@ export default function ConnectedAppsPage() {
       <footer className="border-t border-border/40 pt-8 flex items-start gap-3 text-sm text-muted-foreground max-w-3xl">
         <Sparkles className="h-4 w-4 mt-0.5 text-primary/70 shrink-0" />
         <p className="leading-relaxed">
-          Workflows og AI-actions bruger jeres forbundne konti direkte — ingen separate API-nøgler eller webhooks at vedligeholde.
+          {tx("Workflows og AI-actions bruger jeres forbundne konti direkte — ingen separate API-nøgler eller webhooks at vedligeholde.", "Workflows and AI actions use your connected accounts directly — no separate API keys or webhooks to maintain.")}
         </p>
       </footer>
 
@@ -524,22 +524,22 @@ function AppRow({
       <div className="shrink-0 flex items-center gap-2">
         {isConnected ? (
           <>
-            <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onConnect}>Administrér</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onConnect}>{tx("Administrér", "Manage")}</Button>
             <Button size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground hover:text-destructive" onClick={onDisconnect}>
               Afbryd
             </Button>
           </>
         ) : isPending ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
-            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> Afventer
+            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> {tx("Afventer", "Pending")}
           </Button>
         ) : canConnect ? (
           <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={onConnect}>
-            Forbind
+            {tx("Forbind", "Connect")}
           </Button>
         ) : (
-          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70" title="Kræver jeres egen OAuth-app hos udbyderen">
-            <Lock className="h-3 w-3" /> Kræver opsætning
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70" title={tx("Kræver jeres egen OAuth-app hos udbyderen", "Requires your own OAuth app with the provider")}>
+            <Lock className="h-3 w-3" /> {tx("Kræver opsætning", "Requires setup")}
           </span>
         )}
       </div>
@@ -583,19 +583,19 @@ function ConnectDialog({
             <div className={`rounded-lg border p-3 text-xs leading-relaxed ${isConnected ? "border-emerald-500/30 bg-emerald-500/5 text-muted-foreground" : "border-border/40 bg-card/30 text-muted-foreground"}`}>
               <div className={`flex items-center gap-1.5 mb-1 ${isConnected ? "text-emerald-500" : "text-foreground/80"}`}>
                 {isConnected ? <CheckCircle2 className="h-3 w-3" /> : <Loader2 className="h-3 w-3 animate-spin" />}
-                {isConnected ? "Forbundet" : "Afventer bekræftelse"}
+                {isConnected ? tx("Forbundet", "Connected") : tx("Afventer bekræftelse", "Awaiting confirmation")}
               </div>
               {isConnected && existing?.connected_at && (
-                <span>Forbundet {new Date(existing.connected_at).toLocaleDateString("da-DK")}</span>
+                <span>{tx("Forbundet", "Connected")} {new Date(existing.connected_at).toLocaleDateString(dateLocaleTag())}</span>
               )}
-              {isPending && <span>Forbindelsen mangler stadig at blive bekræftet hos {item.name}.</span>}
+              {isPending && <span>{tx("Forbindelsen mangler stadig at blive bekræftet hos", "The connection still has to be confirmed with")} {item.name}.</span>}
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={onClose}>Luk</Button>
+            <Button variant="ghost" onClick={onClose}>{tx("Luk", "Close")}</Button>
             <Button variant="outline" className="text-destructive hover:text-destructive" onClick={onDisconnect}>
-              Afbryd forbindelse
+              {tx("Afbryd forbindelse", "Disconnect")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -612,7 +612,7 @@ function ConnectDialog({
               <AppLogo logoUrl={composioToolkit?.meta?.logo} icon={item.icon} />
             </div>
             <div>
-              <DialogTitle>Forbind {item.name}</DialogTitle>
+              <DialogTitle>{tx("Forbind", "Connect")} {item.name}</DialogTitle>
               <DialogDescription className="text-xs">{item.surface}</DialogDescription>
             </div>
           </div>
@@ -622,16 +622,16 @@ function ConnectDialog({
           {canConnect ? (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground leading-relaxed">
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-                <CheckCircle2 className="h-3 w-3" /> Rigtig konto-forbindelse
+                <CheckCircle2 className="h-3 w-3" /> {tx("Rigtig konto-forbindelse", "Real account connection")}
               </div>
-              Log ind med jeres {item.name}-konto. Kræver kontoen en API-nøgle i stedet for login, beder {item.name} selv om den på næste skærm.
+              {t3(`Log ind med jeres ${item.name}-konto. Kræver kontoen en API-nøgle i stedet for login, beder ${item.name} selv om den på næste skærm.`, `Sign in with your ${item.name} account. If the account needs an API key instead of a login, ${item.name} asks for it on the next screen.`, `Melden Sie sich mit Ihrem ${item.name}-Konto an. Benötigt das Konto stattdessen einen API-Schlüssel, fragt ${item.name} auf dem nächsten Bildschirm danach.`)}
               {(() => {
                 const poweredModule = LIVE_MODULES.find((m) => m.providers.includes(item.provider));
                 return poweredModule ? (
                   <span className="block mt-1.5 text-foreground/70">{poweredModule.outcome}</span>
                 ) : (
                   <span className="block mt-1.5 text-amber-500/90">
-                    Forbindelsen oprettes med det samme, men bruges endnu ikke af en specifik funktion i CRM'et — I forbinder den til senere brug.
+                    {tx("Forbindelsen oprettes med det samme, men bruges endnu ikke af en specifik funktion i CRM'et — I forbinder den til senere brug.", "The connection is created right away but isn't used by a specific CRM feature yet — you're connecting it for later use.")}
                   </span>
                 );
               })()}
@@ -639,9 +639,9 @@ function ConnectDialog({
           ) : (
             <div className="rounded-lg border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground leading-relaxed">
               <div className="flex items-center gap-1.5 text-foreground/80 mb-1">
-                <Lock className="h-3 w-3" /> Kræver avanceret opsætning
+                <Lock className="h-3 w-3" /> {tx("Kræver avanceret opsætning", "Requires advanced setup")}
               </div>
-              {item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos {item.name}, ikke bare et login.
+              {t3(`${item.name} kan ikke forbindes automatisk endnu — denne integration kræver jeres egen OAuth-app registreret hos ${item.name}, ikke bare et login.`, `${item.name} can't be connected automatically yet — this integration needs your own OAuth app registered with ${item.name}, not just a login.`, `${item.name} kann noch nicht automatisch verbunden werden — diese Integration braucht Ihre eigene, bei ${item.name} registrierte OAuth-App, nicht nur ein Login.`)}
             </div>
           )}
 
@@ -657,7 +657,7 @@ function ConnectDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Annullér</Button>
+          <Button variant="ghost" onClick={onClose}>{tx("Annullér", "Cancel")}</Button>
           {canConnect && (
             <Button
               className="gap-2"
@@ -669,7 +669,7 @@ function ConnectDialog({
               }
             >
               {createComposioConnection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Forbind {item.name}
+              {tx("Forbind", "Connect")} {item.name}
             </Button>
           )}
         </DialogFooter>

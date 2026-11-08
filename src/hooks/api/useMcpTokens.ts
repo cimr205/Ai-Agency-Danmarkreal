@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { t3, tx } from '@/lib/inlineI18n';
 
 export interface McpToken {
   id: string;
@@ -39,7 +40,7 @@ export function useIssueMcpToken() {
       return { id: row.id, token: row.token, prefix: row.prefix };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mcp-tokens"] }),
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke oprette token"),
+    onError: (e: Error) => toast.error(e?.message ?? tx("Kunne ikke oprette token", "Could not create token")),
   });
 }
 
@@ -54,9 +55,9 @@ export function useRevokeMcpToken() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Token tilbagekaldt");
+      toast.success(t3("Token tilbagekaldt", "Token revoked", "Token widerrufen"));
       qc.invalidateQueries({ queryKey: ["mcp-tokens"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke tilbagekalde"),
+    onError: (e: Error) => toast.error(e?.message ?? tx("Kunne ikke tilbagekalde", "Could not revoke")),
   });
 }

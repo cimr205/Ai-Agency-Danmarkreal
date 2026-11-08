@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 
 export interface SubscriptionState {
   subscribed: boolean;
@@ -22,8 +22,13 @@ export function useSubscription() {
 
   const checkSubscription = useCallback(async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      if (error) throw error;
+      const data = await invokeFunction<{
+        subscribed?: boolean;
+        status?: string;
+        trial_ends_at?: string | null;
+        period_end?: string | null;
+        seat_limit?: number;
+      }>('check-subscription');
       setState({
         subscribed: data?.subscribed ?? false,
         status: data?.status ?? 'none',
@@ -48,17 +53,15 @@ export function useSubscription() {
     const localeMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
     const locale = localeMatch?.[1] ?? 'da';
     const currency = locale === 'en' ? 'usd' : 'dkk';
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
+    const data = await invokeFunction<{ url?: string }>('create-checkout', {
       body: { seat_limit: seatLimit, currency, locale },
     });
-    if (error) throw error;
     if (data?.url) window.open(data.url, '_blank');
     return data;
   };
 
   const openPortal = async () => {
-    const { data, error } = await supabase.functions.invoke('customer-portal');
-    if (error) throw error;
+    const data = await invokeFunction<{ url?: string }>('customer-portal');
     if (data?.url) window.open(data.url, '_blank');
     return data;
   };

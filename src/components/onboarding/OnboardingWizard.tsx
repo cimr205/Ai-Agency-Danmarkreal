@@ -14,7 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -136,19 +138,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         checkoutBody.seat_limit = Number(teamSize) || 1;
       }
 
-      const { data: checkout, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+      const checkout = await invokeFunction<{ url?: string }>('create-checkout', {
         body: checkoutBody,
       });
-      if (checkoutError || !checkout?.url) {
-        throw new Error(checkoutError?.message || 'Could not start checkout');
+      if (!checkout?.url) {
+        throw new Error('Could not start checkout');
       }
       window.location.href = checkout.url;
     } catch (err) {
-      toast({
-        variant: 'destructive',
-        title: t('wizard.errorTitle'),
-        description: getErrorMessage(err) || t('wizard.errorDesc'),
-      });
+      showError(err, { module: 'create-checkout' });
     } finally {
       setLoading(false);
     }
@@ -278,7 +276,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   ))}
                   <div className="flex items-center justify-between pt-3 border-t text-sm font-medium">
                     <span>{t('wizard.moduleTotalLabel')}</span>
-                    <span>{moduleTotal.toLocaleString('da-DK')} kr./md.</span>
+                    <span>{moduleTotal.toLocaleString(dateLocaleTag())} kr./md.</span>
                   </div>
                 </div>
               )}

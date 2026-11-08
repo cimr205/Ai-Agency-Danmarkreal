@@ -16,8 +16,8 @@ its own isolated workspace. The UI is fully translated in EN, DA, and DE.
 | UI components | shadcn/ui (Radix UI primitives) |
 | Styling | Tailwind CSS with CSS variables for theming |
 | State / data | TanStack React Query v5 |
-| Auth + OAuth | Supabase Auth (Google OAuth) |
-| Primary API | Custom REST API at `https://api.aiagencydanmark.dk/api` |
+| Auth + OAuth | Supabase Auth (email/password + Google OAuth) |
+| Primary API | Supabase directly — Postgres + RLS, ~60 Deno edge functions in `supabase/functions/*` |
 | i18n | Custom `useI18n()` hook — translations in `src/messages/` |
 | Routing | React Router DOM v6 with locale prefix (`/:locale/app/...`) |
 
@@ -42,7 +42,6 @@ src/
 ├── hooks/
 │   └── api/               ← React Query hooks per feature domain
 ├── lib/
-│   ├── api.ts             ← Primary API client (ApiClient class, all methods)
 │   ├── supabase.ts        ← Re-exports from integrations/supabase/client
 │   ├── i18n.tsx           ← Translation hook: useI18n() → t('key')
 │   ├── tenant.ts          ← Tenant defaults persistence
@@ -74,43 +73,34 @@ src/
 
 ## Backend Architecture
 
-### Primary API (`src/lib/api.ts`)
-
-All feature data (leads, deals, tasks, campaigns, employees, etc.) goes through
-`src/lib/api.ts` — a typed `ApiClient` class that talks to the Railway backend.
-
-```ts
-import { api } from '@/lib/api';
-
-// Usage examples:
-await api.listLeads({ status: 'new', q: 'search term' });
-await api.createLead({ name, phone, email, company_name });
-await api.updateLead(id, { status: 'contacted', notes });
-```
-
-The client handles:
-- JWT token storage and refresh (via `localStorage`)
-- Tenant ID injection via request headers
-- All auth flows (email/password, Google OAuth exchange)
-
 ### Supabase (`src/integrations/supabase/client.ts`)
 
-Supabase is used **only** for:
-- Google OAuth initiation (`supabase.auth.signInWithOAuth`)
-- Session token exchange (OAuthCallback page)
+There is no separate backend API — the frontend talks to Supabase directly:
+- **Postgres + RLS**: tables are queried directly via `supabase.from(...)`, scoped per
+  tenant by Row Level Security (never filter by `company_id` manually on the frontend —
+  RLS does it, driven by `get_user_company_id(auth.uid())`).
+- **RPCs**: business logic that must run atomically/with elevated checks lives in
+  Postgres functions, called via `supabase.rpc('fn_name', { ... })`.
+- **Edge functions**: ~60 Deno functions in `supabase/functions/*` (lead-gen, email,
+  Meta/Gmail/Twilio integrations, AI-assisted actions, etc.), called via
+  `supabase.functions.invoke('function-name', { body })`.
+- **Auth**: Supabase Auth handles both email/password and Google OAuth.
 
-Supabase DB tables exist for `companies`, `profiles`, `leads`, `invitations`, `user_roles`
-but are accessed primarily through the Railway API, not directly from the frontend.
+A `CLAUDE.md` note from an earlier iteration described a separate Railway REST API
+(`src/lib/api.ts`, `https://api.aiagencydanmark.dk/api`) as the primary backend. That
+file no longer exists in this codebase — it was fully replaced by the Supabase-direct
+pattern above. All new work should follow that pattern, not the Railway one.
 
 ---
 
 ## Authentication Flow
 
-1. **Email/password** → `api.login()` → JWT stored in localStorage
+1. **Email/password** → `supabase.auth.signInWithPassword()` → session stored by the
+   Supabase client (localStorage)
 2. **Google OAuth** → `supabase.auth.signInWithOAuth()` → redirects to `/auth/callback`
-   → `api.exchangeGoogleSession()` → JWT stored
-3. **Session restore** → `api.getToken()` + `api.getMe()` on app load
-4. **Logout** → `api.logout()` + clear localStorage
+   → session established directly by Supabase on return
+3. **Session restore** → `supabase.auth.getSession()` on app load
+4. **Logout** → `supabase.auth.signOut()`
 
 Auth state lives in `AuthContext`. Use `useAuth()` to access `user`, `isAuthenticated`.
 
@@ -122,28 +112,37 @@ Auth state lives in `AuthContext`. Use `useAuth()` to access `user`, `isAuthenti
 2. Add route in `src/App.tsx` under the protected routes section
 3. Add nav item in `src/components/TenantSidebar.tsx`
 4. Add translations in `src/messages/en.json`, `da.json`, `de.json`
-5. Use `api.*` methods for data, wrapped in React Query if needed
+5. Add a React Query hook in `src/hooks/api/` that queries Supabase directly
+   (`supabase.from(...)` / `supabase.rpc(...)` / `supabase.functions.invoke(...)`) —
+   never a new `api.*` call, that client doesn't exist anymore
 
-### Page template
+### Hook + page pattern
+
+```ts
+// src/hooks/api/useMyFeature.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+export function useMyFeature() {
+  return useQuery({
+    queryKey: ['my-feature'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('my_table').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+```
 
 ```tsx
-import { useEffect, useState } from 'react';
+// src/pages/app/feature/MyPage.tsx
 import { useI18n } from '@/lib/i18n';
-import { api } from '@/lib/api';
-import { useToast } from '@/components/ui/use-toast';
+import { useMyFeature } from '@/hooks/api/useMyFeature';
 
 export default function MyFeaturePage() {
   const { t } = useI18n();
-  const { toast } = useToast();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.myMethod()
-      .then(res => setData(res.data))
-      .catch(err => toast({ title: err.message, variant: 'destructive' }))
-      .finally(() => setLoading(false));
-  }, [toast]);
+  const { data, isLoading, error } = useMyFeature();
 
   return <div className="space-y-6">...</div>;
 }
@@ -181,21 +180,22 @@ When adding a new string:
 ## Environment Variables
 
 ```env
-VITE_SUPABASE_URL=              # Supabase project URL
+VITE_SUPABASE_URL=              # Supabase project URL — the only backend; point this at
+                                 # staging for local dev against non-production data
 VITE_SUPABASE_PUBLISHABLE_KEY=  # Supabase anon/public key
-VITE_API_BASE_URL=              # Optional: override Railway API base (default: production)
 ```
 
 ---
 
 ## Multi-tenant
 
-Every authenticated user belongs to a `company_id`. The API client automatically injects
-the tenant ID in request headers. Never filter by company_id on the frontend — the backend
-handles tenant isolation.
+Every authenticated user has a `profiles` row with a `company_id`. Tenant isolation is
+enforced by Postgres RLS policies (keyed off `get_user_company_id(auth.uid())`), not by
+the frontend — never add a manual `company_id` filter as a security measure, RLS already
+scopes every query.
 
-User roles: `employee`, `manager`, `admin`, `global_admin` (system-wide superuser).
-Check `user.is_global_admin` to show admin-only UI.
+User roles (`public.app_role` enum, in `user_roles`): `owner`, `company_admin`, `manager`,
+`employee`, `readonly`, `partner`, `system_admin` (system-wide superuser).
 
 ---
 

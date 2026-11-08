@@ -44,6 +44,18 @@ function resolve(locale: Locale, key: string): string {
   return last.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
 }
 
+/** Translate a key for an explicit locale — for non-component code (error formatting, …) that can't use useI18n(). */
+export function translate(locale: Locale, key: string): string {
+  return resolve(locale, key);
+}
+
+/** Best-effort current locale for non-component code, read from the `/:locale/...` URL segment. */
+export function getLocaleFromPath(pathname?: string): Locale {
+  const path = pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '');
+  const segment = path.split('/').filter(Boolean)[0];
+  return isLocale(segment) ? segment : 'en';
+}
+
 interface I18nContextValue {
   locale: Locale;
   t: (key: string) => string;

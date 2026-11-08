@@ -6,8 +6,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useWorkflows } from "@/hooks/api/useWorkflows";
-import { supabase } from "@/integrations/supabase/client";
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
+import { t3, tx } from '@/lib/inlineI18n';
 
 type StepKind = "trigger" | "filter" | "ai" | "action";
 
@@ -29,7 +30,7 @@ export default function WorkflowStudioPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [trace, setTrace] = useState<Trace[]>([]);
   const [running, setRunning] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState("Vurdér om denne event kræver opfølgning.");
+  const [aiPrompt, setAiPrompt] = useState(tx("Vurdér om denne event kræver opfølgning.", "Assess whether this event needs follow-up."));
 
   const active = useMemo(
     () => workflows.find(w => w.id === activeId) ?? workflows[0],
@@ -39,33 +40,48 @@ export default function WorkflowStudioPage() {
   const synthSteps = useMemo(() => {
     if (!active) return [];
     return [
-      { id: "t", kind: "trigger" as StepKind, icon: Mail, title: `Når ${active.trigger_event}`, detail: "Workspace event" },
-      { id: "f", kind: "filter" as StepKind, icon: Filter, title: "Filter (klient-side)", detail: "Konfigurérbar" },
-      { id: "a", kind: "ai" as StepKind, icon: Bot, title: "AI-trin", detail: aiPrompt.slice(0, 60) },
+      { id: "t", kind: "trigger" as StepKind, icon: Mail, title: `${tx("Når", "When")} ${active.trigger_event}`, detail: "Workspace event" },
+      { id: "f", kind: "filter" as StepKind, icon: Filter, title: tx("Filter (klient-side)", "Filter (client-side)"), detail: tx("Konfigurérbar", "Configurable") },
+      { id: "a", kind: "ai" as StepKind, icon: Bot, title: tx("AI-trin", "AI step"), detail: aiPrompt.slice(0, 60) },
       {
         id: "x", kind: "action" as StepKind,
         icon: active.action_type === "webhook" ? Send : active.action_type === "run_integration" ? Plug : Calendar,
-        title: active.action_type === "run_integration" ? `Handling: ${active.action_tool_slug ?? "integration"}` : `Handling: ${active.action_type}`,
+        title: active.action_type === "run_integration" ? `${tx("Handling", "Action")}: ${active.action_tool_slug ?? "integration"}` : `${tx("Handling", "Action")}: ${active.action_type}`,
         detail: active.action_type === "run_integration"
           ? `→ ${active.action_capability ?? "capability"}`
-          : active.webhook_url ? "→ webhook" : "ingen destination",
+          : active.webhook_url ? "→ webhook" : tx("ingen destination", "no destination"),
       },
     ];
   }, [active, aiPrompt]);
+
+  // Mirrors workflow-runner: only a webhook with a URL or an integration with
+  // a tool + capability actually executes; every other action type is
+  // skipped server-side ("Handlingstype ikke understøttet endnu").
+  const hasDestination = !!active && (
+    (active.action_type === "webhook" && !!active.webhook_url)
+    || (active.action_type === "run_integration" && !!active.action_capability && !!active.action_tool_slug)
+  );
 
   const runWorkflow = async (mode: "test" | "live") => {
     if (!active) return;
     setRunning(true);
     setTrace([]);
     try {
-      const { data, error } = await supabase.functions.invoke("workflow-runner", {
+      const data = await invokeFunction<{ trace?: Trace[] }>("workflow-runner", {
         body: { workflow_id: active.id, mode, ai_prompt: aiPrompt, payload: { sample: true, ts: Date.now() } },
       });
-      if (error) throw error;
-      setTrace((data as { trace?: Trace[] } | null)?.trace ?? []);
-      toast.success(mode === "test" ? "Test-kørsel fuldført" : "Workflow kørt live");
+      const steps = data?.trace ?? [];
+      setTrace(steps);
+      // Don't report success when a step failed (e.g. the AI step returning
+      // 404) — the trace already shows it, the toast used to say "fuldført".
+      const failed = steps.filter(s => s.status === "error");
+      if (failed.length > 0) {
+        toast.error(`${mode === "test" ? tx("Test-kørsel", "Test run") : tx("Kørsel", "Run")} ${tx("fejlede i", "failed in")} ${failed.length} ${tx("trin", "step(s)")}: ${failed.map(f => f.step).join(", ")}`);
+      } else {
+        toast.success(mode === "test" ? tx("Test-kørsel fuldført", "Test run completed") : tx("Workflow kørt live", "Workflow run live"));
+      }
     } catch (e) {
-      toast.error(getErrorMessage(e) || "Kørsel fejlede");
+      showError(e, { module: "workflow-runner" });
     } finally {
       setRunning(false);
     }
@@ -83,25 +99,27 @@ export default function WorkflowStudioPage() {
               Workflow Studio
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Triggers fra Smart Inbox, AI-beslutninger, handlinger på tværs af Gmail, Calendar og webhook-modtagere.
-              Test før du går live — hvert trin spores.
+              {tx("Triggers fra Smart Inbox, AI-beslutninger, handlinger på tværs af Gmail, Calendar og webhook-modtagere. Test før du går live — hvert trin spores.", "Triggers from Smart Inbox, AI decisions, actions across Gmail, Calendar and webhook receivers. Test before going live — every step is traced.")}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => runWorkflow("test")} disabled={!active || running}>
-              {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <History className="h-3.5 w-3.5" />} Test-kør
+              {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <History className="h-3.5 w-3.5" />} {tx("Test-kør", "Test run")}
             </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => runWorkflow("live")} disabled={!active || running}>
-              <PlayCircle className="h-4 w-4" /> Kør live
+            {/* A live run with no destination does nothing useful (the action
+                step reports "ingen destination"), so require one first. */}
+            <Button size="sm" className="gap-1.5" onClick={() => runWorkflow("live")} disabled={!active || running || !hasDestination}
+              title={active && !hasDestination ? tx("Tilføj en destination (webhook eller integration) før du kører live", "Add a destination (webhook or integration) before running live") : undefined}>
+              <PlayCircle className="h-4 w-4" /> {tx("Kør live", "Run live")}
             </Button>
           </div>
         </div>
       </header>
 
-      {isLoading && <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />Henter workflows…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 animate-spin mr-2" />{t3("Henter workflows…", "Loading workflows…", "Workflows werden geladen…")}</div>}
       {!isLoading && workflows.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/50 p-10 text-center text-muted-foreground">
-          Ingen workflows endnu. Opret ét under Indstillinger → Webhooks for at se det her.
+          {tx("Ingen workflows endnu. Opret ét under Indstillinger → Webhooks for at se det her.", "No workflows yet. Create one under Settings → Webhooks to see it here.")}
         </div>
       )}
 
@@ -135,17 +153,17 @@ export default function WorkflowStudioPage() {
 
             <button
               className="mt-3 ml-7 flex items-center gap-2 text-xs text-muted-foreground/60 hover:text-foreground transition-colors group"
-              onClick={() => toast.info("Trin-katalog kommer i næste iteration")}
+              onClick={() => toast.info(tx("Trin-katalog kommer i næste iteration", "Step catalogue is coming in the next iteration"))}
             >
               <span className="h-6 w-6 rounded-full border border-dashed border-border/60 flex items-center justify-center group-hover:border-primary/40">
                 <Plus className="h-3 w-3" />
               </span>
-              Tilføj trin
+              {tx("Tilføj trin", "Add step")}
             </button>
 
             <div className="mt-8">
               <label className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60 mb-2 block">
-                AI-prompt (bruges som AI-trin)
+                {tx("AI-prompt (bruges som AI-trin)", "AI prompt (used as the AI step)")}
               </label>
               <textarea
                 value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
@@ -158,11 +176,11 @@ export default function WorkflowStudioPage() {
           {/* Trace panel */}
           <aside className="lg:sticky lg:top-16 lg:self-start">
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 mb-4">
-              Spor af seneste kørsel
+              {tx("Spor af seneste kørsel", "Trace of the latest run")}
             </div>
             {trace.length === 0 ? (
               <div className="text-xs text-muted-foreground/60 py-6 px-4 rounded-lg border border-dashed border-border/40">
-                Endnu ingen kørsel. Tryk "Test-kør" for at se trin-for-trin spor.
+                {tx("Endnu ingen kørsel. Tryk \"Test-kør\" for at se trin-for-trin spor.", "No run yet. Press \"Test run\" to see a step-by-step trace.")}
               </div>
             ) : (
               <ul className="space-y-2.5">

@@ -112,7 +112,7 @@ Returnér JSON med "subject" og "body" felter.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt + "\n\nIMPORTANT: Return ONLY valid JSON with keys \"subject\" and \"body\". No markdown, no code fences, just raw JSON." }],
       }),

@@ -58,6 +58,10 @@ describe('getErrorMessage', () => {
 
   it('should handle unknown errors', async () => {
     const { getErrorMessage } = await import('@/lib/retryWithBackoff');
+    // Follows the URL locale; the test runner has no /da prefix, so English.
+    expect(getErrorMessage(null)).toBe('An unexpected error occurred. Please try again.');
+    window.history.pushState({}, '', '/da/app/dashboard');
     expect(getErrorMessage(null)).toBe('En uventet fejl opstod. Prøv igen.');
+    window.history.pushState({}, '', '/');
   });
 });

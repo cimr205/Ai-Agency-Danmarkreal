@@ -1,16 +1,17 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useI18n, SUPPORTED_LOCALES } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function LanguagePicker() {
   const { locale, t } = useI18n();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const handleChange = (value: string) => {
     const parts = location.pathname.split('/');
     parts[1] = value;
-    navigate(parts.join('/') + location.search, { replace: true });
+    // A full load on purpose: labels built with tx()/t3() in module-level
+    // constants are fixed when the bundle first runs and would keep the old language.
+    window.location.replace(parts.join('/') + location.search);
   };
 
   return (

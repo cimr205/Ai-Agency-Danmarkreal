@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 import type { Tables, Json, Enums, Database } from '@/integrations/supabase/types';
 
 export type Customer = Tables<'customers'>;
@@ -47,6 +48,7 @@ export function useCustomers() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60_000,
   });
 }
 
@@ -216,8 +218,7 @@ export function useDeleteInvoice() {
 export function useCreateInvoiceCheckout() {
   return useMutation({
     mutationFn: async (invoiceId: string) => {
-      const { data, error } = await supabase.functions.invoke('create-invoice-checkout', { body: { invoice_id: invoiceId } });
-      if (error) throw error;
+      const data = await invokeFunction<{ checkout_url?: string; expires_at: string; error?: string }>('create-invoice-checkout', { body: { invoice_id: invoiceId } });
       if (!data?.checkout_url) throw new Error(data?.error || 'Checkout URL was not created');
       return data as { checkout_url: string; expires_at: string };
     },
@@ -260,7 +261,13 @@ export function useUpdateInvoiceStatus() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['invoices'] }),
+    // Marking paid registers a payment row, so the Payments page (and the
+    // finance dashboards) must refetch too — they used to keep showing the
+    // stale list until a full page reload.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invoices'] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+    },
   });
 }
 

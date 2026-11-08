@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import logo from '@/assets/logo.png';
 import LanguagePicker from '@/components/LanguagePicker';
 import { useI18n, isLocale } from '@/lib/i18n';
+import { tl } from '@/lib/inlineI18n';
 
 export function Navbar() {
   const { t } = useI18n();
@@ -23,7 +24,7 @@ export function Navbar() {
     { href: '#features', label: t('landing.features') },
     { href: '#pricing', label: t('landing.pricing') },
     { href: '#faq', label: 'FAQ' },
-    { href: '#testimonials', label: locale === 'da' ? 'Om platformen' : 'About' },
+    { href: '#testimonials', label: tl(locale, 'Om platformen', 'About') },
   ];
 
   return (

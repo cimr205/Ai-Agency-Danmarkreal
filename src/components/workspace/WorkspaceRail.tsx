@@ -13,7 +13,7 @@ import {
   type Icon,
   SquaresFour, Buildings, CalendarBlank, ListChecks, Tray, ChatCircle,
   Crosshair, Briefcase, Funnel, UserFocus,
-  PhoneCall, PaperPlaneTilt, Megaphone, Microphone, Sparkle,
+  PhoneCall, PaperPlaneTilt, Megaphone, Microphone, FilmSlate,
   Receipt, FileText, CreditCard,
   UsersThree, Clock, CalendarCheck, CalendarDots, AirplaneTilt, Money, UserPlus, ChartBar, ChartPieSlice,
   TreeStructure, ChatCenteredDots, ShieldCheck, PlugsConnected, Brain, Lightning, Robot, LinkSimple, Lifebuoy, GearSix,
@@ -60,11 +60,11 @@ function useNavGroups(): NavGroup[] {
       section: "marketing", label: t("nav.marketing") || "Marketing", module: "marketing", accent: "#A78BFA",
       items: [
         { label: t("nav.marketingDashboard"), path: "marketing/dashboard", icon: SquaresFour },
+        { label: t("nav.studio") || "Studio", path: "marketing/studio", icon: FilmSlate },
         { label: t("nav.coldCaller") || "Power Dialer", path: "marketing/cold-caller", icon: PhoneCall },
         { label: t("nav.bulkEmail") || "Bulk email", path: "email/bulk", icon: PaperPlaneTilt },
         { label: t("nav.metaAds") || "Meta Ads", path: "marketing/meta-ads", icon: Megaphone },
         { label: t("nav.voiceAgent") || "Voice Agent", path: "marketing/voice-agent", icon: Microphone },
-        { label: t("nav.aiMedia") || "AI Medier", path: "ai/media", icon: Sparkle },
       ],
     },
     {
@@ -95,7 +95,7 @@ function useNavGroups(): NavGroup[] {
       section: "control", label: t("nav.controlRoom"), module: "system", accent: "#22D3EE",
       items: [
         { label: t("nav.controlRoomDashboard"), path: "workspace/control-room", icon: SquaresFour },
-        { label: t("nav.studio"), path: "workspace/studio", icon: TreeStructure },
+        { label: t("nav.workflowStudio"), path: "workspace/studio", icon: TreeStructure },
         { label: t("nav.workflowChat"), path: "workspace/workflow-chat", icon: ChatCenteredDots },
         { label: t("nav.operatingManager"), path: "workspace/operating-manager", icon: ShieldCheck },
         { label: t("nav.connectedApps"), path: "workspace/connected-apps", icon: PlugsConnected },

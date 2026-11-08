@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Ban, Loader2, Sparkles, Globe, Mail, Phone, Building2, TrendingUp, Zap, Target, Users, BarChart3, Search, Database, Shield } from "lucide-react";
+import { tx } from '@/lib/inlineI18n';
 
 // ─── Data ───────────────────────────────────────────────────
 
@@ -20,22 +21,22 @@ const QUOTES = [
 ];
 
 const TIPS = [
-  { icon: Mail, text: "Personlige emails har 6x højere transaktionsrate" },
-  { icon: Phone, text: "Opfølgning indenfor 5 minutter øger konvertering 9x" },
-  { icon: Target, text: "80% af salg kræver mindst 5 opfølgninger" },
-  { icon: TrendingUp, text: "Virksomheder der nurture leads genererer 50% mere salg" },
-  { icon: Users, text: "Referrals har 30% højere konverteringsrate" },
-  { icon: BarChart3, text: "Data-drevet salg øger hitrate med 15-20%" },
-  { icon: Shield, text: "GDPR-compliance styrker tilliden til dit brand" },
-  { icon: Zap, text: "Automatisering sparer gennemsnitligt 2t dagligt per sælger" },
+  { icon: Mail, text: ["Personlige emails har 6x højere transaktionsrate", "Personal emails have a 6x higher transaction rate"] as const },
+  { icon: Phone, text: ["Opfølgning indenfor 5 minutter øger konvertering 9x", "Following up within 5 minutes raises conversion 9x"] as const },
+  { icon: Target, text: ["80% af salg kræver mindst 5 opfølgninger", "80% of sales need at least 5 follow-ups"] as const },
+  { icon: TrendingUp, text: ["Virksomheder der nurture leads genererer 50% mere salg", "Companies that nurture leads generate 50% more sales"] as const },
+  { icon: Users, text: ["Referrals har 30% højere konverteringsrate", "Referrals have a 30% higher conversion rate"] as const },
+  { icon: BarChart3, text: ["Data-drevet salg øger hitrate med 15-20%", "Data-driven sales raise the hit rate by 15–20%"] as const },
+  { icon: Shield, text: ["GDPR-compliance styrker tilliden til dit brand", "GDPR compliance strengthens trust in your brand"] as const },
+  { icon: Zap, text: ["Automatisering sparer gennemsnitligt 2t dagligt per sælger", "Automation saves each salesperson about 2 hours a day"] as const },
 ];
 
 const PHASES = [
-  { min: 0, max: 15, label: "Søger i forretningsregistre...", icon: Database },
-  { min: 15, max: 35, label: "Scanner Google Maps...", icon: Globe },
-  { min: 35, max: 60, label: "Beriger med kontaktdata...", icon: Mail },
-  { min: 60, max: 85, label: "Scorer og validerer leads...", icon: TrendingUp },
-  { min: 85, max: 100, label: "Færdiggør resultater...", icon: Sparkles },
+  { min: 0, max: 15, label: ["Søger i forretningsregistre...", "Searching business registers..."] as const, icon: Database },
+  { min: 15, max: 35, label: ["Scanner Google Maps...", "Scanning Google Maps..."] as const, icon: Globe },
+  { min: 35, max: 60, label: ["Beriger med kontaktdata...", "Enriching with contact data..."] as const, icon: Mail },
+  { min: 60, max: 85, label: ["Scorer og validerer leads...", "Scoring and validating leads..."] as const, icon: TrendingUp },
+  { min: 85, max: 100, label: ["Færdiggør resultater...", "Finishing results..."] as const, icon: Sparkles },
 ];
 
 // ─── Animated Counter ───────────────────────────────────────
@@ -146,7 +147,7 @@ export default function LeadGenLoadingExperience({ progress, progressLabel, resu
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-2">
               <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-              {progressLabel || currentPhase.label}
+              {progressLabel || tx(currentPhase.label[0], currentPhase.label[1])}
             </span>
             <span className="font-mono text-primary font-semibold">{progress}%</span>
           </div>
@@ -159,17 +160,17 @@ export default function LeadGenLoadingExperience({ progress, progressLabel, resu
             <div className="text-2xl font-bold text-foreground">
               <AnimatedNumber value={resultsCount} />
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">Leads fundet</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{tx("Leads fundet", "Leads found")}</div>
           </div>
           <div className="text-center p-3 rounded-xl bg-muted/40">
             <div className="text-2xl font-bold text-foreground">{formatTime(elapsed)}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Forløbet tid</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{tx("Forløbet tid", "Elapsed time")}</div>
           </div>
           <div className="text-center p-3 rounded-xl bg-muted/40">
             <div className="text-2xl font-bold text-primary">
               {PHASES.findIndex((p) => p === currentPhase) + 1}/{PHASES.length}
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">Fase</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{tx("Fase", "Phase")}</div>
           </div>
         </div>
 
@@ -209,8 +210,8 @@ export default function LeadGenLoadingExperience({ progress, progressLabel, resu
             <TipIcon className="h-4.5 w-4.5 text-primary" />
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Vidste du?</p>
-            <p className="text-sm text-foreground/80 mt-0.5">{tip.text}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{tx("Vidste du?", "Did you know?")}</p>
+            <p className="text-sm text-foreground/80 mt-0.5">{tx(tip.text[0], tip.text[1])}</p>
           </div>
         </div>
 

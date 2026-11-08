@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { t3 } from '@/lib/inlineI18n';
 
 /**
  * Shows an undo toast for 10 seconds. If the user doesn't click undo,
@@ -20,12 +21,12 @@ export function undoableDelete({
   const toastId = toast(label, {
     duration,
     action: {
-      label: 'Fortryd',
+      label: t3('Fortryd', 'Undo', 'Rückgängig'),
       onClick: () => {
         cancelled = true;
         onUndo?.();
         toast.dismiss(toastId);
-        toast.success('Handling fortrudt');
+        toast.success(t3('Handling fortrudt', 'Action undone', 'Aktion rückgängig gemacht'));
       },
     },
     onDismiss: () => {

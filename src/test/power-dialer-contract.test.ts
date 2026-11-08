@@ -19,7 +19,14 @@ describe('Device Power Dialer architecture contracts', () => {
     const hook = repoFile('src/hooks/api/useVoiceTelephony.ts');
 
     expect(page).toContain('useVoiceTelephonyAccount');
-    expect(hook).toContain('supabase.functions.invoke("voice-telephony"');
+    // All edge-function calls now go through the shared invokeFunction()
+    // (src/lib/functions.ts) instead of calling supabase.functions.invoke
+    // directly, so the contract this test protects — "voice-telephony" is
+    // its own function boundary, not shared with cold-caller — is checked
+    // via the function name passed to invokeFunction instead.
+    expect(hook).toContain('invokeFunction<');
+    expect(hook).toContain('"voice-telephony"');
+    expect(hook).not.toContain('supabase.functions.invoke');
     expect(hook).not.toContain('cold-caller');
   });
 

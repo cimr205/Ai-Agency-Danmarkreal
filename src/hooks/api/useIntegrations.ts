@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { t3 } from '@/lib/inlineI18n';
 
 export interface Integration {
   id: string;
@@ -36,13 +39,12 @@ export function useConnectGmail() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("gmail-auth");
-      if (error) throw error;
-      const url = (data as { auth_url?: string } | null)?.auth_url;
-      if (!url) throw new Error("Ingen auth URL");
+      const data = await invokeFunction<{ auth_url?: string }>("gmail-auth");
+      const url = data?.auth_url;
+      if (!url) throw new Error(t3("Ingen login-URL modtaget", "No sign-in URL received", "Keine Anmelde-URL erhalten"));
       window.location.href = url;
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke starte Gmail-flow"),
+    onError: (e) => showError(e, { module: "gmail-auth" }),
     onSettled: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
   });
 }
@@ -60,10 +62,10 @@ export function useDisconnectIntegration() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Forbindelse afbrudt");
+      toast.success(t3("Forbindelse afbrudt", "Disconnected", "Verbindung getrennt"));
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke afbryde"),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke afbryde", "Could not disconnect", "Trennen fehlgeschlagen")),
   });
 }
 
@@ -77,7 +79,7 @@ export function useConnectWebhook() {
   const { profile } = useAuth();
   return useMutation({
     mutationFn: async (input: { provider: string; name: string; webhookUrl: string; accountLabel?: string }) => {
-      if (!profile?.company_id) throw new Error("Ingen virksomhed tilknyttet");
+      if (!profile?.company_id) throw new Error(t3("Ingen virksomhed tilknyttet", "No company linked", "Kein Unternehmen verknüpft"));
       try { new URL(input.webhookUrl); } catch { throw new Error("Ugyldig webhook URL"); }
 
       // Upsert integration row
@@ -129,10 +131,10 @@ export function useConnectWebhook() {
       }
     },
     onSuccess: (_d, v) => {
-      toast.success(`${v.name} forbundet`);
+      toast.success(t3(`${v.name} forbundet`, `${v.name} connected`, `${v.name} verbunden`));
       qc.invalidateQueries({ queryKey: ["integrations"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke forbinde"),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Kunne ikke forbinde", "Could not connect", "Verbindung fehlgeschlagen")),
   });
 }
 
@@ -143,7 +145,7 @@ export function useTestConnection() {
   return useMutation({
     mutationFn: async (integration: Integration) => {
       const url = (integration.metadata as { webhook_url?: string })?.webhook_url;
-      if (!url) throw new Error("Ingen webhook URL gemt");
+      if (!url) throw new Error(t3("Ingen webhook-URL gemt", "No webhook URL saved", "Keine Webhook-URL gespeichert"));
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,10 +156,10 @@ export function useTestConnection() {
           timestamp: new Date().toISOString(),
         }),
       }).catch(() => null);
-      if (!res || !res.ok) throw new Error(`Webhook svarede ikke OK${res ? ` (${res.status})` : ""}`);
+      if (!res || !res.ok) throw new Error(`${t3("Webhook svarede ikke OK", "Webhook did not respond OK", "Webhook hat nicht mit OK geantwortet")}${res ? ` (${res.status})` : ""}`);
     },
-    onSuccess: () => toast.success("Webhook svarede 200 — forbindelsen virker"),
-    onError: (e: Error) => toast.error(e?.message ?? "Test fejlede"),
+    onSuccess: () => toast.success(t3("Webhook svarede 200 — forbindelsen virker", "Webhook responded 200 — the connection works", "Webhook hat mit 200 geantwortet — die Verbindung funktioniert")),
+    onError: (e: Error) => toast.error(e?.message ?? t3("Test fejlede", "Test failed", "Test fehlgeschlagen")),
   });
 }
 
@@ -166,20 +168,9 @@ export function useTestConnection() {
 // function — the platform API key never reaches the browser.
 
 async function callComposioIntegration<T = unknown>(action: string, body: Record<string, unknown> = {}): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("composio-integration", { body: { action, ...body } });
-  if (error) {
-    const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
-    let message = error.message;
-    try {
-      const parsed = (await ctx?.json?.()) as { error?: string } | undefined;
-      if (parsed?.error) message = parsed.error;
-    } catch {
-      // ignore, fall back to error.message
-    }
-    throw new Error(message);
-  }
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+  const data = await invokeFunction<T & { error?: string }>("composio-integration", { body: { action, ...body } });
+  if (data && typeof data === "object" && "error" in data && data.error) throw new Error(data.error);
+  return data;
 }
 
 export interface ComposioToolkit {
@@ -206,7 +197,7 @@ export function useCreateComposioConnection() {
   return useMutation({
     mutationFn: (toolkit: string) =>
       callComposioIntegration<{ redirectUrl: string; connectionId: string }>("create-connection", { toolkit }),
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke starte forbindelse"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -225,9 +216,9 @@ export function useDisconnectComposioConnection() {
     mutationFn: (integrationId: string) => callComposioIntegration("disconnect-connection", { integrationId }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      toast.success("Forbindelse afbrudt");
+      toast.success(t3("Forbindelse afbrudt", "Disconnected", "Verbindung getrennt"));
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke afbryde forbindelsen"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -297,9 +288,9 @@ export function useSyncCrmContacts() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      if (res.imported > 0) toast.success(`${res.imported} nye leads importeret fra ${res.provider}`);
+      if (res.imported > 0) toast.success(t3(`${res.imported} nye leads importeret fra ${res.provider}`, `${res.imported} new leads imported from ${res.provider}`, `${res.imported} neue Leads aus ${res.provider} importiert`));
     },
-    onError: (e: Error) => toast.error(e?.message ?? "CRM-synkronisering fejlede"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }
 
@@ -314,8 +305,8 @@ export function useSyncFinancePayments() {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["integrations"] });
-      if (res.matched > 0) toast.success(`${res.matched} betaling(er) matchet og markeret betalt`);
+      if (res.matched > 0) toast.success(t3(`${res.matched} betaling(er) matchet og markeret betalt`, `${res.matched} payment(s) matched and marked paid`, `${res.matched} Zahlung(en) zugeordnet und als bezahlt markiert`));
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Betalings-synkronisering fejlede"),
+    onError: (e) => showError(e, { module: "composio-integration" }),
   });
 }

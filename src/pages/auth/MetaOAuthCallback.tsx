@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { explainError } from '@/lib/errors';
 import { toast } from "@/hooks/use-toast";
-import { getErrorMessage } from '@/lib/errors';
 
 /**
  * Handles the Meta OAuth redirect at /auth/meta/callback
@@ -15,11 +15,10 @@ export default function MetaOAuthCallbackPage() {
 
   const exchangeCode = useCallback(async (code: string, state: string) => {
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("meta-oauth-callback", {
+      const data = await invokeFunction<{ error?: string; detail?: string; ad_accounts_count?: number }>("meta-oauth-callback", {
         body: { code, state },
       });
 
-      if (fnError) throw new Error(fnError.message);
       if (data?.error) throw new Error(data.detail || data.error);
 
       toast({
@@ -28,7 +27,7 @@ export default function MetaOAuthCallbackPage() {
       });
       navigate("/en/app/marketing/meta-ads", { replace: true });
     } catch (err) {
-      setError((getErrorMessage(err) || "Ukendt fejl"));
+      setError(explainError(err).message);
     }
   }, [navigate]);
 

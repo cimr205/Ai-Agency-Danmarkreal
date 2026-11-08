@@ -40,7 +40,12 @@
     "account": "Account",
     "create": "Create",
     "selectAllVisible": "Select all visible ({count})",
-    "selected": "{count} selected"
+    "selected": "{count} selected",
+    "done": "Done",
+    "edit": "Edit",
+    "no": "No",
+    "of": "of",
+    "yes": "Yes"
   },
   "language": {
     "label": "Language",
@@ -263,6 +268,8 @@
     "customers": "Customers",
     "pipeline": "Pipeline",
     "campaigns": "Campaigns",
+    "videoStudio": "Video Studio",
+    "studio": "Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finance",
@@ -315,6 +322,7 @@
     "emailTemplates": "Email Templates",
     "accountMenu": "Account menu",
     "aiMedia": "AI Media",
+    "studios": "Studios",
     "clients": "Customers",
     "connectedApps": "Connected apps",
     "help": "Help",
@@ -326,7 +334,6 @@
     "expandSidebar": "Expand sidebar",
     "openMenu": "Open menu",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow Chat",
     "workspaceNavigation": "Workspace navigation",
     "controlRoom": "Control room",
@@ -342,7 +349,8 @@
     "financeDashboard": "Finance Dashboard",
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
-    "linkedinOutreach": "LinkedIn Outreach"
+    "linkedinOutreach": "LinkedIn Outreach",
+    "workflowStudio": "Workflow Studio"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -435,7 +443,8 @@
     "plannedHours": "Planned",
     "deviation": "Deviation",
     "daysWorked": "Days worked",
-    "noReportData": "No data for this period"
+    "noReportData": "No data for this period",
+    "forgotClockOut": "This workday has been open since {since}. Did you forget to clock out? Stop the workday and correct the time."
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -444,7 +453,7 @@
     "reloadPage": "Reload page"
   },
   "clients": {
-    "title": "Clients",
+    "title": "Customers",
     "subtitle": "Every client is a living object — communication, deals, invoices and activity in one place.",
     "searchPlaceholder": "Search client or email",
     "empty": "No clients yet.",
@@ -466,7 +475,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "created_success": "Client added",
-    "created_error": "Could not add client"
+    "created_error": "Could not add client",
+    "invalidVat": "Enter a valid CVR (8 digits, e.g. DK12345678) or EU VAT number."
   },
   "dashboard": {
     "title": "Overview",
@@ -712,7 +722,22 @@
     "fetchRecruitmentError": "Could not load positions",
     "searchPositionPlaceholder": "Search positions...",
     "payrollGuide": "Register monthly salary payments for employees. Click \"Register Payroll\" to add a salary record for the current period.",
-    "departmentRequired": "Department is required"
+    "departmentRequired": "Department is required",
+    "salaryPositive": "Salary must be greater than 0.",
+    "payrollDuplicate": "This employee already has a payroll record for that period.",
+    "leaveEndBeforeStart": "The end date can't be before the start date.",
+    "editEmployee": "Edit employee",
+    "fullName": "Full name",
+    "deletePayrollTitle": "Delete this payroll record?",
+    "department": "Department",
+    "description": "Description",
+    "requirements": "Requirements",
+    "salaryRange": "Salary range",
+    "empty": "No employees yet.",
+    "orgChart": "Org chart",
+    "orgChartDesc": "See how your team is organized.",
+    "orgChartEmpty": "No employees to show",
+    "orgChartEmptyDesc": "Add employees to build your org chart."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -882,7 +907,22 @@
     "empty": "No quotes yet",
     "createFirst": "Create your first quote",
     "created": "Quote created",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "A quote needs a lead/customer before it can be saved or invoiced.",
+    "vatInvalid": "VAT rate must be between 0 and 100 %.",
+    "statusLabels": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    },
+    "expired": "Expired — can no longer be accepted",
+    "duplicateNumber": "A quote with this number already exists.",
+    "markSent": "Mark as sent",
+    "markAccepted": "Mark as accepted",
+    "markRejected": "Mark as rejected",
+    "createInvoice": "Create invoice"
   },
   "roles": {
     "employee": "Employee",
@@ -999,7 +1039,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Owner",
-      "nameRequired": "Name and email are required",
+      "nameRequired": "Name is required",
       "created_success": "Lead created",
       "created_error": "Could not create lead",
       "scoreUpdated": "Score updated",
@@ -1103,7 +1143,22 @@
       "aiEmailWriter": "AI Email Writer",
       "folderNameTooShort": "Folder name must be at least 2 characters",
       "syncNow": "Sync now",
-      "connectCrm": "Connect CRM"
+      "connectCrm": "Connect CRM",
+      "phoneInvalid": "Enter a valid phone number (digits, spaces, + and - only).",
+      "duplicateEmail": "A lead or customer with this email already exists.",
+      "convertedToExisting": "Deal created and linked to an existing contact with the same email/phone.",
+      "cockpit": {
+        "signal": "Live lead signal",
+        "contacts": "Contacts",
+        "followUp": "Follow up",
+        "new": "New",
+        "stale": "No activity",
+        "title": "Relationships in motion.",
+        "subtitle": "Find the next contact, keep momentum and move the right leads into the pipeline.",
+        "syncedVia": "Synced via",
+        "syncNow": "Sync now",
+        "connectCrm": "Connect CRM"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1147,7 +1202,9 @@
       "selectLead": "Select lead...",
       "noLead": "No lead",
       "moveToStage": "Move to stage",
-      "bulkStageUpdated": "Deals updated"
+      "bulkStageUpdated": "Deals updated",
+      "valuePositive": "The value cannot be negative.",
+      "confirmLostTitle": "Mark this deal as lost?"
     },
     "invoices": {
       "title": "Invoices",
@@ -1203,6 +1260,7 @@
       "issued": "Issued",
       "actions": "Actions",
       "selectError": "Select a customer and add at least one line",
+      "lineInvalid": "Every invoice line needs a description and an amount above 0.",
       "created_success": "Invoice created",
       "created_error": "Could not create invoice",
       "fetchError": "Could not fetch invoices",
@@ -1237,7 +1295,12 @@
       "companyDetails": "Company details",
       "customerDetails": "Customer details",
       "markSelectedSent": "Mark as sent",
-      "connectPayments": "Connect payments"
+      "connectPayments": "Connect payments",
+      "confirmMarkPaidTitle": "Mark invoice as paid?",
+      "confirmMarkPaidDesc": "This registers a payment for the full remaining amount",
+      "confirmMarkPaidDraft": "this invoice is still a draft and was never sent",
+      "senderIncomplete": "Your company's CVR or address is missing — required on Danish invoices.",
+      "senderIncompleteLink": "Complete company info"
     },
     "tasks": {
       "title": "Tasks",
@@ -1287,12 +1350,25 @@
       "assignee": "Assignee",
       "priority": "Priority",
       "bulkComplete": "Complete",
-      "bulkAssignTo": "Assign to"
+      "bulkAssignTo": "Assign to",
+      "views": {
+        "today": "Today",
+        "overdue": "Overdue",
+        "upcoming": "Upcoming",
+        "mine": "Mine",
+        "allActive": "All active",
+        "completed": "Completed",
+        "archived": "Archived"
+      },
+      "selectAll": "Select all",
+      "selectAllVisible": "Select all visible",
+      "selected": "selected",
+      "emptyView": "Nothing in this view — check the other tabs."
     },
     "calendar": {
       "title": "Calendar",
       "subtitle": "View your events",
-      "newEvent": "New Event",
+      "newEvent": "New event",
       "createTitle": "Create event",
       "createSubtitle": "Add a new event to your calendar",
       "titleLabel": "Title",
@@ -1882,6 +1958,15 @@
     "queue": {
       "title": "Lead queue"
     },
+    "views": {
+      "queue": "Queue",
+      "history": "History",
+      "setup": "Setup"
+    },
+    "status": {
+      "connected": "Phone ready",
+      "disconnected": "Phone not connected"
+    },
     "outcomes": {
       "noAnswer": "No answer",
       "callback": "Callback",
@@ -2024,7 +2109,9 @@
     "selectError": "Select invoice and enter amount",
     "success": "Payment registered – invoice updated automatically",
     "error": "Could not register payment",
-    "exportHistory": "Export"
+    "exportHistory": "Export",
+    "manual": "Marked as paid manually",
+    "noUnpaidInvoices": "No unpaid invoices — every invoice is already paid."
   },
   "bulkEmail": {
     "title": "Bulk Email",
@@ -2108,7 +2195,7 @@
     "matches": "Matches",
     "edit": "Edit",
     "moreCount": "+{count} more",
-    "backToIcps": "← Back to ICPs",
+    "backToIcps": "Back to ICPs",
     "leadMatches": "Lead Matches: {name}",
     "leadsScored": "{count} leads scored",
     "sortedByBestMatch": "Sorted by best match",
@@ -2130,15 +2217,15 @@
       "stepPain": "Pain Points & Services",
       "stepPriorities": "Priorities & Review",
       "nameLabel": "ICP Name *",
-      "namePlaceholder": "e.g. Texas Cleaning Companies 5-25 Employees",
+      "namePlaceholder": "e.g. Danish cleaning companies, 5–25 employees",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your ideal customer in your own words...",
       "targetIndustries": "Target Industries",
       "targetCountries": "Target Countries",
       "targetRegions": "Target Regions / States",
-      "targetRegionsPlaceholder": "e.g. Texas, California...",
+      "targetRegionsPlaceholder": "e.g. Capital Region, Central Jutland...",
       "targetCities": "Target Cities",
-      "targetCitiesPlaceholder": "e.g. Houston, Dallas...",
+      "targetCitiesPlaceholder": "e.g. Copenhagen, Aarhus...",
       "excludeIndustries": "Exclude Industries",
       "excludeIndustriesPlaceholder": "Industries to exclude...",
       "minEmployees": "Min Employees",
@@ -2304,7 +2391,7 @@
     "secretHint": "If set, we'll include an X-Webhook-Signature header",
     "createWebhook": "Create Webhook",
     "fillRequired": "Please fill in all required fields",
-    "invalidUrl": "Please enter a valid URL",
+    "invalidUrl": "Enter a public https:// URL (http, localhost and private network addresses are not allowed).",
     "created": "Webhook created",
     "testSuccess": "Test webhook delivered successfully!",
     "testFailed": "Test webhook failed — check logs for details",
@@ -2704,6 +2791,55 @@
     "subtitle": "Find answers to your questions",
     "noResults": "No articles found. Try a different search term."
   },
+  "studio": {
+    "pageDescription": "Edit and generate video and image content without leaving the platform.",
+    "editorTab": "Editor",
+    "generateTab": "AI Generate"
+  },
+  "videoStudio": {
+    "pageDescription": "Produce videos and ads without leaving the platform.",
+    "newVideo": "New video",
+    "untitled": "Untitled video",
+    "emptyTitle": "No videos yet",
+    "emptyHint": "Create your first video project.",
+    "upload": "Upload media",
+    "uploadError": "Upload failed",
+    "noMedia": "No media uploaded yet.",
+    "addToTimeline": "Add to timeline",
+    "addToTimelineError": "Could not add to timeline",
+    "save": "Save",
+    "saved": "Project saved",
+    "saveError": "Could not save project",
+    "autosaving": "Saving…",
+    "autosaved": "All changes saved",
+    "unsavedChanges": "Unsaved changes",
+    "leaveConfirm": "You have unsaved changes. Leave anyway?",
+    "export": "Export MP4",
+    "exporting": "Exporting",
+    "exported": "Video exported",
+    "exportError": "Export failed",
+    "loadError": "Could not load project",
+    "createError": "Could not create project",
+    "deleted": "Video deleted",
+    "downloadExport": "Download last export",
+    "unsupportedTitle": "Your browser doesn't support Video Studio",
+    "unsupportedBody": "Video Studio requires WebCodecs, WebGL2 and OffscreenCanvas. Use the latest Chrome or Edge (Chromium 108+).",
+    "unsupportedMissing": "Missing",
+    "status": {
+      "draft": "Draft",
+      "exporting": "Exporting",
+      "exported": "Exported",
+      "failed": "Failed"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (square)",
+      "4:5": "4:5 — Feed (portrait)",
+      "16:9": "16:9 — YouTube / landscape"
+    },
+    "notDeployedTitle": "Video Studio isn't set up yet",
+    "notDeployedHint": "The video editor's database table hasn't been deployed. An administrator needs to run the latest database migration (supabase db push)."
+  },
   "sec": {
     "home": "Home",
     "all": "All",
@@ -3014,5 +3150,127 @@
       "replied": "Replied",
       "skipped": "Skipped"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Something went wrong",
+      "actionFallback": "The action"
+    },
+    "functionAreas": {
+      "accounting": "Accounting integration",
+      "aiActions": "AI assistant",
+      "aiAnalyze": "AI analysis",
+      "aiEmailWriter": "AI email writer",
+      "aiGenerate": "AI generation",
+      "aiHealth": "AI connection",
+      "aiOperatingManager": "AI operating manager",
+      "autopilot": "Autopilot",
+      "callScript": "Call script",
+      "chat": "AI chat",
+      "companiesHouse": "Companies House lookup",
+      "csvImport": "CSV import",
+      "customerPortal": "Customer portal",
+      "cvrSearch": "CVR lookup",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero connection",
+      "dineroSync": "Dinero sync",
+      "economic": "e-conomic connection",
+      "economicSync": "e-conomic sync",
+      "emailCampaigns": "Email campaigns",
+      "emailProvider": "Email provider",
+      "emailQueue": "Email queue",
+      "emailTrack": "Email tracking",
+      "emailVerify": "Email verification",
+      "gmail": "Gmail connection",
+      "gmailSync": "Gmail sync",
+      "icpScore": "ICP scoring",
+      "integrations": "Integrations",
+      "invoicePayment": "Invoice payment",
+      "leadGen": "Lead generation",
+      "leadRecommend": "Lead recommendations",
+      "linkedinOutreach": "LinkedIn outreach",
+      "mcpServer": "MCP server",
+      "meetingSummary": "Meeting summary",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta Ads sync",
+      "payment": "Payment",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Subscription",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow assistant",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "the information sent was invalid.",
+        "what": "Check the fields and try again."
+      },
+      "unauthorized": {
+        "why": "your session has expired.",
+        "what": "Log in again."
+      },
+      "forbidden": {
+        "why": "you don't have access to this.",
+        "what": "Contact an administrator if this seems wrong."
+      },
+      "notFound": {
+        "why": "it could not be found.",
+        "what": "Check that it still exists."
+      },
+      "conflict": {
+        "why": "it conflicts with something already in progress.",
+        "what": "Refresh the page and try again."
+      },
+      "rateLimited": {
+        "why": "there are too many requests right now.",
+        "what": "Wait a moment and try again."
+      },
+      "serverError": {
+        "why": "something went wrong on our side or with a connected service.",
+        "what": "Try again in a moment."
+      },
+      "network": {
+        "why": "the connection failed or the service is not responding.",
+        "what": "Check your internet connection and try again."
+      },
+      "unknown": {
+        "why": "something unexpected happened.",
+        "what": "Try again, and contact support if it keeps happening."
+      }
+    },
+    "details": {
+      "show": "Show details",
+      "hide": "Hide details",
+      "copy": "Copy",
+      "copied": "Copied",
+      "function": "Function",
+      "status": "Status",
+      "time": "Time",
+      "requestId": "Request ID"
+    }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Follow up with",
+    "prepareError": "Could not prepare the action",
+    "taskCreated": "Task created",
+    "rejected": "Proposal rejected",
+    "actionFailed": "The action failed",
+    "resultTitle": "Follow-up task created",
+    "prepareAgain": "Prepare again",
+    "proposalTitle": "AI suggests an action",
+    "risk": "risk",
+    "what": "What",
+    "why": "Why",
+    "changes": "What changes",
+    "fieldTitle": "Title",
+    "fieldDue": "Due",
+    "fieldPriority": "Priority",
+    "serverSide": "Runs server-side after your approval.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "preparing": "Preparing…",
+    "prepare": "Prepare follow-up (AI)"
   }
 }

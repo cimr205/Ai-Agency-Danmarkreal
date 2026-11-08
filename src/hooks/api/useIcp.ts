@@ -192,11 +192,14 @@ export function useLeadIcpScores(icpProfileId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('lead_icp_scores')
-        .select('*, leads(name, email, company_name, phone, industry, status, score)')
+        // lead_id points at customers since the leads→customers merge; embedding the
+        // frozen legacy `leads` table made PostgREST reject the whole query, so
+        // the page always said "no scores" even right after scoring.
+        .select('*, leads:customers!lead_icp_scores_lead_id_fkey(name, email, company_name, phone, industry, status, score)')
         .eq('icp_profile_id', icpProfileId!)
         .order('total_score', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as (LeadIcpScore & { leads: Pick<Tables<'leads'>, 'name' | 'email' | 'company_name' | 'phone' | 'industry' | 'status' | 'score'> | null })[];
+      return (data ?? []) as unknown as (LeadIcpScore & { leads: Pick<Tables<'customers'>, 'name' | 'email' | 'company_name' | 'phone' | 'industry' | 'status' | 'score'> | null })[];
     },
     enabled: !!icpProfileId,
   });

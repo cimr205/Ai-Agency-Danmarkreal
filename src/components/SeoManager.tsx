@@ -38,14 +38,24 @@ function setMeta(selector: string, attribute: 'name' | 'property', key: string, 
   element.content = content;
 }
 
+/** Split "/de/app/x" into its locale and the rest. Exported for tests: German
+ *  routes once kept their prefix and were all titled "page not found". */
+export function splitLocalePath(pathname: string): { htmlLang: string; locale: 'da' | 'en'; suffix: string } {
+  const firstSegment = pathname.split('/')[1];
+  const htmlLang = isLocale(firstSegment) ? firstSegment : 'en';
+  return {
+    htmlLang,
+    locale: htmlLang === 'da' ? 'da' : 'en',
+    suffix: pathname.replace(/^\/(da|en|de)(?=\/|$)/, '') || '/',
+  };
+}
+
 export function SeoManager() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const firstSegment = pathname.split('/')[1];
-    const locale = isLocale(firstSegment) && firstSegment === 'da' ? 'da' : 'en';
+    const { htmlLang, locale, suffix } = splitLocalePath(pathname);
     const localized = copy[locale];
-    const suffix = pathname.replace(/^\/(da|en)/, '') || '/';
     const isPrivate = /^\/(app|auth|admin)(\/|$)/.test(suffix);
 
     let title: string = localized.homeTitle;
@@ -60,14 +70,14 @@ export function SeoManager() {
       title = localized.dpaTitle;
       description = localized.dpaDescription;
     } else if (suffix !== '/' && !isPrivate) {
-      title = `Side ikke fundet | AI Agency Danmark`;
+      title = locale === 'da' ? 'Side ikke fundet | AI Agency Danmark' : htmlLang === 'de' ? 'Seite nicht gefunden | AI Agency Danmark' : 'Page not found | AI Agency Danmark';
       description = localized.homeDescription;
     }
 
     const canonicalPath = isPrivate ? `/${locale}` : `/${locale}${suffix === '/' ? '' : suffix}`;
     const canonical = `${SITE_URL}${canonicalPath}`;
     document.title = title;
-    document.documentElement.lang = locale;
+    document.documentElement.lang = htmlLang;
     setMeta('meta[name="description"]', 'name', 'description', description);
     setMeta('meta[name="robots"]', 'name', 'robots', isPrivate || (suffix !== '/' && !['/privacy', '/terms', '/dpa'].includes(suffix)) ? 'noindex, nofollow' : 'index, follow');
     setMeta('meta[property="og:title"]', 'property', 'og:title', title);

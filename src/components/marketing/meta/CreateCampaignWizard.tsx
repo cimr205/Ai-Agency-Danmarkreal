@@ -14,7 +14,8 @@ import {
   Loader2, ChevronRight, Globe, Clock, Video, X, Plus, Copy, Trash2, FlaskConical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from '@/lib/errors';
@@ -227,7 +228,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
   const handleAiGenerate = async () => {
     setAiGenerating(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke("meta-ads-ai", {
+      const result = await invokeFunction<{ primaryTexts?: string[]; headlines?: string[]; hooks?: string[] }>("meta-ads-ai", {
         body: {
           type: "generate",
           product: data.aiPrompt,
@@ -238,7 +239,6 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
           cta: "",
         },
       });
-      if (error) throw new Error(error.message);
 
       // Generate 2 A/B variants from AI
       const variantA: AdVariant = {
@@ -261,7 +261,7 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
       setActiveVariantIdx(0);
       setStep(1);
     } catch (err) {
-      toast({ title: "AI fejl", description: getErrorMessage(err) || String(err), variant: "destructive" });
+      showError(err, { module: "meta-ads-ai" });
     } finally {
       setAiGenerating(false);
     }
@@ -271,19 +271,18 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
     if (!activeVariant.primaryText && !data.aiPrompt) return;
     setAiImageGenerating(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke("ai-generate", {
+      const result = await invokeFunction<{ output_url?: string }>("ai-generate", {
         body: {
           prompt: `Professional Meta/Facebook ad image: ${data.aiPrompt || activeVariant.primaryText}. Clean, high-quality, modern design suitable for social media advertising.`,
           generation_type: "ad_creative",
         },
       });
-      if (error) throw new Error(error.message);
       if (result?.output_url) {
         updateVariant(activeVariantIdx, { imageUrl: result.output_url, aiGeneratedImage: result.output_url });
         toast({ title: "Billede genereret!" });
       }
     } catch (err) {
-      toast({ title: "Billedgenerering fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
+      showError(err, { module: "ai-generate" });
     } finally {
       setAiImageGenerating(false);
     }
@@ -337,11 +336,10 @@ export function CreateCampaignWizard({ open, onOpenChange }: Props) {
         idempotency_key: publishIdempotencyKeyRef.current,
       };
 
-      const { data: result, error } = await supabase.functions.invoke("meta-publish-campaign", {
+      const result = await invokeFunction<{ error?: string; detail?: string }>("meta-publish-campaign", {
         body: payload,
       });
 
-      if (error) throw new Error(error.message);
       if (result?.error) {
         const msg = result.detail || result.error;
         if (msg.includes("ikke forbundet") || msg.includes("No connection") || msg.includes("Forbind")) {

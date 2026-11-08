@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, Check, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { da } from 'date-fns/locale';
+import { tx } from '@/lib/inlineI18n';
 
 type Submission = {
   id: string;
@@ -56,7 +57,7 @@ export default function AdminContactSubmissions() {
       </div>
 
       {submissions.length === 0 && !loading && (
-        <p className="text-sm text-muted-foreground">Ingen henvendelser endnu.</p>
+        <p className="text-sm text-muted-foreground">{tx("Ingen henvendelser endnu.", "No enquiries yet.")}</p>
       )}
 
       <div className="space-y-3">

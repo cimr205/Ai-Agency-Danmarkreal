@@ -19,7 +19,9 @@ import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
+import { t3, tl } from '@/lib/inlineI18n';
 
 type Recipient = { email: string; name: string; firstName: string; lastName: string; verified?: boolean | null; verifyReason?: string };
 type Attachment = { filename: string; content_type: string; data: string; size: number };
@@ -419,11 +421,15 @@ export default function BulkEmailPage() {
     setVerifying(true);
     setVerifyStats(null);
     try {
-      const { data, error } = await supabase.functions.invoke('verify-emails', {
+      const data = await invokeFunction<{
+        error?: string;
+        results: { email: string; valid: boolean; reason: string; status?: string }[];
+        summary: { valid: number; invalid: number; unverified?: number };
+      }>('verify-emails', {
         body: { emails: recipientsToVerify.map(r => r.email) },
       });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
-      const results: { email: string; valid: boolean; reason: string; status?: string }[] = data.results;
+      if (data?.error) throw new Error(data.error);
+      const results = data.results;
       const resultMap = new Map(results.map(r => [r.email, r]));
       setRecipients(prev => prev.map(r => {
         const vr = resultMap.get(r.email);
@@ -439,10 +445,10 @@ export default function BulkEmailPage() {
       } else if (unv > 0) {
         toast.info(locale === 'da' ? `${data.summary.valid} verificeret, ${unv} kunne ikke tjekkes (du kan stadig sende)` : `${data.summary.valid} verified, ${unv} could not be checked (you can still send)`);
       } else {
-        toast.success(locale === 'da' ? 'Alle emails verificeret ✓' : 'All emails verified ✓');
+        toast.success(tl(locale, 'Alle emails verificeret ✓', 'All emails verified ✓'));
       }
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Verification failed');
+      showError(err, { module: 'verify-emails' });
     } finally {
       setVerifying(false);
     }
@@ -507,14 +513,14 @@ export default function BulkEmailPage() {
 
     const scheduledAt = scheduledTime ? new Date(scheduledTime) : null;
     if (scheduledAt && (!Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now())) {
-      toast.error(locale === 'da' ? 'Vælg et tidspunkt i fremtiden' : 'Choose a time in the future');
+      toast.error(tl(locale, 'Vælg et tidspunkt i fremtiden', 'Choose a time in the future'));
       return;
     }
     setSending(true);
     setProgress({ sent: 0, total: recipients.length, errors: 0 });
     const companyId = user?.company_id;
     const userId = user?.user_id;
-    if (!companyId || !userId) { toast.error(locale === 'da' ? 'Manglende virksomhedskontekst' : 'Missing company context'); setSending(false); return; }
+    if (!companyId || !userId) { toast.error(tl(locale, 'Manglende virksomhedskontekst', 'Missing company context')); setSending(false); return; }
     try {
       const campaignId = crypto.randomUUID();
       const htmlBody = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${body
@@ -558,11 +564,9 @@ export default function BulkEmailPage() {
       });
       if (error) throw error;
       setProgress({ sent: 0, total: recipients.length, errors: Number((data as { suppressed?: number })?.suppressed ?? 0) });
-      toast.success(locale === 'da'
-        ? `${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`
-        : `${recipients.length} emails are queued and will continue in the background`);
+      toast.success(t3(`${recipients.length} emails er lagt sikkert i kø og fortsætter i baggrunden`, `${recipients.length} emails are queued and will continue in the background`, `${recipients.length} E-Mails sind sicher eingereiht und werden im Hintergrund versendet`, locale));
     } catch (error) {
-      toast.error(getErrorMessage(error) || t('common.error'));
+      showError(error, { module: 'enqueue_email_campaign' });
     } finally {
       setSending(false);
     }
@@ -595,7 +599,7 @@ export default function BulkEmailPage() {
           <TabsTrigger value="recipients">👥 {t('bulkEmail.tabRecipients')} ({recipients.length})</TabsTrigger>
           <TabsTrigger value="preview">👁️ {t('bulkEmail.tabPreview')}</TabsTrigger>
           <TabsTrigger value="analytics" className="gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" /> {locale === 'da' ? 'Statistik' : 'Analytics'}
+            <BarChart3 className="h-3.5 w-3.5" /> {tl(locale, 'Statistik', 'Analytics')}
           </TabsTrigger>
         </TabsList>
 
@@ -617,22 +621,22 @@ export default function BulkEmailPage() {
                 {verifying && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {locale === 'da' ? 'Verificerer emails via SMTP...' : 'Verifying emails via SMTP...'}
+                    {tl(locale, 'Verificerer emails via SMTP...', 'Verifying emails via SMTP...')}
                   </div>
                 )}
               </div>
               <input ref={csvInputRef} type="file" accept=".csv,.txt,.tsv" className="hidden" onChange={(e) => e.target.files?.[0] && readCSV(e.target.files[0])} />
               {verifyStats && (
                 <div className="mt-3 flex gap-3 items-center flex-wrap">
-                  <Badge variant="secondary" className="gap-1"><ShieldCheck className="h-3 w-3 text-green-500" /> {verifyStats.valid} {locale === 'da' ? 'verificeret' : 'verified'}</Badge>
+                  <Badge variant="secondary" className="gap-1"><ShieldCheck className="h-3 w-3 text-green-500" /> {verifyStats.valid} {tl(locale, 'verificeret', 'verified')}</Badge>
                   {(verifyStats.unverified || 0) > 0 && (
-                    <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3 text-yellow-500" /> {verifyStats.unverified} {locale === 'da' ? 'ikke tjekket' : 'unchecked'}</Badge>
+                    <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3 text-yellow-500" /> {verifyStats.unverified} {tl(locale, 'ikke tjekket', 'unchecked')}</Badge>
                   )}
                   {verifyStats.invalid > 0 && (
                     <>
-                      <Badge variant="destructive" className="gap-1"><ShieldX className="h-3 w-3" /> {verifyStats.invalid} {locale === 'da' ? 'ugyldige' : 'invalid'}</Badge>
+                      <Badge variant="destructive" className="gap-1"><ShieldX className="h-3 w-3" /> {verifyStats.invalid} {tl(locale, 'ugyldige', 'invalid')}</Badge>
                       <Button variant="destructive" size="sm" onClick={removeInvalidEmails}>
-                        {locale === 'da' ? 'Fjern ugyldige' : 'Remove invalid'}
+                        {tl(locale, 'Fjern ugyldige', 'Remove invalid')}
                       </Button>
                     </>
                   )}
@@ -731,22 +735,22 @@ export default function BulkEmailPage() {
                   <Button
                     variant="outline"
                     onClick={async () => {
-                      if (!subject.trim() || !body.trim()) { toast.error(locale === 'da' ? 'Udfyld emne og brødtekst først' : 'Fill in subject and body first'); return; }
+                      if (!subject.trim() || !body.trim()) { toast.error(tl(locale, 'Udfyld emne og brødtekst først', 'Fill in subject and body first')); return; }
                       if (!gmailAccount) { toast.error(t('bulkEmail.connectFirst')); return; }
                       const { data: { user: authUser } } = await supabase.auth.getUser();
-                      if (!authUser?.email) { toast.error(locale === 'da' ? 'Ingen email fundet' : 'No email found'); return; }
+                      if (!authUser?.email) { toast.error(tl(locale, 'Ingen email fundet', 'No email found')); return; }
                       try {
                         const testRecipient: Recipient = { email: authUser.email, name: user?.full_name || '', firstName: user?.full_name?.split(' ')[0] || '', lastName: user?.full_name?.split(' ').slice(1).join(' ') || '' };
-                        await supabase.functions.invoke('gmail-send', {
+                        await invokeFunction('gmail-send', {
                           body: { to: authUser.email, subject: personalizeText(subject, testRecipient), message: personalizeText(body, testRecipient) },
                         });
                         toast.success(locale === 'da' ? `Test-email sendt til ${authUser.email}` : `Test email sent to ${authUser.email}`);
-                      } catch { toast.error(locale === 'da' ? 'Kunne ikke sende test-email' : 'Failed to send test email'); }
+                      } catch (e) { showError(e, { module: 'gmail-send' }); }
                     }}
                     disabled={sending || !subject.trim() || !body.trim() || !gmailAccount}
                   >
                     <Mail className="h-4 w-4 mr-2" />
-                    {locale === 'da' ? 'Send test til mig' : 'Send test to me'}
+                    {tl(locale, 'Send test til mig', 'Send test to me')}
                   </Button>
                   <Button onClick={() => setConfirmSendOpen(true)} disabled={sending || !recipients.length || !subject.trim() || !body.trim() || !gmailAccount} size="lg">
                     <Send className="h-4 w-4 mr-2" />
@@ -768,7 +772,7 @@ export default function BulkEmailPage() {
                     <>
                       <Button variant="outline" size="sm" onClick={() => verifyEmails(recipients)} disabled={verifying}>
                         {verifying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
-                        {locale === 'da' ? 'Verificér emails' : 'Verify emails'}
+                        {tl(locale, 'Verificér emails', 'Verify emails')}
                       </Button>
                       {verifyStats && verifyStats.invalid > 0 && (
                         <Button variant="destructive" size="sm" onClick={removeInvalidEmails}>
@@ -783,8 +787,8 @@ export default function BulkEmailPage() {
               </CardTitle>
               {verifyStats && (
                 <div className="flex gap-3 text-sm mt-2">
-                  <Badge variant="secondary" className="gap-1"><ShieldCheck className="h-3 w-3 text-green-500" /> {verifyStats.valid} {locale === 'da' ? 'gyldige' : 'valid'}</Badge>
-                  {verifyStats.invalid > 0 && <Badge variant="destructive" className="gap-1"><ShieldX className="h-3 w-3" /> {verifyStats.invalid} {locale === 'da' ? 'ugyldige' : 'invalid'}</Badge>}
+                  <Badge variant="secondary" className="gap-1"><ShieldCheck className="h-3 w-3 text-green-500" /> {verifyStats.valid} {tl(locale, 'gyldige', 'valid')}</Badge>
+                  {verifyStats.invalid > 0 && <Badge variant="destructive" className="gap-1"><ShieldX className="h-3 w-3" /> {verifyStats.invalid} {tl(locale, 'ugyldige', 'invalid')}</Badge>}
                 </div>
               )}
             </CardHeader>

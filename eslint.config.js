@@ -33,6 +33,21 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "supabase",
+          property: "functions",
+          message:
+            "Call invokeFunction() from '@/lib/functions' instead of supabase.functions.invoke() directly — it turns the SDK's generic error into an AppError that explainError()/showError() can translate into an honest message. See src/lib/functions.ts.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/lib/functions.ts"],
+    rules: {
+      "no-restricted-properties": "off",
     },
   },
 );

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ShieldAlert, Loader2 } from 'lucide-react';
 import { isLocale } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
+import { t3 } from '@/lib/inlineI18n';
 
 // Admin access is the same `system_admin` database role every admin page and
 // RLS policy already trusts (public.has_role) — there is no separate secret
@@ -37,10 +38,9 @@ export default function AdminGatePage() {
           <div className="mx-auto rounded-full bg-destructive/10 p-3 w-fit">
             <ShieldAlert className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-xl">Ingen adgang</CardTitle>
+          <CardTitle className="text-xl">{t3("Ingen adgang", "No access", "Kein Zugriff")}</CardTitle>
           <CardDescription>
-            Din konto har ikke system-admin-rettigheder. Kontakt en eksisterende
-            system-admin, hvis du mener det er en fejl.
+            {t3("Din konto har ikke system-admin-rettigheder. Kontakt en eksisterende system-admin, hvis du mener det er en fejl.", "Your account doesn't have system admin rights. Contact an existing system admin if you think this is a mistake.", "Ihr Konto hat keine System-Admin-Rechte. Wenden Sie sich an einen bestehenden System-Admin, falls das ein Fehler ist.")}
           </CardDescription>
         </CardHeader>
       </Card>

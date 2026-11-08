@@ -12,6 +12,10 @@ import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { getErrorMessage } from '@/lib/errors';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { t3 } from '@/lib/inlineI18n';
+import { localDateString } from '@/lib/localDate';
 
 function BigTimer({ checkIn }: { checkIn: string }) {
   const [display, setDisplay] = useState('0:00:00');
@@ -31,7 +35,7 @@ function BigTimer({ checkIn }: { checkIn: string }) {
 }
 
 export default function TimeTrackingPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { isAdmin } = useAuth();
   const { data: session, isLoading: sessionLoading, error: sessionError } = useMyActiveSession();
   const clockIn = useClockIn();
@@ -65,21 +69,31 @@ export default function TimeTrackingPage() {
   const { data: weekEntries } = useTimeEntries({ startDate: weekStart, endDate: weekEnd, employeeId: viewEmployeeId });
   const { data: monthEntries } = useTimeEntries({ startDate: monthStart, endDate: monthEnd, employeeId: viewEmployeeId });
 
-  const calcHours = (entries: AttendanceLog[]) => {
+  // Hours that fall inside [from, to] — an entry (or a session still open)
+  // is clipped to the period. Counting whole entries by their check-in date
+  // made a session open since last week show 0h this week but 171h this month.
+  const calcHours = (entries: AttendanceLog[], from: Date, to: Date) => {
+    const seen = new Set<string>();
     return entries.reduce((total, e) => {
-      const end = e.check_out ? new Date(e.check_out).getTime() : Date.now();
-      return total + (end - new Date(e.check_in).getTime()) / 3600000;
+      if (seen.has(e.id)) return total;
+      seen.add(e.id);
+      const start = Math.max(new Date(e.check_in).getTime(), from.getTime());
+      const end = Math.min(e.check_out ? new Date(e.check_out).getTime() : Date.now(), to.getTime());
+      return end > start ? total + (end - start) / 3600000 : total;
     }, 0);
   };
 
-  const weekHours = weekEntries ? Math.round(calcHours(weekEntries) * 10) / 10 : 0;
-  const monthHours = monthEntries ? Math.round(calcHours(monthEntries) * 10) / 10 : 0;
+  const viewingSelf = !viewEmployeeId || viewEmployeeId === employeeProfileId;
+  const openSession = viewingSelf && isActive && session ? [session as unknown as AttendanceLog] : [];
+  const periodEntries = [...(weekEntries ?? []), ...(monthEntries ?? []), ...openSession];
+  const weekHours = Math.round(calcHours(periodEntries, startOfWeek(today, { weekStartsOn: 1 }), endOfWeek(today, { weekStartsOn: 1 })) * 10) / 10;
+  const monthHours = Math.round(calcHours(periodEntries, startOfMonth(today), endOfMonth(today)) * 10) / 10;
 
   const handleClockIn = useCallback(async () => {
     setActionError(null);
     const targetId = isAdmin && selectedEmployee ? selectedEmployee : employeeProfileId;
     if (!targetId) {
-      const msg = 'Ingen medarbejderprofil fundet. Prøv at genindlæse siden.';
+      const msg = t3("Ingen medarbejderprofil fundet. Prøv at genindlæse siden.", "No employee profile found. Try reloading the page.", "Kein Mitarbeiterprofil gefunden. Bitte Seite neu laden.");
       setActionError(msg);
       toast.error(msg);
       return;
@@ -88,7 +102,7 @@ export default function TimeTrackingPage() {
       await clockIn.mutateAsync(targetId);
       toast.success(t('workforce.clockedIn'));
     } catch (err) {
-      const msg = getErrorMessage(err) || 'Clock-in fejlede';
+      const msg = getErrorMessage(err) || t3("Clock-in fejlede", "Clock-in failed", "Einstempeln fehlgeschlagen");
       setActionError(msg);
       toast.error(msg);
     }
@@ -97,7 +111,7 @@ export default function TimeTrackingPage() {
   const handleClockOut = useCallback(async () => {
     setActionError(null);
     if (!session || !('id' in session)) {
-      const msg = 'Ingen aktiv session fundet';
+      const msg = t3("Ingen aktiv session fundet", "No active session found", "Keine aktive Sitzung gefunden");
       setActionError(msg);
       toast.error(msg);
       return;
@@ -106,14 +120,14 @@ export default function TimeTrackingPage() {
       await clockOut.mutateAsync(session.id);
       toast.success(t('workforce.clockedOut'));
     } catch (err) {
-      const msg = getErrorMessage(err) || 'Clock-out fejlede';
+      const msg = getErrorMessage(err) || t3("Clock-out fejlede", "Clock-out failed", "Ausstempeln fehlgeschlagen");
       setActionError(msg);
       toast.error(msg);
     }
   }, [session, clockOut, t]);
 
   // History - last 14 days
-  const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+  const twoWeeksAgo = localDateString(new Date(Date.now() - 14 * 86400000));
   const { data: history, isLoading: historyLoading } = useTimeEntries({
     startDate: twoWeeksAgo,
     endDate: format(today, 'yyyy-MM-dd'),
@@ -121,7 +135,7 @@ export default function TimeTrackingPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">{t('workforce.timeTrackingTitle')}</h1>
         <p className="text-muted-foreground">{t('workforce.timeTrackingSubtitle')}</p>
@@ -154,7 +168,7 @@ export default function TimeTrackingPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 text-destructive">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              <p className="text-sm">Fejl ved indlæsning af session: {getErrorMessage(sessionError) || 'Ukendt fejl'}</p>
+              <p className="text-sm">{t3("Fejl ved indlæsning af session", "Error loading session", "Fehler beim Laden der Sitzung")}: {getErrorMessage(sessionError) || t3("Ukendt fejl", "Unknown error", "Unbekannter Fehler")}</p>
             </div>
           </CardContent>
         </Card>
@@ -225,48 +239,26 @@ export default function TimeTrackingPage() {
         </CardContent>
       </Card>
 
+      {/* A workday open for more than 16 hours is almost certainly a missed
+          clock-out; say so instead of silently accruing hours for days. */}
+      {isActive && session && (Date.now() - new Date(session.check_in).getTime()) > 16 * 3600000 && (
+        <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {t('workforce.forgotClockOut').replace('{since}', new Date(session.check_in).toLocaleString(locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB'))}
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.todayHours')}</p>
-                <p className="text-2xl font-bold">{isActive && session ? ((Date.now() - new Date(session.check_in).getTime()) / 3600000).toFixed(1) : '0'}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-chart-blue/10 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-chart-blue" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.weekHours')}</p>
-                <p className="text-2xl font-bold">{weekHours}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-chart-violet/10 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-chart-violet" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('workforce.monthHours')}</p>
-                <p className="text-2xl font-bold">{monthHours}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+            {/* Only the part of the open session that falls on today counts as
+                "today" — a session left open since last week showed 161h today. */}
+            <WorkspaceTile label={t('workforce.todayHours')} value={`${isActive && session ? ((Date.now() - Math.max(new Date(session.check_in).getTime(), new Date(new Date().setHours(0, 0, 0, 0)).getTime())) / 3600000).toFixed(1) : '0'}h`} active />
+            <WorkspaceTile label={t('workforce.weekHours')} value={`${weekHours}h`} />
+            <WorkspaceTile label={t('workforce.monthHours')} value={`${monthHours}h`} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* History */}
       <Card className="border-border/50">

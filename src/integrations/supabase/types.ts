@@ -6912,6 +6912,59 @@ export type Database = {
           },
         ]
       }
+      video_projects: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          duration_frames: number | null
+          exported_at: string | null
+          exported_video_path: string | null
+          id: string
+          name: string
+          project_json: Json
+          status: string
+          thumbnail_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          duration_frames?: number | null
+          exported_at?: string | null
+          exported_video_path?: string | null
+          id?: string
+          name?: string
+          project_json?: Json
+          status?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          duration_frames?: number | null
+          exported_at?: string | null
+          exported_video_path?: string | null
+          id?: string
+          name?: string
+          project_json?: Json
+          status?: string
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_agents: {
         Row: {
           company_id: string
@@ -7851,6 +7904,17 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
       activate_company: { Args: { _company_id: string }; Returns: boolean }
+      admin_update_employee: {
+        Args: {
+          _department: string
+          _employee_id: string
+          _full_name: string
+          _is_active: boolean
+          _phone: string
+          _position: string
+        }
+        Returns: undefined
+      }
       attach_invoice_checkout_session: {
         Args: {
           p_company_id: string

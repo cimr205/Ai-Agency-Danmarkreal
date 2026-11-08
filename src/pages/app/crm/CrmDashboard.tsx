@@ -69,16 +69,16 @@ export default function CrmDashboard() {
       <section className="grid gap-6 xl:grid-cols-3">
         <Panel>
           <PanelHeader eyebrow={tr('sec.crm.panelPipelineEyebrow')} title={tr('sec.crm.panelPipeline')} action={tr('sec.open')} href={`${base}/crm/deals?view=board`} />
-          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5">
+          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
             {stages.length > 0 ? (
               <div className="grid grid-cols-[110px_1fr] gap-4">
-                <div className="h-[110px] w-[110px] rounded-full bg-slate-950/5 p-2">
+                <div className="h-[110px] w-[110px] rounded-full bg-slate-950/5 p-2 dark:bg-white/5">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={stages} dataKey="count" nameKey="name" innerRadius={32} outerRadius={50} paddingAngle={3} stroke="none">
                         {stages.map((s, i) => <Cell key={s.name} fill={s.color || COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <RTooltip contentStyle={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(148,163,184,0.3)', borderRadius: 16, fontSize: 12 }} />
+                      <RTooltip contentStyle={{ background: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))', border: '1px solid rgba(148,163,184,0.3)', borderRadius: 16, fontSize: 12 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -94,7 +94,7 @@ export default function CrmDashboard() {
 
         <Panel>
           <PanelHeader eyebrow={tr('sec.crm.panelFunnelEyebrow')} title={tr('sec.crm.panelFunnel')} action={tr('sec.open')} href={`${base}/crm/leads`} />
-          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5">
+          <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
             <BarRows rows={[
               { label: tr('sec.lbl.newLeads'), value: d?.leads?.new ?? 0, display: String(d?.leads?.new ?? 0), color: COLORS[0] },
               { label: tr('sec.lbl.contacted'), value: d?.leads?.contacted ?? 0, display: String(d?.leads?.contacted ?? 0), color: COLORS[1] },

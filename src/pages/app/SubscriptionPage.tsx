@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
-import { toast } from 'sonner';
+import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
-import { getErrorMessage } from '@/lib/errors';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 const FEATURES = [
-  'Ubegrænsede leads & deals',
+  tx("Ubegrænsede leads & deals", "Unlimited leads & deals"),
   'AI-drevet ICP scoring',
   'Pipeline management',
   'Email integration (Gmail)',
@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
     try {
       await startCheckout();
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke starte checkout'));
+      showError(e, { module: 'create-checkout' });
     }
   };
 
@@ -36,17 +36,23 @@ export default function SubscriptionPage() {
     try {
       await openPortal();
     } catch (e) {
-      toast.error((getErrorMessage(e) || 'Kunne ikke åbne portal'));
+      showError(e, { module: 'customer-portal' });
     }
   };
 
+  // A trial granted on the company itself has no Stripe status. Starting checkout would replace it with 14 days.
+  const grantedTrialEnd = status === 'none' && trialEndsAt && new Date(trialEndsAt).getTime() > Date.now()
+    ? new Date(trialEndsAt).toLocaleDateString(dateLocaleTag())
+    : null;
+
   const getStatusBadge = () => {
+    if (grantedTrialEnd) return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
     switch (status) {
       case 'active': return <Badge className="bg-success text-success-foreground">Aktiv</Badge>;
-      case 'trialing': return <Badge className="bg-warning text-warning-foreground">Prøveperiode</Badge>;
+      case 'trialing': return <Badge className="bg-warning text-warning-foreground">{tx("Prøveperiode", "Trial")}</Badge>;
       case 'past_due': return <Badge variant="destructive">Forfaldent</Badge>;
       case 'canceled': return <Badge variant="secondary">Annulleret</Badge>;
-      default: return <Badge variant="outline">Ingen abonnement</Badge>;
+      default: return <Badge variant="outline">{tx("Ingen abonnement", "No subscription")}</Badge>;
     }
   };
 
@@ -55,8 +61,8 @@ export default function SubscriptionPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold">Abonnement</h1>
-        <p className="text-sm text-muted-foreground">Administrer dit abonnement og betalinger</p>
+        <h1 className="text-2xl font-bold">{tx("Abonnement", "Subscription")}</h1>
+        <p className="text-sm text-muted-foreground">{tx("Administrer dit abonnement og betalinger", "Manage your subscription and payments")}</p>
       </div>
 
       {/* Current Status */}
@@ -73,18 +79,24 @@ export default function SubscriptionPage() {
         <CardContent className="space-y-4">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold">499</span>
-            <span className="text-muted-foreground">kr / bruger / måned</span>
+            <span className="text-muted-foreground">{tx("kr / bruger / måned", "DKK / user / month")}</span>
           </div>
 
           {status === 'trialing' && trialDaysLeft > 0 && (
             <div className="bg-warning/10 text-warning rounded-lg px-3 py-2 text-sm">
-              {trialDaysLeft} dage tilbage af din prøveperiode
+              {t3(`${trialDaysLeft} dage tilbage af din prøveperiode`, `${trialDaysLeft} days left of your trial`, `Noch ${trialDaysLeft} Tage Testphase`)}
+            </div>
+          )}
+
+          {grantedTrialEnd && (
+            <div className="bg-warning/10 text-warning rounded-lg px-3 py-2 text-sm">
+              {t3(`Din prøveperiode gælder til ${grantedTrialEnd}`, `Your trial is valid until ${grantedTrialEnd}`, `Ihre Testphase gilt bis ${grantedTrialEnd}`)}
             </div>
           )}
 
           {periodEnd && subscribed && (
             <p className="text-xs text-muted-foreground">
-              Næste betaling: {new Date(periodEnd).toLocaleDateString('da-DK')}
+              Næste betaling: {new Date(periodEnd).toLocaleDateString(dateLocaleTag())}
             </p>
           )}
 
@@ -102,14 +114,14 @@ export default function SubscriptionPage() {
               <Button onClick={handleManage} variant="outline">
                 Administrer abonnement
               </Button>
-            ) : (
+            ) : !grantedTrialEnd && (
               <Button onClick={handleSubscribe} disabled={isLoading}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Start 14-dages gratis prøveperiode
+                {tx("Start 14-dages gratis prøveperiode", "Start 14-day free trial")}
               </Button>
             )}
             <Button variant="ghost" onClick={checkSubscription} disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Opdater status'}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t3("Opdater status", "Refresh status", "Status aktualisieren")}
             </Button>
           </div>
         </CardContent>

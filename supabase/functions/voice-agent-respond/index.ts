@@ -163,7 +163,7 @@ Deno.serve(withSentry("voice-agent-respond", async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: ai.model,
+          model: ai.model, models: ai.models,
           reasoning: { effort: "none" },
           messages,
           max_tokens: 120,

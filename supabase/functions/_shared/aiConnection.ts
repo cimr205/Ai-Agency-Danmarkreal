@@ -18,7 +18,28 @@ export interface CompanyAI {
   url: string;
   apiKey: string;
   model: string;
+  /**
+   * Ordered fallback list for OpenRouter: the primary model first, then free
+   * alternatives. Sent as the request's `models` array so OpenRouter
+   * automatically routes to the next model when one is rate-limited (429),
+   * down, or removed — instead of the whole AI feature failing. Free models
+   * have low rate limits, so this keeps AI working under load without paid
+   * credits. Configured via LOCAL_LLM_FALLBACK_MODELS (comma-separated).
+   */
+  models: string[];
   provider: "local";
+}
+
+// OpenRouter rejects the whole request when `models` has more entries than this.
+export const MAX_MODELS = 3;
+
+// Deduplicating, order-preserving parse of the comma-separated fallback list,
+// always led by the primary model so it's tried first.
+function resolveModelList(primary: string): string[] {
+  const extra = (Deno.env.get("LOCAL_LLM_FALLBACK_MODELS") ?? "")
+    .split(",").map((m) => m.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  return [primary, ...extra].filter((m) => (seen.has(m) ? false : (seen.add(m), true))).slice(0, MAX_MODELS);
 }
 
 function normalizeEndpoint(url: string) {
@@ -39,12 +60,15 @@ export async function getCompanyAI(
     url: normalizeEndpoint(baseUrl),
     apiKey: Deno.env.get("LOCAL_LLM_API_KEY") ?? "ollama",
     model,
+    models: resolveModelList(model),
     provider: "local",
   };
 }
 
+// Edge functions don't know the caller's UI language, so user-facing AI
+// errors carry Danish and English (they were Danish-only).
 export const AI_NOT_CONNECTED_MESSAGE =
-  "AI-modellen er ikke tilgængelig lige nu (LOCAL_LLM_BASE_URL er ikke konfigureret, eller udbyderen svarer ikke).";
+  "AI-modellen er ikke tilgængelig lige nu. / The AI model is unavailable right now.";
 
 /**
  * Explains a non-ok response from the configured LLM endpoint. Kept as a
@@ -66,12 +90,16 @@ export async function describeOpenAIError(
     // ignore, body wasn't JSON
   }
   if (status === 404) {
-    return { status, message: "Den konfigurerede model kunne ikke findes hos udbyderen." };
+    // The provider's 404 means "unknown model" (a platform config problem),
+    // not "your record is missing" — passing 404 through made the UI say
+    // "It could not be found. Check that it still exists." on every AI
+    // feature. 503 = service unavailable is what the caller should see.
+    return { status: 503, message: "AI-modellen er ikke tilgængelig lige nu (den konfigurerede model findes ikke hos udbyderen). / The AI model is unavailable right now." };
   }
   return {
     status,
     message: body?.error?.message
-      ? `AI-fejl: ${body.error.message}`
-      : `AI-udbyderen svarede ikke korrekt (HTTP ${status}).`,
+      ? `AI-fejl / AI error: ${body.error.message}`
+      : `AI-udbyderen svarede ikke korrekt / The AI provider returned an error (HTTP ${status}).`,
   };
 }

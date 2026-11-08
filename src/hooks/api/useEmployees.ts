@@ -13,10 +13,20 @@ export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // RLS lets system_admin users read employee_profiles of *every*
+      // tenant, so without this scope the HR pages (and the leave/payroll
+      // employee pickers) mixed in other companies' staff, e.g. QA tenants.
+      // This is workspace scoping, not a security boundary — RLS still is.
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = user
+        ? await supabase.from('profiles').select('company_id').eq('user_id', user.id).maybeSingle()
+        : { data: null };
+      let query = supabase
         .from('employee_profiles')
         .select('*')
         .order('created_at', { ascending: false });
+      if (profile?.company_id) query = query.eq('company_id', profile.company_id);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -26,7 +36,16 @@ export function useEmployees() {
 export function useCreateEmployee() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { full_name: string; email: string; position?: string; department?: string; phone?: string }) => {
+    mutationFn: async (raw: { full_name: string; email: string; position?: string; department?: string; phone?: string }) => {
+      // Normalise free text so "qa" and "QA " don't become two departments.
+      const dept = raw.department?.trim();
+      const input = {
+        ...raw,
+        full_name: raw.full_name.trim(),
+        email: raw.email.trim().toLowerCase(),
+        position: raw.position?.trim(),
+        department: dept,
+      };
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
       const { data: profile } = await supabase
@@ -35,6 +54,22 @@ export function useCreateEmployee() {
         .eq('user_id', session.user.id)
         .single();
       if (!profile?.company_id) throw new Error('No company');
+      const { data: existingEmps } = await supabase
+        .from('employee_profiles')
+        .select('department, email, full_name')
+        .eq('company_id', profile.company_id);
+      // One person = one employee record. The same person had been created
+      // three times ("Cimraan Farah", "cimraan farah", "cimraan").
+      const dupe = (existingEmps ?? []).find(e =>
+        (input.email && e.email?.trim().toLowerCase() === input.email) ||
+        (e.full_name?.trim().toLowerCase() === input.full_name.toLowerCase()));
+      if (dupe) throw new Error('DUPLICATE_EMPLOYEE');
+      // Reuse the existing spelling of a department ("QA" vs "qa").
+      if (input.department) {
+        const match = (existingEmps ?? []).find(e => e.department && e.department.toLowerCase() === input.department!.toLowerCase());
+        if (match?.department) input.department = match.department;
+      }
+
       // If someone with this email already has portal access in this company,
       // link the new employee record to their account so they show up as
       // themselves everywhere (shift assignment, "who am I" lookups, etc.)
@@ -49,8 +84,10 @@ export function useCreateEmployee() {
         .ilike('email', escapedEmail)
         .maybeSingle();
 
-      // employee_id is unique across all companies, so it is random (see
-      // src/lib/employeeId.ts); a collision is retried with a fresh ID.
+      // employee_id is unique across ALL companies, while RLS only shows this
+      // company's rows, so a per-company counter (EMP-001 ...) collided with
+      // other companies. Use a random ID (src/lib/employeeId.ts) and retry
+      // with a fresh one on the rare collision.
       for (let attempt = 1; ; attempt++) {
         const { data, error } = await supabase
           .from('employee_profiles')

@@ -22,35 +22,36 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { getErrorMessage } from '@/lib/errors';
+import { t3, tx } from '@/lib/inlineI18n';
 
-const EVENT_LABELS: Record<string, string> = {
-  "lead.created": "Lead oprettet",
-  "lead.updated": "Lead opdateret",
-  "deal.created": "Deal oprettet",
-  "deal.won": "Deal vundet",
-  "deal.lost": "Deal tabt",
-  "task.created": "Opgave oprettet",
-  "task.completed": "Opgave færdig",
-  "employee.created": "Medarbejder oprettet",
+const eventLabels = (): Record<string, string> => ({
+  "lead.created": tx("Lead oprettet", "Lead created"),
+  "lead.updated": tx("Lead opdateret", "Lead updated"),
+  "deal.created": tx("Deal oprettet", "Deal created"),
+  "deal.won": tx("Deal vundet", "Deal won"),
+  "deal.lost": tx("Deal tabt", "Deal lost"),
+  "task.created": tx("Opgave oprettet", "Task created"),
+  "task.completed": tx("Opgave færdig", "Task completed"),
+  "employee.created": tx("Medarbejder oprettet", "Employee created"),
   "employee.clocked_in": "Clock in",
   "employee.clocked_out": "Clock out",
-  "invoice.created": "Faktura oprettet",
-  "invoice.paid": "Faktura betalt",
-  "email.sent": "Email sendt",
-  "email.opened": "Email åbnet",
-};
+  "invoice.created": tx("Faktura oprettet", "Invoice created"),
+  "invoice.paid": tx("Faktura betalt", "Invoice paid"),
+  "email.sent": tx("Email sendt", "Email sent"),
+  "email.opened": tx("Email åbnet", "Email opened"),
+});
 
 function actionLabel(wf: { action_type: string; action_tool_slug?: string | null; webhook_url?: string | null }): string {
-  if (wf.action_type === "run_integration") return wf.action_tool_slug ? `Kør ${wf.action_tool_slug}` : "Kør handling";
+  if (wf.action_type === "run_integration") return wf.action_tool_slug ? `${tx("Kør", "Run")} ${wf.action_tool_slug}` : tx("Kør handling", "Run action");
   if (wf.action_type === "send_webhook") return "Webhook";
   return wf.action_type;
 }
 
-const QUICK_PROMPTS = [
-  { label: "Ny lead → Zapier", prompt: "Når en ny lead bliver oprettet, send data til Zapier" },
-  { label: "Deal vundet → Slack", prompt: "Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack" },
-  { label: "Faktura betalt → Sheets", prompt: "Når en faktura bliver betalt, send betalingsdata til Zapier webhook" },
-  { label: "Foreslå workflows", prompt: "Foreslå smarte workflows baseret på min brug af systemet" },
+const quickPrompts = () => [
+  { label: tx("Ny lead → Zapier", "New lead → Zapier"), prompt: tx("Når en ny lead bliver oprettet, send data til Zapier", "When a new lead is created, send the data to Zapier") },
+  { label: tx("Deal vundet → Slack", "Deal won → Slack"), prompt: tx("Når en deal bliver vundet, send en besked til Zapier så den kan gå til Slack", "When a deal is won, send a message to Zapier so it can go to Slack") },
+  { label: tx("Faktura betalt → Sheets", "Invoice paid → Sheets"), prompt: tx("Når en faktura bliver betalt, send betalingsdata til Zapier webhook", "When an invoice is paid, send the payment data to a Zapier webhook") },
+  { label: tx("Foreslå workflows", "Suggest workflows"), prompt: tx("Foreslå smarte workflows baseret på min brug af systemet", "Suggest smart workflows based on how I use the system") },
 ];
 
 export default function WorkflowsPage() {
@@ -114,16 +115,16 @@ export default function WorkflowsPage() {
           <div>
             <h1 className="text-lg font-semibold">Automation Assistant</h1>
             <p className="text-xs text-muted-foreground">
-              Skriv hvad du vil automatisere — AI bygger workflowet
+              {tx("Skriv hvad du vil automatisere — AI bygger workflowet", "Describe what to automate — AI builds the workflow")}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            {activeWorkflows.length} aktive
+            {activeWorkflows.length} {tx("aktive", "active")}
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            {totalRuns} kørsler
+            {totalRuns} {tx("kørsler", "runs")}
           </Badge>
           <Button
             variant="outline"
@@ -148,15 +149,14 @@ export default function WorkflowsPage() {
                 </div>
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-semibold mb-2">
-                    Hej! Jeg er din Automation Assistant 🤖
+                    {tx("Hej! Jeg er din Automation Assistant 🤖", "Hi! I'm your Automation Assistant 🤖")}
                   </h2>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Skriv hvad du gerne vil automatisere, og jeg opretter workflowet for dig.
-                    Du kan forbinde Zapier, Make eller enhver webhook.
+                    {tx("Skriv hvad du gerne vil automatisere, og jeg opretter workflowet for dig. Du kan forbinde Zapier, Make eller enhver webhook.", "Describe what you want to automate and I'll create the workflow for you. You can connect Zapier, Make or any webhook.")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 max-w-lg w-full">
-                  {QUICK_PROMPTS.map((qp) => (
+                  {quickPrompts().map((qp) => (
                     <button
                       key={qp.label}
                       onClick={() => send(qp.prompt)}
@@ -214,7 +214,7 @@ export default function WorkflowsPage() {
                   <div className="bg-muted/50 border border-border/50 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Tænker...
+                      {tx("Tænker...", "Thinking...")}
                     </div>
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function WorkflowsPage() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder='Skriv fx "Når en deal vindes, send det til Zapier"...'
+                placeholder={tx("Skriv fx \"Når en deal vindes, send det til Zapier\"...", "e.g. \"When a deal is won, send it to Zapier\"...")}
                 disabled={isLoading}
                 className="flex-1"
               />
@@ -249,7 +249,7 @@ export default function WorkflowsPage() {
             <ScrollArea className="flex-1 p-3">
               {!workflows?.length ? (
                 <p className="text-xs text-muted-foreground text-center py-6">
-                  Ingen workflows endnu
+                  {tx("Ingen workflows endnu", "No workflows yet")}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -262,7 +262,7 @@ export default function WorkflowsPage() {
                               {wf.description || wf.trigger_event}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {EVENT_LABELS[wf.trigger_event] || wf.trigger_event} → {actionLabel(wf)}
+                              {eventLabels()[wf.trigger_event] || wf.trigger_event} → {actionLabel(wf)}
                             </p>
                           </div>
                           <Switch
@@ -276,7 +276,7 @@ export default function WorkflowsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                              {wf.run_count || 0} kørsler
+                              {wf.run_count || 0} {tx("kørsler", "runs")}
                             </Badge>
                             {wf.last_run_at && (
                               <span className="text-[10px] text-muted-foreground">
@@ -299,7 +299,7 @@ export default function WorkflowsPage() {
                               className="h-6 w-6"
                               onClick={() => {
                                 deleteMutation.mutate(wf.id);
-                                toast.success("Workflow slettet");
+                                toast.success(t3("Workflow slettet", "Workflow deleted", "Workflow gelöscht"));
                               }}
                             >
                               <Trash2 className="h-3 w-3 text-destructive" />

@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link2, CheckCircle2, RefreshCw, AlertCircle, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { getErrorMessage } from '@/lib/errors';
 
 type MetaConnection = {
   id: string;
@@ -67,13 +68,12 @@ export function MetaAccountConnection() {
   const handleConnect = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("meta-oauth-start", { body: {} });
-      if (error) throw new Error(error.message);
+      const data = await invokeFunction<{ error?: string; detail?: string; authorization_url?: string }>("meta-oauth-start", { body: {} });
       if (data?.error) throw new Error(data.detail || data.error);
       if (!data?.authorization_url) throw new Error("Meta authorization URL mangler");
       window.location.assign(data.authorization_url);
     } catch (err) {
-      toast({ title: "Forbindelse fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
+      showError(err, { module: "meta-oauth-start" });
       setLoading(false);
     }
   };
@@ -81,12 +81,12 @@ export function MetaAccountConnection() {
   const handleSync = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("meta-sync", { body: {} });
-      if (error || data?.error) throw new Error(data?.detail || error?.message || data?.error);
+      const data = await invokeFunction<{ error?: string; detail?: string; records_synced?: number }>("meta-sync", { body: {} });
+      if (data?.error) throw new Error(data.detail || data.error);
       toast({ title: "Meta Ads opdateret", description: `${data.records_synced} poster synkroniseret.` });
       await fetchConnection();
     } catch (err) {
-      toast({ title: "Synkronisering fejlede", description: getErrorMessage(err), variant: "destructive" });
+      showError(err, { module: "meta-sync" });
     } finally { setLoading(false); }
   };
 
@@ -94,14 +94,11 @@ export function MetaAccountConnection() {
     if (!companyId) return;
     setDisconnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("meta-disconnect", {
-        body: { company_id: companyId },
-      });
-      if (error) throw new Error(error.message);
+      await invokeFunction("meta-disconnect", { body: { company_id: companyId } });
       toast({ title: "Meta Ads afbrudt" });
       await fetchConnection();
     } catch (err) {
-      toast({ title: "Afbrydelse fejlede", description: getErrorMessage(err) || String(err), variant: "destructive" });
+      showError(err, { module: "meta-disconnect" });
     } finally {
       setDisconnecting(false);
     }

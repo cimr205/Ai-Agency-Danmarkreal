@@ -181,7 +181,7 @@ serve(withSentry("autopilot-brief", async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${ai.apiKey}` },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },

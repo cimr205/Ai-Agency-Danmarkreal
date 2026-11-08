@@ -9,6 +9,7 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useEmailOAuthCallback } from '@/hooks/api';
+import { t3, tx } from '@/lib/inlineI18n';
 
 export default function EmailCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -39,9 +40,9 @@ export default function EmailCallbackPage() {
         <CardHeader className="text-center">
           <CardTitle>Gmail Forbindelse</CardTitle>
           <CardDescription>
-            {status === 'loading' && 'Forbinder din Gmail konto...'}
-            {status === 'success' && 'Din Gmail konto er forbundet!'}
-            {status === 'error' && 'Der opstod en fejl'}
+            {status === 'loading' && t3('Forbinder din Gmail-konto...', 'Connecting your Gmail account...', 'Ihr Gmail-Konto wird verbunden...')}
+            {status === 'success' && t3('Din Gmail-konto er forbundet!', 'Your Gmail account is connected!', 'Ihr Gmail-Konto ist verbunden!')}
+            {status === 'error' && t3('Der opstod en fejl', 'Something went wrong', 'Es ist ein Fehler aufgetreten')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
@@ -52,10 +53,10 @@ export default function EmailCallbackPage() {
             <>
               <CheckCircle2 className="h-12 w-12 text-green-600" />
               <p className="text-center text-muted-foreground">
-                Du kan nu synkronisere dine emails og se todos.
+                {tx("Du kan nu synkronisere dine emails og se todos.", "You can now sync your emails and see to-dos.")}
               </p>
               <Button onClick={() => navigate('/app/emails')}>
-                Gå til Emails
+                {tx("Gå til Emails", "Go to Emails")}
               </Button>
             </>
           )}
@@ -63,10 +64,10 @@ export default function EmailCallbackPage() {
             <>
               <XCircle className="h-12 w-12 text-destructive" />
               <p className="text-center text-muted-foreground">
-                Kunne ikke forbinde din Gmail konto. Prøv igen.
+                {tx("Kunne ikke forbinde din Gmail konto. Prøv igen.", "Could not connect your Gmail account. Please try again.")}
               </p>
               <Button variant="outline" onClick={() => navigate('/app/emails')}>
-                Tilbage til Emails
+                {tx("Tilbage til Emails", "Back to Emails")}
               </Button>
             </>
           )}

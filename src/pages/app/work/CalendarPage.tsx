@@ -118,7 +118,10 @@ export default function CalendarPage() {
 
   // ── Visible range ──────────────────────────────────────────────────────
   const days = useMemo(
-    () => (view === 'day' ? [selected] : Array.from({ length: 8 }, (_, i) => addDays(selected, i))),
+    // A week is Monday–Sunday (7 columns). It used to be 8 rolling days
+    // starting today, so the "week" began mid-week and the last column was
+    // cut off by the viewport.
+    () => (view === 'day' ? [selected] : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(selected, { weekStartsOn: 1 }), i))),
     [view, selected],
   );
   const range = useMemo(() => {
@@ -171,11 +174,13 @@ export default function CalendarPage() {
   const en = locale === 'en';
   const hourLabel = useCallback((h: number) => {
     const d = new Date(2000, 0, 1, h);
-    return en ? format(d, 'h a').toLowerCase() : format(d, 'HH:mm');
-  }, [en]);
-  const timeRange = useCallback((s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm')}` : `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`), [en]);
-  const popoverTime = (s: Date, e: Date) => (en ? `${format(s, 'h:mm')} - ${format(e, 'h:mm a').toLowerCase()}` : timeRange(s, e));
-  const popoverDate = (d: Date) => format(d, en ? 'MMM d, yyyy' : 'd. MMM yyyy', { locale: dfLocale });
+    // 24-hour clock in every locale (the English view uses en-GB dates; its
+    // "h:mm - h:mm" ranges had no am/pm, so 1:00 - 2:00 was ambiguous).
+    return format(d, 'HH:mm');
+  }, []);
+  const timeRange = useCallback((s: Date, e: Date) => `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`, []);
+  const popoverTime = (s: Date, e: Date) => timeRange(s, e);
+  const popoverDate = (d: Date) => format(d, en ? 'd MMM yyyy' : 'd. MMM yyyy', { locale: dfLocale });
 
   // ── Navigation ─────────────────────────────────────────────────────────
   const go = (step: number) => {
@@ -387,12 +392,28 @@ export default function CalendarPage() {
               <ChevronRight className="h-[18px] w-[18px]" />
             </button>
           </div>
+          {/* Explicit "New event" — creating used to be possible only by
+              discovering that empty grid slots are clickable. Opens a draft
+              at the next full hour on the selected day. */}
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              const base = view === 'day' || isSameDay(selected, now) ? now : selected;
+              const day = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+              const minutes = isSameDay(base, now) ? Math.min(23, now.getHours() + 1) * 60 : 9 * 60;
+              onSlotClick(day, minutes);
+            }}
+            className="ml-auto h-10 rounded-[12px] border border-[#0A0A0A]/15 bg-white px-3 text-[14px] font-semibold text-[#0A0A0A]"
+          >
+            + {t('pages.calendar.newEvent')}
+          </button>
           <button
             type="button"
             onClick={join}
             disabled={!joinTarget}
             title={joinTarget ? joinTarget.title : t('pages.calendar.joinNone')}
-            className="ml-auto h-10 w-[76px] rounded-[12px] bg-[#0A0A0A] text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+            className="ml-2 h-10 w-[76px] rounded-[12px] bg-[#0A0A0A] text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
           >
             {t('pages.calendar.join')}
           </button>

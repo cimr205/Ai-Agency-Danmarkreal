@@ -1,5 +1,6 @@
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { Sparkles } from "lucide-react";
+import { tx } from '@/lib/inlineI18n';
 
 interface Props {
   pipelineValue: number;
@@ -21,21 +22,21 @@ export function ClientGlance({ pipelineValue, invoicedThisYear, overdueInvoices,
   );
 
   const fallbackSuggestion = overdueInvoices > 0
-    ? "Følg op på forfalden faktura"
+    ? tx("Følg op på forfalden faktura", "Follow up on overdue invoice")
     : pipelineValue > 0
-    ? "Bekræft næste skridt på åben deal"
-    : "Send en hilsen — det er stille";
+    ? tx("Bekræft næste skridt på åben deal", "Confirm the next step on the open deal")
+    : tx("Send en hilsen — det er stille", "Send a hello — it has been quiet");
 
   return (
     <aside className="border border-border/60 rounded-lg p-5 bg-foreground/[0.015] divide-y divide-border/40">
-      <Stat label="Værdi i pipeline" value={format(pipelineValue)} />
-      <Stat label="Faktureret i år" value={format(invoicedThisYear)} />
-      <Stat label="Forfaldne fakturaer" value={String(overdueInvoices)} tone={overdueInvoices > 0 ? "danger" : undefined} />
+      <Stat label={tx("Værdi i pipeline", "Pipeline value")} value={format(pipelineValue)} />
+      <Stat label={tx("Faktureret i år", "Invoiced this year")} value={format(invoicedThisYear)} />
+      <Stat label={tx("Forfaldne fakturaer", "Overdue invoices")} value={String(overdueInvoices)} tone={overdueInvoices > 0 ? "danger" : undefined} />
       <div className="pt-4">
-        <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 mb-2">Næste handling</div>
+        <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground/60 mb-2">{tx("Næste handling", "Next action")}</div>
         <div className="text-[13px] text-foreground/90 leading-snug">{suggestion || fallbackSuggestion}</div>
         <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.1em] font-mono text-muted-foreground/60">
-          <Sparkles className="h-2.5 w-2.5" /> foreslået af AI
+          <Sparkles className="h-2.5 w-2.5" /> {tx("foreslået af AI", "suggested by AI")}
         </div>
       </div>
     </aside>

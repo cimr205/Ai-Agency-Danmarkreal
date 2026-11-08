@@ -35,10 +35,11 @@ const TONE_GRADIENT: Record<Tone, string> = {
 
 export function CockpitPage({ children }: { children: ReactNode }) {
   return (
-    <div className="relative -m-4 min-h-[calc(100vh-76px)] overflow-hidden bg-[#eef4ff] p-4 text-slate-950 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(82,113,255,0.34),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(236,124,255,0.24),transparent_26%),radial-gradient(circle_at_52%_78%,rgba(50,214,255,0.20),transparent_36%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_48%,#f9f2ff_100%)]" />
-      <div className="pointer-events-none absolute left-6 top-8 h-[520px] w-[520px] rounded-full bg-blue-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[420px] w-[520px] rounded-full bg-fuchsia-300/25 blur-3xl" />
+    <div className="relative -m-4 min-h-[calc(100vh-76px)] overflow-hidden bg-[#eef4ff] p-4 text-slate-950 dark:bg-[#05070c] dark:text-white sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(82,113,255,0.34),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(236,124,255,0.24),transparent_26%),radial-gradient(circle_at_52%_78%,rgba(50,214,255,0.20),transparent_36%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_48%,#f9f2ff_100%)] dark:hidden" />
+      <div className="pointer-events-none absolute inset-0 hidden dark:block dark:bg-[radial-gradient(circle_at_12%_8%,rgba(82,113,255,0.22),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(236,124,255,0.16),transparent_26%),radial-gradient(circle_at_52%_78%,rgba(50,214,255,0.14),transparent_36%),linear-gradient(135deg,#05070c_0%,#070a14_48%,#0a0714_100%)]" />
+      <div className="pointer-events-none absolute left-6 top-8 h-[520px] w-[520px] rounded-full bg-blue-400/20 blur-3xl dark:bg-blue-500/10" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-[420px] w-[520px] rounded-full bg-fuchsia-300/25 blur-3xl dark:bg-fuchsia-500/10" />
       <div className="relative mx-auto max-w-[1500px] space-y-6">{children}</div>
     </div>
   );
@@ -68,33 +69,33 @@ export function CockpitHero({ crumb, eyebrow, lead, accent, intro, primary, acti
   const today = useTodayLabel();
   const tr = useTr();
   return (
-    <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.22)] backdrop-blur-2xl">
+    <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.22)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_30px_100px_rgba(0,0,0,0.4)]">
       <div className="grid min-h-[430px] lg:grid-cols-[minmax(0,1.45fr)_440px]">
         <div className="relative p-6 sm:p-8 lg:p-10">
-          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
-          <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <span className="rounded-full border border-white/70 bg-white/60 px-3 py-1.5 shadow-sm">{tr('sec.home')}</span>
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent dark:via-white/30" />
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-white/45">
+            <span className="rounded-full border border-white/70 bg-white/60 px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-white/5">{tr('sec.home')}</span>
             <span>/</span>
             <span>{crumb}</span>
             <span>/</span>
-            <span className="rounded-full border border-white/70 bg-white/60 px-3 py-1.5 shadow-sm">{today}</span>
+            <span className="rounded-full border border-white/70 bg-white/60 px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-white/5">{today}</span>
           </div>
           <div className="mt-10 max-w-3xl">
-            <p className="text-[12px] font-bold uppercase tracking-[0.24em] text-blue-600">{eyebrow}</p>
-            <h1 className="mt-4 text-[42px] font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 sm:text-[58px] lg:text-[72px]">
+            <p className="text-[12px] font-bold uppercase tracking-[0.24em] text-blue-600 dark:text-blue-400">{eyebrow}</p>
+            <h1 className="mt-4 text-[42px] font-semibold leading-[0.95] tracking-[-0.055em] text-slate-950 dark:text-white sm:text-[58px] lg:text-[72px]">
               {lead}
-              <span className="block bg-gradient-to-r from-blue-600 via-indigo-500 to-fuchsia-500 bg-clip-text text-transparent">{accent}</span>
+              <span className="block bg-gradient-to-r from-blue-600 via-indigo-500 to-fuchsia-500 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-fuchsia-400">{accent}</span>
             </h1>
-            <p className="mt-5 max-w-xl text-[15px] leading-7 text-slate-600 sm:text-base">{intro}</p>
+            <p className="mt-5 max-w-xl text-[15px] leading-7 text-slate-600 dark:text-white/60 sm:text-base">{intro}</p>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link to={primary.href} className="group inline-flex h-12 items-center gap-3 rounded-full bg-slate-950 px-5 text-[13px] font-semibold text-white shadow-[0_18px_38px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5">
+            <Link to={primary.href} className="group inline-flex h-12 items-center gap-3 rounded-full bg-slate-950 px-5 text-[13px] font-semibold text-white shadow-[0_18px_38px_rgba(15,23,42,0.25)] transition-transform hover:-translate-y-0.5 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_38px_rgba(0,0,0,0.4)]">
               {primary.label}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             {actions.map(a => (
-              <Link key={a.label} to={a.href} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/70 bg-white/62 px-4 text-[13px] font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white/85 hover:text-slate-950">
-                <a.icon className="h-4 w-4 text-blue-600" />
+              <Link key={a.label} to={a.href} className="inline-flex h-12 items-center gap-2 rounded-full border border-white/70 bg-white/62 px-4 text-[13px] font-semibold text-slate-700 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white/85 hover:text-slate-950 dark:border-white/10 dark:bg-white/5 dark:text-white/75 dark:hover:bg-white/10 dark:hover:text-white">
+                <a.icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 {a.label}
               </Link>
             ))}
@@ -140,15 +141,15 @@ export function SignalPill({ label, value, loading }: { label: string; value: nu
 
 export function PulseMetric({ label, value, detail, href, icon: Icon, tone }: { label: string; value: string | null; detail: string; href: string; icon: IconType; tone: Tone }) {
   return (
-    <Link to={href} className="group relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/68 p-5 shadow-[0_18px_55px_rgba(45,77,150,0.12)] backdrop-blur-xl transition-all hover:-translate-y-1 hover:bg-white/86">
+    <Link to={href} className="group relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/68 p-5 shadow-[0_18px_55px_rgba(45,77,150,0.12)] backdrop-blur-xl transition-all hover:-translate-y-1 hover:bg-white/86 dark:border-white/10 dark:bg-white/5 dark:shadow-[0_18px_55px_rgba(0,0,0,0.3)] dark:hover:bg-white/10">
       <div className={cn('absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br opacity-20 blur-2xl', TONE_GRADIENT[tone])} />
       <div className="relative flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{label}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-white/45">{label}</span>
         <span className={cn('grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br text-white shadow-lg', TONE_GRADIENT[tone])}><Icon className="h-4 w-4" /></span>
       </div>
       <div className="relative mt-5">
-        {value === null ? <Skeleton className="h-8 w-24 rounded-full" /> : <div className="text-[28px] font-semibold leading-none tracking-[-0.04em] text-slate-950 tabular-nums">{value}</div>}
-        <div className="mt-2 text-[12px] text-slate-500">{detail}</div>
+        {value === null ? <Skeleton className="h-8 w-24 rounded-full" /> : <div className="text-[28px] font-semibold leading-none tracking-[-0.04em] text-slate-950 dark:text-white tabular-nums">{value}</div>}
+        <div className="mt-2 text-[12px] text-slate-500 dark:text-white/45">{detail}</div>
       </div>
     </Link>
   );
@@ -162,11 +163,11 @@ export function PanelHeader({ eyebrow, title, action, href, dark = false }: { ey
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-1">
       <div>
-        <div className={cn('text-[10px] font-bold uppercase tracking-[0.19em]', dark ? 'text-white/45' : 'text-blue-600')}>{eyebrow}</div>
-        <h2 className={cn('mt-1 text-[22px] font-semibold tracking-[-0.04em]', dark ? 'text-white' : 'text-slate-950')}>{title}</h2>
+        <div className={cn('text-[10px] font-bold uppercase tracking-[0.19em]', dark ? 'text-white/45' : 'text-blue-600 dark:text-blue-400')}>{eyebrow}</div>
+        <h2 className={cn('mt-1 text-[22px] font-semibold tracking-[-0.04em]', dark ? 'text-white' : 'text-slate-950 dark:text-white')}>{title}</h2>
       </div>
       {action && href && (
-        <Link to={href} className={cn('flex h-10 items-center gap-2 rounded-full px-4 text-[12px] font-semibold transition-transform hover:-translate-y-0.5', dark ? 'bg-white/10 text-white' : 'bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.16)]')}>
+        <Link to={href} className={cn('flex h-10 items-center gap-2 rounded-full px-4 text-[12px] font-semibold transition-transform hover:-translate-y-0.5', dark ? 'bg-white/10 text-white' : 'bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.16)] dark:bg-white dark:text-slate-950')}>
           {action} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}
@@ -176,7 +177,7 @@ export function PanelHeader({ eyebrow, title, action, href, dark = false }: { ey
 
 export function Panel({ children, dark = false, className }: { children: ReactNode; dark?: boolean; className?: string }) {
   return (
-    <div className={cn('rounded-[2rem] border border-white/70 p-5 backdrop-blur-2xl', dark ? 'bg-slate-950 text-white shadow-[0_24px_80px_rgba(15,23,42,0.24)]' : 'bg-white/62 shadow-[0_24px_80px_rgba(45,77,150,0.11)]', className)}>
+    <div className={cn('rounded-[2rem] border border-white/70 p-5 backdrop-blur-2xl dark:border-white/10', dark ? 'bg-slate-950 text-white shadow-[0_24px_80px_rgba(15,23,42,0.24)]' : 'bg-white/62 shadow-[0_24px_80px_rgba(45,77,150,0.11)] dark:bg-white/[0.04] dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)]', className)}>
       {children}
     </div>
   );
@@ -186,9 +187,9 @@ export function MicroStack({ items }: { items: { label: string; value: string; t
   return (
     <div className="space-y-3">
       {items.map(item => (
-        <div key={item.label} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3">
-          <span className="text-[12px] text-slate-500">{item.label}</span>
-          <span className={cn('text-[14px] font-semibold text-slate-950 tabular-nums', item.tone === 'risk' && 'text-rose-600')}>{item.value}</span>
+        <div key={item.label} className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+          <span className="text-[12px] text-slate-500 dark:text-white/45">{item.label}</span>
+          <span className={cn('text-[14px] font-semibold text-slate-950 dark:text-white tabular-nums', item.tone === 'risk' && 'text-rose-600 dark:text-rose-400')}>{item.value}</span>
         </div>
       ))}
     </div>
@@ -207,10 +208,10 @@ export function CompactNumber({ icon: Icon, label, value, loading, tone }: { ico
 
 export function EmptyLane({ title, text, href, action, dark = false }: { title: string; text: string; href: string; action: string; dark?: boolean }) {
   return (
-    <div className={cn('flex min-h-[180px] flex-col justify-center rounded-[1.35rem] border border-dashed p-6', dark ? 'border-white/18 bg-white/5' : 'border-slate-300/70 bg-white/60')}>
-      <p className={cn('text-[15px] font-semibold', dark ? 'text-white' : 'text-slate-950')}>{title}</p>
-      <p className={cn('mt-2 max-w-md text-[13px] leading-6', dark ? 'text-white/62' : 'text-slate-500')}>{text}</p>
-      <Link to={href} className={cn('mt-4 flex w-fit items-center gap-1 rounded-full px-4 py-2 text-[12px] font-semibold', dark ? 'bg-white/10 text-white' : 'bg-slate-950 text-white')}>
+    <div className={cn('flex min-h-[180px] flex-col justify-center rounded-[1.35rem] border border-dashed p-6', dark ? 'border-white/18 bg-white/5' : 'border-slate-300/70 bg-white/60 dark:border-white/15 dark:bg-white/5')}>
+      <p className={cn('text-[15px] font-semibold', dark ? 'text-white' : 'text-slate-950 dark:text-white')}>{title}</p>
+      <p className={cn('mt-2 max-w-md text-[13px] leading-6', dark ? 'text-white/62' : 'text-slate-500 dark:text-white/55')}>{text}</p>
+      <Link to={href} className={cn('mt-4 flex w-fit items-center gap-1 rounded-full px-4 py-2 text-[12px] font-semibold', dark ? 'bg-white/10 text-white' : 'bg-slate-950 text-white dark:bg-white dark:text-slate-950')}>
         {action} <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
@@ -224,33 +225,33 @@ export function ListPanel({ icon: Icon, eyebrow, title, emptyText, href, items, 
     <Panel>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white shadow-[0_14px_30px_rgba(15,23,42,0.16)]"><Icon className="h-4 w-4" /></span>
+          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-950 text-white shadow-[0_14px_30px_rgba(15,23,42,0.16)] dark:bg-white dark:text-slate-950"><Icon className="h-4 w-4" /></span>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600">{eyebrow}</p>
-            <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.035em] text-slate-950">{title}</h2>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">{eyebrow}</p>
+            <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.035em] text-slate-950 dark:text-white">{title}</h2>
           </div>
         </div>
-        <Link to={href} className="rounded-full border border-white/70 bg-white/70 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 hover:text-blue-600">{linkLabel}</Link>
+        <Link to={href} className="rounded-full border border-white/70 bg-white/70 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white/50 dark:hover:text-blue-400">{linkLabel}</Link>
       </div>
-      <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-4">
+      <div className="mt-5 rounded-[1.6rem] border border-white/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
         {isLoading ? (
           <div className="space-y-2.5">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-2xl" />)}</div>
         ) : items.length === 0 ? (
-          <p className="text-[13px] leading-6 text-slate-500">{emptyText}</p>
+          <p className="text-[13px] leading-6 text-slate-500 dark:text-white/50">{emptyText}</p>
         ) : (
           <ul className="space-y-2">
             {items.slice(0, 6).map(item => {
-              const dot = item.tone === 'risk' ? 'bg-rose-500 text-rose-500' : item.tone === 'ok' ? 'bg-emerald-500 text-emerald-500' : item.tone === 'muted' ? 'bg-slate-300 text-slate-300' : 'bg-blue-500 text-blue-500';
+              const dot = item.tone === 'risk' ? 'bg-rose-500 text-rose-500' : item.tone === 'ok' ? 'bg-emerald-500 text-emerald-500' : item.tone === 'muted' ? 'bg-slate-300 text-slate-300 dark:bg-white/30 dark:text-white/30' : 'bg-blue-500 text-blue-500';
               const row = (
                 <>
                   <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full shadow-[0_0_14px_currentColor]', dot)} />
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-800">{item.primary}</span>
-                  {item.secondary && <span className="text-[11px] text-slate-400 tabular-nums">{item.secondary}</span>}
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-800 dark:text-white/90">{item.primary}</span>
+                  {item.secondary && <span className="text-[11px] text-slate-400 dark:text-white/40 tabular-nums">{item.secondary}</span>}
                 </>
               );
               return (
                 <li key={item.id}>
-                  {item.href ? <Link to={item.href} className="flex items-center gap-3 rounded-2xl bg-white/70 px-3 py-3 transition-colors hover:bg-white">{row}</Link> : <div className="flex items-center gap-3 rounded-2xl bg-white/70 px-3 py-3">{row}</div>}
+                  {item.href ? <Link to={item.href} className="flex items-center gap-3 rounded-2xl bg-white/70 px-3 py-3 transition-colors hover:bg-white dark:bg-white/5 dark:hover:bg-white/10">{row}</Link> : <div className="flex items-center gap-3 rounded-2xl bg-white/70 px-3 py-3 dark:bg-white/5">{row}</div>}
                 </li>
               );
             })}
@@ -270,13 +271,13 @@ export function BarRows({ rows }: { rows: BarRow[] }) {
       {rows.map(r => (
         <div key={r.label}>
           <div className="flex items-center justify-between gap-2 text-[12px]">
-            <span className="truncate text-slate-500">{r.label}</span>
-            <span className="font-semibold text-slate-900 tabular-nums">{r.display}</span>
+            <span className="truncate text-slate-500 dark:text-white/50">{r.label}</span>
+            <span className="font-semibold text-slate-900 dark:text-white tabular-nums">{r.display}</span>
           </div>
-          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-200/70">
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
             <div className="h-full rounded-full" style={{ width: `${r.value === 0 ? 0 : Math.max(6, (r.value / max) * 100)}%`, background: r.color }} />
           </div>
-          {r.note && <div className={cn('mt-1 text-[11px]', r.noteTone === 'risk' ? 'font-medium text-rose-600' : 'text-slate-400')}>{r.note}</div>}
+          {r.note && <div className={cn('mt-1 text-[11px]', r.noteTone === 'risk' ? 'font-medium text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-white/40')}>{r.note}</div>}
         </div>
       ))}
     </div>
@@ -284,9 +285,9 @@ export function BarRows({ rows }: { rows: BarRow[] }) {
 }
 
 const TIER_STYLE: Record<Tier, { chip: string; ring: string; dot: string }> = {
-  1: { chip: 'bg-gradient-to-br from-rose-500 to-orange-400 text-white', ring: 'border-rose-200/80', dot: 'text-rose-600' },
-  2: { chip: 'bg-gradient-to-br from-blue-600 to-indigo-500 text-white', ring: 'border-blue-200/70', dot: 'text-blue-600' },
-  3: { chip: 'bg-gradient-to-br from-slate-500 to-slate-400 text-white', ring: 'border-slate-200/80', dot: 'text-slate-500' },
+  1: { chip: 'bg-gradient-to-br from-rose-500 to-orange-400 text-white', ring: 'border-rose-200/80 dark:border-rose-400/20', dot: 'text-rose-600 dark:text-rose-400' },
+  2: { chip: 'bg-gradient-to-br from-blue-600 to-indigo-500 text-white', ring: 'border-blue-200/70 dark:border-blue-400/20', dot: 'text-blue-600 dark:text-blue-400' },
+  3: { chip: 'bg-gradient-to-br from-slate-500 to-slate-400 text-white', ring: 'border-slate-200/80 dark:border-white/15', dot: 'text-slate-500 dark:text-white/50' },
 };
 
 const TIER_KEYS: Record<Tier, { label: string; empty: string }> = {
@@ -300,39 +301,39 @@ export function PriorityBoard({ items, loading }: { items: PriorityItem[]; loadi
   const tr = useTr();
   const tiers: Tier[] = [1, 2, 3];
   return (
-    <section className="rounded-[2rem] border border-white/70 bg-white/64 p-4 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl sm:p-5">
+    <section className="rounded-[2rem] border border-white/70 bg-white/64 p-4 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)] sm:p-5">
       <PanelHeader eyebrow={tr('sec.priorities')} title={tr('sec.prioritiesTitle')} />
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
         {tiers.map(tier => {
           const list = itemsInTier(items, tier);
           const style = TIER_STYLE[tier];
           return (
-            <div key={tier} className={cn('rounded-[1.6rem] border bg-white/70 p-4', style.ring)}>
+            <div key={tier} className={cn('rounded-[1.6rem] border bg-white/70 p-4 dark:bg-white/5', style.ring)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className={cn('grid h-8 min-w-8 place-items-center rounded-xl px-2 text-[12px] font-bold shadow-sm', style.chip)}>P{tier}</span>
-                  <span className="text-[14px] font-semibold tracking-[-0.02em] text-slate-950">{tr(TIER_KEYS[tier].label)}</span>
+                  <span className="text-[14px] font-semibold tracking-[-0.02em] text-slate-950 dark:text-white">{tr(TIER_KEYS[tier].label)}</span>
                 </div>
-                <span className="text-[12px] font-semibold text-slate-400 tabular-nums">{loading ? '–' : list.length}</span>
+                <span className="text-[12px] font-semibold text-slate-400 dark:text-white/40 tabular-nums">{loading ? '–' : list.length}</span>
               </div>
               <div className="mt-4 space-y-2.5">
                 {loading ? (
                   Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full rounded-2xl" />)
                 ) : list.length === 0 ? (
-                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50/80 p-4">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                    <p className="text-[13px] leading-5 text-slate-500">{tr(TIER_KEYS[tier].empty)}</p>
+                  <div className="flex items-start gap-3 rounded-2xl bg-slate-50/80 p-4 dark:bg-white/5">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                    <p className="text-[13px] leading-5 text-slate-500 dark:text-white/50">{tr(TIER_KEYS[tier].empty)}</p>
                   </div>
                 ) : (
                   <>
                     {list.slice(0, 4).map(item => (
-                      <Link key={item.id} to={item.href} className="group block rounded-2xl border border-slate-200/70 bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(45,77,150,0.12)]">
-                        <p className="line-clamp-2 text-[13px] font-semibold leading-5 text-slate-900">{item.title}</p>
-                        {item.detail && <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-slate-500">{item.detail}</p>}
+                      <Link key={item.id} to={item.href} className="group block rounded-2xl border border-slate-200/70 bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(45,77,150,0.12)] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)]">
+                        <p className="line-clamp-2 text-[13px] font-semibold leading-5 text-slate-900 dark:text-white">{item.title}</p>
+                        {item.detail && <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-slate-500 dark:text-white/50">{item.detail}</p>}
                         <p className={cn('mt-2 flex items-center gap-1 text-[12px] font-semibold', style.dot)}>{item.cta} <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></p>
                       </Link>
                     ))}
-                    {list.length > 4 && <p className="px-1 text-[12px] font-medium text-slate-400">{tr('sec.more', { n: list.length - 4 })}</p>}
+                    {list.length > 4 && <p className="px-1 text-[12px] font-medium text-slate-400 dark:text-white/40">{tr('sec.more', { n: list.length - 4 })}</p>}
                   </>
                 )}
               </div>

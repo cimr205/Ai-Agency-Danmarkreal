@@ -51,7 +51,7 @@ export const DESTINATIONS: Destination[] = [
   { labelKey: "nav.invoices",   path: "finance/invoices", icon: FileText,    modes: ["operations"] },
   { labelKey: "nav.quotes",      path: "finance/quotes",   icon: FileText,    modes: ["operations"] },
   { labelKey: "nav.payments",  path: "finance/payments", icon: CreditCard,  modes: ["operations"] },
-  { labelKey: "nav.studio",      path: "workspace/studio", icon: Workflow,    modes: ["operations"] },
+  { labelKey: "nav.workflowStudio", path: "workspace/studio", icon: Workflow,    modes: ["operations"] },
   { labelKey: "nav.connectedApps",   path: "workspace/connected-apps", icon: Plug, modes: ["operations", "overview"] },
   { labelKey: "nav.documents",  path: "workspace/documents", icon: FileText, modes: ["operations", "overview"] },
   { labelKey: "nav.aiProvider",  path: "settings/ai", icon: Bot, modes: ["operations", "overview"] },

@@ -4,20 +4,46 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Link2, XCircle, CheckCircle2, RefreshCw, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
-import { getErrorMessage } from '@/lib/errors';
+import { t3, tx } from '@/lib/inlineI18n';
 
 type DineroConnection = Tables<'dinero_connections'>;
 type EconomicConnection = Tables<'economic_connections'>;
 
 async function startOAuth(fn: 'dinero-oauth-start' | 'economic-oauth-start') {
-  const { data, error } = await supabase.functions.invoke(fn, {
+  const data = await invokeFunction<{ authorize_url: string; error?: string }>(fn, {
     body: { return_url: window.location.href.split('?')[0] },
   });
-  if (error) throw new Error(error.message);
   if (data?.error) throw new Error(data.error);
   window.location.href = data.authorize_url;
+}
+
+
+// The OAuth callbacks redirect back with a short error code; show it as a sentence.
+function oauthErrorText(code: string | null): string {
+  switch (code) {
+    case 'missing_state':
+    case 'expired_state':
+    case 'invalid_or_expired_state':
+      return t3('Login-sessionen udløb. Start forbindelsen igen.', 'The sign-in session expired. Start the connection again.', 'Die Anmeldesitzung ist abgelaufen. Bitte Verbindung neu starten.');
+    case 'missing_code':
+    case 'user_declined_or_missing_token':
+    case 'access_denied':
+      return t3('Adgang blev ikke givet.', 'Access was not granted.', 'Der Zugriff wurde nicht erteilt.');
+    case 'token_exchange_failed':
+    case 'grant_token_invalid':
+      return t3('Udbyderen afviste login. Prøv igen.', 'The provider rejected the sign-in. Please try again.', 'Der Anbieter hat die Anmeldung abgelehnt. Bitte erneut versuchen.');
+    case 'no_organization':
+      return t3('Kontoen har ingen virksomhed tilknyttet hos udbyderen.', 'The account has no company with the provider.', 'Das Konto hat beim Anbieter kein Unternehmen.');
+    case 'save_failed':
+    case 'internal_error':
+      return t3('Forbindelsen kunne ikke gemmes. Prøv igen.', 'The connection could not be saved. Please try again.', 'Die Verbindung konnte nicht gespeichert werden. Bitte erneut versuchen.');
+    default:
+      return code || t3('ukendt fejl', 'unknown error', 'unbekannter Fehler');
+  }
 }
 
 export function AccountingConnections() {
@@ -46,10 +72,10 @@ export function AccountingConnections() {
     const params = new URLSearchParams(window.location.search);
     const dineroStatus = params.get('dinero');
     const economicStatus = params.get('economic');
-    if (dineroStatus === 'connected') toast.success('Dinero forbundet!');
-    if (dineroStatus === 'error') toast.error(`Dinero-forbindelse fejlede: ${params.get('dinero_error') || 'ukendt fejl'}`);
-    if (economicStatus === 'connected') toast.success('e-conomic forbundet!');
-    if (economicStatus === 'error') toast.error(`e-conomic-forbindelse fejlede: ${params.get('economic_error') || 'ukendt fejl'}`);
+    if (dineroStatus === 'connected') toast.success(t3('Dinero forbundet!', 'Dinero connected!', 'Dinero verbunden!'));
+    if (dineroStatus === 'error') toast.error(`${t3("Dinero-forbindelse fejlede", "Dinero connection failed", "Dinero-Verbindung fehlgeschlagen")}: ${oauthErrorText(params.get('dinero_error'))}`);
+    if (economicStatus === 'connected') toast.success(t3('e-conomic forbundet!', 'e-conomic connected!', 'e-conomic verbunden!'));
+    if (economicStatus === 'error') toast.error(`${t3("e-conomic-forbindelse fejlede", "e-conomic connection failed", "e-conomic-Verbindung fehlgeschlagen")}: ${oauthErrorText(params.get('economic_error'))}`);
     if (dineroStatus || economicStatus) {
       const url = new URL(window.location.href);
       url.searchParams.delete('dinero');
@@ -65,7 +91,7 @@ export function AccountingConnections() {
     try {
       await startOAuth(provider === 'dinero' ? 'dinero-oauth-start' : 'economic-oauth-start');
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Kunne ikke starte forbindelse');
+      showError(e, { module: 'accounting' });
       setBusy(null);
     }
   };
@@ -73,13 +99,12 @@ export function AccountingConnections() {
   const handleDisconnect = async (provider: 'dinero' | 'economic') => {
     setBusy(provider);
     try {
-      const { data, error } = await supabase.functions.invoke('accounting-disconnect', { body: { provider } });
-      if (error) throw new Error(error.message);
+      const data = await invokeFunction<{ error?: string }>('accounting-disconnect', { body: { provider } });
       if (data?.error) throw new Error(data.error);
-      toast.success(provider === 'dinero' ? 'Dinero afbrudt' : 'e-conomic afbrudt');
+      toast.success(t3(`${provider === 'dinero' ? 'Dinero' : 'e-conomic'} afbrudt`, `${provider === 'dinero' ? 'Dinero' : 'e-conomic'} disconnected`, `${provider === 'dinero' ? 'Dinero' : 'e-conomic'} getrennt`));
       await fetchConnections();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Afbrydelse fejlede');
+      showError(e, { module: 'accounting' });
     } finally {
       setBusy(null);
     }
@@ -88,14 +113,13 @@ export function AccountingConnections() {
   const handleImport = async (provider: 'dinero' | 'economic') => {
     setBusy(`${provider}-import`);
     try {
-      const { data, error } = await supabase.functions.invoke(provider === 'dinero' ? 'dinero-sync' : 'economic-sync', {
+      const data = await invokeFunction<{ imported: number; error?: string }>(provider === 'dinero' ? 'dinero-sync' : 'economic-sync', {
         body: { action: 'pull_customers' },
       });
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
-      toast.success(`${data.imported} kunder importeret`);
+      toast.success(t3(`${data.imported} kunder importeret`, `${data.imported} customers imported`, `${data.imported} Kunden importiert`));
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Import fejlede');
+      showError(e, { module: 'accounting' });
     } finally {
       setBusy(null);
     }
@@ -124,9 +148,9 @@ export function AccountingConnections() {
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Regnskabsintegrationer</CardTitle>
+        <CardTitle className="text-base">{tx("Regnskabsintegrationer", "Accounting integrations")}</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Forbind Dinero eller e-conomic for at synkronisere kunder og fakturaer to-vejs.
+          {tx("Forbind Dinero eller e-conomic for at synkronisere kunder og fakturaer to-vejs.", "Connect Dinero or e-conomic to sync customers and invoices both ways.")}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -141,7 +165,7 @@ export function AccountingConnections() {
                 <div>
                   <p className="text-sm font-medium">{row.label}</p>
                   <p className="text-xs text-muted-foreground">
-                    {isConnected ? (row.name || 'Forbundet') : 'Ikke forbundet'}
+                    {isConnected ? (row.name || tx("Forbundet", "Connected")) : tx("Ikke forbundet", "Not connected")}
                   </p>
                 </div>
               </div>
@@ -156,7 +180,7 @@ export function AccountingConnections() {
                       onClick={() => handleImport(row.key)}
                     >
                       {busy === `${row.key}-import` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                      Importér kunder
+                      {tx("Importér kunder", "Import customers")}
                     </Button>
                     <Button
                       size="sm"
@@ -164,13 +188,13 @@ export function AccountingConnections() {
                       disabled={busy === row.key}
                       onClick={() => handleDisconnect(row.key)}
                     >
-                      {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Afbryd'}
+                      {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t3("Afbryd", "Disconnect", "Trennen")}
                     </Button>
                   </>
                 ) : (
                   <Button size="sm" className="gap-1.5" disabled={busy === row.key} onClick={() => handleConnect(row.key)}>
                     {busy === row.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
-                    Forbind {row.label}
+                    {tx("Forbind", "Connect")} {row.label}
                   </Button>
                 )}
               </div>

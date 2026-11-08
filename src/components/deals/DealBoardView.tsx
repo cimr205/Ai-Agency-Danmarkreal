@@ -5,6 +5,7 @@ import { Briefcase, Calendar } from 'lucide-react';
 import type { DealWithCustomer } from '@/hooks/api/useDeals';
 import type { StageDef } from '@/lib/deals/stages';
 import { normalizeStageKey } from '@/lib/deals/stages';
+import { dateLocaleTag } from '@/lib/inlineI18n';
 
 export function DealBoardView({
   deals, stages, locale, formatCurrency, onSelectDeal, onDrop,
@@ -85,7 +86,7 @@ export function DealBoardView({
                     {deal.expected_close_date && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {new Date(deal.expected_close_date).toLocaleDateString()}
+                        {new Date(deal.expected_close_date).toLocaleDateString(dateLocaleTag())}
                       </div>
                     )}
                   </div>

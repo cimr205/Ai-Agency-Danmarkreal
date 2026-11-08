@@ -13,8 +13,10 @@ import {
 import { Navigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/errors';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 interface OwnerInfo {
   user_id: string;
@@ -79,10 +81,13 @@ export default function AdminOverviewPage() {
       // supabase.functions.invoke attaches the current session's JWT
       // automatically — admin-data verifies it server-side and requires the
       // system_admin role. No shared code, nothing to store client-side.
-      const { data, error } = await supabase.functions.invoke('admin-data', {
-        body: {},
-      });
-      if (error) throw error;
+      const data = await invokeFunction<{
+        error?: string;
+        profiles?: RawProfile[];
+        employees?: RawEmployee[];
+        roles?: RawRole[];
+        companies?: RawCompany[];
+      }>('admin-data', { body: {} });
       if (data?.error) throw new Error(data.error);
 
       const profiles = data.profiles || [];
@@ -108,7 +113,7 @@ export default function AdminOverviewPage() {
 
       setCompanies(result);
     } catch (err) {
-      toast.error('Kunne ikke hente data: ' + (getErrorMessage(err) || 'Ukendt fejl'));
+      showError(err, { module: 'admin-data' });
     } finally {
       setLoading(false);
     }
@@ -124,16 +129,15 @@ export default function AdminOverviewPage() {
     if (!isSystemAdmin) return;
     setTogglingIds(prev => new Set(prev).add(companyId));
     try {
-      const { data, error } = await supabase.functions.invoke('admin-data', {
+      const data = await invokeFunction<{ error?: string }>('admin-data', {
         body: { action: 'toggle_company', companyId, disabled: !currentDisabled },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, disabled: !currentDisabled } : c));
-      toast.success(!currentDisabled ? 'Virksomhed deaktiveret' : 'Virksomhed aktiveret');
+      toast.success(!currentDisabled ? t3("Virksomhed deaktiveret", "Company deactivated", "Unternehmen deaktiviert") : t3("Virksomhed aktiveret", "Company activated", "Unternehmen aktiviert"));
     } catch (err) {
-      toast.error('Kunne ikke ændre status: ' + (getErrorMessage(err) || 'Ukendt fejl'));
+      showError(err, { module: 'admin-data' });
     }
     setTogglingIds(prev => { const s = new Set(prev); s.delete(companyId); return s; });
   };
@@ -159,7 +163,7 @@ export default function AdminOverviewPage() {
       case 'active': return <Badge className="bg-success/20 text-success border-success/30">Betaler</Badge>;
       case 'trialing': return <Badge className="bg-warning/20 text-warning border-warning/30">Prøveperiode</Badge>;
       case 'canceled': return <Badge variant="destructive">Annulleret</Badge>;
-      default: return <Badge variant="secondary">Ingen</Badge>;
+      default: return <Badge variant="secondary">{t3("Ingen", "None", "Keine")}</Badge>;
     }
   };
 
@@ -172,7 +176,7 @@ export default function AdminOverviewPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Admin Overblik</h1>
-            <p className="text-sm text-muted-foreground">Komplet oversigt over alle virksomheder</p>
+            <p className="text-sm text-muted-foreground">{tx("Komplet oversigt over alle virksomheder", "Complete overview of all companies")}</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={loadAll} className="gap-1.5">
@@ -209,7 +213,7 @@ export default function AdminOverviewPage() {
             <KpiCard icon={Users} label="Brugere" value={totalUsers.toString()} color="text-primary" />
             <KpiCard icon={UserCheck} label="Medarbejdere" value={totalEmployees.toString()} color="text-success" />
             <KpiCard icon={CreditCard} label="Betalende" value={payingCompanies.toString()} color="text-success" />
-            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString('da-DK')} color="text-warning" />
+            <KpiCard icon={DollarSign} label="MRR (DKK)" value={mrr.toLocaleString(dateLocaleTag())} color="text-warning" />
             <KpiCard icon={AlertTriangle} label="Deaktiverede" value={disabledCompanies.toString()} color="text-destructive" />
           </>
         )}
@@ -219,23 +223,23 @@ export default function AdminOverviewPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="rounded-lg border-success/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-success mb-1">💰 Betalende kunder</p>
+              <p className="text-sm font-medium text-success mb-1">💰 {t3("Betalende kunder", "Paying customers", "Zahlende Kunden")}</p>
               <p className="text-3xl font-bold">{payingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString('da-DK')} DKK/md omsætning</p>
+              <p className="text-xs text-muted-foreground mt-1">{mrr.toLocaleString(dateLocaleTag())} DKK/md omsætning</p>
             </CardContent>
           </Card>
           <Card className="rounded-lg border-warning/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-warning mb-1">⏳ Prøveperiode</p>
+              <p className="text-sm font-medium text-warning mb-1">⏳ {t3("Prøveperiode", "Trial", "Testphase")}</p>
               <p className="text-3xl font-bold">{trialingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString('da-DK')} DKK/md</p>
+              <p className="text-xs text-muted-foreground mt-1">Potentiel: {potentialMrr.toLocaleString(dateLocaleTag())} DKK/md</p>
             </CardContent>
           </Card>
           <Card className="rounded-lg border-destructive/20">
             <CardContent className="p-5">
-              <p className="text-sm font-medium text-destructive mb-1">🚫 Ikke betalt / ingen plan</p>
+              <p className="text-sm font-medium text-destructive mb-1">🚫 {t3("Ikke betalt / ingen plan", "Not paid / no plan", "Nicht bezahlt / kein Tarif")}</p>
               <p className="text-3xl font-bold">{totalCompanies - payingCompanies - trialingCompanies}</p>
-              <p className="text-xs text-muted-foreground mt-1">Kræver opfølgning</p>
+              <p className="text-xs text-muted-foreground mt-1">{tx("Kræver opfølgning", "Needs follow-up")}</p>
             </CardContent>
           </Card>
         </div>
@@ -244,7 +248,7 @@ export default function AdminOverviewPage() {
       {loading ? (
         <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}</div>
       ) : companies.length === 0 ? (
-        <Card className="rounded-lg"><CardContent className="py-12 text-center text-muted-foreground">Ingen virksomheder fundet</CardContent></Card>
+        <Card className="rounded-lg"><CardContent className="py-12 text-center text-muted-foreground">{tx("Ingen virksomheder fundet", "No companies found")}</CardContent></Card>
       ) : (
         <div className="space-y-4">
           {companies.map(company => {
@@ -271,7 +275,7 @@ export default function AdminOverviewPage() {
                           {company.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{company.phone}</span>}
                           <span>{company.userCount} brugere</span>
                           <span>{company.employees.length} medarbejdere</span>
-                          <span>Oprettet {format(new Date(company.created_at), 'dd/MM/yyyy')}</span>
+                          <span>{t3("Oprettet", "Created", "Erstellt")} {format(new Date(company.created_at), 'dd/MM/yyyy')}</span>
                         </div>
                       </div>
                     </button>
@@ -296,10 +300,10 @@ export default function AdminOverviewPage() {
                           <CreditCard className="h-3.5 w-3.5" /> Betaling
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <InfoCell label="Abonnement" value={company.subscription_status || 'Ingen'} />
-                          <InfoCell label="Stripe Kunde" value={company.stripe_customer_id ? '✅ Tilknyttet' : '❌ Mangler'} />
-                          <InfoCell label="Stripe Abonnement" value={company.stripe_subscription_id ? '✅ Aktiv' : '❌ Ingen'} />
-                          <InfoCell label="Prøveperiode udløber" value={company.trial_ends_at ? format(new Date(company.trial_ends_at), 'dd/MM/yyyy') : '—'} />
+                          <InfoCell label="Abonnement" value={company.subscription_status || t3('Ingen', 'None', 'Keine')} />
+                          <InfoCell label={t3("Stripe-kunde", "Stripe customer", "Stripe-Kunde")} value={company.stripe_customer_id ? `✅ ${t3("Tilknyttet", "Linked", "Verknüpft")}` : `❌ ${t3("Mangler", "Missing", "Fehlt")}`} />
+                          <InfoCell label={t3("Stripe-abonnement", "Stripe subscription", "Stripe-Abonnement")} value={company.stripe_subscription_id ? `✅ ${t3("Aktiv", "Active", "Aktiv")}` : `❌ ${t3("Ingen", "None", "Keins")}`} />
+                          <InfoCell label={t3("Prøveperiode udløber", "Trial ends", "Testphase endet")} value={company.trial_ends_at ? format(new Date(company.trial_ends_at), 'dd/MM/yyyy') : '—'} />
                         </div>
                       </div>
 
@@ -308,7 +312,7 @@ export default function AdminOverviewPage() {
                           <Crown className="h-3.5 w-3.5 text-warning" /> Ejere ({company.owners.length})
                         </h3>
                         {company.owners.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Ingen ejere registreret</p>
+                          <p className="text-sm text-muted-foreground">{tx("Ingen ejere registreret", "No owners registered")}</p>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {company.owners.map(owner => (
@@ -329,7 +333,7 @@ export default function AdminOverviewPage() {
                           <UserCheck className="h-3.5 w-3.5 text-success" /> Medarbejdere ({company.employees.length})
                         </h3>
                         {company.employees.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Ingen medarbejdere</p>
+                          <p className="text-sm text-muted-foreground">{tx("Ingen medarbejdere", "No employees")}</p>
                         ) : (
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">

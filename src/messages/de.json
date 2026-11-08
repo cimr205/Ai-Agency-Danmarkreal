@@ -37,7 +37,15 @@
     "account": "Konto",
     "create": "Erstellen",
     "selectAllVisible": "Alle sichtbaren auswählen ({count})",
-    "selected": "{count} ausgewählt"
+    "selected": "{count} ausgewählt",
+    "back": "Zurück",
+    "copied": "In die Zwischenablage kopiert",
+    "copy": "Kopieren",
+    "done": "Fertig",
+    "edit": "Bearbeiten",
+    "no": "Nein",
+    "of": "von",
+    "yes": "Ja"
   },
   "language": {
     "label": "Sprache",
@@ -202,7 +210,7 @@
     "featureTasksDesc": "Aufgaben zuweisen, Deadlines setzen und Fortschritte über Projekte hinweg verfolgen.",
     "featureInbox": "Posteingang",
     "featureInboxDesc": "Einheitliche Kommunikation mit Kunden und Kollegen direkt in der Plattform.",
-    "featureMarketing": "Marketing & Ads",
+    "featureMarketing": "Marketing & Anzeigen",
     "featureMarketingDesc": "Meta Ads-Verwaltung, Kampagnenerstellung und KI-generierter Anzeigeninhalt.",
     "featureAi": "KI-Assistent",
     "featureAiDesc": "Dein persönlicher PA, der bei allem hilft, von E-Mails bis zu Berichten.",
@@ -280,6 +288,8 @@
     "customers": "Kunden",
     "pipeline": "Pipeline",
     "campaigns": "Kampagnen",
+    "videoStudio": "Video Studio",
+    "studio": "Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finanzen",
@@ -332,6 +342,7 @@
     "emailTemplates": "E-Mail-Vorlagen",
     "accountMenu": "Kontomenü",
     "aiMedia": "KI-Medien",
+    "studios": "Studios",
     "clients": "Kunden",
     "connectedApps": "Verbundene Apps",
     "help": "Hilfe",
@@ -343,7 +354,6 @@
     "expandSidebar": "Seitenleiste ausklappen",
     "openMenu": "Menü öffnen",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow-Chat",
     "workspaceNavigation": "Workspace-Navigation",
     "controlRoom": "Kontrollraum",
@@ -359,7 +369,8 @@
     "financeDashboard": "Finanz-Dashboard",
     "hrDashboard": "HR-Dashboard",
     "controlRoomDashboard": "Kontrollraum-Dashboard",
-    "linkedinOutreach": "LinkedIn-Outreach"
+    "linkedinOutreach": "LinkedIn-Outreach",
+    "workflowStudio": "Workflow-Studio"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -452,7 +463,8 @@
     "plannedHours": "Soll",
     "deviation": "Abweichung",
     "daysWorked": "Arbeitstage",
-    "noReportData": "Keine Daten für diesen Zeitraum"
+    "noReportData": "Keine Daten für diesen Zeitraum",
+    "forgotClockOut": "Dieser Arbeitstag ist seit {since} offen. Hast du vergessen auszustempeln? Beende den Arbeitstag und korrigiere die Zeit."
   },
   "errorBoundary": {
     "title": "Etwas ist schiefgelaufen",
@@ -483,7 +495,8 @@
     "edit": "Bearbeiten",
     "delete": "Löschen",
     "created_success": "Kunde hinzugefügt",
-    "created_error": "Kunde konnte nicht hinzugefügt werden"
+    "created_error": "Kunde konnte nicht hinzugefügt werden",
+    "invalidVat": "Gib eine gültige CVR- (8 Ziffern, z. B. DK12345678) oder EU-USt-IdNr. ein."
   },
   "dashboard": {
     "title": "Übersicht",
@@ -729,7 +742,22 @@
     "fetchRecruitmentError": "Stellen konnten nicht geladen werden",
     "searchPositionPlaceholder": "Stellen suchen...",
     "payrollGuide": "Erfasse monatliche Gehaltszahlungen für Mitarbeiter. Klicke auf \"Lohn registrieren\", um einen Gehaltseintrag für den aktuellen Zeitraum hinzuzufügen.",
-    "departmentRequired": "Abteilung ist erforderlich"
+    "departmentRequired": "Abteilung ist erforderlich",
+    "salaryPositive": "Das Gehalt muss größer als 0 sein.",
+    "payrollDuplicate": "Für diesen Mitarbeiter gibt es für diesen Zeitraum bereits eine Lohnabrechnung.",
+    "leaveEndBeforeStart": "Das Enddatum darf nicht vor dem Startdatum liegen.",
+    "editEmployee": "Mitarbeiter bearbeiten",
+    "fullName": "Vollständiger Name",
+    "deletePayrollTitle": "Diese Lohnabrechnung löschen?",
+    "department": "Abteilung",
+    "description": "Beschreibung",
+    "requirements": "Anforderungen",
+    "salaryRange": "Gehaltsspanne",
+    "empty": "Noch keine Mitarbeitenden.",
+    "orgChart": "Organigramm",
+    "orgChartDesc": "Sieh, wie dein Team organisiert ist.",
+    "orgChartEmpty": "Keine Mitarbeitenden vorhanden",
+    "orgChartEmptyDesc": "Füge Mitarbeitende hinzu, um das Organigramm aufzubauen."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -899,7 +927,22 @@
     "empty": "Noch keine Angebote",
     "createFirst": "Erstellen Sie Ihr erstes Angebot",
     "created": "Angebot erstellt",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "Ein Angebot braucht einen Lead/Kunden, bevor es gespeichert oder abgerechnet werden kann.",
+    "vatInvalid": "Der MwSt.-Satz muss zwischen 0 und 100 % liegen.",
+    "statusLabels": {
+      "draft": "Entwurf",
+      "sent": "Gesendet",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "expired": "Abgelaufen"
+    },
+    "expired": "Abgelaufen — kann nicht mehr angenommen werden",
+    "duplicateNumber": "Ein Angebot mit dieser Nummer existiert bereits.",
+    "markSent": "Als gesendet markieren",
+    "markAccepted": "Als angenommen markieren",
+    "markRejected": "Als abgelehnt markieren",
+    "createInvoice": "Rechnung erstellen"
   },
   "roles": {
     "employee": "Mitarbeiter",
@@ -1016,7 +1059,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Inhaber",
-      "nameRequired": "Name und E-Mail sind erforderlich",
+      "nameRequired": "Name ist erforderlich",
       "created_success": "Lead erstellt",
       "created_error": "Lead konnte nicht erstellt werden",
       "scoreUpdated": "Score aktualisiert",
@@ -1120,7 +1163,22 @@
       "aiEmailWriter": "KI-E-Mail-Assistent",
       "folderNameTooShort": "Der Ordnername muss mindestens 2 Zeichen lang sein",
       "syncNow": "Jetzt synchronisieren",
-      "connectCrm": "CRM verbinden"
+      "connectCrm": "CRM verbinden",
+      "phoneInvalid": "Gib eine gültige Telefonnummer ein (nur Ziffern, Leerzeichen, + und -).",
+      "duplicateEmail": "Ein Lead oder Kunde mit dieser E-Mail existiert bereits.",
+      "convertedToExisting": "Deal erstellt und mit einem bestehenden Kontakt mit derselben E-Mail/Telefonnummer verknüpft.",
+      "cockpit": {
+        "signal": "Live-Lead-Signal",
+        "contacts": "Kontakte",
+        "followUp": "Nachfassen",
+        "new": "Neu",
+        "stale": "Ohne Aktivität",
+        "title": "Beziehungen in Bewegung.",
+        "subtitle": "Finde den nächsten Kontakt, halte das Momentum und bring die richtigen Leads in die Pipeline.",
+        "syncedVia": "Synchronisiert über",
+        "syncNow": "Jetzt synchronisieren",
+        "connectCrm": "CRM verbinden"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1164,7 +1222,9 @@
       "selectLead": "Lead auswählen...",
       "noLead": "Kein Lead",
       "moveToStage": "In Phase verschieben",
-      "bulkStageUpdated": "Deals aktualisiert"
+      "bulkStageUpdated": "Deals aktualisiert",
+      "valuePositive": "Der Wert darf nicht negativ sein.",
+      "confirmLostTitle": "Diesen Deal als verloren markieren?"
     },
     "invoices": {
       "title": "Rechnungen",
@@ -1220,6 +1280,7 @@
       "issued": "Ausgestellt",
       "actions": "Aktionen",
       "selectError": "Kunde wählen und mindestens eine Position hinzufügen",
+      "lineInvalid": "Jede Rechnungszeile braucht eine Beschreibung und einen Betrag über 0.",
       "created_success": "Rechnung erstellt",
       "created_error": "Rechnung konnte nicht erstellt werden",
       "fetchError": "Rechnungen konnten nicht geladen werden",
@@ -1254,7 +1315,12 @@
       "companyDetails": "Firmendetails",
       "customerDetails": "Kundendetails",
       "markSelectedSent": "Als gesendet markieren",
-      "connectPayments": "Zahlungen verbinden"
+      "connectPayments": "Zahlungen verbinden",
+      "confirmMarkPaidTitle": "Rechnung als bezahlt markieren?",
+      "confirmMarkPaidDesc": "Dadurch wird eine Zahlung über den gesamten Restbetrag erfasst",
+      "confirmMarkPaidDraft": "diese Rechnung ist noch ein Entwurf und wurde nie versendet",
+      "senderIncomplete": "CVR-Nummer oder Adresse deines Unternehmens fehlt — Pflicht auf dänischen Rechnungen.",
+      "senderIncompleteLink": "Unternehmensdaten ergänzen"
     },
     "tasks": {
       "title": "Aufgaben",
@@ -1299,7 +1365,25 @@
       "assignee": "Verantwortlich",
       "priority": "Priorität",
       "bulkComplete": "Abschließen",
-      "bulkAssignTo": "Zuweisen an"
+      "bulkAssignTo": "Zuweisen an",
+      "views": {
+        "today": "Heute",
+        "overdue": "Überfällig",
+        "upcoming": "Anstehend",
+        "mine": "Meine",
+        "allActive": "Alle aktiven",
+        "completed": "Erledigt",
+        "archived": "Archiviert"
+      },
+      "selectAll": "Alle auswählen",
+      "selectAllVisible": "Alle sichtbaren auswählen",
+      "selected": "ausgewählt",
+      "emptyView": "In dieser Ansicht ist nichts — sieh in den anderen Tabs nach.",
+      "priorityHigh": "Hoch",
+      "priorityLabel": "Priorität",
+      "priorityLow": "Niedrig",
+      "priorityMedium": "Mittel",
+      "priorityUrgent": "Dringend"
     },
     "calendar": {
       "title": "Kalender",
@@ -1589,7 +1673,7 @@
     "subNone": "Keine"
   },
   "pipeline": {
-    "title": "Sales Pipeline",
+    "title": "Vertriebspipeline",
     "subtitle": "Übersicht über deine Leads und Vertriebsprozesse",
     "listTab": "Liste",
     "calendarTab": "Kalender",
@@ -1894,6 +1978,15 @@
     "queue": {
       "title": "Lead-Warteschlange"
     },
+    "views": {
+      "queue": "Warteschlange",
+      "history": "Verlauf",
+      "setup": "Einrichtung"
+    },
+    "status": {
+      "connected": "Telefon bereit",
+      "disconnected": "Telefon nicht verbunden"
+    },
     "outcomes": {
       "noAnswer": "Keine Antwort",
       "callback": "Rückruf",
@@ -2036,7 +2129,9 @@
     "selectError": "Rechnung wählen und Betrag eingeben",
     "success": "Zahlung registriert – Rechnung automatisch aktualisiert",
     "error": "Zahlung konnte nicht registriert werden",
-    "exportHistory": "Exportieren"
+    "exportHistory": "Exportieren",
+    "manual": "Manuell als bezahlt markiert",
+    "noUnpaidInvoices": "Keine unbezahlten Rechnungen — alle Rechnungen sind bezahlt."
   },
   "bulkEmail": {
     "title": "Massen-E-Mail",
@@ -2086,7 +2181,9 @@
     "confirmSendTitle": "Senden bestätigen",
     "confirmSendDesc": "Sie senden E-Mails an {count} Empfänger. Dies kann nicht rückgängig gemacht werden.",
     "confirmSend": "Jetzt senden",
-    "consentReminder": "Stellen Sie sicher, dass alle Empfänger zugestimmt haben (DSGVO)."
+    "consentReminder": "Stellen Sie sicher, dass alle Empfänger zugestimmt haben (DSGVO).",
+    "scheduled": "Für später planen",
+    "scheduledTime": "Senden um"
   },
   "pa": {
     "title": "Ihr persönlicher PA",
@@ -2118,7 +2215,7 @@
     "matches": "Treffer",
     "edit": "Bearbeiten",
     "moreCount": "+{count} weitere",
-    "backToIcps": "← Zurück zu ICPs",
+    "backToIcps": "Zurück zu ICPs",
     "leadMatches": "Lead-Treffer: {name}",
     "leadsScored": "{count} Leads bewertet",
     "sortedByBestMatch": "Sortiert nach bester Übereinstimmung",
@@ -2140,15 +2237,15 @@
       "stepPain": "Herausforderungen & Services",
       "stepPriorities": "Prioritäten & Überprüfung",
       "nameLabel": "ICP-Name *",
-      "namePlaceholder": "z.B. Reinigungsfirmen 5-25 Mitarbeiter",
+      "namePlaceholder": "z. B. Reinigungsfirmen in Dänemark, 5–25 Mitarbeiter",
       "descriptionLabel": "Beschreibung",
       "descriptionPlaceholder": "Beschreibe deinen idealen Kunden mit eigenen Worten...",
       "targetIndustries": "Zielbranchen",
       "targetCountries": "Zielländer",
       "targetRegions": "Zielregionen",
-      "targetRegionsPlaceholder": "z.B. Bayern, Berlin...",
+      "targetRegionsPlaceholder": "z. B. Hauptstadtregion, Mitteljütland...",
       "targetCities": "Zielstädte",
-      "targetCitiesPlaceholder": "z.B. München, Hamburg...",
+      "targetCitiesPlaceholder": "z. B. Kopenhagen, Aarhus...",
       "excludeIndustries": "Branchen ausschließen",
       "excludeIndustriesPlaceholder": "Auszuschließende Branchen...",
       "minEmployees": "Min. Mitarbeiter",
@@ -2241,7 +2338,23 @@
     "statusVerified": "Verifiziert",
     "statusLikelyValid": "Wahrscheinlich gültig",
     "statusUnverified": "Nicht verifiziert",
-    "statusMissing": "Fehlt"
+    "statusMissing": "Fehlt",
+    "allDuplicated": "Alle gefundenen Firmen sind bereits in deiner Datenbank. Versuche eine andere Suche.",
+    "allImported": "Alle Leads bereits importiert",
+    "colSource": "Quelle",
+    "colValidation": "Validierung",
+    "excludeKeywordsLabel": "Stichwörter ausschließen",
+    "excludeKeywordsPlaceholder": "Auszuschließende Stichwörter, durch Komma getrennt",
+    "importAll": "Alle importieren",
+    "importCta": "Importieren",
+    "importToFolder": "In Ordner importieren",
+    "importToFolderDesc": "Wähle einen Ordner für die Leads oder importiere ohne Ordner.",
+    "newSearch": "Neue Suche",
+    "nicheLabel": "Nische",
+    "nichePlaceholder": "z. B. Zahnarzt, Restaurant...",
+    "noFolder": "Kein Ordner",
+    "noNewResults": "Keine neuen Leads gefunden",
+    "selectFolder": "Ordner wählen"
   },
   "invitations": {
     "title": "Einladungen",
@@ -2298,7 +2411,7 @@
     "secretHint": "Falls angegeben, fügen wir einen X-Webhook-Signature-Header hinzu",
     "createWebhook": "Webhook erstellen",
     "fillRequired": "Bitte fülle alle Pflichtfelder aus",
-    "invalidUrl": "Bitte gib eine gültige URL ein",
+    "invalidUrl": "Gib eine öffentliche https://-URL ein (http, localhost und private Netzwerkadressen sind nicht erlaubt).",
     "created": "Webhook erstellt",
     "testSuccess": "Test-Webhook erfolgreich zugestellt!",
     "testFailed": "Test-Webhook fehlgeschlagen — prüfe die Logs für Details",
@@ -2644,6 +2757,50 @@
     "subtitle": "Finde Antworten auf deine Fragen",
     "noResults": "Keine Artikel gefunden. Versuche einen anderen Suchbegriff."
   },
+  "videoStudio": {
+    "pageDescription": "Produziere Videos und Anzeigen, ohne die Plattform zu verlassen.",
+    "newVideo": "Neues Video",
+    "untitled": "Unbenanntes Video",
+    "emptyTitle": "Noch keine Videos",
+    "emptyHint": "Erstelle dein erstes Videoprojekt.",
+    "upload": "Medien hochladen",
+    "uploadError": "Upload fehlgeschlagen",
+    "noMedia": "Noch keine Medien hochgeladen.",
+    "addToTimeline": "Zur Zeitleiste hinzufügen",
+    "addToTimelineError": "Konnte nicht zur Zeitleiste hinzugefügt werden",
+    "save": "Speichern",
+    "saved": "Projekt gespeichert",
+    "saveError": "Projekt konnte nicht gespeichert werden",
+    "autosaving": "Speichert…",
+    "autosaved": "Alle Änderungen gespeichert",
+    "unsavedChanges": "Ungespeicherte Änderungen",
+    "leaveConfirm": "Du hast ungespeicherte Änderungen. Trotzdem verlassen?",
+    "export": "MP4 exportieren",
+    "exporting": "Exportiert",
+    "exported": "Video exportiert",
+    "exportError": "Export fehlgeschlagen",
+    "loadError": "Projekt konnte nicht geladen werden",
+    "createError": "Projekt konnte nicht erstellt werden",
+    "deleted": "Video gelöscht",
+    "downloadExport": "Letzten Export herunterladen",
+    "unsupportedTitle": "Dein Browser unterstützt Video Studio nicht",
+    "unsupportedBody": "Video Studio benötigt WebCodecs, WebGL2 und OffscreenCanvas. Verwende die neueste Version von Chrome oder Edge (Chromium 108+).",
+    "unsupportedMissing": "Fehlt",
+    "status": {
+      "draft": "Entwurf",
+      "exporting": "Exportiert",
+      "exported": "Exportiert",
+      "failed": "Fehlgeschlagen"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (quadratisch)",
+      "4:5": "4:5 — Feed (Hochformat)",
+      "16:9": "16:9 — YouTube / Querformat"
+    },
+    "notDeployedTitle": "Video Studio ist noch nicht eingerichtet",
+    "notDeployedHint": "Die Datenbanktabelle des Video-Editors wurde noch nicht bereitgestellt. Ein Administrator muss die neueste Datenbankmigration ausführen (supabase db push)."
+  },
   "sec": {
     "home": "Start",
     "all": "Alle",
@@ -2954,5 +3111,166 @@
       "replied": "Geantwortet",
       "skipped": "Übersprungen"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Etwas ist schiefgelaufen",
+      "actionFallback": "Die Aktion"
+    },
+    "functionAreas": {
+      "accounting": "Buchhaltungsintegration",
+      "aiActions": "KI-Assistent",
+      "aiAnalyze": "KI-Analyse",
+      "aiEmailWriter": "KI-E-Mail-Assistent",
+      "aiGenerate": "KI-Erstellung",
+      "aiHealth": "KI-Verbindung",
+      "aiOperatingManager": "KI-Betriebsleiter",
+      "autopilot": "Autopilot",
+      "callScript": "Anrufskript",
+      "chat": "KI-Chat",
+      "companiesHouse": "Companies-House-Abfrage",
+      "csvImport": "CSV-Import",
+      "customerPortal": "Kundenportal",
+      "cvrSearch": "CVR-Abfrage",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero-Verbindung",
+      "dineroSync": "Dinero-Synchronisierung",
+      "economic": "e-conomic-Verbindung",
+      "economicSync": "e-conomic-Synchronisierung",
+      "emailCampaigns": "E-Mail-Kampagnen",
+      "emailProvider": "E-Mail-Anbieter",
+      "emailQueue": "E-Mail-Warteschlange",
+      "emailTrack": "E-Mail-Tracking",
+      "emailVerify": "E-Mail-Verifizierung",
+      "gmail": "Gmail-Verbindung",
+      "gmailSync": "Gmail-Synchronisierung",
+      "icpScore": "ICP-Bewertung",
+      "integrations": "Integrationen",
+      "invoicePayment": "Rechnungszahlung",
+      "leadGen": "Lead-Generierung",
+      "leadRecommend": "Lead-Empfehlungen",
+      "linkedinOutreach": "LinkedIn-Outreach",
+      "mcpServer": "MCP-Server",
+      "meetingSummary": "Besprechungszusammenfassung",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta-Ads-Synchronisierung",
+      "payment": "Zahlung",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Abonnement",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow-Assistent",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "die gesendeten Angaben waren ungültig.",
+        "what": "Prüfen Sie die Felder und versuchen Sie es erneut."
+      },
+      "unauthorized": {
+        "why": "Ihre Sitzung ist abgelaufen.",
+        "what": "Melden Sie sich erneut an."
+      },
+      "forbidden": {
+        "why": "Sie haben keinen Zugriff darauf.",
+        "what": "Wenden Sie sich an einen Administrator, falls das nicht stimmt."
+      },
+      "notFound": {
+        "why": "es konnte nicht gefunden werden.",
+        "what": "Prüfen Sie, ob es noch existiert."
+      },
+      "conflict": {
+        "why": "es steht im Konflikt mit etwas, das bereits läuft.",
+        "what": "Aktualisieren Sie die Seite und versuchen Sie es erneut."
+      },
+      "rateLimited": {
+        "why": "es gibt gerade zu viele Anfragen.",
+        "what": "Warten Sie einen Moment und versuchen Sie es erneut."
+      },
+      "serverError": {
+        "why": "bei uns oder einem verbundenen Dienst ist etwas schiefgelaufen.",
+        "what": "Versuchen Sie es gleich noch einmal."
+      },
+      "network": {
+        "why": "die Verbindung ist fehlgeschlagen oder der Dienst antwortet nicht.",
+        "what": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+      },
+      "unknown": {
+        "why": "es ist ein unerwarteter Fehler aufgetreten.",
+        "what": "Versuchen Sie es erneut und kontaktieren Sie den Support, falls es weiterhin auftritt."
+      }
+    },
+    "details": {
+      "show": "Details anzeigen",
+      "hide": "Details ausblenden",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "function": "Funktion",
+      "status": "Status",
+      "time": "Zeitpunkt",
+      "requestId": "Anfrage-ID"
+    }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Nachfassen bei",
+    "prepareError": "Die Aktion konnte nicht vorbereitet werden",
+    "taskCreated": "Aufgabe erstellt",
+    "rejected": "Vorschlag abgelehnt",
+    "actionFailed": "Die Aktion ist fehlgeschlagen",
+    "resultTitle": "Nachfass-Aufgabe erstellt",
+    "prepareAgain": "Erneut vorbereiten",
+    "proposalTitle": "KI schlägt eine Aktion vor",
+    "risk": "Risiko",
+    "what": "Was",
+    "why": "Warum",
+    "changes": "Was sich ändert",
+    "fieldTitle": "Titel",
+    "fieldDue": "Fällig",
+    "fieldPriority": "Priorität",
+    "serverSide": "Wird nach deiner Freigabe serverseitig ausgeführt.",
+    "approve": "Freigeben",
+    "reject": "Ablehnen",
+    "preparing": "Wird vorbereitet…",
+    "prepare": "Nachfassen vorbereiten (KI)"
+  },
+  "adminGate": {
+    "accessDenied": "Zugriff verweigert — du hast keine Systemadministrator-Rechte",
+    "codeAccepted": "Code akzeptiert",
+    "codeHint": "Dieser Code ist nur autorisiertem Personal bekannt",
+    "enterCode": "Gib den geheimen Zugangscode ein, um fortzufahren",
+    "invalidCode": "Ungültiger Zugangscode",
+    "loginAsAdmin": "Als Admin anmelden",
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "loginWithAdmin": "Mit deinem Admin-Konto anmelden",
+    "secretCode": "Geheimer Code",
+    "verificationError": "Verifizierungsfehler",
+    "verificationFailed": "Verifizierung fehlgeschlagen",
+    "verifyCode": "Code prüfen"
+  },
+  "aiEmail": {
+    "casual": "Locker",
+    "coldOutreach": "Kaltakquise",
+    "contextPlaceholder": "Z. B. „Wir haben gerade ein neues Produkt für ihre Branche gestartet...“ oder „Sie haben gestern unsere Website besucht“",
+    "emailBody": "E-Mail-Text",
+    "extraContext": "Zusätzlicher Kontext (optional)",
+    "followUp": "Nachfassen",
+    "generate": "KI-E-Mail generieren",
+    "generateError": "E-Mail konnte nicht generiert werden",
+    "generating": "Personalisierte E-Mail wird erstellt...",
+    "meetingRequest": "Terminbuchung",
+    "openInEmail": "In E-Mail öffnen",
+    "professional": "Professionell",
+    "proposal": "Angebot",
+    "purpose": "Zweck",
+    "regenerate": "Neue Version generieren",
+    "subject": "Betreff",
+    "tone": "Ton",
+    "urgent": "Dringend"
+  },
+  "studio": {
+    "editorTab": "Editor",
+    "generateTab": "KI-Generierung",
+    "pageDescription": "Bearbeite und erstelle Video- und Bildinhalte, ohne die Plattform zu verlassen."
   }
 }

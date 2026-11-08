@@ -16,6 +16,7 @@ import {
   XCircle, Eye, Wand2, Upload, Paintbrush, X,
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { tx } from '@/lib/inlineI18n';
 import { getErrorMessage } from '@/lib/errors';
 
 export default function AiMediaContent() {
@@ -99,17 +100,17 @@ export default function AiMediaContent() {
   };
 
   const promptSuggestions = referenceImage ? [
-    'Make the image sharper and more professional',
-    'Remove the background and replace with white',
-    'Add a warm color tone and increase contrast',
-    'Turn it into an ad with text overlay',
-    'Convert to black and white with high contrast',
+    tx("Gør billedet skarpere og mere professionelt", "Make the image sharper and more professional"),
+    tx("Fjern baggrunden og erstat med hvid", "Remove the background and replace with white"),
+    tx("Tilføj en varm farvetone og øg kontrasten", "Add a warm color tone and increase contrast"),
+    tx("Lav det til en annonce med tekst-overlay", "Turn it into an ad with text overlay"),
+    tx("Konverter til sort-hvid med høj kontrast", "Convert to black and white with high contrast"),
   ] : [
-    'Professional Facebook ad for a coffee shop with modern design',
-    'Instagram post for a tech startup with blue and white palette',
-    'LinkedIn banner for a consulting firm with corporate style',
-    'E-commerce product image of a luxury bag on white background',
-    'Social media campaign image for Black Friday sale',
+    tx("Professionel Facebook-annonce for en kaffebar med moderne design", "Professional Facebook ad for a coffee shop with modern design"),
+    tx("Instagram-opslag til en tech-startup med blå og hvid palet", "Instagram post for a tech startup with blue and white palette"),
+    tx("LinkedIn-banner til et konsulentfirma i corporate stil", "LinkedIn banner for a consulting firm with corporate style"),
+    tx("E-commerce produktbillede af en luksustaske på hvid baggrund", "E-commerce product image of a luxury bag on white background"),
+    tx("Kampagnebillede til sociale medier til Black Friday-udsalg", "Social media campaign image for Black Friday sale"),
   ];
 
   return (

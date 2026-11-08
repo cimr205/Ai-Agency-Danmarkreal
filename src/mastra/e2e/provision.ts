@@ -13,7 +13,7 @@
 import {
   buildCompanyRow,
   buildProfileUpdate,
-  buildUserRoleUpdate,
+  buildUserRoleRow,
   buildLeadRow,
   buildDealRow,
   buildTaskRow,
@@ -59,11 +59,10 @@ export async function provisionTenant(port: ProvisionPort, spec: TenantSpec): Pr
   for (const u of spec.users) {
     const email = testEmail(`${spec.label}-${u.key}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
     const created = await port.createConfirmedUser(email, TEST_PASSWORD, u.fullName);
-    // A DB trigger (handle_new_user) already created a `profiles` row and a default
-    // `user_roles` ('employee') on user creation — so UPDATE to attach the company +
-    // intended role rather than INSERT (which would violate unique keys).
+    // handle_new_user() creates a `profiles` row on user creation (UPDATE to attach
+    // the company) but no default user_roles row anymore — INSERT it directly.
     await port.update("profiles", "user_id", created.id, buildProfileUpdate(companyId, u.fullName));
-    await port.update("user_roles", "user_id", created.id, buildUserRoleUpdate(u.role));
+    await port.insert("user_roles", buildUserRoleRow(created.id, companyId, u.role));
     users.push({ key: u.key, userId: created.id, email, role: u.role });
   }
 

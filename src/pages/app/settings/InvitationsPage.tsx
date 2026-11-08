@@ -15,6 +15,8 @@ import { Plus, Mail, Copy, XCircle, Clock, CheckCircle2, Loader2 } from 'lucide-
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getErrorMessage } from '@/lib/errors';
+import { dateLocaleTag } from '@/lib/inlineI18n';
+import { ROLE_LABELS } from '@/lib/auth';
 
 // The raw invite token is only ever available once, at creation. It is never
 // stored in readable form (only token_hash) and never selected back.
@@ -207,10 +209,10 @@ export default function InvitationsPage() {
                 {invitations.map((inv) => (
                   <TableRow key={inv.id}>
                     <TableCell className="font-medium">{inv.email}</TableCell>
-                    <TableCell><Badge variant="outline">{inv.role}</Badge></TableCell>
+                    <TableCell><Badge variant="outline">{ROLE_LABELS[inv.role] ?? inv.role}</Badge></TableCell>
                     <TableCell>{statusBadge(inv.status, inv.expires_at)}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(inv.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(inv.created_at).toLocaleDateString(dateLocaleTag())}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(inv.expires_at).toLocaleDateString(dateLocaleTag())}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-1 justify-end">
                         {inv.status === 'pending' && new Date(inv.expires_at) > new Date() && (

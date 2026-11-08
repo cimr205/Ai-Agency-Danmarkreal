@@ -31,7 +31,12 @@ import { CsvImportWizard } from '@/components/import/CsvImportWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/lib/i18n';
 import type { Tables, Enums } from '@/integrations/supabase/types';
-import { getErrorMessage } from '@/lib/errors';
+import { AppError, invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
+import { usePipelineStages } from '@/hooks/api/usePipelineStages';
+import { getStageLabelFor } from '@/lib/deals/stages';
 
 type Lead = LeadWithOwner;
 type SavedFilter = Tables<'saved_lead_filters'>;
@@ -118,6 +123,7 @@ export default function LeadsPage() {
   const params = useParams();
   const { user } = useAuth();
   const locale = isLocale(params.locale) ? params.locale : 'en';
+  const { data: pipelineStages } = usePipelineStages();
   const { data: moduleAvailability } = useModuleAvailability();
   const crmSyncModule = moduleAvailability?.modules.find((m) => m.module === 'crmSync');
   const crmSyncAvailable = !!crmSyncModule?.available;
@@ -134,6 +140,9 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Converted leads (status 'customer') live under Customers; hide them from the
+  // default list and KPIs so the lead list only shows open leads.
+  const [showConverted, setShowConverted] = useState(false);
   const [industryFilter, setIndustryFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [quickView, setQuickView] = useState<QuickView>('all');
@@ -154,7 +163,7 @@ export default function LeadsPage() {
   const [newTagInput, setNewTagInput] = useState('');
   const [newFilterTagInput, setNewFilterTagInput] = useState('');
   const [newLead, setNewLead] = useState({ name: '', email: '', phone: '', company_name: '' });
-  const [createErrors, setCreateErrors] = useState<{ name?: string; email?: string }>({});
+  const [createErrors, setCreateErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
   const [isDragging, setIsDragging] = useState(false);
   const [aiEmailOpen, setAiEmailOpen] = useState(false);
   const [aiEmailLead, setAiEmailLead] = useState<{ id: string; name: string; email: string } | null>(null);
@@ -235,8 +244,10 @@ export default function LeadsPage() {
   const bulkDelete = useBulkDeleteLeads();
   const bulkUpdate = useBulkUpdateLeads();
   const allLeads = result?.data ?? [];
+  const convertedOnPage = useMemo(() => allLeads.filter((l: Lead) => l.status === 'customer').length, [allLeads]);
+  const hideConverted = statusFilter === 'all' && !showConverted;
   const leads = useMemo(() => {
-    const sorted = [...allLeads];
+    const sorted = hideConverted ? allLeads.filter((l: Lead) => l.status !== 'customer') : [...allLeads];
     sorted.sort((a: Lead, b: Lead) => {
       let aVal: unknown = a[sortCol as keyof Lead] ?? '';
       let bVal: unknown = b[sortCol as keyof Lead] ?? '';
@@ -247,8 +258,8 @@ export default function LeadsPage() {
       return 0;
     });
     return sorted;
-  }, [allLeads, sortCol, sortDir]);
-  const totalCount = result?.count ?? 0;
+  }, [allLeads, sortCol, sortDir, hideConverted]);
+  const totalCount = Math.max(0, (result?.count ?? 0) - (hideConverted ? convertedOnPage : 0));
   const pageSize = result?.pageSize ?? 100;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -261,14 +272,16 @@ export default function LeadsPage() {
   const countNew = useMemo(() => leads.filter(l => l.status === 'new').length, [leads]);
   const countNeedsContact = useMemo(() => leads.filter(isNeedsContact).length, [leads]);
   const countStale = useMemo(() => leads.filter(isStale).length, [leads]);
-  const countMine = useMemo(() => user ? leads.filter(l => l.owner_id === user.id).length : 0, [leads, user]);
+  // owner_id holds the auth user id; useAuth().user.id is the *profile* id,
+  // so comparing against it made "My leads" always 0.
+  const countMine = useMemo(() => user ? leads.filter(l => l.owner_id === user.user_id).length : 0, [leads, user]);
 
   const visibleLeads = useMemo(() => leads.filter(l => {
     if (ownerFilter !== 'all' && l.owner_id !== ownerFilter) return false;
     if (quickView === 'new' && l.status !== 'new') return false;
     if (quickView === 'followup' && !isNeedsContact(l)) return false;
     if (quickView === 'stale' && !isStale(l)) return false;
-    if (quickView === 'mine' && l.owner_id !== user?.id) return false;
+    if (quickView === 'mine' && l.owner_id !== user?.user_id) return false;
     return true;
   }), [leads, ownerFilter, quickView, user]);
 
@@ -278,7 +291,7 @@ export default function LeadsPage() {
     customer: t('pages.leads.statusCustomer') || 'Customer',
   };
 
-  const relatedDeals = selectedLead ? (allDeals ?? []).filter((d: Deal) => d.customer_id === selectedLead.id || d.notes?.includes(selectedLead.name)) : [];
+  const relatedDeals = selectedLead ? (allDeals ?? []).filter((d: Deal) => d.customer_id === selectedLead.id || d.customer_id === selectedLead.converted_customer_id) : [];
 
   const openLeadDetail = (lead: Lead) => {
     setSelectedLead(lead);
@@ -307,10 +320,11 @@ export default function LeadsPage() {
   };
 
   const handleCreate = async () => {
-    const errors: { name?: string; email?: string } = {};
+    const errors: { name?: string; email?: string; phone?: string } = {};
     if (!newLead.name.trim()) errors.name = t('pages.leads.nameRequired');
     if (!newLead.email.trim()) errors.email = t('pages.leads.emailRequired') || 'Email is required';
-    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(newLead.email)) errors.email = t('pages.leads.emailInvalid') || 'Invalid email';
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newLead.email.trim())) errors.email = t('pages.leads.emailInvalid') || 'Invalid email';
+    if (newLead.phone && !/^\+?[\d\s().-]{6,20}$/.test(newLead.phone.trim())) errors.phone = t('pages.leads.phoneInvalid');
     if (Object.keys(errors).length > 0) { setCreateErrors(errors); return; }
     setCreateErrors({});
     try {
@@ -318,7 +332,10 @@ export default function LeadsPage() {
       toast.success(t('pages.leads.created_success'));
       setNewLead({ name: '', email: '', phone: '', company_name: '' });
       setIsCreateOpen(false);
-    } catch { toast.error(t('pages.leads.created_error')); }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'DUPLICATE_LEAD_EMAIL') { setCreateErrors({ email: t('pages.leads.duplicateEmail') }); return; }
+      toast.error(t('pages.leads.created_error'));
+    }
   };
 
   const handleStatusChange = async (id: string, status: Enums<'lead_status'>) => {
@@ -382,7 +399,7 @@ export default function LeadsPage() {
     try {
       const text = await file.text();
       const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast.error('CSV filen skal have mindst én header og én data-række'); return; }
+      if (lines.length < 2) { toast.error(t3("CSV-filen skal have mindst én header og én data-række", "The CSV file needs at least one header row and one data row", "Die CSV-Datei braucht mindestens eine Kopf- und eine Datenzeile")); return; }
 
       const firstLine = lines[0];
       const semicolons = (firstLine.match(/;/g) || []).length;
@@ -423,7 +440,7 @@ export default function LeadsPage() {
 
       const mappedFields = Object.values(autoMap).filter(Boolean);
       if (!mappedFields.includes('name') || !mappedFields.includes('email')) {
-        toast.error(t('pages.leads.csvMissingFields') || 'CSV mangler name/email kolonner — brug manuel import');
+        toast.error(t('pages.leads.csvMissingFields') || t3("CSV mangler name/email-kolonner — brug manuel import", "CSV is missing name/email columns — use manual import", "CSV ohne name/email-Spalten — bitte manuellen Import nutzen"));
         setIsImportOpen(true);
         return;
       }
@@ -438,13 +455,14 @@ export default function LeadsPage() {
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), 60000);
-          const { data: verifyData } = await supabase.functions.invoke('verify-emails', {
+          const verifyData = await invokeFunction<{ results?: { valid: boolean; email: string }[] }>('verify-emails', {
             body: { emails: allEmails },
+            signal: controller.signal,
           });
           clearTimeout(timeout);
           if (verifyData?.results) {
             validEmails = new Set(
-              (verifyData.results as { valid: boolean; email: string }[]).filter((r) => r.valid).map((r) => r.email)
+              verifyData.results.filter((r) => r.valid).map((r) => r.email)
             );
             const invalidCount = allEmails.length - validEmails.size;
             if (invalidCount > 0) {
@@ -453,7 +471,9 @@ export default function LeadsPage() {
           }
         } catch (verifyErr) {
           if (verifyErr instanceof Error && verifyErr.name === 'AbortError') {
-            toast.warning('Email-verificering tog for lang tid — fortsætter uden', { duration: 3000 });
+            toast.warning(t3("Email-verificering tog for lang tid — fortsætter uden", "Email verification took too long — continuing without it", "E-Mail-Prüfung dauerte zu lange — es wird ohne fortgefahren"), { duration: 3000 });
+          } else if (verifyErr instanceof AppError && verifyErr.kind === 'network') {
+            toast.warning(t3("Email-verificering kunne ikke nås — fortsætter uden", "Email verification unreachable — continuing without it", "E-Mail-Prüfung nicht erreichbar — es wird ohne fortgefahren"), { duration: 3000 });
           }
           console.warn('Email verification fejlede, fortsætter uden:', verifyErr);
         }
@@ -465,26 +485,24 @@ export default function LeadsPage() {
         : rows;
 
       if (filteredRows.length === 0) {
-        toast.error('Ingen gyldige emails fundet — import afbrudt');
+        toast.error(t3("Ingen gyldige emails fundet — import afbrudt", "No valid emails found — import stopped", "Keine gültigen E-Mails gefunden — Import abgebrochen"));
         return;
       }
 
-      setAutoImportProgress(`Importerer ${filteredRows.length} leads med AI-klassificering...`);
+      setAutoImportProgress(t3(`Importerer ${filteredRows.length} leads med AI-klassificering...`, `Importing ${filteredRows.length} leads with AI classification...`, `${filteredRows.length} Leads werden mit KI-Klassifizierung importiert...`));
 
-      const { data, error } = await supabase.functions.invoke('csv-import-leads', {
+      const result = await invokeFunction<{ error?: string; imported: number; duplicates: number; ai_classified: boolean }>('csv-import-leads', {
         body: { rows: filteredRows, mapping: autoMap, useAi: true },
       });
 
-      if (error || data?.error) throw new Error(data?.error || error?.message);
-
-      const result = data;
+      if (result?.error) throw new Error(result.error);
       const removedCount = rows.length - filteredRows.length;
       toast.success(
         `✅ ${result.imported} leads importeret${removedCount > 0 ? ` · ${removedCount} ugyldige emails fjernet` : ''}${result.duplicates > 0 ? ` · ${result.duplicates} dubletter` : ''}${result.ai_classified ? ' · AI-klassificeret' : ''}`,
         { duration: 5000 }
       );
     } catch (err) {
-      toast.error(getErrorMessage(err) || 'Auto-import fejlede');
+      showError(err, { module: 'csv-import-leads' });
     } finally {
       setAutoImporting(false);
       setAutoImportProgress('');
@@ -525,16 +543,19 @@ export default function LeadsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="workspace-theme text-center py-12">
         <p className="text-destructive">{t('common.error')}: {error.message}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>{t('common.retry')}</Button>
       </div>
     );
   }
 
+  // overflow-clip, not overflow-hidden: the decorative ::after glow sticks out 160px,
+  // and an overflow-hidden box can still be scrolled by focus — the whole cockpit
+  // then slid 160px left behind the sidebar after adding a lead.
   return (
     <div
-      className="relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(82,113,255,0.28),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(236,124,255,0.20),transparent_25%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_52%,#f9f2ff_100%)] p-4 text-slate-950 before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-blue-400/15 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-fuchsia-300/20 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
+      className="workspace-theme relative -m-4 min-h-[calc(100vh-76px)] space-y-5 overflow-clip bg-[radial-gradient(circle_at_8%_4%,rgba(22,129,90,0.16),transparent_27%),radial-gradient(circle_at_92%_8%,rgba(221,122,60,0.14),transparent_25%),linear-gradient(135deg,#f3faf5_0%,#f6faf2_52%,#fdf3e8_100%)] p-4 text-workspace-ink before:pointer-events-none before:absolute before:-left-32 before:top-16 before:h-[520px] before:w-[520px] before:rounded-full before:bg-emerald-400/10 before:blur-3xl after:pointer-events-none after:absolute after:-right-40 after:top-0 after:h-[440px] after:w-[540px] after:rounded-full after:bg-orange-300/15 after:blur-3xl [&>*]:relative sm:-m-6 sm:p-6 lg:-m-8 lg:p-8"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -557,46 +578,54 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Lead cockpit — same visual language as the dashboard hero */}
-      <section className="overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/58 shadow-[0_30px_100px_rgba(42,62,130,0.20)] backdrop-blur-2xl">
-        <div className="grid lg:grid-cols-[minmax(0,1.45fr)_360px]">
-          <div className="p-6 sm:p-8 lg:p-10">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">CRM · Lead cockpit</p>
-            <h1 className="mt-4 text-[40px] font-semibold leading-[0.96] tracking-[-0.055em] text-slate-950 sm:text-[54px]">
-              Relationer i bevægelse.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600">
-              Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-2">
+      {/* Lead cockpit — now the workspace design language (dark panel + gradient surface) */}
+      <WorkspaceFrame className="flex-col lg:flex-row">
+        <div className="order-2 w-full shrink-0 rounded-[22px] bg-workspace-panel p-6 text-workspace-ink-on-dark lg:order-1 lg:w-[340px] lg:p-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.signal')}</p>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.contacts')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{totalCount}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.followUp')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNeedsContact}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.new')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countNew}</p></div>
+            <div className="rounded-[1.1rem] bg-workspace-panel-row p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-workspace-muted-on-dark">{t('pages.leads.cockpit.stale')}</p><p className="mt-4 text-[26px] font-bold tabular-nums">{countStale}</p></div>
+          </div>
+        </div>
+        <WorkspaceGradientSurface className="order-1 p-6 sm:p-8 lg:order-2 lg:p-10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-workspace-ink/70">CRM · Lead cockpit</p>
+          <h1 className="mt-4 text-[36px] font-bold leading-[0.96] tracking-[-0.03em] text-workspace-ink sm:text-[46px]">
+            {t('pages.leads.cockpit.title')}
+          </h1>
+          <p className="mt-4 max-w-xl text-[15px] leading-7 text-workspace-ink/75">
+            {t('pages.leads.cockpit.subtitle')}
+          </p>
+          <div className="mt-7 flex flex-wrap items-center gap-2">
           {crmSyncAvailable ? (
             <Button
               variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
+              className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               disabled={syncCrmContacts.isPending}
               onClick={() => syncCrmContacts.mutate()}
-              title={`Synkroniseret via ${crmSyncProvider}`}
+              title={`${t('pages.leads.cockpit.syncedVia')} ${crmSyncProvider}`}
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> Synkronisér nu
+              <RefreshCw className={`h-3.5 w-3.5 ${syncCrmContacts.isPending ? 'animate-spin' : ''}`} /> {t('pages.leads.cockpit.syncNow')}
             </Button>
           ) : (
             <Button
               variant="ghost" size="sm"
-              className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90"
+              className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90"
               onClick={() => navigate(`/${locale}/app/workspace/connected-apps`)}
             >
-              <Plug className="h-3.5 w-3.5" /> Forbind CRM
+              <Plug className="h-3.5 w-3.5" /> {t('pages.leads.cockpit.connectCrm')}
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
+          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0} className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90">
             <Download className="h-3.5 w-3.5" /> {t('pages.leads.export') || 'Export'}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full border border-white/70 bg-white/65 px-4 text-slate-600 shadow-sm hover:bg-white/90">
+          <Button variant="ghost" size="sm" onClick={() => setIsImportOpen(true)} className="h-11 gap-1.5 rounded-full bg-white/70 px-4 text-workspace-ink shadow-sm hover:bg-white/90">
             <Upload className="h-3.5 w-3.5" /> {t('pages.leads.import')}
           </Button>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="h-11 rounded-full bg-slate-950 px-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.24)] hover:bg-slate-800"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
+              <Button className="h-11 rounded-full bg-workspace-ink px-5 text-white shadow-sm hover:bg-workspace-ink/90"><Plus className="mr-2 h-4 w-4" /> {t('pages.leads.addLead')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -614,7 +643,7 @@ export default function LeadsPage() {
                   <Input type="email" value={newLead.email} onChange={e => { setNewLead(p => ({ ...p, email: e.target.value })); setCreateErrors(prev => ({ ...prev, email: undefined })); }} className={createErrors.email ? 'border-destructive' : ''} />
                   {createErrors.email && <p className="text-xs text-destructive mt-1">{createErrors.email}</p>}
                 </div>
-                <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))} /></div>
+                <div><Label>{t('common.phone')}</Label><Input value={newLead.phone} onChange={e => { setNewLead(p => ({ ...p, phone: e.target.value })); setCreateErrors(prev => ({ ...prev, phone: undefined })); }} className={createErrors.phone ? 'border-destructive' : ''} />{createErrors.phone && <p className="text-xs text-destructive mt-1">{createErrors.phone}</p>}</div>
                 <div><Label>{t('pages.leads.company')}</Label><Input value={newLead.company_name} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} /></div>
                 <Button onClick={handleCreate} disabled={createLead.isPending} className="w-full">
                   {createLead.isPending ? t('common.saving') : t('pages.leads.addLead')}
@@ -622,53 +651,40 @@ export default function LeadsPage() {
               </div>
             </DialogContent>
           </Dialog>
-            </div>
           </div>
-          <div className="relative border-t border-white/60 bg-slate-950/92 p-6 text-white lg:border-l lg:border-t-0 lg:p-8">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_5%,rgba(92,124,255,0.52),transparent_34%),radial-gradient(circle_at_100%_30%,rgba(244,114,255,0.28),transparent_38%)]" />
-            <div className="relative">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">Live lead signal</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Kontakter</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{totalCount}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Følg op</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNeedsContact}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Nye</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countNew}</p></div>
-                <div className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4"><p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Uden aktivitet</p><p className="mt-4 text-[30px] font-semibold tabular-nums">{countStale}</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       {/* Saved views: smart pills + custom saved lists, merged into one row */}
       <div className="flex items-center gap-2 overflow-x-auto rounded-[1.5rem] border border-white/70 bg-white/58 p-2 shadow-[0_16px_45px_rgba(45,77,150,0.10)] backdrop-blur-xl">
         <button
           onClick={resetToAllView}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'all' && !activeListId ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.allLeads')} {totalCount}
         </button>
         <button
           onClick={() => { setQuickView('new'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'new' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewNew')} {countNew}
         </button>
         <button
           onClick={() => { setQuickView('followup'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'followup' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewNeedsContact')} {countNeedsContact}
         </button>
         <button
           onClick={() => { setQuickView('stale'); setActiveListId(null); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'stale' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
         >
           {t('pages.leads.viewStale')} {countStale}
         </button>
         {user && (
           <button
             onClick={() => { setQuickView('mine'); setActiveListId(null); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-slate-950 text-white shadow-lg' : 'text-slate-500 hover:bg-white/75 hover:text-slate-950'}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${quickView === 'mine' ? 'bg-workspace-ink text-white' : 'text-workspace-surface-label hover:bg-black/5 hover:text-workspace-ink'}`}
           >
             {t('pages.leads.viewMine')} {countMine}
           </button>
@@ -705,6 +721,13 @@ export default function LeadsPage() {
             {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
+        {statusFilter === 'all' && convertedOnPage > 0 && (
+          <Button type="button" variant="outline" className="h-11 rounded-full" onClick={() => setShowConverted(v => !v)}>
+            {showConverted
+              ? tx('Skjul konverterede', 'Hide converted')
+              : `${tx('Vis konverterede', 'Show converted')} (${convertedOnPage})`}
+          </Button>
+        )}
         <Select value={ownerFilter} onValueChange={setOwnerFilter}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder={t('pages.leads.owner')} /></SelectTrigger>
           <SelectContent>
@@ -978,7 +1001,7 @@ export default function LeadsPage() {
                       </TableCell>
                       <TableCell className={cellPad}>
                         <div className="flex flex-col">
-                          <span className="font-semibold tracking-[-0.01em] text-slate-950">{lead.name}</span>
+                          <span className="font-semibold tracking-[-0.01em] text-workspace-ink">{lead.name}</span>
                           {lead.acquisition_source && (
                             <span className="mt-1 w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
                               {lead.acquisition_source}
@@ -1032,7 +1055,7 @@ export default function LeadsPage() {
                         </Popover>
                       </TableCell>
                       <TableCell className={`${cellPad} text-sm text-muted-foreground`}>
-                        {lead.last_touched_at ? new Date(lead.last_touched_at).toLocaleDateString() : '–'}
+                        {lead.last_touched_at ? new Date(lead.last_touched_at).toLocaleDateString(dateLocaleTag()) : '–'}
                       </TableCell>
                       <TableCell className={cellPad} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1142,7 +1165,25 @@ export default function LeadsPage() {
       )}
 
       {/* Lead Detail Sheet */}
-      <Sheet open={!!selectedLead} onOpenChange={open => { if (!open) setSelectedLead(null); }}>
+      <Sheet open={!!selectedLead} onOpenChange={open => {
+        if (open) return;
+        // Status/potential autosave, but notes/tags/phone/company only saved
+        // via the Save button at the bottom — closing the panel silently
+        // threw those edits away. Save them on close when anything changed.
+        if (selectedLead) {
+          const dirty = (selectedLead.notes || '') !== editNotes
+            || (selectedLead.phone || '') !== editPhone
+            || (selectedLead.company_name || '') !== editCompany
+            || (selectedLead.industry || '') !== editIndustry
+            || JSON.stringify(selectedLead.tags || []) !== JSON.stringify(editTags);
+          if (dirty) {
+            updateLead.mutateAsync({ id: selectedLead.id, data: { notes: editNotes, phone: editPhone, company_name: editCompany, tags: editTags, industry: editIndustry || null } })
+              .then(() => toast.success(t('common.saved')))
+              .catch(() => toast.error(t('common.error')));
+          }
+        }
+        setSelectedLead(null);
+      }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           {selectedLead && (
             <>
@@ -1287,7 +1328,7 @@ export default function LeadsPage() {
                   <Label className="text-xs text-muted-foreground flex items-center gap-1">
                     {t('pages.leads.estimatedValue') || 'Estimated Deal Value'}
                   </Label>
-                  <p className="text-lg font-semibold">{selectedLead.value ? `${Number(selectedLead.value).toLocaleString()} ${selectedLead.currency || 'DKK'}` : '–'}</p>
+                  <p className="text-lg font-semibold">{selectedLead.value ? `${Number(selectedLead.value).toLocaleString(dateLocaleTag())} ${selectedLead.currency || 'DKK'}` : '–'}</p>
                 </div>
 
                 {/* AI Relationship Summary */}
@@ -1310,7 +1351,7 @@ export default function LeadsPage() {
                       <div key={d.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">{d.title}</span>
-                        <Badge variant="outline" className="ml-auto text-xs">{d.stage}</Badge>
+                        <Badge variant="outline" className="ml-auto text-xs">{getStageLabelFor(d.stage, locale, pipelineStages)}</Badge>
                       </div>
                     ))}
                   </div>
@@ -1318,8 +1359,8 @@ export default function LeadsPage() {
 
                 {/* Meta */}
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>{t('common.created')}: {new Date(selectedLead.created_at).toLocaleDateString()}</p>
-                  {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString()}</p>}
+                  <p>{t('common.created')}: {new Date(selectedLead.created_at).toLocaleDateString(dateLocaleTag())}</p>
+                  {selectedLead.last_touched_at && <p>{t('pages.leads.lastTouched') || 'Last activity'}: {new Date(selectedLead.last_touched_at).toLocaleDateString(dateLocaleTag())}</p>}
                 </div>
 
                 {/* Convert to Deal — one atomic server-side conversion
@@ -1335,11 +1376,14 @@ export default function LeadsPage() {
                   onClick={async () => {
                     const locale = isLocale(params.locale) ? params.locale : 'en';
                     try {
-                      await convertToDeal.mutateAsync({
+                      const result = await convertToDeal.mutateAsync({
                         leadId: selectedLead.id,
                         dealName: `Deal: ${selectedLead.name}`,
                         value: selectedLead.value ?? undefined,
                       });
+                      // The RPC reuses an existing contact with the same email/phone;
+                      // say so, otherwise the deal silently shows another name.
+                      if (result?.dedupe_result === 'matched_existing') toast.info(t('pages.leads.convertedToExisting'));
                       navigate(`/${locale}/app/crm/deals`);
                     } catch {
                       toast.error(t('common.error'));

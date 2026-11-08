@@ -37,7 +37,15 @@
     "account": "Konto",
     "create": "Opret",
     "selectAllVisible": "Vælg alle synlige ({count})",
-    "selected": "{count} valgt"
+    "selected": "{count} valgt",
+    "back": "Tilbage",
+    "copied": "Kopieret til udklipsholder",
+    "copy": "Kopiér",
+    "done": "Færdig",
+    "edit": "Rediger",
+    "no": "Nej",
+    "of": "af",
+    "yes": "Ja"
   },
   "language": {
     "label": "Sprog",
@@ -202,7 +210,7 @@
     "featureTasksDesc": "Tildel opgaver, sæt deadlines og følg fremskridt på tværs af projekter.",
     "featureInbox": "Inbox",
     "featureInboxDesc": "Samlet kommunikation med kunder og kollegaer direkte i platformen.",
-    "featureMarketing": "Marketing & Ads",
+    "featureMarketing": "Marketing og annoncer",
     "featureMarketingDesc": "Meta Ads-styring, kampagne-oprettelse og AI-genereret annonceindhold.",
     "featureAi": "AI-Assistent",
     "featureAiDesc": "Din personlige PA der hjælper med alt fra emails til rapporter.",
@@ -280,6 +288,8 @@
     "customers": "Kunder",
     "pipeline": "Pipeline",
     "campaigns": "Kampagner",
+    "videoStudio": "Video Studio",
+    "studio": "Studio",
     "coldCaller": "Power Dialer",
     "voiceAgent": "Voice Agent",
     "finance": "Finans",
@@ -332,7 +342,8 @@
     "emailTemplates": "E-mail skabeloner",
     "accountMenu": "Kontomenu",
     "aiMedia": "AI Medier",
-    "clients": "Klienter",
+    "studios": "Studios",
+    "clients": "Kunder",
     "connectedApps": "Forbundne apps",
     "help": "Hjælp",
     "messages": "Beskeder",
@@ -343,7 +354,6 @@
     "expandSidebar": "Fold sidebar ud",
     "openMenu": "Åbn menu",
     "operatingManager": "Operating Manager",
-    "studio": "Studio",
     "workflowChat": "Workflow-chat",
     "workspaceNavigation": "Workspace-navigation",
     "controlRoom": "Kontrolrum",
@@ -359,7 +369,8 @@
     "financeDashboard": "Finance Dashboard",
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
-    "linkedinOutreach": "LinkedIn Outreach"
+    "linkedinOutreach": "LinkedIn Outreach",
+    "workflowStudio": "Workflow Studio"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -452,7 +463,8 @@
     "plannedHours": "Planlagt",
     "deviation": "Afvigelse",
     "daysWorked": "Arbejdsdage",
-    "noReportData": "Ingen data for denne periode"
+    "noReportData": "Ingen data for denne periode",
+    "forgotClockOut": "Denne arbejdsdag har været åben siden {since}. Har du glemt at stemple ud? Stop arbejdsdagen og ret tiden."
   },
   "errorBoundary": {
     "title": "Noget gik galt",
@@ -461,7 +473,7 @@
     "reloadPage": "Genindlæs siden"
   },
   "clients": {
-    "title": "Klienter",
+    "title": "Kunder",
     "subtitle": "Hver klient er et levende objekt — kommunikation, deals, fakturaer og aktivitet samlet ét sted.",
     "searchPlaceholder": "Søg klient eller email",
     "empty": "Ingen klienter endnu.",
@@ -483,7 +495,8 @@
     "edit": "Redigér",
     "delete": "Slet",
     "created_success": "Klient tilføjet",
-    "created_error": "Kunne ikke tilføje klient"
+    "created_error": "Kunne ikke tilføje klient",
+    "invalidVat": "Angiv et gyldigt CVR-nummer (8 cifre, fx DK12345678) eller EU-momsnummer."
   },
   "dashboard": {
     "title": "Overblik",
@@ -729,7 +742,22 @@
     "fetchRecruitmentError": "Kunne ikke hente stillinger",
     "searchPositionPlaceholder": "Søg efter stilling...",
     "payrollGuide": "Registrer månedlige lønudbetalinger for medarbejdere. Klik på \"Registrer Løn\" for at tilføje en lønregistrering for den aktuelle periode.",
-    "departmentRequired": "Afdeling er påkrævet"
+    "departmentRequired": "Afdeling er påkrævet",
+    "salaryPositive": "Lønnen skal være større end 0.",
+    "payrollDuplicate": "Medarbejderen har allerede en lønregistrering for den periode.",
+    "leaveEndBeforeStart": "Slutdatoen kan ikke ligge før startdatoen.",
+    "editEmployee": "Redigér medarbejder",
+    "fullName": "Fulde navn",
+    "deletePayrollTitle": "Slet denne lønregistrering?",
+    "department": "Afdeling",
+    "description": "Beskrivelse",
+    "requirements": "Krav",
+    "salaryRange": "Lønniveau",
+    "empty": "Ingen medarbejdere endnu.",
+    "orgChart": "Organisationsdiagram",
+    "orgChartDesc": "Se hvordan jeres team er organiseret.",
+    "orgChartEmpty": "Ingen medarbejdere at vise",
+    "orgChartEmptyDesc": "Tilføj medarbejdere for at opbygge organisationsdiagrammet."
   },
   "aiInbox": {
     "title": "AI Inbox",
@@ -740,7 +768,7 @@
     "companyTitle": "Virksomhedsindstillinger",
     "companySubtitle": "Administrer dine virksomhedsoplysninger",
     "updateCta": "Gem ændringer",
-    "sendInvitation": "Send invitation"
+    "sendInvitation": "Send invitationen"
   },
   "admin": {
     "title": "Admin overblik",
@@ -899,7 +927,22 @@
     "empty": "Ingen tilbud endnu",
     "createFirst": "Opret dit første tilbud",
     "created": "Tilbud oprettet",
-    "status": "Status"
+    "status": "Status",
+    "leadRequired": "Et tilbud skal have et lead/en kunde, før det kan gemmes eller faktureres.",
+    "vatInvalid": "Momssatsen skal være mellem 0 og 100 %.",
+    "statusLabels": {
+      "draft": "Kladde",
+      "sent": "Sendt",
+      "accepted": "Accepteret",
+      "rejected": "Afvist",
+      "expired": "Udløbet"
+    },
+    "expired": "Udløbet — kan ikke længere accepteres",
+    "duplicateNumber": "Der findes allerede et tilbud med dette nummer.",
+    "markSent": "Markér som sendt",
+    "markAccepted": "Markér som accepteret",
+    "markRejected": "Markér som afvist",
+    "createInvoice": "Opret faktura"
   },
   "roles": {
     "employee": "Medarbejder",
@@ -1016,7 +1059,7 @@
       "status": "Status",
       "statusLabel": "Status",
       "owner": "Ejer",
-      "nameRequired": "Navn og email er påkrævet",
+      "nameRequired": "Navn skal udfyldes",
       "created_success": "Lead oprettet",
       "created_error": "Kunne ikke oprette lead",
       "scoreUpdated": "Score opdateret",
@@ -1120,7 +1163,22 @@
       "aiEmailWriter": "AI mailskribent",
       "folderNameTooShort": "Mappenavn skal være mindst 2 tegn",
       "syncNow": "Synkronisér nu",
-      "connectCrm": "Forbind CRM"
+      "connectCrm": "Forbind CRM",
+      "phoneInvalid": "Angiv et gyldigt telefonnummer (kun tal, mellemrum, + og -).",
+      "duplicateEmail": "Der findes allerede et lead eller en kunde med denne e-mail.",
+      "convertedToExisting": "Deal oprettet og knyttet til en eksisterende kontakt med samme e-mail/telefon.",
+      "cockpit": {
+        "signal": "Live lead-signal",
+        "contacts": "Kontakter",
+        "followUp": "Følg op",
+        "new": "Nye",
+        "stale": "Uden aktivitet",
+        "title": "Relationer i bevægelse.",
+        "subtitle": "Find næste kontakt, hold momentum og flyt de rigtige leads videre i pipeline.",
+        "syncedVia": "Synkroniseret via",
+        "syncNow": "Synkronisér nu",
+        "connectCrm": "Forbind CRM"
+      }
     },
     "deals": {
       "title": "Deals",
@@ -1164,7 +1222,9 @@
       "selectLead": "Vælg lead...",
       "noLead": "Intet lead",
       "moveToStage": "Flyt til stadie",
-      "bulkStageUpdated": "Deals opdateret"
+      "bulkStageUpdated": "Deals opdateret",
+      "valuePositive": "Værdien kan ikke være negativ.",
+      "confirmLostTitle": "Markér denne deal som tabt?"
     },
     "invoices": {
       "title": "Fakturaer",
@@ -1220,6 +1280,7 @@
       "issued": "Udstedt",
       "actions": "Handlinger",
       "selectError": "Vælg kunde og tilføj mindst én linje",
+      "lineInvalid": "Alle fakturalinjer skal have en beskrivelse og et beløb over 0.",
       "created_success": "Faktura oprettet",
       "created_error": "Kunne ikke oprette faktura",
       "fetchError": "Kunne ikke hente fakturaer",
@@ -1254,7 +1315,12 @@
       "companyDetails": "Virksomhedsoplysninger",
       "customerDetails": "Kundeoplysninger",
       "markSelectedSent": "Markér som sendt",
-      "connectPayments": "Forbind betalinger"
+      "connectPayments": "Forbind betalinger",
+      "confirmMarkPaidTitle": "Markér faktura som betalt?",
+      "confirmMarkPaidDesc": "Det registrerer en betaling for hele det resterende beløb",
+      "confirmMarkPaidDraft": "fakturaen er stadig en kladde og er aldrig sendt",
+      "senderIncomplete": "Virksomhedens CVR eller adresse mangler — det skal stå på danske fakturaer.",
+      "senderIncompleteLink": "Udfyld virksomhedsinfo"
     },
     "tasks": {
       "title": "Opgaver",
@@ -1304,12 +1370,25 @@
       "assignee": "Ansvarlig",
       "priority": "Prioritet",
       "bulkComplete": "Fuldfør",
-      "bulkAssignTo": "Tildel til"
+      "bulkAssignTo": "Tildel til",
+      "views": {
+        "today": "I dag",
+        "overdue": "Forfaldne",
+        "upcoming": "Kommende",
+        "mine": "Mine",
+        "allActive": "Alle aktive",
+        "completed": "Fuldførte",
+        "archived": "Arkiverede"
+      },
+      "selectAll": "Vælg alle",
+      "selectAllVisible": "Vælg alle synlige",
+      "selected": "valgt",
+      "emptyView": "Intet i denne visning — se de andre faner."
     },
     "calendar": {
       "title": "Kalender",
       "subtitle": "Se dine begivenheder",
-      "newEvent": "Ny Begivenhed",
+      "newEvent": "Ny aftale",
       "createTitle": "Opret begivenhed",
       "createSubtitle": "Tilføj en ny begivenhed til din kalender",
       "titleLabel": "Titel",
@@ -1614,7 +1693,7 @@
     "scoreRange": "Score",
     "topSeller": "Top sælger",
     "closed": "lukket",
-    "totalPipeline": "Total pipeline",
+    "totalPipeline": "Samlet pipeline",
     "sellers": "Sælgere",
     "avgDays": "Gns. dage",
     "days": "dage",
@@ -1899,6 +1978,15 @@
     "queue": {
       "title": "Lead-kø"
     },
+    "views": {
+      "queue": "Kø",
+      "history": "Historik",
+      "setup": "Opsætning"
+    },
+    "status": {
+      "connected": "Telefon klar",
+      "disconnected": "Telefon ikke forbundet"
+    },
     "outcomes": {
       "noAnswer": "Intet svar",
       "callback": "Ring tilbage",
@@ -2041,7 +2129,9 @@
     "selectError": "Vælg faktura og angiv beløb",
     "success": "Betaling registreret – faktura opdateret automatisk",
     "error": "Kunne ikke registrere betaling",
-    "exportHistory": "Eksporter"
+    "exportHistory": "Eksporter",
+    "manual": "Markeret betalt manuelt",
+    "noUnpaidInvoices": "Ingen ubetalte fakturaer — alle fakturaer er betalt."
   },
   "bulkEmail": {
     "title": "Masse-email",
@@ -2125,7 +2215,7 @@
     "matches": "Match",
     "edit": "Rediger",
     "moreCount": "+{count} mere",
-    "backToIcps": "← Tilbage til ICP'er",
+    "backToIcps": "Tilbage til ICP'er",
     "leadMatches": "Lead-match: {name}",
     "leadsScored": "{count} leads scoret",
     "sortedByBestMatch": "Sorteret efter bedste match",
@@ -2147,15 +2237,15 @@
       "stepPain": "Udfordringer & services",
       "stepPriorities": "Prioriteter & gennemgang",
       "nameLabel": "ICP-navn *",
-      "namePlaceholder": "f.eks. Rengøringsfirmaer i Jylland, 5-25 ansatte",
+      "namePlaceholder": "F.eks. danske rengøringsfirmaer, 5–25 ansatte",
       "descriptionLabel": "Beskrivelse",
       "descriptionPlaceholder": "Beskriv din ideelle kunde med dine egne ord...",
       "targetIndustries": "Målrettede brancher",
       "targetCountries": "Målrettede lande",
       "targetRegions": "Målrettede regioner",
-      "targetRegionsPlaceholder": "f.eks. Jylland, Sjælland...",
+      "targetRegionsPlaceholder": "F.eks. Region Hovedstaden, Region Midtjylland...",
       "targetCities": "Målrettede byer",
-      "targetCitiesPlaceholder": "f.eks. København, Aarhus...",
+      "targetCitiesPlaceholder": "F.eks. København, Aarhus...",
       "excludeIndustries": "Ekskluder brancher",
       "excludeIndustriesPlaceholder": "Brancher der skal ekskluderes...",
       "minEmployees": "Min. antal ansatte",
@@ -2321,7 +2411,7 @@
     "secretHint": "Hvis angivet, inkluderer vi en X-Webhook-Signature header",
     "createWebhook": "Opret webhook",
     "fillRequired": "Udfyld venligst alle påkrævede felter",
-    "invalidUrl": "Indtast venligst en gyldig URL",
+    "invalidUrl": "Angiv en offentlig https://-URL (http, localhost og private netværksadresser er ikke tilladt).",
     "created": "Webhook oprettet",
     "testSuccess": "Testwebhook blev leveret!",
     "testFailed": "Testwebhook fejlede — tjek logs for detaljer",
@@ -2483,9 +2573,9 @@
     "securityDesc": "Sikkerhedsindstillinger for systemet",
     "twoFactor": "To-faktor godkendelse",
     "twoFactorDesc": "Kræv 2FA for alle administratorer",
-    "sessionTimeout": "Session timeout",
+    "sessionTimeout": "Session-timeout",
     "sessionTimeoutDesc": "Log automatisk ud efter inaktivitet",
-    "apiIntegration": "API Integration",
+    "apiIntegration": "API-integration",
     "apiIntegrationDesc": "Konfigurer forbindelse til ekstern backend",
     "apiIntegrationNote": "Backend-integration er konfigureret via Lovable Cloud.",
     "settingSaved": "Indstilling gemt"
@@ -2666,6 +2756,50 @@
     "title": "Hjælpecenter",
     "subtitle": "Find svar på dine spørgsmål",
     "noResults": "Ingen artikler fundet. Prøv et andet søgeord."
+  },
+  "videoStudio": {
+    "pageDescription": "Producér videoer og annoncer uden at forlade platformen.",
+    "newVideo": "Ny video",
+    "untitled": "Unavngiven video",
+    "emptyTitle": "Ingen videoer endnu",
+    "emptyHint": "Opret dit første videoprojekt.",
+    "upload": "Upload medie",
+    "uploadError": "Upload mislykkedes",
+    "noMedia": "Ingen medier uploadet endnu.",
+    "addToTimeline": "Tilføj til tidslinje",
+    "addToTimelineError": "Kunne ikke tilføje til tidslinje",
+    "save": "Gem",
+    "saved": "Projekt gemt",
+    "saveError": "Kunne ikke gemme projekt",
+    "autosaving": "Gemmer…",
+    "autosaved": "Alle ændringer gemt",
+    "unsavedChanges": "Ikke-gemte ændringer",
+    "leaveConfirm": "Du har ikke-gemte ændringer. Forlad alligevel?",
+    "export": "Eksportér MP4",
+    "exporting": "Eksporterer",
+    "exported": "Video eksporteret",
+    "exportError": "Eksport mislykkedes",
+    "loadError": "Kunne ikke indlæse projekt",
+    "createError": "Kunne ikke oprette projekt",
+    "deleted": "Video slettet",
+    "downloadExport": "Download sidste eksport",
+    "unsupportedTitle": "Din browser understøtter ikke Video Studio",
+    "unsupportedBody": "Video Studio kræver WebCodecs, WebGL2 og OffscreenCanvas. Brug den nyeste version af Chrome eller Edge (Chromium 108+).",
+    "unsupportedMissing": "Mangler",
+    "status": {
+      "draft": "Kladde",
+      "exporting": "Eksporterer",
+      "exported": "Eksporteret",
+      "failed": "Fejlet"
+    },
+    "preset": {
+      "9:16": "9:16 — Reels / TikTok / Stories",
+      "1:1": "1:1 — Feed (kvadrat)",
+      "4:5": "4:5 — Feed (portræt)",
+      "16:9": "16:9 — YouTube / landskab"
+    },
+    "notDeployedTitle": "Video Studio er ikke sat op endnu",
+    "notDeployedHint": "Videoeditorens databasetabel er ikke deployet. En administrator skal køre den seneste databasemigration (supabase db push)."
   },
   "sec": {
     "home": "Hjem",
@@ -2977,5 +3111,166 @@
       "replied": "Svaret",
       "skipped": "Sprunget over"
     }
+  },
+  "errors": {
+    "generic": {
+      "title": "Noget gik galt",
+      "actionFallback": "Handlingen"
+    },
+    "functionAreas": {
+      "accounting": "Regnskabsintegration",
+      "aiActions": "AI-assistenten",
+      "aiAnalyze": "AI-analyse",
+      "aiEmailWriter": "AI e-mail-forfatter",
+      "aiGenerate": "AI-generering",
+      "aiHealth": "AI-forbindelse",
+      "aiOperatingManager": "AI-driftslederen",
+      "autopilot": "Autopilot",
+      "callScript": "Opkaldsscript",
+      "chat": "AI-chat",
+      "companiesHouse": "Companies House-opslag",
+      "csvImport": "CSV-import",
+      "customerPortal": "Kundeportal",
+      "cvrSearch": "CVR-opslag",
+      "dealCoach": "Deal Coach",
+      "dinero": "Dinero-forbindelse",
+      "dineroSync": "Dinero-synkronisering",
+      "economic": "e-conomic-forbindelse",
+      "economicSync": "e-conomic-synkronisering",
+      "emailCampaigns": "E-mail-kampagner",
+      "emailProvider": "E-mail-udbyder",
+      "emailQueue": "E-mail-kø",
+      "emailTrack": "E-mail-sporing",
+      "emailVerify": "E-mail-verificering",
+      "gmail": "Gmail-forbindelse",
+      "gmailSync": "Gmail-synkronisering",
+      "icpScore": "ICP-scoring",
+      "integrations": "Integrationer",
+      "invoicePayment": "Fakturabetaling",
+      "leadGen": "Lead-generering",
+      "leadRecommend": "Lead-anbefalinger",
+      "linkedinOutreach": "LinkedIn-outreach",
+      "mcpServer": "MCP-server",
+      "meetingSummary": "Mødereferat",
+      "metaAds": "Meta Ads",
+      "metaAdsSync": "Meta Ads-synkronisering",
+      "payment": "Betaling",
+      "powerDialer": "Power Dialer",
+      "smartInbox": "Smart Inbox",
+      "subscription": "Abonnement",
+      "voiceAgent": "Voice Agent",
+      "webhooks": "Webhooks",
+      "workflowAssistant": "Workflow-assistenten",
+      "workflows": "Workflows"
+    },
+    "status": {
+      "badRequest": {
+        "why": "de indsendte oplysninger var ugyldige.",
+        "what": "Tjek felterne, og prøv igen."
+      },
+      "unauthorized": {
+        "why": "din session er udløbet.",
+        "what": "Log ind igen."
+      },
+      "forbidden": {
+        "why": "du har ikke adgang til det her.",
+        "what": "Kontakt en administrator, hvis det ikke stemmer."
+      },
+      "notFound": {
+        "why": "det kunne ikke findes.",
+        "what": "Tjek at det stadig findes."
+      },
+      "conflict": {
+        "why": "det er i konflikt med noget, der allerede er i gang.",
+        "what": "Opdater siden, og prøv igen."
+      },
+      "rateLimited": {
+        "why": "der er for mange forespørgsler lige nu.",
+        "what": "Vent et øjeblik, og prøv igen."
+      },
+      "serverError": {
+        "why": "der er en fejl hos os eller hos en forbundet tjeneste.",
+        "what": "Prøv igen om et øjeblik."
+      },
+      "network": {
+        "why": "forbindelsen fejlede, eller tjenesten svarer ikke.",
+        "what": "Tjek din internetforbindelse, og prøv igen."
+      },
+      "unknown": {
+        "why": "der skete en uventet fejl.",
+        "what": "Prøv igen, og kontakt support, hvis det fortsætter."
+      }
+    },
+    "details": {
+      "show": "Vis detaljer",
+      "hide": "Skjul detaljer",
+      "copy": "Kopiér",
+      "copied": "Kopieret",
+      "function": "Funktion",
+      "status": "Status",
+      "time": "Tidspunkt",
+      "requestId": "Forespørgsels-id"
+    }
+  },
+  "leadFollowup": {
+    "defaultTitle": "Følg op på",
+    "prepareError": "Kunne ikke forberede handlingen",
+    "taskCreated": "Opgave oprettet",
+    "rejected": "Forslag afvist",
+    "actionFailed": "Handlingen fejlede",
+    "resultTitle": "Opfølgningsopgave oprettet",
+    "prepareAgain": "Forbered igen",
+    "proposalTitle": "AI foreslår en handling",
+    "risk": "risiko",
+    "what": "Hvad",
+    "why": "Hvorfor",
+    "changes": "Hvad ændres",
+    "fieldTitle": "Titel",
+    "fieldDue": "Forfald",
+    "fieldPriority": "Prioritet",
+    "serverSide": "Udføres server-side efter din godkendelse.",
+    "approve": "Godkend",
+    "reject": "Afvis",
+    "preparing": "Forbereder…",
+    "prepare": "Forbered opfølgning (AI)"
+  },
+  "adminGate": {
+    "accessDenied": "Adgang nægtet — du har ikke systemadministrator-rettigheder",
+    "codeAccepted": "Kode accepteret",
+    "codeHint": "Denne kode kendes kun af autoriseret personale",
+    "enterCode": "Indtast den hemmelige adgangskode for at fortsætte",
+    "invalidCode": "Ugyldig adgangskode",
+    "loginAsAdmin": "Log ind som admin",
+    "loginFailed": "Login mislykkedes",
+    "loginWithAdmin": "Log ind med din admin-konto",
+    "secretCode": "Hemmelig kode",
+    "verificationError": "Verifikationsfejl",
+    "verificationFailed": "Verifikation mislykkedes",
+    "verifyCode": "Bekræft kode"
+  },
+  "aiEmail": {
+    "casual": "Uformel",
+    "coldOutreach": "Kold henvendelse",
+    "contextPlaceholder": "Fx 'Vi har netop lanceret et nyt produkt til deres branche...' eller 'De besøgte vores hjemmeside i går'",
+    "emailBody": "E-mailtekst",
+    "extraContext": "Ekstra kontekst (valgfri)",
+    "followUp": "Opfølgning",
+    "generate": "Generér AI-e-mail",
+    "generateError": "Kunne ikke generere e-mail",
+    "generating": "Genererer personlig e-mail...",
+    "meetingRequest": "Mødebooking",
+    "openInEmail": "Åbn i e-mail",
+    "professional": "Professionel",
+    "proposal": "Tilbud",
+    "purpose": "Formål",
+    "regenerate": "Generér ny version",
+    "subject": "Emne",
+    "tone": "Tone",
+    "urgent": "Haster"
+  },
+  "studio": {
+    "editorTab": "Editor",
+    "generateTab": "AI-generering",
+    "pageDescription": "Redigér og generér video- og billedindhold uden at forlade platformen."
   }
 }

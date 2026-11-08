@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isLocale, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { tl } from '@/lib/inlineI18n';
 
 interface NavItem {
   title: string;
@@ -132,7 +133,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             AI Agency Danmark
           </div>
           <div className="text-[11px] text-sidebar-foreground/50 leading-tight truncate">
-            {t('appName') === 'AI Agency Danmark' ? (locale === 'da' ? 'Alt-i-ét workspace' : 'All-in-one workspace') : t('appName')}
+            {t('appName') === 'AI Agency Danmark' ? (tl(locale, 'Alt-i-ét workspace', 'All-in-one workspace')) : t('appName')}
           </div>
         </div>
       </div>

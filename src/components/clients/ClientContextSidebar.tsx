@@ -1,9 +1,10 @@
 import type { Signal } from "@/lib/clientIntelligence";
 import type { Tables } from "@/integrations/supabase/types";
+import { tx } from '@/lib/inlineI18n';
 
 const STAGE_LABELS: Record<string, string> = {
-  discovery: "Discovery", qualification: "Kvalificering", proposal: "Tilbud",
-  negotiation: "Forhandling", won: "Vundet", lost: "Tabt",
+  get discovery() { return "Discovery"; }, get qualification() { return tx("Kvalificering", "Qualification"); }, get proposal() { return tx("Tilbud", "Proposal"); },
+  get negotiation() { return tx("Forhandling", "Negotiation"); }, get won() { return tx("Vundet", "Won"); }, get lost() { return tx("Tabt", "Lost"); },
 };
 
 const TONE = {
@@ -29,7 +30,7 @@ export function ClientContextSidebar({
     <div className="space-y-8">
       {signals.length === 0 ? (
         <p className="text-[12.5px] text-muted-foreground/60 italic leading-relaxed">
-          Alt ser roligt ud her. Brug øjeblikket på dybt arbejde.
+          {tx("Alt ser roligt ud her. Brug øjeblikket på dybt arbejde.", "All quiet here. Use the moment for deep work.")}
         </p>
       ) : (
         <ul className="space-y-4">
@@ -47,7 +48,7 @@ export function ClientContextSidebar({
       {activeDeals.length > 0 && (
         <div>
           <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/50 mb-3">
-            Åbne deals
+            {tx("Åbne deals", "Open deals")}
           </div>
           <ul className="space-y-2">
             {activeDeals.map(d => (

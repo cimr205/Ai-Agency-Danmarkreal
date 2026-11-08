@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
+import { showError } from '@/lib/showError';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { useConnectVoiceTelephony, useVoiceTelephonyAccount } from '@/hooks/api/useVoiceTelephony';
@@ -8,15 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Phone, CheckCircle2, XCircle, ExternalLink, Plus, Play, Mic, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getErrorMessage } from '@/lib/errors';
+import { dateLocaleTag, t3 } from '@/lib/inlineI18n';
 
 interface TwilioAccount { account_sid: string; }
 interface VoiceAgent { id: string; name: string; voice: string; language: string; system_prompt: string; greeting: string; is_active: boolean; }
@@ -37,6 +39,7 @@ export default function VoiceAgentPage() {
   const [calls, setCalls] = useState<VoiceCall[]>([]);
   const [events, setEvents] = useState<VoiceCallEvent[]>([]);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'connections' | 'agents' | 'live' | 'history'>('connections');
 
   // Twilio belongs to the AI Voice Agent only. The Device Power Dialer never reads this state.
   const twilioConnected = twilioInfo?.connected === true;
@@ -84,7 +87,7 @@ export default function VoiceAgentPage() {
   const [agentVoice, setAgentVoice] = useState('alloy');
   const [agentLanguage, setAgentLanguage] = useState('da');
   const [agentPrompt, setAgentPrompt] = useState('You are a friendly sales assistant calling on behalf of our company. Be polite, brief, and helpful.');
-  const [agentGreeting, setAgentGreeting] = useState('Hej, det er en AI-assistent fra os. Har du to minutter til en kort snak?');
+  const [agentGreeting, setAgentGreeting] = useState(() => t3("Hej, det er en AI-assistent fra os. Har du to minutter til en kort snak?", "Hi, this is an AI assistant calling from us. Do you have two minutes for a quick chat?", "Hallo, hier ist ein KI-Assistent von uns. Haben Sie zwei Minuten für ein kurzes Gespräch?"));
 
   // Call dialog
   const [callDialog, setCallDialog] = useState(false);
@@ -96,8 +99,11 @@ export default function VoiceAgentPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data: profile } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-      if (!profile?.company_id) { setLoading(false); return; }
+      // user from useAuth() is the profile row: its `id` is the profile id,
+      // not the auth uid, so the old .eq('user_id', user.id) lookup matched
+      // nothing (406) and the page never loaded agents or calls.
+      const profile = { company_id: user.company_id };
+      if (!profile.company_id) { setLoading(false); return; }
       setCompanyId(profile.company_id);
 
       const [ag, cl] = await Promise.all([
@@ -136,22 +142,7 @@ export default function VoiceAgentPage() {
 
   // Helper: invoke edge function and surface real error from response body
   const invokeWithError = async (fn: string, body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke(fn, { body });
-    if (error) {
-      // FunctionsHttpError -> read body for real message
-      let msg = error.message;
-      try {
-        const ctx = (error as { context?: { json?: () => Promise<{ error?: string }>; text?: () => Promise<string> } }).context;
-        if (ctx && typeof ctx.json === 'function') {
-          const parsed = await ctx.json();
-          if (parsed?.error) msg = parsed.error;
-        } else if (ctx && typeof ctx.text === 'function') {
-          const txt = await ctx.text();
-          if (txt) msg = txt;
-        }
-      } catch { /* ignore */ }
-      throw new Error(msg);
-    }
+    const data = await invokeFunction<{ error?: string } & Record<string, unknown>>(fn, { body });
     if (data?.error) throw new Error(data.error);
     return data;
   };
@@ -165,7 +156,7 @@ export default function VoiceAgentPage() {
       language: agentLanguage,
       system_prompt: agentPrompt,
       greeting: agentGreeting,
-      created_by: user?.id,
+      created_by: user?.user_id,
     });
     if (error) { toast.error(error.message); return; }
     toast.success(t('voiceAgent.agentCreated'));
@@ -178,15 +169,15 @@ export default function VoiceAgentPage() {
     if (!callAgentId || !callTo) return;
     setCalling(true);
     try {
-      const { data, error } = await supabase.functions.invoke('voice-agent-call', { body: { agentId: callAgentId, toNumber: callTo } });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      const data = await invokeFunction<{ error?: string; callId?: string }>('voice-agent-call', { body: { agentId: callAgentId, toNumber: callTo } });
+      if (data?.error) throw new Error(data.error);
       toast.success(t('voiceAgent.callInitiated'));
       setCallDialog(false);
       setCallTo('');
-      setSelectedCallId(data.callId);
+      setSelectedCallId(data.callId!);
       loadAll();
     } catch (e) {
-      toast.error(getErrorMessage(e) || 'Call failed');
+      showError(e, { module: 'voice-agent-call' });
     } finally {
       setCalling(false);
     }
@@ -202,12 +193,12 @@ export default function VoiceAgentPage() {
       await connectVoiceProvider.mutateAsync();
       toast.success(t('voiceAgent.connectionSaved'));
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      showError(error, { module: 'voice-telephony' });
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
@@ -265,16 +256,21 @@ export default function VoiceAgentPage() {
         )}
       </div>
 
-      <Tabs defaultValue="connections" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="connections">{t('voiceAgent.tabs.connections') || 'Connections'}</TabsTrigger>
-          <TabsTrigger value="agents" disabled={!isReady}>{t('voiceAgent.tabs.agents') || 'Agents'}</TabsTrigger>
-          <TabsTrigger value="live">{t('voiceAgent.tabs.live') || 'Live & Timeline'}</TabsTrigger>
-          <TabsTrigger value="history">{t('voiceAgent.tabs.history') || 'History'}</TabsTrigger>
-        </TabsList>
+      <div className="space-y-4">
+        <SegmentedControl<'connections' | 'agents' | 'live' | 'history'>
+          layoutId="voiceAgentTabPill"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'connections', label: t('voiceAgent.tabs.connections') || 'Connections' },
+            { value: 'agents', label: t('voiceAgent.tabs.agents') || 'Agents', disabled: !isReady },
+            { value: 'live', label: t('voiceAgent.tabs.live') || 'Live & Timeline' },
+            { value: 'history', label: t('voiceAgent.tabs.history') || 'History' },
+          ]}
+        />
 
         {/* CONNECTIONS */}
-        <TabsContent value="connections" className="space-y-4">
+        {tab === 'connections' && <div className="space-y-4">
           {loading ? <Skeleton className="h-48 w-full" /> : (
             <div className="grid gap-4 md:grid-cols-2">
               {/* Twilio card */}
@@ -322,7 +318,7 @@ export default function VoiceAgentPage() {
                     <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5" /> AI-model</CardTitle>
                     <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Ollama (selv-hostet)</Badge>
                   </div>
-                  <CardDescription>Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.</CardDescription>
+                  <CardDescription>{t3("Samtalens svar genereres af en delt, selv-hostet AI-model — ingen opsætning nødvendig.", "Replies in the call come from a shared, self-hosted AI model — no setup needed.", "Die Antworten im Gespräch kommen von einem gemeinsam genutzten, selbst gehosteten KI-Modell — keine Einrichtung nötig.")}</CardDescription>
                 </CardHeader>
               </Card>
             </div>
@@ -335,10 +331,10 @@ export default function VoiceAgentPage() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+        </div>}
 
         {/* AGENTS */}
-        <TabsContent value="agents" className="space-y-4">
+        {tab === 'agents' && <div className="space-y-4">
           <div className="flex justify-end">
             <Button onClick={() => setAgentDialog(true)} className="gap-2"><Plus className="h-4 w-4" /> {t('voiceAgent.newAgent')}</Button>
           </div>
@@ -362,10 +358,10 @@ export default function VoiceAgentPage() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>}
 
         {/* LIVE */}
-        <TabsContent value="live" className="space-y-4">
+        {tab === 'live' && <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="md:col-span-1">
               <CardHeader><CardTitle className="text-base">{t('voiceAgent.recentCalls')}</CardTitle></CardHeader>
@@ -396,7 +392,7 @@ export default function VoiceAgentPage() {
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {events.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.waitingForEvents')}</p> : events.map(e => (
                         <div key={e.id} className="flex gap-3 text-sm border-l-2 border-border pl-3 py-1">
-                          <div className="text-xs text-muted-foreground min-w-20">{new Date(e.created_at).toLocaleTimeString()}</div>
+                          <div className="text-xs text-muted-foreground min-w-20">{new Date(e.created_at).toLocaleTimeString(dateLocaleTag())}</div>
                           <div className="flex-1">
                             <Badge variant="outline" className="text-xs mr-2">{e.speaker || t('voiceAgent.systemLabel')}</Badge>
                             <span className="text-muted-foreground text-xs mr-2">{e.event_type}</span>
@@ -410,10 +406,10 @@ export default function VoiceAgentPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </div>}
 
         {/* HISTORY */}
-        <TabsContent value="history">
+        {tab === 'history' && <div>
           <Card>
             <CardContent className="pt-6">
               {calls.length === 0 ? <p className="text-sm text-muted-foreground">{t('voiceAgent.noCallsYet')}</p> : (
@@ -422,7 +418,7 @@ export default function VoiceAgentPage() {
                     <div key={c.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{c.to_number}</div>
-                        <div className="text-xs text-muted-foreground">{c.started_at ? new Date(c.started_at).toLocaleString() : '—'} · {c.duration_seconds}s</div>
+                        <div className="text-xs text-muted-foreground">{c.started_at ? new Date(c.started_at).toLocaleString(dateLocaleTag()) : '—'} · {c.duration_seconds}s</div>
                         {c.summary && <div className="text-xs mt-1 line-clamp-2 max-w-2xl">{c.summary}</div>}
                       </div>
                       <Badge variant={c.status === 'completed' ? 'default' : 'secondary'}>{c.status}</Badge>
@@ -432,8 +428,8 @@ export default function VoiceAgentPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>}
+      </div>
 
       {/* New Agent Dialog */}
       <Dialog open={agentDialog} onOpenChange={setAgentDialog}>

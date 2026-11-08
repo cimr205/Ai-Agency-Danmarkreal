@@ -47,7 +47,9 @@ export function useCreateTask() {
       if (!profile?.company_id) throw new Error('No company');
       const { data, error } = await supabase
         .from('tasks')
-        .insert({ ...input, company_id: profile.company_id, created_by: session.user.id })
+        // Unassigned tasks default to the creator, otherwise "Mine" never shows
+        // the tasks you just made.
+        .insert({ ...input, assigned_to: input.assigned_to || session.user.id, company_id: profile.company_id, created_by: session.user.id })
         .select()
         .single();
       if (error) throw error;

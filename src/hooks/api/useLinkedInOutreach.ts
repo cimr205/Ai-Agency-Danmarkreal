@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 export type OutreachStatus =
   | "draft" | "ready" | "connection_sent" | "connected" | "messaged" | "replied" | "skipped";
@@ -28,15 +29,9 @@ export interface LinkedInOutreachRow {
 const outreachTable = () => supabase.from("linkedin_outreach");
 
 async function invokeOutreach<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("linkedin-outreach", { body });
-  if (error) {
-    // Edge functions return { error } with a non-2xx status; surface that message.
-    const ctx = (error as { context?: Response }).context;
-    const detail = ctx ? await ctx.json().then((j: { error?: string }) => j?.error).catch(() => null) : null;
-    throw new Error(detail ?? error.message);
-  }
-  if (data && typeof data === "object" && "error" in data) throw new Error(String((data as { error: unknown }).error));
-  return data as T;
+  const data = await invokeFunction<T & { error?: unknown }>("linkedin-outreach", { body });
+  if (data && typeof data === "object" && "error" in data && data.error) throw new Error(String(data.error));
+  return data;
 }
 
 export function useLinkedInOutreach() {
@@ -71,7 +66,7 @@ export function useQueueLinkedInOutreach() {
     mutationFn: (resultIds: string[]) =>
       invokeOutreach<{ queued: number; alreadyQueued: number; noProfile: number }>({ action: "queue-from-results", resultIds }),
     onSettled: () => qc.invalidateQueries({ queryKey: ["linkedin-outreach"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e) => showError(e, { module: 'linkedin-outreach' }),
   });
 }
 
@@ -81,7 +76,7 @@ export function useGenerateLinkedInDrafts() {
     mutationFn: (ids: string[]) =>
       invokeOutreach<{ generated: number; failed: string[] }>({ action: "generate-drafts", ids }),
     onSettled: () => qc.invalidateQueries({ queryKey: ["linkedin-outreach"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e) => showError(e, { module: 'linkedin-outreach' }),
   });
 }
 
@@ -97,7 +92,7 @@ export function useUpdateLinkedInOutreach() {
       if (error) throw error;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ["linkedin-outreach"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e) => showError(e, { module: 'linkedin-outreach' }),
   });
 }
 
@@ -110,6 +105,6 @@ export function useDeleteLinkedInOutreach() {
       if (error) throw error;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ["linkedin-outreach"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e) => showError(e, { module: 'linkedin-outreach' }),
   });
 }

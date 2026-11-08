@@ -72,3 +72,38 @@ export async function serviceSelect(table: string, query: string): Promise<any[]
   if (!res.ok) throw new Error(`serviceSelect ${table} failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as any[];
 }
+
+/** Service-role REST update (for test setup that bypasses normal app flows, e.g. injecting an
+ * already-expired media URL to deterministically test expiry handling without waiting 24h). */
+export async function serviceUpdate(table: string, query: string, patch: Record<string, unknown>): Promise<void> {
+  const { url, serviceRoleKey } = testConfig();
+  const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
+    method: "PATCH",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(`serviceUpdate ${table} failed: ${res.status} ${await res.text()}`);
+}
+
+/** Mints a signed URL for a storage object via the service-role Storage REST API, with full
+ * control over expiresIn (used by tests to create an already-expired URL deterministically). */
+export async function serviceSignStorageUrl(bucket: string, path: string, expiresInSeconds: number): Promise<string> {
+  const { url, serviceRoleKey } = testConfig();
+  const res = await fetch(`${url}/storage/v1/object/sign/${bucket}/${path}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ expiresIn: expiresInSeconds }),
+  });
+  if (!res.ok) throw new Error(`serviceSignStorageUrl failed: ${res.status} ${await res.text()}`);
+  const { signedURL } = (await res.json()) as { signedURL: string };
+  return `${url}/storage/v1${signedURL}`;
+}

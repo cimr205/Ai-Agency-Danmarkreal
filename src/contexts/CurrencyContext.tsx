@@ -68,6 +68,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }
 
+// Invoices, quotes and payments are legal documents issued in DKK: show
+// them in DKK with øre, never converted by the top-bar display-currency
+// toggle and never rounded to whole kroner (99.99 used to show as "100 kr.").
+const DOCUMENT_FORMATTER = new Intl.NumberFormat('da-DK', { style: 'currency', currency: 'DKK', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export function formatDocumentAmount(amount: number): string {
+  return DOCUMENT_FORMATTER.format(Number(amount) || 0);
+}
+
 export function useCurrency() {
   const ctx = useContext(CurrencyContext);
   if (!ctx) throw new Error('useCurrency must be used within CurrencyProvider');

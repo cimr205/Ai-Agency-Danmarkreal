@@ -59,7 +59,7 @@ ${email ? `- Email: ${email}` : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [
           { role: "system", content: systemPrompt },

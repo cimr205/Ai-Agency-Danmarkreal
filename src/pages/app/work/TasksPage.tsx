@@ -11,24 +11,43 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Clock, CheckCircle, AlertCircle, User, MoreHorizontal, Archive, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { SegmentedControl } from '@/components/workspace/SegmentedControl';
+import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 type Task = {
   id: string; title: string; description?: string | null; status: string;
   due_date?: string | null; priority?: string | null; assigned_to?: string | null;
   completed_at?: string | null; created_at: string; archived: boolean;
+  source_event_id?: string | null;
   assigned_profile?: { full_name: string | null; email: string } | null;
 };
 
 type ViewKey = 'today' | 'upcoming' | 'overdue' | 'mine' | 'all' | 'completed' | 'archived';
 
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent'] as const;
+
+// Workflow-created tasks store "Created by <event.key>" as description.
+const EVENT_TEXT: Record<string, [string, string, string]> = {
+  'lead.created': ['en ny lead', 'a new lead', 'einen neuen Lead'],
+  'deal.won': ['en vundet deal', 'a won deal', 'einen gewonnenen Deal'],
+  'deal.lost': ['en tabt deal', 'a lost deal', 'einen verlorenen Deal'],
+  'invoice.paid': ['en betalt faktura', 'a paid invoice', 'eine bezahlte Rechnung'],
+  'invoice.created': ['en ny faktura', 'a new invoice', 'eine neue Rechnung'],
+  'email.replied': ['et e-mailsvar', 'an email reply', 'eine E-Mail-Antwort'],
+  'task.completed': ['en færdig opgave', 'a completed task', 'eine erledigte Aufgabe'],
+};
+function describeTask(description: string): string {
+  const m = /^Created by ([a-z_]+\.[a-z_]+)$/.exec(description.trim());
+  if (!m) return description;
+  const ev = EVENT_TEXT[m[1]];
+  return ev ? t3(`Oprettet automatisk ved ${ev[0]}`, `Created automatically by ${ev[1]}`, `Automatisch erstellt durch ${ev[2]}`) : description;
+}
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -179,7 +198,7 @@ export default function TasksPage() {
   const handleBulkArchive = async () => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { archived: view !== 'archived' } });
-      toast.success('Opdateret');
+      toast.success(t3('Opdateret', 'Updated', 'Aktualisiert'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
@@ -187,47 +206,55 @@ export default function TasksPage() {
   const handleBulkReassign = async (userId: string) => {
     try {
       await bulkUpdate.mutateAsync({ ids: Array.from(selectedIds), data: { assigned_to: userId } });
-      toast.success('Opdateret');
+      toast.success(t3('Opdateret', 'Updated', 'Aktualisiert'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`)) return;
+    if (!confirm(t3(`Slet ${selectedIds.size} opgave(r)? Dette kan ikke fortrydes.`, `Delete ${selectedIds.size} task(s)? This cannot be undone.`, `${selectedIds.size} Aufgabe(n) löschen? Das kann nicht rückgängig gemacht werden.`))) return;
     try {
       await bulkDelete.mutateAsync(Array.from(selectedIds));
-      toast.success('Slettet');
+      toast.success(t3('Slettet', 'Deleted', 'Gelöscht'));
       clearSelection();
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Slet denne opgave? Dette kan ikke fortrydes.')) return;
+    if (!confirm(t3('Slet denne opgave? Dette kan ikke fortrydes.', 'Delete this task? This cannot be undone.', 'Diese Aufgabe löschen? Das kann nicht rückgängig gemacht werden.'))) return;
     try {
       await deleteTask.mutateAsync(id);
-      toast.success('Slettet');
+      toast.success(t3('Slettet', 'Deleted', 'Gelöscht'));
     } catch { toast.error(t('pages.tasks.updateError')); }
   };
 
   const TaskCard = ({ task }: { task: Task }) => {
-    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+    // Due today is not overdue — only a date before today is. Comparing the
+    // timestamp made every task due today (stored as midnight) red.
+    const isOverdue = !!task.due_date && task.status !== 'completed'
+      && new Date(task.due_date) < new Date() && !isSameDay(new Date(task.due_date), new Date());
     const assigneeName = task.assigned_profile?.full_name;
     return (
       <Card className={`transition-all ${task.status === 'completed' ? 'opacity-60' : ''}`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`Vælg: ${task.title}`} />
+            <Checkbox checked={selectedIds.has(task.id)} onCheckedChange={() => toggleSelect(task.id)} className="mt-1" aria-label={`${tx('Vælg', 'Select')}: ${task.title}`} />
             <Checkbox checked={task.status === 'completed'} onCheckedChange={() => handleToggleComplete(task)} className="mt-1" aria-label={`${t('pages.tasks.completed')}: ${task.title}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className={`font-medium ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>{task.title}</span>
                 <Badge className={statusColors[task.status]} variant="secondary">{statusLabels[task.status]}</Badge>
+                {task.source_event_id && (
+                  <Badge variant="outline" className="text-[10px]" title={tx('Oprettet automatisk af en workflow-regel. Du kan slå reglen fra under Workflows.', 'Created automatically by a workflow rule. You can turn the rule off under Workflows.')}>
+                    {tx('Automatisk', 'Automatic')}
+                  </Badge>
+                )}
                 {task.priority && task.priority !== 'medium' && (
                   <Badge className={priorityColors[task.priority] || ''} variant="secondary">{priorityLabels[task.priority] || task.priority}</Badge>
                 )}
                 {task.archived && <Badge variant="outline">Arkiveret</Badge>}
               </div>
-              {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>}
+              {task.description && <p className="text-sm text-muted-foreground line-clamp-2">{describeTask(task.description)}</p>}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {assigneeName && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -238,7 +265,7 @@ export default function TasksPage() {
                 {task.due_date && (
                   <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {isOverdue ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                    {new Date(task.due_date).toLocaleDateString()}
+                    {new Date(task.due_date).toLocaleDateString(dateLocaleTag())}
                   </div>
                 )}
                 {task.status !== 'completed' && (
@@ -261,10 +288,10 @@ export default function TasksPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => updateTask.mutate({ id: task.id, data: { archived: !task.archived } })}>
-                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? 'Fjern fra arkiv' : 'Arkivér'}
+                  <Archive className="h-3.5 w-3.5 mr-2" />{task.archived ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDelete(task.id)} className="text-destructive focus:text-destructive">
-                  <Trash2 className="h-3.5 w-3.5 mr-2" />Slet
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />{t3("Slet", "Delete", "Löschen")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -275,7 +302,7 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('pages.tasks.title')}</h1>
@@ -349,17 +376,22 @@ export default function TasksPage() {
         </Dialog>
       </div>
 
-      <Tabs value={view} onValueChange={(v) => { setView(v as ViewKey); clearSelection(); }}>
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="today">I dag {counts.today > 0 && `(${counts.today})`}</TabsTrigger>
-          <TabsTrigger value="overdue">Forfaldne {counts.overdue > 0 && `(${counts.overdue})`}</TabsTrigger>
-          <TabsTrigger value="upcoming">Kommende {counts.upcoming > 0 && `(${counts.upcoming})`}</TabsTrigger>
-          <TabsTrigger value="mine">Mine {counts.mine > 0 && `(${counts.mine})`}</TabsTrigger>
-          <TabsTrigger value="all">Alle aktive ({counts.all})</TabsTrigger>
-          <TabsTrigger value="completed">Fuldførte ({counts.completed})</TabsTrigger>
-          <TabsTrigger value="archived">Arkiverede</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="overflow-x-auto">
+        <SegmentedControl<ViewKey>
+          layoutId="tasksViewPill"
+          value={view}
+          onChange={(v) => { setView(v); clearSelection(); }}
+          options={[
+            { value: 'today', label: `${t('pages.tasks.views.today')} ${counts.today > 0 ? `(${counts.today})` : ''}`.trim() },
+            { value: 'overdue', label: `${t('pages.tasks.views.overdue')} ${counts.overdue > 0 ? `(${counts.overdue})` : ''}`.trim() },
+            { value: 'upcoming', label: `${t('pages.tasks.views.upcoming')} ${counts.upcoming > 0 ? `(${counts.upcoming})` : ''}`.trim() },
+            { value: 'mine', label: `${t('pages.tasks.views.mine')} ${counts.mine > 0 ? `(${counts.mine})` : ''}`.trim() },
+            { value: 'all', label: `${t('pages.tasks.views.allActive')} (${counts.all})` },
+            { value: 'completed', label: `${t('pages.tasks.views.completed')} (${counts.completed})` },
+            { value: 'archived', label: t('pages.tasks.views.archived') },
+          ]}
+        />
+      </div>
 
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
@@ -367,18 +399,18 @@ export default function TasksPage() {
           <Input placeholder={t('pages.tasks.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Ansvarlig" /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue placeholder={t('pages.tasks.assignee')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle ansvarlige</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allAssignees')}</SelectItem>
             {(teamProfiles ?? []).map(p => (
               <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || p.email}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Prioritet" /></SelectTrigger>
+          <SelectTrigger className="w-40"><SelectValue placeholder={t('pages.tasks.priority')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle prioriteter</SelectItem>
+            <SelectItem value="all">{t('pages.tasks.allPriorities')}</SelectItem>
             {PRIORITY_OPTIONS.map(p => (
               <SelectItem key={p} value={p}>{priorityLabels[p]}</SelectItem>
             ))}
@@ -388,22 +420,22 @@ export default function TasksPage() {
 
       {viewFiltered.length > 0 && (
         <div className="flex items-center gap-3">
-          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label="Vælg alle" />
-          <span className="text-xs text-muted-foreground">Vælg alle synlige ({viewFiltered.length})</span>
+          <Checkbox checked={selectedIds.size > 0 && selectedIds.size === viewFiltered.length} onCheckedChange={selectAllVisible} aria-label={t('pages.tasks.selectAll')} />
+          <span className="text-xs text-muted-foreground">{t('pages.tasks.selectAllVisible')} ({viewFiltered.length})</span>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-muted-foreground">{selectedIds.size} valgt</span>
+              <span className="text-xs text-muted-foreground">{selectedIds.size} {t('pages.tasks.selected')}</span>
               <Button size="sm" variant="outline" onClick={handleBulkComplete}>Fuldfør</Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">Tildel til</Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button size="sm" variant="outline">{t3('Tildel til', 'Assign to', 'Zuweisen an')}</Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {(teamProfiles ?? []).map(p => (
                     <DropdownMenuItem key={p.user_id} onClick={() => handleBulkReassign(p.user_id)}>{p.full_name || p.email}</DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? 'Fjern fra arkiv' : 'Arkivér'}</Button>
-              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Slet</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkArchive}>{view === 'archived' ? t3('Fjern fra arkiv', 'Unarchive', 'Aus Archiv entfernen') : t3('Arkivér', 'Archive', 'Archivieren')}</Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>{t3("Slet", "Delete", "Löschen")}</Button>
             </div>
           )}
         </div>
@@ -414,7 +446,7 @@ export default function TasksPage() {
       ) : error ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">{t('pages.tasks.fetchError')}</CardContent></Card>
       ) : viewFiltered.length === 0 ? (
-        <EmptyState icon={CheckCircle} title={t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
+        <EmptyState icon={CheckCircle} title={counts.all > 0 && view !== 'all' ? t('pages.tasks.emptyView') : t('pages.tasks.empty')} action={{ label: t('pages.tasks.newTask'), onClick: () => setIsCreateOpen(true), icon: Plus }} />
       ) : (
         <div className="space-y-3">{viewFiltered.map((task) => (<TaskCard key={task.id} task={task} />))}</div>
       )}

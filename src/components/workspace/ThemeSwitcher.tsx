@@ -8,12 +8,13 @@ import { useTenant } from "@/contexts/TenantContext";
 import { THEME_MODES, type ThemeMode } from "@/lib/tenant";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { tx } from '@/lib/inlineI18n';
 
 /** The three installed themes, with the swatch that identifies each. */
 const THEME_META: Record<ThemeMode, { label: string; hint: string; swatch: string }> = {
-  midnight: { label: "Midnight", hint: "Mørk · indigo", swatch: "#6E8BFF" },
-  daylight: { label: "Daylight", hint: "Lys · blå", swatch: "#2D54F0" },
-  graphite: { label: "Graphite", hint: "Koksgrå · guld", swatch: "#E6B450" },
+  midnight: { label: "Midnight", get hint() { return tx("Mørk · indigo", "Dark · indigo"); }, swatch: "#6E8BFF" },
+  daylight: { label: "Daylight", get hint() { return tx("Lys · blå", "Light · blue"); }, swatch: "#2D54F0" },
+  graphite: { label: "Graphite", get hint() { return tx("Koksgrå · guld", "Charcoal · gold"); }, swatch: "#E6B450" },
 };
 
 export function ThemeSwitcher() {

@@ -5,7 +5,10 @@ const ECONOMIC_API_BASE = "https://restapi.e-conomic.com";
 const FALLBACK_RETURN_URL = "https://aiagencydanmark.dk/en/app/settings/company";
 
 function errorRedirect(returnUrl: string, message: string): Response {
-  const url = new URL(returnUrl);
+  // A malformed stored return_url used to throw here and turn the redirect
+  // into a 500; fall back to the settings page instead.
+  let url: URL;
+  try { url = new URL(returnUrl); } catch { url = new URL(FALLBACK_RETURN_URL); }
   url.searchParams.set("economic", "error");
   url.searchParams.set("economic_error", message);
   return new Response(null, { status: 302, headers: { Location: url.toString() } });

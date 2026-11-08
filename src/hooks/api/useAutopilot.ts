@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functions";
+import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { tx } from '@/lib/inlineI18n';
 
 export interface WorkspaceEvent {
   id: string;
@@ -106,36 +109,30 @@ export function useUpdateActionStatus() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "executed" | "dismissed" | "failed" }) => {
       const operation = status === "dismissed" ? "reject" : status === "failed" ? "retry" : "approve";
-      const { error } = await supabase.functions.invoke("ai-operating-manager", {
-        body: { operation, actionId: id },
-      });
-      if (error) throw error;
+      await invokeFunction("ai-operating-manager", { body: { operation, actionId: id } });
     },
     onSuccess: (_d, v) => {
-      toast.success(v.status === "dismissed" ? "Forslag afvist" : "Forslag opdateret");
+      toast.success(v.status === "dismissed" ? tx("Forslag afvist", "Suggestion rejected") : tx("Forslag opdateret", "Suggestion updated"));
       qc.invalidateQueries({ queryKey: ["autopilot-actions"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Kunne ikke opdatere"),
+    onError: (e) => showError(e, { module: "ai-operating-manager" }),
   });
 }
 
 export function useExecuteAction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (action: AutopilotAction) => {
+    mutationFn: async (action: AutopilotAction) =>
       // Side effects are claimed atomically, permission-checked and executed
       // server-side. The browser never receives connector secrets or webhook URLs.
-      const { data, error } = await supabase.functions.invoke("ai-operating-manager", {
+      invokeFunction("ai-operating-manager", {
         body: { operation: action.status === "failed" ? "retry" : "approve", actionId: action.id },
-      });
-      if (error) throw error;
-      return data;
-    },
+      }),
     onSuccess: () => {
-      toast.success("Handling udført");
+      toast.success(tx("Handling udført", "Action completed"));
       qc.invalidateQueries({ queryKey: ["autopilot-actions"] });
     },
-    onError: (e: Error) => toast.error(e?.message ?? "Udførelse fejlede"),
+    onError: (e) => showError(e, { module: "ai-operating-manager" }),
   });
 }
 

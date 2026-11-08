@@ -7,6 +7,7 @@ import { Clock, UserPlus, FileText, CreditCard, Users, CheckCircle2, Mail, Zap, 
 import { useActivityLogs } from '@/hooks/api/useActivityLogs';
 import { formatDistanceToNow } from 'date-fns';
 import { da } from 'date-fns/locale';
+import { t3 } from '@/lib/inlineI18n';
 
 const iconMap: Record<string, { icon: React.ElementType; color: string }> = {
   lead: { icon: UserPlus, color: 'text-primary bg-primary/10' },
@@ -39,7 +40,7 @@ export default function HistoryPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">I dag</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : todayCount}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">{t3("I dag", "Today", "Heute")}</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : todayCount}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : (activities?.length ?? 0)}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Kategorier</p><p className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-8" /> : types.length}</p></CardContent></Card>
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Status</p><Badge variant="outline" className="mt-1">Live</Badge></CardContent></Card>
@@ -57,7 +58,7 @@ export default function HistoryPage() {
               ))}
             </div>
           ) : !activities || activities.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Ingen aktivitet registreret endnu.</p>
+            <p className="text-center text-muted-foreground py-8">{t3("Ingen aktivitet registreret endnu.", "No activity recorded yet.", "Noch keine Aktivität erfasst.")}</p>
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="relative">

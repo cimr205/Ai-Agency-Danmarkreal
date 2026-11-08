@@ -7,6 +7,7 @@ import { useAutopilotActions, useWorkspaceEvents } from '@/hooks/api/useAutopilo
 import { controlPriorities, isPendingAction } from '@/lib/priorities/control';
 import { signalNote } from '@/lib/priorities/types';
 import { useTr } from '@/lib/priorities/useTr';
+import { workspaceEventLabel } from '@/lib/workspaceEvents';
 import { CockpitHero, CockpitPage, ListPanel, PriorityBoard, PulseMetric, PulseRow, useAppBase } from '@/components/dashboard/cockpit';
 
 export default function ControlRoomDashboard() {
@@ -42,7 +43,7 @@ export default function ControlRoomDashboard() {
         intro={tr(firstName ? 'sec.ctl.introNamed' : 'sec.ctl.intro', { name: firstName })}
         primary={{ label: tr('sec.cta.reviewAction'), href: `${base}/workspace/operating-manager` }}
         actions={[
-          { icon: Workflow, label: tr('nav.studio'), href: `${base}/workspace/studio` },
+          { icon: Workflow, label: tr('nav.workflowStudio'), href: `${base}/workspace/studio` },
           { icon: Plug, label: tr('nav.connectedApps'), href: `${base}/workspace/connected-apps` },
           { icon: Bot, label: tr('nav.assistant'), href: `${base}/pa` },
         ]}
@@ -99,7 +100,7 @@ export default function ControlRoomDashboard() {
           href={`${base}/workspace/intelligence`}
           linkLabel={tr('sec.all')}
           isLoading={evLoading}
-          items={events.slice(0, 6).map(e => ({ id: e.id, primary: e.type, secondary: new Date(e.created_at).toLocaleTimeString(tag, { hour: '2-digit', minute: '2-digit' }), tone: 'muted' as const }))}
+          items={events.slice(0, 6).map(e => ({ id: e.id, primary: workspaceEventLabel(e.type), secondary: new Date(e.created_at).toLocaleTimeString(tag, { hour: '2-digit', minute: '2-digit' }), tone: 'muted' as const }))}
         />
       </section>
     </CockpitPage>

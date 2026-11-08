@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeFunction } from '@/lib/functions';
 import { getTelephoneUri } from '@/lib/deviceDialer';
 import { getErrorMessage } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
@@ -47,13 +47,12 @@ function loadCredentials(): DeviceCredentials | null {
 }
 
 async function invokeRelay<T>(body: Record<string, unknown>, deviceToken?: string): Promise<T> {
-  const { data, error } = await supabase.functions.invoke('phone-device-relay', {
+  const data = await invokeFunction<T & { error?: string }>('phone-device-relay', {
     body,
     headers: deviceToken ? { Authorization: `Bearer ${deviceToken}` } : undefined,
   });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+  if (data && typeof data === 'object' && 'error' in data && data.error) throw new Error(data.error);
+  return data;
 }
 
 export default function PhoneCompanionPage() {

@@ -9,7 +9,7 @@ import { DealBoardView } from '@/components/deals/DealBoardView';
 import { DealListView } from '@/components/deals/DealListView';
 import { DealCalendarView } from '@/components/deals/DealCalendarView';
 import { DealDetailSheet } from '@/components/deals/DealDetailSheet';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,9 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { buildStages, getStageLabelFor, normalizeStageKey, type StageDef } from '@/lib/deals/stages';
 import { canMarkDealWon, getWonValidationMessage } from '@/lib/deals/wonValidation';
 import { reportError } from '@/lib/sentry';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
+import { tl } from '@/lib/inlineI18n';
 
 type DealStage = string;
 
@@ -56,8 +59,13 @@ export default function DealsPage() {
   const filteredDeals = deals.filter(deal => deal.title.toLowerCase().includes(search.toLowerCase()));
   const isEmpty = !isLoading && deals.length === 0;
 
-  const totalValue = deals.reduce((sum, d) => sum + Number(d.value || 0), 0);
+  // Pipeline = open deals only. Won/lost deals are closed and must not
+  // inflate "Pipeline Value" / "Avg. Deal Value" (a 50.000 kr lost deal was
+  // being counted as pipeline).
+  const openDeals = deals.filter(d => !['won', 'lost'].includes(normalizeStageKey(d.stage)));
+  const totalValue = openDeals.reduce((sum, d) => sum + Number(d.value || 0), 0);
   const totalDeals = deals.length;
+  const openDealCount = openDeals.length;
   const wonValue = deals.filter(d => normalizeStageKey(d.stage) === 'won').reduce((sum, d) => sum + Number(d.value || 0), 0);
 
   useEffect(() => {
@@ -87,10 +95,11 @@ export default function DealsPage() {
   const handleCreate = async () => {
     const errors: Record<string, string> = {};
     if (!newDeal.title.trim()) errors.title = t('pages.deals.titleRequired') || 'Title is required';
-    if (!newDeal.value || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) <= 0) errors.value = t('pages.deals.valueRequired') || 'Value is required';
-    if ((customers ?? []).length === 0) errors.customer_id = locale === 'da' ? 'Opret mindst én kunde før du opretter en deal' : 'Create at least one customer before creating a deal';
-    else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = locale === 'da' ? 'Kunde er påkrævet' : 'Customer is required';
-    if (!newDeal.expected_close_date) errors.expected_close_date = locale === 'da' ? 'Forventet lukkedato er påkrævet' : 'Expected close date is required';
+    // 0 is allowed (value not known yet) — lead conversion creates 0-value deals too.
+    if (newDeal.value === '' || isNaN(parseFloat(newDeal.value)) || parseFloat(newDeal.value) < 0) errors.value = newDeal.value !== '' && parseFloat(newDeal.value) < 0 ? t('pages.deals.valuePositive') : (t('pages.deals.valueRequired') || 'Value is required');
+    if ((customers ?? []).length === 0) errors.customer_id = tl(locale, 'Opret mindst én kunde før du opretter en deal', 'Create at least one customer before creating a deal');
+    else if (!newDeal.customer_id || newDeal.customer_id === 'none') errors.customer_id = tl(locale, 'Kunde er påkrævet', 'Customer is required');
+    if (!newDeal.expected_close_date) errors.expected_close_date = tl(locale, 'Forventet lukkedato er påkrævet', 'Expected close date is required');
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setFormErrors({});
     try {
@@ -115,7 +124,7 @@ export default function DealsPage() {
   const handleStageChange = async (dealId: string, stage: DealStage) => {
     const targetDeal = selectedDeal?.id === dealId ? selectedDeal : deals.find((deal) => deal.id === dealId);
     if (normalizeStageKey(stage) === 'won' && !canMarkDealWon(targetDeal)) {
-      toast.error(getWonValidationMessage(locale));
+      toast.error(getWonValidationMessage(locale, targetDeal));
       return;
     }
     try {
@@ -128,6 +137,14 @@ export default function DealsPage() {
   const handleNotesUpdate = async (dealId: string, notes: string) => {
     try {
       await updateDeal.mutateAsync({ id: dealId, notes });
+      toast.success(t('common.saved'));
+    } catch { toast.error(t('common.error')); }
+  };
+
+  const handleValueUpdate = async (dealId: string, value: number) => {
+    try {
+      await updateDeal.mutateAsync({ id: dealId, value });
+      if (selectedDeal?.id === dealId) setSelectedDeal(d => d ? { ...d, value } : d);
       toast.success(t('common.saved'));
     } catch { toast.error(t('common.error')); }
   };
@@ -148,7 +165,7 @@ export default function DealsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -184,14 +201,14 @@ export default function DealsPage() {
                 <div className="space-y-2">
                   <Label>{t('pages.deals.customer')} *</Label>
                   <Select value={newDeal.customer_id} onValueChange={v => { setNewDeal({ ...newDeal, customer_id: v }); setFormErrors(prev => ({ ...prev, customer_id: '' })); }}>
-                    <SelectTrigger className={formErrors.customer_id ? 'border-destructive' : ''}><SelectValue placeholder={locale === 'da' ? 'Vælg kunde' : 'Select customer'} /></SelectTrigger>
+                    <SelectTrigger className={formErrors.customer_id ? 'border-destructive' : ''}><SelectValue placeholder={tl(locale, 'Vælg kunde', 'Select customer')} /></SelectTrigger>
                     <SelectContent>
                       {(customers ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {(customers ?? []).length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      {locale === 'da' ? 'Du skal oprette en kunde først, før en deal kan gemmes.' : 'You need to create a customer before a deal can be saved.'}
+                      {tl(locale, 'Du skal oprette en kunde først, før en deal kan gemmes.', 'You need to create a customer before a deal can be saved.')}
                     </p>
                   )}
                   {formErrors.customer_id && <p className="text-xs text-destructive">{formErrors.customer_id}</p>}
@@ -201,7 +218,7 @@ export default function DealsPage() {
                   <Input type="date" value={newDeal.expected_close_date} onChange={e => { setNewDeal({ ...newDeal, expected_close_date: e.target.value }); setFormErrors(prev => ({ ...prev, expected_close_date: '' })); }} className={formErrors.expected_close_date ? 'border-destructive' : ''} />
                   {formErrors.expected_close_date && <p className="text-xs text-destructive">{formErrors.expected_close_date}</p>}
                 </div>
-                <div className="space-y-2"><Label>{t('pages.deals.notesLabel')}</Label><Textarea value={newDeal.notes} onChange={e => setNewDeal({ ...newDeal, notes: e.target.value })} placeholder={locale === 'da' ? 'Tilføj næste skridt, indvendinger og kontekst...' : 'Add next steps, objections, and context...'} rows={3} /></div>
+                <div className="space-y-2"><Label>{t('pages.deals.notesLabel')}</Label><Textarea value={newDeal.notes} onChange={e => setNewDeal({ ...newDeal, notes: e.target.value })} placeholder={tl(locale, 'Tilføj næste skridt, indvendinger og kontekst...', 'Add next steps, objections, and context...')} rows={3} /></div>
                 <Button onClick={handleCreate} disabled={createDeal.isPending} className="w-full">{createDeal.isPending ? t('pages.deals.creating') : t('pages.deals.createCta')}</Button>
               </div>
             </DialogContent>
@@ -224,12 +241,16 @@ export default function DealsPage() {
       {!isEmpty && (
         <>
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.totalDeals')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{totalDeals}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.pipelineValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-primary">{formatCurrency(totalValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.wonValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(wonValue)}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{t('pages.deals.avgDealValue')}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(totalDeals ? totalValue / totalDeals : 0)}</div></CardContent></Card>
-          </div>
+          <WorkspaceFrame>
+            <WorkspaceGradientSurface className="p-4">
+              <div className="grid gap-3 md:grid-cols-4">
+                <WorkspaceTile label={t('pages.deals.totalDeals')} value={totalDeals} active />
+                <WorkspaceTile label={t('pages.deals.pipelineValue')} value={formatCurrency(totalValue)} />
+                <WorkspaceTile label={t('pages.deals.wonValue')} value={formatCurrency(wonValue)} />
+                <WorkspaceTile label={t('pages.deals.avgDealValue')} value={formatCurrency(openDealCount ? totalValue / openDealCount : 0)} />
+              </div>
+            </WorkspaceGradientSurface>
+          </WorkspaceFrame>
 
           {/* Toolbar */}
           <div className="flex items-center gap-4">
@@ -287,6 +308,7 @@ export default function DealsPage() {
         onCustomerLink={handleCustomerLink}
         onExpectedCloseChange={handleExpectedCloseChange}
         onNotesUpdate={handleNotesUpdate}
+        onValueUpdate={handleValueUpdate}
         onMarkWon={id => handleStageChange(id, 'won')}
         onMarkLost={id => handleStageChange(id, 'lost')}
       />

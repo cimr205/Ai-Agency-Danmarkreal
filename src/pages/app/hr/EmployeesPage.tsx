@@ -8,14 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, UserCheck, Building2, RefreshCw } from 'lucide-react';
+import { Plus, Search, UserCheck, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { MetricTile } from '@/components/shared/MetricTile';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { WorkspaceFrame, WorkspaceGradientSurface } from '@/components/workspace/WorkspacePanel';
+import { WorkspaceTile } from '@/components/workspace/Tile';
 import EmployeeDetailPanel from '@/components/hr/EmployeeDetailPanel';
 import type { Tables } from '@/integrations/supabase/types';
+import { tx } from '@/lib/inlineI18n';
 
 export default function EmployeesPage() {
   const { t, locale } = useI18n();
@@ -45,13 +47,19 @@ export default function EmployeesPage() {
       toast.success(t('hr.employeeCreated'));
       setNewEmployee({ full_name: '', email: '', position: '', department: '' });
       setIsCreateOpen(false);
-    } catch { toast.error(t('hr.employeeCreateError')); }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'DUPLICATE_EMPLOYEE') {
+        toast.error(tx('Der findes allerede en medarbejder med denne e-mail eller dette navn.', 'An employee with this email or name already exists.'));
+      } else {
+        toast.error(t('hr.employeeCreateError'));
+      }
+    }
   };
 
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
 
   return (
-    <div className="space-y-6">
+    <div className="workspace-theme space-y-6">
       <PageHeader
         eyebrow={t('nav.hr') || 'HR'}
         title={t('hr.employeesTitle')}
@@ -73,10 +81,14 @@ export default function EmployeesPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricTile icon={UserCheck} label={t('hr.totalEmployees')} value={employees.length} />
-        <MetricTile icon={Building2} label={t('hr.departments')} value={departments.length} />
-      </div>
+      <WorkspaceFrame>
+        <WorkspaceGradientSurface className="p-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <WorkspaceTile label={t('hr.totalEmployees')} value={employees.length} active />
+            <WorkspaceTile label={t('hr.departments')} value={departments.length} />
+          </div>
+        </WorkspaceGradientSurface>
+      </WorkspaceFrame>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder={t('hr.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" /></div></div>
 

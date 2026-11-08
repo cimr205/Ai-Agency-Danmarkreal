@@ -4,6 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/lib/errors';
 import { Mail, Phone, Building2, Briefcase, Calendar, Hash, User, ShieldCheck } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +17,7 @@ import {
   MODULE_KEYS, MODULE_LABELS, type ModuleKey,
   useUserModuleRestrictions, useSetModuleRestrictions,
 } from '@/hooks/api/useModuleAccess';
+import { t3 } from '@/lib/inlineI18n';
 
 interface EmployeeDetail {
   id: string;
@@ -38,6 +44,47 @@ export default function EmployeeDetailPanel({ employee, open, onClose }: Props) 
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
   const { roles } = useAuth();
   const isOwnerLevel = roles.some(r => ['system_admin', 'company_admin', 'owner'].includes(r.role));
+
+  const canEdit = roles.some(r => ['system_admin', 'company_admin', 'owner', 'manager'].includes(r.role));
+  const qc = useQueryClient();
+  const [edit, setEdit] = useState({ full_name: '', position: '', department: '', phone: '', is_active: true });
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (employee) setEdit({ full_name: employee.full_name ?? '', position: employee.position ?? '', department: employee.department ?? '', phone: employee.phone ?? '', is_active: employee.is_active !== false });
+  }, [employee]);
+
+  // The sheet used to be read-only (column grants only allow phone), so a
+  // wrong or duplicate employee could never be corrected or deactivated.
+  const saveEmployee = async () => {
+    if (!employee) return;
+    setSaving(true);
+    const { error } = await supabase.rpc('admin_update_employee', {
+      _employee_id: employee.id, _full_name: edit.full_name, _position: edit.position,
+      _department: edit.department, _phone: edit.phone, _is_active: edit.is_active,
+    });
+    if (error && (error as { code?: string }).code === 'PGRST202') {
+      // The RPC ships in migration 20261028000005; until it is applied only
+      // the phone column is client-writable, so save that and say why the
+      // rest has to wait instead of showing a raw "function not found".
+      const onlyPhoneChanged = edit.full_name === (employee.full_name ?? '') && edit.position === (employee.position ?? '')
+        && edit.department === (employee.department ?? '') && edit.is_active === (employee.is_active !== false);
+      if (onlyPhoneChanged) {
+        const { error: phoneErr } = await supabase.from('employee_profiles').update({ phone: edit.phone.trim() || null }).eq('id', employee.id);
+        setSaving(false);
+        if (phoneErr) { toast.error(getErrorMessage(phoneErr) || t('common.error')); return; }
+      } else {
+        setSaving(false);
+        toast.error(t3('Ændring af navn, stilling, afdeling og status bliver mulig, når databasen er opdateret (supabase db push). Telefonnummer kan allerede gemmes.', 'Changing name, position, department and status becomes available once the database is updated (supabase db push). The phone number can already be saved.', 'Name, Position, Abteilung und Status lassen sich ändern, sobald die Datenbank aktualisiert ist (supabase db push). Die Telefonnummer kann bereits gespeichert werden.'));
+        return;
+      }
+    } else {
+      setSaving(false);
+      if (error) { toast.error(getErrorMessage(error) || t('common.error')); return; }
+    }
+    toast.success(t('common.saved'));
+    qc.invalidateQueries({ queryKey: ['employees'] });
+    onClose();
+  };
 
   const { data: restrictions } = useUserModuleRestrictions(employee?.user_id ?? null);
   const setRestrictions = useSetModuleRestrictions();
@@ -140,6 +187,28 @@ export default function EmployeeDetailPanel({ employee, open, onClose }: Props) 
               </div>
             </div>
           </div>
+
+          {canEdit && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('hr.editEmployee')}</h3>
+                <div className="grid gap-3">
+                  <div className="space-y-1"><Label htmlFor="emp-name" className="text-xs">{t('hr.fullName')}</Label><Input id="emp-name" value={edit.full_name} onChange={e => setEdit({ ...edit, full_name: e.target.value })} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1"><Label htmlFor="emp-pos" className="text-xs">{t('hr.positionLabel') || 'Position'}</Label><Input id="emp-pos" value={edit.position} onChange={e => setEdit({ ...edit, position: e.target.value })} /></div>
+                    <div className="space-y-1"><Label htmlFor="emp-dept" className="text-xs">{t('hr.departmentLabel') || 'Department'}</Label><Input id="emp-dept" value={edit.department} onChange={e => setEdit({ ...edit, department: e.target.value })} /></div>
+                  </div>
+                  <div className="space-y-1"><Label htmlFor="emp-phone" className="text-xs">{t('common.phone')}</Label><Input id="emp-phone" value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></div>
+                  <label className="flex items-center gap-3 text-sm cursor-pointer">
+                    <Checkbox checked={edit.is_active} onCheckedChange={v => setEdit({ ...edit, is_active: v === true })} />
+                    {t('hr.active') || 'Active'}
+                  </label>
+                </div>
+                <Button size="sm" onClick={saveEmployee} disabled={saving || !edit.full_name.trim()}>{t('common.save') || 'Save'}</Button>
+              </div>
+            </>
+          )}
 
           {employee.user_id && isOwnerLevel && (
             <>

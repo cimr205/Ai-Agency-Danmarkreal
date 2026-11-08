@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { localDateString } from '@/lib/localDate';
 
 /** Leave requests waiting for an approver. Tenant isolation is enforced by RLS. */
 export function usePendingLeaveCount() {
@@ -30,7 +31,7 @@ export function useUpcomingLeave(limit = 6) {
   return useQuery({
     queryKey: ['leave-upcoming', limit],
     queryFn: async (): Promise<UpcomingLeave[]> => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateString();
       const { data, error } = await supabase
         .from('leave_requests')
         .select('id, type, start_date, end_date, status, employee_profile_id')

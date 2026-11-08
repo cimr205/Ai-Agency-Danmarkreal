@@ -15,7 +15,11 @@ async function economicFetch(appSecretToken: string, grantToken: string, path: s
     },
   });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  // e-conomic error bodies aren't always JSON; don't let a parse error hide
+  // the real HTTP status.
+  // deno-lint-ignore no-explicit-any
+  let data: any = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text.slice(0, 500); }
   if (!res.ok) throw new Error(`e-conomic API ${path} failed: ${res.status} ${JSON.stringify(data)}`);
   return data;
 }
@@ -60,8 +64,11 @@ Deno.serve(withSentry("economic-sync", async (req) => {
       }
 
       // Find next free customer number
-      const nextNumberData = await economicFetch(appSecretToken, grantToken, `/customers/next-available-number`).catch(() => null);
-      const customerNumber = nextNumberData?.customerNumber || Math.floor(Date.now() / 1000) % 100000;
+      // Never invent a customer number: an epoch-based fallback could collide
+      // with (and overwrite) an existing e-conomic customer.
+      const nextNumberData = await economicFetch(appSecretToken, grantToken, `/customers/next-available-number`);
+      const customerNumber = nextNumberData?.customerNumber;
+      if (!customerNumber) throw new Error("e-conomic did not return a free customer number");
 
       const created = await economicFetch(appSecretToken, grantToken, `/customers`, {
         method: "POST",

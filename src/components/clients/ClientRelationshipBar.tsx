@@ -2,7 +2,9 @@ import { relationshipTemperature } from "@/lib/clientIntelligence";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { formatDistanceToNow } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
-import { da } from "date-fns/locale";
+import { da, de as deLocale } from "date-fns/locale";
+import { tx } from '@/lib/inlineI18n';
+import { getLocaleFromPath } from '@/lib/i18n';
 
 interface Props {
   customer: Tables<"customers">;
@@ -34,7 +36,7 @@ export function ClientRelationshipBar({
     <div className="border-l-2 border-border/60 pl-6 py-2 space-y-5 max-w-3xl">
       <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground/60">
         <span className={`h-1.5 w-1.5 rounded-full ${TEMP_COLOR[temp.tone]}`} />
-        <span>{temp.label} relation</span>
+        <span>{temp.label} {tx("relation", "relationship")}</span>
       </div>
 
       <p className="text-[16px] sm:text-[17px] text-foreground/90 leading-relaxed font-light">
@@ -43,9 +45,9 @@ export function ClientRelationshipBar({
 
       <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 text-[12.5px] text-muted-foreground/80">
         <span>
-          Sidste kontakt{" "}
+          {tx("Sidste kontakt", "Last contact")}{" "}
           <span className="text-foreground/85 tabular-nums">
-            {lastTouch ? formatDistanceToNow(new Date(lastTouch), { locale: da, addSuffix: true }) : "—"}
+            {lastTouch ? formatDistanceToNow(new Date(lastTouch), { locale: getLocaleFromPath() === "da" ? da : getLocaleFromPath() === "de" ? deLocale : undefined, addSuffix: true }) : "—"}
           </span>
         </span>
         <span className="text-muted-foreground/30">·</span>
@@ -54,7 +56,7 @@ export function ClientRelationshipBar({
         </span>
         <span className="text-muted-foreground/30">·</span>
         <span>
-          Omsat i år <span className="text-foreground/85 tabular-nums">{format(invoicedThisYear)}</span>
+          {tx("Omsat i år", "Revenue this year")} <span className="text-foreground/85 tabular-nums">{format(invoicedThisYear)}</span>
         </span>
       </div>
     </div>

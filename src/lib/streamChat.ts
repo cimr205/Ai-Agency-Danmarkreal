@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { t3 } from '@/lib/inlineI18n';
 
 export type ChatContentPart =
   | { type: "text"; text: string }
@@ -37,10 +38,10 @@ export async function streamChat({
 
   if (!resp.ok) {
     const errBody = await resp.json().catch(() => ({ error: "Netværksfejl" }));
-    throw new Error(errBody.error || `Fejl ${resp.status}`);
+    throw new Error(errBody.error || `${t3("Fejl", "Error", "Fehler")} ${resp.status}`);
   }
 
-  if (!resp.body) throw new Error("Ingen streaming-body");
+  if (!resp.body) throw new Error(t3("Intet svar fra serveren", "No response from the server", "Keine Antwort vom Server"));
 
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
