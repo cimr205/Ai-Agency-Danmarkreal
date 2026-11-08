@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Enums, Tables } from '@/integrations/supabase/types';
+import { EMPLOYEE_ID_ATTEMPTS, generateEmployeeId, isEmployeeIdConflict } from '@/lib/employeeId';
 
 type EmployeeName = { employee_profiles: Pick<Tables<'employee_profiles'>, 'full_name'> | null };
 export type LeaveRequestWithEmployee = Tables<'leave_requests'> & EmployeeName;
@@ -34,18 +35,6 @@ export function useCreateEmployee() {
         .eq('user_id', session.user.id)
         .single();
       if (!profile?.company_id) throw new Error('No company');
-      // Generate a short employee ID like EMP-001
-      const { data: existingEmps } = await supabase
-        .from('employee_profiles')
-        .select('employee_id')
-        .eq('company_id', profile.company_id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      const lastNum = existingEmps?.[0]?.employee_id
-        ? parseInt(existingEmps[0].employee_id.replace(/\D/g, '')) || 0
-        : 0;
-      const nextId = `EMP-${String(lastNum + 1).padStart(3, '0')}`;
-
       // If someone with this email already has portal access in this company,
       // link the new employee record to their account so they show up as
       // themselves everywhere (shift assignment, "who am I" lookups, etc.)
@@ -60,19 +49,23 @@ export function useCreateEmployee() {
         .ilike('email', escapedEmail)
         .maybeSingle();
 
-      const { data, error } = await supabase
-        .from('employee_profiles')
-        .insert({
-          ...input,
-          employee_id: nextId,
-          company_id: profile.company_id,
-          created_by: session.user.id,
-          user_id: matchingProfile?.user_id ?? null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      // employee_id is unique across all companies, so it is random (see
+      // src/lib/employeeId.ts); a collision is retried with a fresh ID.
+      for (let attempt = 1; ; attempt++) {
+        const { data, error } = await supabase
+          .from('employee_profiles')
+          .insert({
+            ...input,
+            employee_id: generateEmployeeId(),
+            company_id: profile.company_id,
+            created_by: session.user.id,
+            user_id: matchingProfile?.user_id ?? null,
+          })
+          .select()
+          .single();
+        if (!error) return data;
+        if (!isEmployeeIdConflict(error) || attempt >= EMPLOYEE_ID_ATTEMPTS) throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
   });
