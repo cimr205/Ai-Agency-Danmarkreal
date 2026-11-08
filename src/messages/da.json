@@ -3670,5 +3670,22 @@
     "modeAdvancedDesc": "5 trin med fuld kontrol, A/B test varianter",
     "modeAi": "AI-drevet",
     "modeAiDesc": "AI genererer 2+ A/B varianter automatisk"
+  },
+  "goalPicker": {
+    "title": "Hvad vil du først opnå?",
+    "subtitle": "Vi tager dig til et relevant startpunkt — du kan altid skifte senere.",
+    "skip": "Spring over for nu",
+    "crmTitle": "Få bedre styr på salget",
+    "crmPoint1": "Organisér leads",
+    "crmPoint2": "Hold styr på deals",
+    "crmPoint3": "Følg op på kunder",
+    "hrTitle": "Få overblik over medarbejderne",
+    "hrPoint1": "Medarbejderoversigt",
+    "hrPoint2": "Vagtplanlægning",
+    "hrPoint3": "Arbejdstid",
+    "marketingTitle": "Forbedr marketing",
+    "marketingPoint1": "Organisér kampagner",
+    "marketingPoint2": "Forbind relevante kanaler",
+    "marketingPoint3": "Arbejd med marketingopgaver"
   }
 }

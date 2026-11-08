@@ -3670,5 +3670,22 @@
     "modeAdvancedDesc": "5 Schritte mit voller Kontrolle, A/B-Test-Varianten",
     "modeAi": "KI-gestützt",
     "modeAiDesc": "KI generiert automatisch 2+ A/B-Varianten"
+  },
+  "goalPicker": {
+    "title": "Was möchten Sie zuerst erreichen?",
+    "subtitle": "Wir bringen Sie zu einem relevanten Startpunkt — Sie können jederzeit wechseln.",
+    "skip": "Vorerst überspringen",
+    "crmTitle": "Besseren Überblick über den Vertrieb",
+    "crmPoint1": "Leads organisieren",
+    "crmPoint2": "Deals im Blick behalten",
+    "crmPoint3": "Kunden nachverfolgen",
+    "hrTitle": "Überblick über Ihr Team",
+    "hrPoint1": "Mitarbeiterübersicht",
+    "hrPoint2": "Schichtplanung",
+    "hrPoint3": "Arbeitszeit",
+    "marketingTitle": "Marketing verbessern",
+    "marketingPoint1": "Kampagnen organisieren",
+    "marketingPoint2": "Relevante Kanäle verbinden",
+    "marketingPoint3": "An Marketingaufgaben arbeiten"
   }
 }

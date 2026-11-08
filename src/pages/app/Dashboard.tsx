@@ -11,6 +11,7 @@ import { isOnboardingComplete } from "@/lib/onboarding";
 import { useDashboard, type FocusItem } from "@/hooks/api/useDashboard";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
+import { OnboardingGoalPicker } from "@/components/onboarding/OnboardingGoalPicker";
 
 const FOCUS_ICON = { invoice: FileText, deal: Briefcase, lead: PhoneCall } as const;
 const AURORA_COLORS = ["#5b7cfa", "#9b7cff", "#20d6ff", "#f59fe8"];
@@ -118,6 +119,8 @@ export default function Dashboard() {
   ];
 
   return (
+    <>
+    <OnboardingGoalPicker onDone={() => {}} />
     <div className="relative -m-4 min-h-[calc(100vh-76px)] overflow-hidden bg-[#eef4ff] p-4 text-slate-950 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(82,113,255,0.34),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(236,124,255,0.24),transparent_26%),radial-gradient(circle_at_52%_78%,rgba(50,214,255,0.20),transparent_36%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_48%,#f9f2ff_100%)]" />
       <div className="pointer-events-none absolute left-6 top-8 h-[520px] w-[520px] rounded-full bg-blue-400/20 blur-3xl" />
@@ -142,6 +145,7 @@ export default function Dashboard() {
         <section className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]"><VelocityPanel leads={d?.leads?.newThisMonth ?? 0} customers={d?.customers?.total ?? 0} unread={d?.emails?.unread ?? 0} loading={isLoading} base={base} t={t} /><WorkforcePanel active={d?.employees?.active ?? 0} total={d?.employees?.total ?? 0} pending={d?.tasks?.pending ?? 0} completed={d?.tasks?.completed ?? 0} loading={isLoading} base={base} t={t} /></section>
       </div>
     </div>
+    </>
   );
 }
 

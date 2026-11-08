@@ -3670,5 +3670,22 @@
     "modeAdvancedDesc": "5 steps with full control, A/B test variants",
     "modeAi": "AI-powered",
     "modeAiDesc": "AI automatically generates 2+ A/B variants"
+  },
+  "goalPicker": {
+    "title": "What do you want to accomplish first?",
+    "subtitle": "We'll take you to a relevant starting point — you can switch anytime.",
+    "skip": "Skip for now",
+    "crmTitle": "Get a better grip on sales",
+    "crmPoint1": "Organize leads",
+    "crmPoint2": "Keep track of deals",
+    "crmPoint3": "Follow up with customers",
+    "hrTitle": "Get an overview of your team",
+    "hrPoint1": "Employee overview",
+    "hrPoint2": "Shift scheduling",
+    "hrPoint3": "Working hours",
+    "marketingTitle": "Improve marketing",
+    "marketingPoint1": "Organize campaigns",
+    "marketingPoint2": "Connect relevant channels",
+    "marketingPoint3": "Work on marketing tasks"
   }
 }
