@@ -257,7 +257,7 @@
     "pricingF8": "Massen-E-Mail",
     "pricingF9": "Vertriebspipeline",
     "pricingF10": "Datenschutz- und Auftragsverarbeitungsbedingungen",
-    "pricingNote": "14 Tage kostenlos testen. Keine Demo-Anrufe. Voller Zugang ab Tag eins.",
+    "pricingNote": "3 Tage kostenlos testen. Keine Demo-Anrufe. Voller Zugang ab Tag eins.",
     "footerRights": "Alle Rechte vorbehalten."
   },
   "leadAi": {
@@ -983,10 +983,10 @@
     "currency": "kr./Mo.",
     "numberOfUsers": "Anzahl Benutzer",
     "estimatedPrice": "Geschätzter Preis nach Testzeitraum",
-    "trialNote": "Du zahlst nur für aktive Benutzer nach dem Testzeitraum. Die ersten 14 Tage sind komplett kostenlos.",
+    "trialNote": "Du zahlst nur für aktive Benutzer nach dem Testzeitraum. Die ersten 3 Tage sind komplett kostenlos.",
     "readyTitle": "Du bist bereit!",
     "readyDesc": "Wir erstellen {company} mit Platz für {seats} Benutzer.",
-    "trialFreeDesc": "Du erhältst 14 Tage kostenlosen Zugang. Danach zahlst du nur für aktive Benutzer.",
+    "trialFreeDesc": "Du erhältst 3 Tage kostenlosen Zugang. Danach zahlst du nur für aktive Benutzer.",
     "back": "Zurück",
     "next": "Weiter",
     "creating": "Erstelle...",

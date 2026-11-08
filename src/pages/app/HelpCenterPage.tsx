@@ -95,9 +95,9 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: '8', category: 'billing',
     title: { da: 'Hvad sker der efter prøveperioden?', en: 'What happens after the trial?', de: 'Was passiert nach der Testphase?' },
     content: {
-      da: 'Din 14-dages prøveperiode giver fuld adgang. Herefter skal du tilføje en betalingsmetode for at fortsætte. Du mister ingen data.',
-      en: 'Your 14-day trial gives full access. After that you need to add a payment method to continue. You do not lose any data.',
-      de: 'Die 14-tägige Testphase bietet vollen Zugriff. Danach fügen Sie eine Zahlungsmethode hinzu, um weiterzumachen. Es gehen keine Daten verloren.',
+      da: 'Din 3-dages prøveperiode giver fuld adgang. Herefter skal du tilføje en betalingsmetode for at fortsætte. Du mister ingen data.',
+      en: 'Your 3-day trial gives full access. After that you need to add a payment method to continue. You do not lose any data.',
+      de: 'Die 3-tägige Testphase bietet vollen Zugriff. Danach fügen Sie eine Zahlungsmethode hinzu, um weiterzumachen. Es gehen keine Daten verloren.',
     },
     tags: ['trial', 'prøveperiode', 'betaling', 'payment'],
   },

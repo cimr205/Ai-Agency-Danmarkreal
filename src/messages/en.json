@@ -257,7 +257,7 @@
     "pricingF8": "Bulk email",
     "pricingF9": "Sales pipeline",
     "pricingF10": "Privacy and data processing terms",
-    "pricingNote": "14-day free trial. No demo calls. Full access from day one.",
+    "pricingNote": "3-day free trial. No demo calls. Full access from day one.",
     "footerRights": "All rights reserved."
   },
   "nav": {
@@ -963,10 +963,10 @@
     "currency": "kr./mo.",
     "numberOfUsers": "Number of users",
     "estimatedPrice": "Estimated price after trial",
-    "trialNote": "You only pay for active users when the trial ends. The first 14 days are completely free.",
+    "trialNote": "You only pay for active users when the trial ends. The first 3 days are completely free.",
     "readyTitle": "You're ready!",
     "readyDesc": "We're creating {company} with room for {seats} users.",
-    "trialFreeDesc": "You get 14 days of free access. Then you only pay for active users.",
+    "trialFreeDesc": "You get 3 days of free access. Then you only pay for active users.",
     "back": "Back",
     "next": "Next",
     "creating": "Creating...",

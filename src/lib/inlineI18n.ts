@@ -487,7 +487,7 @@ const DE: Record<string, string> = {
   "Could not create token": "Token konnte nicht erstellt werden",
   "Could not revoke": "Widerruf fehlgeschlagen",
   "Import customers": "Kunden importieren",
-  "Start 14-day free trial": "14-tägige Testphase starten",
+  "Start 3-day free trial": "3-tägige Testphase starten",
   "Could not load users": "Nutzer konnten nicht geladen werden",
   "Invite link copied to clipboard": "Einladungslink in die Zwischenablage kopiert",
   "Manage users and invitations in the organisation": "Nutzer und Einladungen der Organisation verwalten",
