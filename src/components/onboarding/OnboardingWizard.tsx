@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/lib/i18n';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
+import { CvrLookupField } from '@/components/shared/CvrLookupField';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -33,6 +34,32 @@ const MODULE_PRICES_DKK: Record<Module, number> = {
 
 const FULL_SUITE_PRICE_DKK = 499;
 
+const COUNTRIES = [
+  { value: 'DK', label: 'Danmark' },
+  { value: 'SE', label: 'Sverige' },
+  { value: 'NO', label: 'Norge' },
+  { value: 'DE', label: 'Tyskland' },
+  { value: 'GB', label: 'Storbritannien' },
+  { value: 'US', label: 'USA' },
+  { value: 'OTHER', label: 'Andet' },
+];
+
+const TIMEZONES = [
+  'Europe/Copenhagen', 'Europe/Stockholm', 'Europe/Oslo', 'Europe/Berlin',
+  'Europe/London', 'America/New_York', 'America/Los_Angeles', 'UTC',
+];
+
+const COMPANY_SIZES = ['1-10', '11-50', '51-200', '201-500', '500+'];
+
+function detectTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return TIMEZONES.includes(tz) ? tz : 'Europe/Copenhagen';
+  } catch {
+    return 'Europe/Copenhagen';
+  }
+}
+
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { toast } = useToast();
   const { user, refreshProfile } = useAuth();
@@ -42,6 +69,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [loading, setLoading] = useState(false);
 
   const [companyName, setCompanyName] = useState('');
+  const [cvr, setCvr] = useState('');
+  const [country, setCountry] = useState('DK');
+  const [timezone, setTimezone] = useState(detectTimezone);
+  const [companySize, setCompanySize] = useState('');
+  const [industry, setIndustry] = useState('');
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [role, setRole] = useState('');
   const [teamSize, setTeamSize] = useState('1');
@@ -91,31 +123,34 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
     setLoading(true);
     try {
-      const companyId = crypto.randomUUID();
-
-      const { error: companyError } = await supabase
-        .from('companies')
-        .insert({
-          id: companyId,
-          name: companyName,
-          onboarding_completed: true,
-          subscription_status: 'none',
-          applicant_role: role,
-          billing_mode: billingMode,
-        });
-
-      if (companyError) throw new Error(companyError.message);
-
-      const { error: profileError } = await supabase.rpc('bootstrap_company_profile', {
-        _company_id: companyId,
+      // Atomic: company creation, profile linking and admin-role grant all
+      // happen in one DB transaction (see bootstrap_company migration), so a
+      // mid-flight failure can't leave an orphaned company with no owner.
+      //
+      // `as never` on the function name: bootstrap_company() ships in a
+      // migration that is written but NOT YET APPLIED to the project (no
+      // production migration without approval) — supabase/types.ts is
+      // generated from the live schema, so it doesn't know this RPC yet.
+      // Once the migration is applied, re-run `npm run db:types` (or the
+      // project's type-gen command) and drop this cast.
+      const bootstrapRpc = supabase.rpc.bind(supabase) as unknown as (
+        fn: 'bootstrap_company',
+        args: Record<string, unknown>
+      ) => Promise<{ data: string | null; error: { message: string } | null }>;
+      const { data: companyId, error: bootstrapError } = await bootstrapRpc('bootstrap_company', {
+        _name: companyName,
         _full_name: fullName,
+        _cvr: cvr || null,
+        _country: country,
+        _timezone: timezone,
+        _company_size: companySize || null,
+        _industry: industry || null,
+        _applicant_role: role,
+        _billing_mode: billingMode,
       });
 
-      if (profileError) throw new Error(profileError.message);
-
-      const { error: roleError } = await supabase.rpc('bootstrap_company_admin', { _company_id: companyId });
-
-      if (roleError) throw new Error(roleError.message);
+      if (bootstrapError) throw new Error(bootstrapError.message);
+      if (!companyId) throw new Error('Could not create company');
 
       await refreshProfile();
 
@@ -203,6 +238,53 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   onChange={e => setCompanyName(e.target.value)}
                 />
               </div>
+
+              {country === 'DK' && (
+                <CvrLookupField
+                  onResult={result => {
+                    if (result.name && !companyName) setCompanyName(result.name);
+                    setCvr(result.cvr);
+                  }}
+                />
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>{t('wizard.countryLabel')}</Label>
+                  <Select value={country} onValueChange={setCountry}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('wizard.timezoneLabel')}</Label>
+                  <Select value={timezone} onValueChange={setTimezone}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIMEZONES.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>{t('wizard.companySizeLabel')} <span className="text-muted-foreground font-normal">({t('wizard.optional')})</span></Label>
+                  <Select value={companySize} onValueChange={setCompanySize}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      {COMPANY_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="industry">{t('wizard.industryLabel')} <span className="text-muted-foreground font-normal">({t('wizard.optional')})</span></Label>
+                  <Input id="industry" value={industry} onChange={e => setIndustry(e.target.value)} />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>{t('wizard.roleLabel')}</Label>
                 <Select value={role} onValueChange={setRole}>

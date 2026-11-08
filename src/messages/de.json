@@ -1116,7 +1116,11 @@
     "moduleTotalLabel": "Gesamt",
     "fillTeamSize": "Bitte geben Sie an, wie viele Personen Zugriff benötigen",
     "fillRole": "Bitte wählen Sie Ihre Rolle",
-    "fillModuleSeats": "Wählen Sie mindestens ein Modul mit Plätzen"
+    "fillModuleSeats": "Wählen Sie mindestens ein Modul mit Plätzen",
+    "countryLabel": "Land",
+    "timezoneLabel": "Zeitzone",
+    "companySizeLabel": "Unternehmensgröße",
+    "optional": "optional"
   },
   "notFound": {
     "title": "404",

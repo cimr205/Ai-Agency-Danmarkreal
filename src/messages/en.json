@@ -1062,7 +1062,11 @@
     "moduleTotalLabel": "Total",
     "fillTeamSize": "Please enter how many people need access",
     "fillRole": "Please select your role",
-    "fillModuleSeats": "Select at least one module with seats"
+    "fillModuleSeats": "Select at least one module with seats",
+    "countryLabel": "Country",
+    "timezoneLabel": "Timezone",
+    "companySizeLabel": "Company size",
+    "optional": "optional"
   },
   "notFound": {
     "title": "404",

@@ -1116,7 +1116,11 @@
     "moduleTotalLabel": "I alt",
     "fillTeamSize": "Udfyld hvor mange der skal have adgang",
     "fillRole": "Vælg venligst din rolle",
-    "fillModuleSeats": "Vælg mindst ét modul med brugere"
+    "fillModuleSeats": "Vælg mindst ét modul med brugere",
+    "countryLabel": "Land",
+    "timezoneLabel": "Tidszone",
+    "companySizeLabel": "Antal medarbejdere",
+    "optional": "valgfrit"
   },
   "notFound": {
     "title": "404",
