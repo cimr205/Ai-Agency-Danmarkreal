@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Enums, Tables } from '@/integrations/supabase/types';
+import { logFirstValueActionOnce } from '@/lib/productEvents';
 
 type EmployeeName = { employee_profiles: Pick<Tables<'employee_profiles'>, 'full_name'> | null };
 export type LeaveRequestWithEmployee = Tables<'leave_requests'> & EmployeeName;
@@ -74,7 +75,10 @@ export function useCreateEmployee() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['employees'] });
+      if (data?.company_id) logFirstValueActionOnce(data.company_id);
+    },
   });
 }
 

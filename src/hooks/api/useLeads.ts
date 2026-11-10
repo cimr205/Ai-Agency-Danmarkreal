@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Enums, Json, Tables } from '@/integrations/supabase/types';
+import { logFirstValueActionOnce } from '@/lib/productEvents';
 
 export const LEADS_PAGE_SIZE = 100;
 
@@ -136,7 +137,10 @@ export function useCreateLead() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      if (data?.company_id) logFirstValueActionOnce(data.company_id);
+    },
   });
 }
 

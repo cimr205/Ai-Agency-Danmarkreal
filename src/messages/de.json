@@ -3687,5 +3687,15 @@
     "marketingPoint1": "Kampagnen organisieren",
     "marketingPoint2": "Relevante Kanäle verbinden",
     "marketingPoint3": "An Marketingaufgaben arbeiten"
+  },
+  "onboardingChecklist": {
+    "title": "Einrichtungs-Checkliste",
+    "optional": "optional",
+    "accountCreated": "Konto erstellt",
+    "companyCreated": "Unternehmen erstellt",
+    "subscriptionActivated": "Abonnement aktiviert",
+    "firstEmployeeInvited": "Ersten Mitarbeiter eingeladen",
+    "firstIntegrationConnected": "Erste Integration verbunden",
+    "firstTaskCompleted": "Erste Aufgabe abgeschlossen"
   }
 }

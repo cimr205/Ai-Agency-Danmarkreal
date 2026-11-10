@@ -142,6 +142,24 @@ Deno.serve(withSentry("stripe-subscription-webhook", async (req) => {
       return json({ error: "Subscription sync failed" }, 500);
     }
 
+    // Activation event — log once per company, not on every subsequent
+    // renewal/update ping. Best-effort: never let analytics fail the
+    // webhook itself. Ships in a migration not yet applied; a missing
+    // table/column just no-ops here like it does on the client side.
+    if (["active", "trialing"].includes(sub.status)) {
+      try {
+        const { data: already } = await db
+          .from("product_events")
+          .select("id")
+          .eq("company_id", company.id)
+          .eq("event_name", "subscription_activated")
+          .limit(1);
+        if (!already?.length) {
+          await db.from("product_events").insert({ company_id: company.id, event_name: "subscription_activated" });
+        }
+      } catch { /* analytics must never break the webhook */ }
+    }
+
     await markResolved("processed", undefined, company.id);
     return json({ received: true, status: "processed" });
   } catch (err) {

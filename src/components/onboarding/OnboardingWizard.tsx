@@ -2,7 +2,7 @@
  * Onboarding Wizard: company + applicant role + team size + module/seat allocation, then Stripe Checkout.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Building2, Check, ArrowLeft, ArrowRight, Users, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { useI18n } from '@/lib/i18n';
 import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { CvrLookupField } from '@/components/shared/CvrLookupField';
+import { logProductEvent } from '@/lib/productEvents';
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -67,6 +68,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => { logProductEvent('onboarding_started'); }, []);
 
   const [companyName, setCompanyName] = useState('');
   const [cvr, setCvr] = useState('');
@@ -152,6 +155,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       if (bootstrapError) throw new Error(bootstrapError.message);
       if (!companyId) throw new Error('Could not create company');
 
+      logProductEvent('company_created', companyId);
       await refreshProfile();
 
       toast({ title: t('wizard.welcome'), description: t('wizard.companyCreatedFallback').replace('{company}', companyName) });

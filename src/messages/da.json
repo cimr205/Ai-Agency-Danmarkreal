@@ -3687,5 +3687,15 @@
     "marketingPoint1": "Organisér kampagner",
     "marketingPoint2": "Forbind relevante kanaler",
     "marketingPoint3": "Arbejd med marketingopgaver"
+  },
+  "onboardingChecklist": {
+    "title": "Opsætnings-tjekliste",
+    "optional": "valgfrit",
+    "accountCreated": "Konto oprettet",
+    "companyCreated": "Virksomhed oprettet",
+    "subscriptionActivated": "Abonnement aktiveret",
+    "firstEmployeeInvited": "Første medarbejder inviteret",
+    "firstIntegrationConnected": "Første integration forbundet",
+    "firstTaskCompleted": "Første arbejdsopgave gennemført"
   }
 }
