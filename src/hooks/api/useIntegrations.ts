@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/functions";
 import { showError } from "@/lib/showError";
 import { useAuth } from "@/hooks/useAuth";
+import { logFirstValueActionOnce } from "@/lib/productEvents";
 import { toast } from "sonner";
 
 export interface Integration {
@@ -202,10 +203,19 @@ export function useCreateComposioConnection() {
 
 export function useSyncComposioConnection() {
   const qc = useQueryClient();
+  const { profile } = useAuth();
   return useMutation({
     mutationFn: (connectionId: string) =>
       callComposioIntegration<{ status: string }>("sync-connection-status", { connectionId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["integrations"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["integrations"] });
+      // Marketing goal's "connect a working channel" value action — only
+      // once the connection is actually confirmed connected, not merely
+      // synced-but-still-pending.
+      if (data?.status === "connected" && profile?.company_id) {
+        logFirstValueActionOnce(profile.company_id);
+      }
+    },
   });
 }
 
