@@ -129,18 +129,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       // Atomic: company creation, profile linking and admin-role grant all
       // happen in one DB transaction (see bootstrap_company migration), so a
       // mid-flight failure can't leave an orphaned company with no owner.
-      //
-      // `as never` on the function name: bootstrap_company() ships in a
-      // migration that is written but NOT YET APPLIED to the project (no
-      // production migration without approval) — supabase/types.ts is
-      // generated from the live schema, so it doesn't know this RPC yet.
-      // Once the migration is applied, re-run `npm run db:types` (or the
-      // project's type-gen command) and drop this cast.
-      const bootstrapRpc = supabase.rpc.bind(supabase) as unknown as (
-        fn: 'bootstrap_company',
-        args: Record<string, unknown>
-      ) => Promise<{ data: string | null; error: { message: string } | null }>;
-      const { data: companyId, error: bootstrapError } = await bootstrapRpc('bootstrap_company', {
+      const { data: companyId, error: bootstrapError } = await supabase.rpc('bootstrap_company', {
         _name: companyName,
         _full_name: fullName,
         _cvr: cvr || null,

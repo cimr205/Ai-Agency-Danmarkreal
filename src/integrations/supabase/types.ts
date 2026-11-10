@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -1297,6 +1277,7 @@ export type Database = {
           billing_mode: string
           company_size: string | null
           compliance_checklist: Json | null
+          country: string
           created_at: string
           cvr: string | null
           disabled: boolean
@@ -1319,6 +1300,7 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string | null
           swift: string | null
+          timezone: string
           trial_ends_at: string | null
           updated_at: string
           website: string | null
@@ -1334,6 +1316,7 @@ export type Database = {
           billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
+          country?: string
           created_at?: string
           cvr?: string | null
           disabled?: boolean
@@ -1356,6 +1339,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           swift?: string | null
+          timezone?: string
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -1371,6 +1355,7 @@ export type Database = {
           billing_mode?: string
           company_size?: string | null
           compliance_checklist?: Json | null
+          country?: string
           created_at?: string
           cvr?: string | null
           disabled?: boolean
@@ -1393,6 +1378,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           swift?: string | null
+          timezone?: string
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -5956,6 +5942,38 @@ export type Database = {
           },
         ]
       }
+      product_events: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          event_name: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          event_name: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          event_name?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_phone_connection_id: string | null
@@ -5966,6 +5984,7 @@ export type Database = {
           full_name: string | null
           id: string
           onboarding_completed: boolean
+          onboarding_goal: string | null
           team_id: string | null
           updated_at: string
           user_id: string
@@ -5979,6 +5998,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           onboarding_completed?: boolean
+          onboarding_goal?: string | null
           team_id?: string | null
           updated_at?: string
           user_id: string
@@ -5992,6 +6012,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           onboarding_completed?: boolean
+          onboarding_goal?: string | null
           team_id?: string | null
           updated_at?: string
           user_id?: string
@@ -7904,6 +7925,17 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
       activate_company: { Args: { _company_id: string }; Returns: boolean }
+      admin_update_employee: {
+        Args: {
+          _department: string
+          _employee_id: string
+          _full_name: string
+          _is_active: boolean
+          _phone: string
+          _position: string
+        }
+        Returns: undefined
+      }
       attach_invoice_checkout_session: {
         Args: {
           p_company_id: string
@@ -7911,6 +7943,20 @@ export type Database = {
           p_session_id: string
         }
         Returns: undefined
+      }
+      bootstrap_company: {
+        Args: {
+          _applicant_role?: string
+          _billing_mode?: string
+          _company_size?: string
+          _country?: string
+          _cvr?: string
+          _full_name: string
+          _industry?: string
+          _name: string
+          _timezone?: string
+        }
+        Returns: string
       }
       bootstrap_company_admin: {
         Args: { _company_id: string }
@@ -8293,6 +8339,13 @@ export type Database = {
         }[]
       }
       get_meta_connection_status: { Args: never; Returns: Json }
+      get_seat_usage: {
+        Args: never
+        Returns: {
+          seat_limit: number
+          used: number
+        }[]
+      }
       get_system_health_summary: { Args: { _hours?: number }; Returns: Json }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -8667,12 +8720,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8696,11 +8749,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8721,11 +8774,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8746,11 +8799,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8763,11 +8816,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -8777,9 +8830,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: [

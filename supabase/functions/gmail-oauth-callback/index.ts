@@ -143,7 +143,7 @@ Deno.serve(withSentry("gmail-oauth-callback", async (req) => {
     return redirectTo(returnUrl, "gmail_connected", "true");
   } catch (err) {
     console.error("gmail-oauth-callback error:", err);
-    return redirectWithError(err.message);
+    return redirectWithError(err instanceof Error ? err.message : String(err));
   }
 }));
 

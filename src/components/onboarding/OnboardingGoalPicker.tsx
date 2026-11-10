@@ -18,12 +18,7 @@ const GOALS: { goal: Goal; icon: typeof Target; dashboardPath: string }[] = [
 /**
  * Shown once, right after a user's company/subscription is set up, so the
  * app can route them to a relevant starting point instead of showing every
- * module at once. Reads/writes profiles.onboarding_goal — a column that
- * ships in a migration NOT YET APPLIED to the live project (no production
- * migration without approval). Every call here is wrapped so a "column
- * does not exist" response just means "treat as unset" rather than
- * breaking the dashboard — this component only activates once that
- * migration actually lands.
+ * module at once. Reads/writes profiles.onboarding_goal.
  */
 export function OnboardingGoalPicker({ onDone }: { onDone: () => void }) {
   const { user, refreshProfile } = useAuth();
@@ -40,13 +35,12 @@ export function OnboardingGoalPicker({ onDone }: { onDone: () => void }) {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('onboarding_goal' as 'id')
+      .select('onboarding_goal')
       .eq('user_id', user.user_id)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (cancelled || error) return; // column not live yet, or any other issue — stay silent
-        const goal = (data as unknown as { onboarding_goal: Goal | null } | null)?.onboarding_goal;
-        if (!goal) setVisible(true);
+        if (cancelled || error) return;
+        if (!data?.onboarding_goal) setVisible(true);
       });
     return () => { cancelled = true; };
   }, [user]);
@@ -56,7 +50,7 @@ export function OnboardingGoalPicker({ onDone }: { onDone: () => void }) {
   const choose = async (goal: Goal) => {
     setSaving(goal);
     try {
-      await supabase.from('profiles').update({ onboarding_goal: goal } as never).eq('user_id', user!.user_id);
+      await supabase.from('profiles').update({ onboarding_goal: goal }).eq('user_id', user!.user_id);
       await refreshProfile();
     } catch {
       // Non-fatal — still route them to the relevant dashboard even if

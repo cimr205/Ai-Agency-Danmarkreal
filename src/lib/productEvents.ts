@@ -8,21 +8,19 @@ export type ProductEvent =
   | 'first_value_action_completed';
 
 /**
- * Fire-and-forget activation event log. Ships in a migration NOT YET
- * APPLIED to the live project (product_events table) — wrapped so a
- * "table does not exist" response is a silent no-op rather than breaking
- * whatever flow called it. No PII: only IDs and a closed event-name set
- * (enforced by the table's own CHECK constraint, not just here).
+ * Fire-and-forget activation event log. No PII: only IDs and a closed
+ * event-name set (enforced by the table's own CHECK constraint, not just
+ * the type here).
  */
 export async function logProductEvent(eventName: ProductEvent, companyId?: string | null): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('product_events' as never).insert({
+    await supabase.from('product_events').insert({
       event_name: eventName,
       company_id: companyId ?? null,
       user_id: user.id,
-    } as never);
+    });
   } catch {
     // Analytics must never break the calling flow.
   }
@@ -37,12 +35,12 @@ export async function logProductEvent(eventName: ProductEvent, companyId?: strin
 export async function logFirstValueActionOnce(companyId: string): Promise<void> {
   try {
     const { data } = await supabase
-      .from('product_events' as never)
-      .select('id' as never)
+      .from('product_events')
+      .select('id')
       .eq('company_id', companyId)
       .eq('event_name', 'first_value_action_completed')
       .limit(1);
-    if (data && (data as unknown[]).length > 0) return;
+    if (data && data.length > 0) return;
     await logProductEvent('first_value_action_completed', companyId);
   } catch {
     // Analytics must never break the calling flow.

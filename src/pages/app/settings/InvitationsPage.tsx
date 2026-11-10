@@ -52,10 +52,7 @@ export default function InvitationsPage() {
   };
 
   const loadSeatUsage = async () => {
-    // get_seat_usage() ships in a migration pending approval — not yet live.
-    const { data } = await (supabase.rpc as unknown as (
-      fn: 'get_seat_usage'
-    ) => Promise<{ data: Array<{ seat_limit: number; used: number }> | null }>)('get_seat_usage');
+    const { data } = await supabase.rpc('get_seat_usage');
     if (data?.[0]) setSeatUsage(data[0]);
   };
 
