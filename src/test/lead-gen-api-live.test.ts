@@ -57,8 +57,8 @@ describe('lead-gen-api — /worker route (fixed 2026-11-11)', () => {
     expect(workerBlockMatch).not.toBeNull();
   });
 
-  it('rejects any caller whose Authorization header is not this function\'s own service-role secret', () => {
-    expect(workerBlockMatch![0]).toMatch(/authHeader !== `Bearer \$\{SUPABASE_SERVICE_ROLE_KEY\}`/);
+  it('rejects any caller whose Authorization header is not this function\'s own service-role secret, compared in constant time', () => {
+    expect(workerBlockMatch![0]).toMatch(/constantTimeEqual\(authHeader, `Bearer \$\{SUPABASE_SERVICE_ROLE_KEY\}`\)/);
     expect(workerBlockMatch![0]).toMatch(/return errorResponse\("Unauthorized", 401\)/);
   });
 

@@ -2,6 +2,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
 import { normalizePhoneNumber } from "../_shared/normalizePhone.ts";
+import { constantTimeEqual } from "../_shared/providerSignatures.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1323,8 +1324,8 @@ Deno.serve(withSentry("lead-gen-api", async (req) => {
     //    ever created with a real company_id by the authenticated
     //    POST /sessions handler above.
     if (req.method === "POST" && action === "worker") {
-      const authHeader = req.headers.get("Authorization");
-      if (authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) return errorResponse("Unauthorized", 401);
+      const authHeader = req.headers.get("Authorization") ?? "";
+      if (!constantTimeEqual(authHeader, `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`)) return errorResponse("Unauthorized", 401);
 
       const body = await req.json();
       const { sessionId, companyId, userId, query, filters } = body;
