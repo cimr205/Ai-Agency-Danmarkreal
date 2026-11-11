@@ -1311,11 +1311,31 @@ Deno.serve(withSentry("lead-gen-api", async (req) => {
     const subAction = pathParts[3] || "";
 
     // ── POST /worker (fire-and-forget pipeline runner) ──
+    // Internal-only: invoked by this same function right after POST /sessions,
+    // with the service-role key as its own Authorization header — never meant
+    // to be reachable by a client. verify_jwt at the platform level only
+    // proves the caller has *some* valid JWT (the public anon key qualifies),
+    // not that they're us, so that alone isn't enough. Two checks:
+    // 1. The Authorization header must be this function's own service-role
+    //    secret, not just any valid JWT.
+    // 2. companyId is never trusted from the request body for the actual
+    //    work — it's re-derived from the session row itself, which was only
+    //    ever created with a real company_id by the authenticated
+    //    POST /sessions handler above.
     if (req.method === "POST" && action === "worker") {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) return errorResponse("Unauthorized", 401);
+
       const body = await req.json();
       const { sessionId, companyId, userId, query, filters } = body;
       if (!sessionId || !companyId) return errorResponse("Missing worker params", 400);
-      await runPipeline(sessionId, companyId, userId, query, filters || {});
+
+      const workerSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: session } = await workerSupabase
+        .from("lead_gen_sessions").select("company_id").eq("id", sessionId).single();
+      if (!session || session.company_id !== companyId) return errorResponse("Session/company mismatch", 403);
+
+      await runPipeline(sessionId, session.company_id, userId, query, filters || {});
       return jsonResponse({ success: true });
     }
 

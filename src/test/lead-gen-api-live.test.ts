@@ -44,34 +44,34 @@ describe('lead-gen-api — authenticated routes', () => {
   });
 });
 
-describe('lead-gen-api — /worker route (KNOWN GAP, documented not fixed)', () => {
-  // The worker route is checked for auth BEFORE the "All other routes need
-  // auth" gate, i.e. it is NOT gated by getAuthContext at all — only by the
-  // platform's verify_jwt (which accepts the public anon key, not just an
-  // authenticated session). It also never checks that `sessionId` actually
-  // belongs to `companyId`, or decrements any usage quota. A caller holding
-  // only the public anon key can POST company_id/query/filters of their
-  // choosing directly to /worker and trigger a real external-API search
-  // pipeline run, bypassing both the per-company usage quota (only checked
-  // in POST /sessions, not here) and any check that the session they're
-  // updating is theirs.
-  //
-  // This is flagged, not fixed, in this pass — fixing it needs a decision on
-  // whether /worker should require the session's own service-role secret
-  // (not just a valid JWT) or whether sessionId ownership should be
-  // re-validated against companyId before any write. These tests pin the
-  // GAP so it can't silently get worse, and will need updating once fixed.
-  it('the worker route has no getAuthContext call on its own code path', () => {
-    const workerBlockMatch = SRC.match(/if \(req\.method === "POST" && action === "worker"\) \{[\s\S]*?\n {4}\}/);
+describe('lead-gen-api — /worker route (fixed 2026-11-11)', () => {
+  // Was: no auth beyond the platform's verify_jwt (accepts the public anon
+  // key), and companyId trusted straight from the request body with no
+  // check that sessionId actually belonged to it. Fixed by (1) requiring the
+  // Authorization header to be this function's own service-role secret, and
+  // (2) re-deriving company_id from the session row itself rather than
+  // trusting the body.
+  const workerBlockMatch = SRC.match(/if \(req\.method === "POST" && action === "worker"\) \{[\s\S]*?\n {4}\}/);
+
+  it('the worker route exists and is isolated to its own block', () => {
     expect(workerBlockMatch).not.toBeNull();
-    expect(workerBlockMatch![0]).not.toMatch(/getAuthContext/);
   });
 
-  it('runPipeline updates lead_gen_sessions by sessionId alone, with no companyId ownership check in the update call', () => {
-    const runPipelineMatch = SRC.match(/async function runPipeline\([\s\S]*?\n\}/);
-    expect(runPipelineMatch).not.toBeNull();
-    // Every session update in runPipeline filters only by id, never by company_id.
-    expect(runPipelineMatch![0]).toMatch(/\.eq\("id", sessionId\)/);
+  it('rejects any caller whose Authorization header is not this function\'s own service-role secret', () => {
+    expect(workerBlockMatch![0]).toMatch(/authHeader !== `Bearer \$\{SUPABASE_SERVICE_ROLE_KEY\}`/);
+    expect(workerBlockMatch![0]).toMatch(/return errorResponse\("Unauthorized", 401\)/);
+  });
+
+  it('never trusts the client-supplied companyId for the actual work — re-derives it from the session row', () => {
+    expect(workerBlockMatch![0]).toMatch(/\.from\("lead_gen_sessions"\)\.select\("company_id"\)\.eq\("id", sessionId\)/);
+    expect(workerBlockMatch![0]).toMatch(/session\.company_id !== companyId/);
+    expect(workerBlockMatch![0]).toMatch(/runPipeline\(sessionId, session\.company_id,/);
+  });
+
+  it('the one legitimate caller (POST /sessions\' fire-and-forget fetch) already sends the matching service-role Authorization header', () => {
+    const sessionsBlockMatch = SRC.match(/const workerUrl[\s\S]*?\}\)\.catch/);
+    expect(sessionsBlockMatch).not.toBeNull();
+    expect(sessionsBlockMatch![0]).toMatch(/Authorization: `Bearer \$\{SUPABASE_SERVICE_ROLE_KEY\}`/);
   });
 });
 
