@@ -20,7 +20,7 @@ Deno.serve(withSentry("ai-health", async (req) => {
     const res = await fetch(modelsUrl, { headers: { Authorization: `Bearer ${ai.apiKey}` }, signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`Modellen svarede ikke korrekt (HTTP ${res.status}).`);
 
-    return new Response(JSON.stringify({ online: true, model: ai.model, provider: ai.provider }), {
+    return new Response(JSON.stringify({ online: true, model: ai.model, models: ai.models, provider: ai.provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

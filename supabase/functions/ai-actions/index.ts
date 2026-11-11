@@ -151,7 +151,7 @@ Deno.serve(withSentry("ai-actions", async (req) => {
           Authorization: `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: ai.model, messages: conversation, tools, tool_choice: "auto", reasoning: { effort: "none" } }),
+        body: JSON.stringify({ model: ai.model, models: ai.models, messages: conversation, tools, tool_choice: "auto", reasoning: { effort: "none" } }),
       });
 
       if (!aiRes.ok) {

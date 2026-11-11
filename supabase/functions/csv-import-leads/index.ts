@@ -131,7 +131,7 @@ serve(withSentry("csv-import-leads", async (req) => {
             method: "POST",
             headers: { Authorization: `Bearer ${ai.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: ai.model,
+              model: ai.model, models: ai.models,
               reasoning: { effort: "none" },
               messages: [
                 {

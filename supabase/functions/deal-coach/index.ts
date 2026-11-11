@@ -101,7 +101,7 @@ IMPORTANT: Return ONLY valid JSON with the keys above. No markdown, no code fenc
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
       }),

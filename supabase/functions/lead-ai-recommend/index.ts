@@ -138,7 +138,7 @@ VIGTIGT: Returner KUN gyldig JSON med nøglerne ovenfor. Ingen markdown, ingen k
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ai.model,
+        model: ai.model, models: ai.models,
         reasoning: { effort: "none" },
         messages: [{ role: "user", content: prompt }],
       }),
