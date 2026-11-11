@@ -1,4 +1,4 @@
-project_id = "inyrwsygghdjhmqejgwk"
+project_id = "vbxlpxhvojlaisxcipyh"
 
 # Cross-tenant admin endpoint — must always require a verified session JWT.
 # Explicit (not just relying on the platform default) so a future accidental
