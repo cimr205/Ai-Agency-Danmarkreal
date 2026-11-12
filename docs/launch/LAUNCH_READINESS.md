@@ -72,3 +72,10 @@ This is **not** an unconditional GO because:
 It is **not NO-GO** because every gate that *could* be run (type-check, lint, build, 357+ unit/integration tests, live schema-wide RLS coverage, live HR policy text) is green, and the one real open security finding (over-permissioned functions) fails safely rather than being exploitable today.
 
 A GO here is a statement of technical readiness for the narrow scope above, once blocker #1 closes — it does not authorize deployment, pricing changes, or billing real customers, per this mission's own boundaries.
+
+## Update 2026-11-12: two fixes deployed to production, verified live
+
+- `lead-gen-api` (version 61): `/worker` now requires the service-role secret (constant-time comparison) and re-derives `company_id` from the session row. Verified by reading the deployed function's source back.
+- 16 AI-calling functions (ai-actions, ai-email-writer, ai-health, autopilot-brief, csv-import-leads, deal-coach, generate-call-script, gmail-sync, lead-ai-recommend, linkedin-outreach, meeting-summary, meta-ads-ai, smart-assistant, voice-agent-respond, workflow-assistant, workflow-runner) + `_shared/aiConnection.ts`: the OpenRouter free-model fallback (`MAX_MODELS=3` cap) is now live, closing the branch-divergence gap found during this deploy. Verified live on `deal-coach` (version 68) by reading the deployed source back.
+
+Deployed via `supabase functions deploy` (CLI, linked to `vbxlpxhvojlaisxcipyh`), after the user explicitly confirmed both fixes were in scope (the classifier correctly blocked the broader batch until that confirmation was given).
