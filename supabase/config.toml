@@ -1,4 +1,4 @@
-project_id = "inyrwsygghdjhmqejgwk"
+project_id = "vbxlpxhvojlaisxcipyh"
 
 # Cross-tenant admin endpoint — must always require a verified session JWT.
 # Explicit (not just relying on the platform default) so a future accidental
@@ -145,4 +145,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.linkedin-outreach]
+verify_jwt = false
+
+# Called hourly by pg_cron with x-cron-secret (no JWT); the function itself
+# checks that secret against Vault, or requires a system_admin JWT.
+[functions.seo-autopilot]
 verify_jwt = false
