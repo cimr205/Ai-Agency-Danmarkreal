@@ -93,6 +93,16 @@ serve(withSentry("check-subscription", async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
+      // A Stripe customer can exist before checkout finishes. Do not erase a
+      // trial or pending status when no subscription was ever recorded.
+      if (!company.stripe_subscription_id) {
+        return new Response(JSON.stringify({
+          subscribed: false,
+          status: company.subscription_status || "none",
+          trial_ends_at: company.trial_ends_at,
+          seat_limit: company.seat_limit_trial || 0,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       await supabaseClient.from("companies").update({ subscription_status: "none" }).eq("id", profile.company_id);
       return new Response(JSON.stringify({ subscribed: false, status: "none" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
