@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
           <h1 className="text-3xl font-bold">{isDa ? 'Privatlivspolitik' : 'Privacy Policy'}</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-8">
-          {isDa ? 'Sidst opdateret: 31. marts 2026' : 'Last updated: March 31, 2026'}
+          {isDa ? 'Sidst opdateret: 17. november 2026' : 'Last updated: November 17, 2026'}
         </p>
 
         <div className="prose dark:prose-invert max-w-none space-y-6">
@@ -97,6 +97,19 @@ export default function PrivacyPolicy() {
                 ? 'Vi bruger nødvendige cookies til autentificering og session-håndtering. Analytiske og marketing-cookies kræver dit samtykke. Du kan administrere dine cookie-præferencer via cookie-banneret.'
                 : 'We use necessary cookies for authentication and session management. Analytical and marketing cookies require your consent. You can manage your cookie preferences via the cookie banner.'}
             </p>
+          </section>
+
+          <section>
+            <h2>{isDa ? '7a. Analyseværktøjer og samtykke' : '7a. Analytics tools and consent'}</h2>
+            <p>{isDa
+              ? 'Vi kan anvende Google Analytics 4 (GA4) til samlet trafikstatistik og Leadfeeder til at forstå virksomheders besøg på vores offentlige website. Disse valgfrie værktøjer må først indlæses, når du accepterer analytiske cookies. De kan behandle onlineidentifikatorer, besøgs- og enhedsoplysninger samt hvilke sider, der besøges. Leadfeeder kan knytte virksomhedsoplysninger til besøg. Vi bruger ikke disse værktøjer til at analysere indholdet i kundernes private CRM.'
+              : 'We may use Google Analytics 4 (GA4) for aggregated traffic statistics and Leadfeeder to understand company visits to our public website. These optional tools must only load after you agree to analytics cookies. They may process online identifiers, visit and device information, and pages viewed. Leadfeeder may associate company information with visits. We do not use these tools to analyse content in customers’ private CRM workspaces.'}</p>
+            <p>{isDa
+              ? 'Leverandørernes behandling, opbevaring og eventuelle overførsler til lande uden for EU/EØS skal fremgå af de gældende leverandørvilkår og vores dokumenterede opsætning. Du kan afvise eller trække samtykket tilbage når som helst via knappen nedenfor. Valgfrie analyseværktøjer slås fra ved tilbagetrækning.'
+              : 'The providers’ processing, retention and any transfers outside the EU/EEA must be assessed against their applicable terms and our documented configuration. You can reject or withdraw consent at any time using the button below. Optional analytics tools are disabled when consent is withdrawn.'}</p>
+            <button type="button" className="underline text-primary" onClick={() => window.dispatchEvent(new Event('open-cookie-settings'))}>
+              {isDa ? 'Redigér cookievalg' : 'Edit cookie preferences'}
+            </button>
           </section>
 
           <section>
