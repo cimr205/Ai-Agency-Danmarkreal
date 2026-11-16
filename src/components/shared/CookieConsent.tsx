@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Shield } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/integrations/supabase/client';
-import { loadLeadfeeder } from '@/lib/analytics';
+import { loadGoogleAnalytics, loadLeadfeeder } from '@/lib/analytics';
 import type { Json } from '@/integrations/supabase/types';
 
 const COOKIE_KEY = 'cookie-consent';
@@ -46,7 +46,10 @@ export function CookieConsent() {
     // Returning visitor who previously opted in — honor that choice on this load too.
     try {
       const parsed = JSON.parse(saved) as ConsentState;
-      if (parsed.analytics) loadLeadfeeder();
+      if (parsed.analytics) {
+        loadLeadfeeder();
+        loadGoogleAnalytics({ marketing: !!parsed.marketing });
+      }
     } catch {
       // ignore malformed stored consent
     }
@@ -55,7 +58,10 @@ export function CookieConsent() {
   const save = (consent: ConsentState) => {
     localStorage.setItem(COOKIE_KEY, JSON.stringify(consent));
     logConsent(consent);
-    if (consent.analytics) loadLeadfeeder();
+    if (consent.analytics) {
+      loadLeadfeeder();
+      loadGoogleAnalytics({ marketing: consent.marketing });
+    }
     setShow(false);
   };
 
