@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch';
 import { Shield } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/integrations/supabase/client';
-import { loadLeadfeeder } from '@/lib/analytics';
+import { loadLeadfeeder, loadGA4, disableGA4 } from '@/lib/analytics';
 import type { Json } from '@/integrations/supabase/types';
 
 const COOKIE_KEY = 'cookie-consent';
@@ -34,6 +34,22 @@ export function CookieConsent() {
   const [expanded, setExpanded] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  useEffect(() => {
+    const openSettings = () => {
+      const saved = localStorage.getItem(COOKIE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as ConsentState;
+          setAnalytics(Boolean(parsed.analytics));
+          setMarketing(Boolean(parsed.marketing));
+        } catch { /* show default off */ }
+      }
+      setExpanded(true);
+      setShow(true);
+    };
+    window.addEventListener('open-cookie-settings', openSettings);
+    return () => window.removeEventListener('open-cookie-settings', openSettings);
+  }, []);
   const { t, locale } = useI18n();
   const isDa = locale === 'da';
 
@@ -46,7 +62,7 @@ export function CookieConsent() {
     // Returning visitor who previously opted in — honor that choice on this load too.
     try {
       const parsed = JSON.parse(saved) as ConsentState;
-      if (parsed.analytics) loadLeadfeeder();
+      if (parsed.analytics) { loadLeadfeeder(); loadGA4(); }
     } catch {
       // ignore malformed stored consent
     }
@@ -55,7 +71,16 @@ export function CookieConsent() {
   const save = (consent: ConsentState) => {
     localStorage.setItem(COOKIE_KEY, JSON.stringify(consent));
     logConsent(consent);
-    if (consent.analytics) loadLeadfeeder();
+    if (consent.analytics) { loadLeadfeeder(); loadGA4(); }
+    else {
+      disableGA4();
+      // If tracking has run during this session, reloading removes the
+      // already-injected Leadfeeder script and resets its in-memory state.
+      if (document.getElementById('ldfdr-script') || document.getElementById('ga4-script')) {
+        window.location.reload();
+        return;
+      }
+    }
     setShow(false);
   };
 
