@@ -3308,7 +3308,8 @@
       "approvals": "Godkendelser",
       "budgetUsage": "Budget og forbrug",
       "auditLog": "Auditlog",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "seoAutopilot": "SEO-autopilot"
     },
     "runSeo": {
       "title": "Kør SEO-specialisten",
@@ -3595,6 +3596,115 @@
         "untrackedTitle": "{n} af {total} leads har ingen kilde",
         "untrackedBody": "Leads uden kilde kan ikke tilskrives SEO og tælles derfor ikke som organiske. Angiv kilden på nye leads for at måle det.",
         "none": "Ingen CRM-data for perioden."
+      }
+    },
+    "seo": {
+      "title": "SEO-autopilot",
+      "subtitle": "Holder øje med jeres eget site efter en tidsplan og skriver udkast til rettelser, som I godkender. Intet publiceres automatisk.",
+      "notInstalled": "SEO-autopilotens tabeller er ikke installeret i dette miljø endnu (migration 20261118120000).",
+      "runNow": "Kør en runde nu",
+      "running": "En runde kører",
+      "queued": "Sat i kø. Growth OS-tjenesten starter den inden for et minut.",
+      "none": "Intet endnu.",
+      "noChanges": "Ingen ændringer mellem crawls endnu.",
+      "chart": "Site-score pr. crawl",
+      "findingsTitle": "Fund fra seneste crawl",
+      "findingsHint": "Målt i den rå HTML, som en crawler ser uden at køre JavaScript.",
+      "changesTitle": "Hvad er ændret siden forrige crawl",
+      "draftsHint": "Udkast skrives og scores af gratis AI-modeller. En score er ikke en godkendelse: det er jer, der beslutter, og en godkendelse publicerer ikke noget.",
+      "waiting": "Venter på dig",
+      "all": "Alle",
+      "read": "Læs",
+      "hide": "Skjul",
+      "approve": "Godkend",
+      "reject": "Afvis",
+      "reviewNotes": "Reviewer",
+      "models": "Skribent: {w} · reviewer: {r}",
+      "historyHint": "Rapporter fra den tidligere selvstændige autopilot (konkurrent- og GA4-rapporter), gemt til reference.",
+      "tab": {
+        "overview": "Overblik",
+        "drafts": "Godkendelseskø",
+        "tasks": "Opgaver",
+        "runs": "Runder",
+        "history": "Historik",
+        "setup": "Opsætning"
+      },
+      "kpi": {
+        "score": "Site-score",
+        "noPrevious": "Intet tidligere crawl at sammenligne med",
+        "delta": "{d} siden forrige crawl",
+        "pages": "Crawlede sider",
+        "crawled": "Crawlet {at}",
+        "findings": "Fund",
+        "bySeverity": "{h} høj · {m} mellem · {l} lav",
+        "next": "Tidsplan",
+        "every": "Hver {h}. time",
+        "paused": "Sat på pause",
+        "calls": "Højst {n} gratis modelkald pr. dag"
+      },
+      "col": {
+        "severity": "Alvor",
+        "page": "Side",
+        "issue": "Problem",
+        "fix": "Rettelse",
+        "field": "Felt",
+        "before": "Før",
+        "after": "Efter",
+        "task": "Opgave",
+        "type": "Type",
+        "status": "Status",
+        "created": "Oprettet"
+      },
+      "sev": {
+        "high": "Høj",
+        "medium": "Mellem",
+        "low": "Lav"
+      },
+      "kind": {
+        "page": "Ny side",
+        "audit": "Teknisk rapport"
+      },
+      "review": {
+        "pending": "Ikke reviewet endnu",
+        "passed": "Reviewer: bestået",
+        "failed": "Reviewer: ikke god nok"
+      },
+      "decision": {
+        "approved": "Godkendt af en person",
+        "rejected": "Afvist af en person"
+      },
+      "type": {
+        "technical_audit": "Teknisk gennemgang",
+        "page_draft": "Sideudkast"
+      },
+      "taskStatus": {
+        "open": "Åben",
+        "done": "Færdig",
+        "failed": "Fejlet"
+      },
+      "runStatus": {
+        "running": "Kører",
+        "ok": "OK",
+        "error": "Fejl"
+      },
+      "trigger": {
+        "schedule": "planlagt",
+        "manual": "manuel",
+        "import": "importeret"
+      },
+      "setup": {
+        "title": "Site og tidsplan",
+        "description": "Sitet skal ligge på domænet fra jeres verificerede Search Console-forbindelse.",
+        "site": "Site (https://host)",
+        "every": "Crawl hver (timer)",
+        "calls": "Gratis modelkald pr. dag",
+        "facts": "Produktfakta, skribenten må bruge",
+        "factsHint": "Ét faktum pr. linje. Skribenten må ikke påstå andet om jeres produkt. Uden fakta skrives der ingen sideudkast.",
+        "enabled": "Autopilot slået til",
+        "save": "Gem",
+        "saved": "Gemt.",
+        "adminOnly": "Kun en ejer eller virksomhedsadministrator kan ændre opsætningen.",
+        "freeNote": "Der bruges kun gratis OpenRouter-modeller med et dagligt loft. Når de er optaget, venter opgaven til næste runde."
       }
     }
   }
