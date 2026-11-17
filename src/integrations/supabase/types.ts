@@ -2985,6 +2985,813 @@ export type Database = {
           },
         ]
       }
+      growth_activity_events: {
+        Row: {
+          action: string
+          agent_id: string
+          company_id: string
+          cost_usd: number | null
+          created_at: string
+          detail: Json
+          id: number
+          phase: string
+          status: string
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          agent_id: string
+          company_id: string
+          cost_usd?: number | null
+          created_at?: string
+          detail?: Json
+          id?: never
+          phase: string
+          status: string
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string
+          company_id?: string
+          cost_usd?: number | null
+          created_at?: string
+          detail?: Json
+          id?: never
+          phase?: string
+          status?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_activity_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_activity_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_analytics_connections: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          ga4_property_id: string | null
+          ga4_synced_through: string | null
+          gsc_site_url: string | null
+          gsc_synced_through: string | null
+          last_error: string | null
+          last_sync_at: string | null
+          requested_at: string
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          ga4_property_id?: string | null
+          ga4_synced_through?: string | null
+          gsc_site_url?: string | null
+          gsc_synced_through?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          ga4_property_id?: string | null
+          ga4_synced_through?: string | null
+          gsc_site_url?: string | null
+          gsc_synced_through?: string | null
+          last_error?: string | null
+          last_sync_at?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_analytics_connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_approval_requests: {
+        Row: {
+          action: string
+          agent_id: string
+          company_id: string
+          consumed_at: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_reason: string | null
+          expires_at: string
+          id: string
+          level: number
+          payload: Json
+          payload_hash: string
+          requested_at: string
+          status: string
+          summary: string
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          agent_id: string
+          company_id: string
+          consumed_at?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          expires_at?: string
+          id?: string
+          level: number
+          payload: Json
+          payload_hash: string
+          requested_at?: string
+          status?: string
+          summary: string
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string
+          company_id?: string
+          consumed_at?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          expires_at?: string
+          id?: string
+          level?: number
+          payload?: Json
+          payload_hash?: string
+          requested_at?: string
+          status?: string
+          summary?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_approval_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_approval_requests_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_audit_log: {
+        Row: {
+          actor_id: string
+          actor_type: string
+          company_id: string
+          created_at: string
+          detail: Json
+          event: string
+          id: number
+          subject_id: string | null
+        }
+        Insert: {
+          actor_id: string
+          actor_type: string
+          company_id: string
+          created_at?: string
+          detail?: Json
+          event: string
+          id?: never
+          subject_id?: string | null
+        }
+        Update: {
+          actor_id?: string
+          actor_type?: string
+          company_id?: string
+          created_at?: string
+          detail?: Json
+          event?: string
+          id?: never
+          subject_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_budget_days: {
+        Row: {
+          company_id: string
+          day: string
+          spent_usd: number
+        }
+        Insert: {
+          company_id: string
+          day: string
+          spent_usd?: number
+        }
+        Update: {
+          company_id?: string
+          day?: string
+          spent_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_budget_days_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_budgets: {
+        Row: {
+          company_id: string
+          daily_usd_limit: number
+          task_usd_limit: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          daily_usd_limit?: number
+          task_usd_limit?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          daily_usd_limit?: number
+          task_usd_limit?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_budgets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_ga4_daily: {
+        Row: {
+          active_users: number
+          channel_group: string
+          company_id: string
+          day: string
+          engaged_sessions: number
+          key_events: number
+          sessions: number
+          synced_at: string
+        }
+        Insert: {
+          active_users: number
+          channel_group: string
+          company_id: string
+          day: string
+          engaged_sessions: number
+          key_events: number
+          sessions: number
+          synced_at?: string
+        }
+        Update: {
+          active_users?: number
+          channel_group?: string
+          company_id?: string
+          day?: string
+          engaged_sessions?: number
+          key_events?: number
+          sessions?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_ga4_daily_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_ga4_landing_daily: {
+        Row: {
+          channel_group: string
+          company_id: string
+          day: string
+          engaged_sessions: number
+          key_events: number
+          landing_page: string
+          sessions: number
+          synced_at: string
+        }
+        Insert: {
+          channel_group: string
+          company_id: string
+          day: string
+          engaged_sessions: number
+          key_events: number
+          landing_page: string
+          sessions: number
+          synced_at?: string
+        }
+        Update: {
+          channel_group?: string
+          company_id?: string
+          day?: string
+          engaged_sessions?: number
+          key_events?: number
+          landing_page?: string
+          sessions?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_ga4_landing_daily_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_gsc_daily: {
+        Row: {
+          clicks: number
+          company_id: string
+          ctr: number
+          day: string
+          impressions: number
+          position: number
+          synced_at: string
+        }
+        Insert: {
+          clicks: number
+          company_id: string
+          ctr: number
+          day: string
+          impressions: number
+          position: number
+          synced_at?: string
+        }
+        Update: {
+          clicks?: number
+          company_id?: string
+          ctr?: number
+          day?: string
+          impressions?: number
+          position?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_gsc_daily_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_gsc_query_page_daily: {
+        Row: {
+          clicks: number
+          company_id: string
+          ctr: number
+          day: string
+          impressions: number
+          page: string
+          position: number
+          query: string
+          synced_at: string
+        }
+        Insert: {
+          clicks: number
+          company_id: string
+          ctr: number
+          day: string
+          impressions: number
+          page: string
+          position: number
+          query: string
+          synced_at?: string
+        }
+        Update: {
+          clicks?: number
+          company_id?: string
+          ctr?: number
+          day?: string
+          impressions?: number
+          page?: string
+          position?: number
+          query?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_gsc_query_page_daily_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_learning_records: {
+        Row: {
+          agent_id: string
+          company_id: string
+          created_at: string
+          evaluation_status: string
+          evidence: Json | null
+          expected_benefit: string | null
+          id: string
+          model: string | null
+          observation: string
+          outcome: string
+          probable_cause: string | null
+          prompt_version: string
+          proposed_change: string | null
+          risk: string | null
+          skill_version: string
+          task_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          company_id: string
+          created_at?: string
+          evaluation_status?: string
+          evidence?: Json | null
+          expected_benefit?: string | null
+          id?: string
+          model?: string | null
+          observation: string
+          outcome: string
+          probable_cause?: string | null
+          prompt_version: string
+          proposed_change?: string | null
+          risk?: string | null
+          skill_version: string
+          task_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          company_id?: string
+          created_at?: string
+          evaluation_status?: string
+          evidence?: Json | null
+          expected_benefit?: string | null
+          id?: string
+          model?: string | null
+          observation?: string
+          outcome?: string
+          probable_cause?: string | null
+          prompt_version?: string
+          proposed_change?: string | null
+          risk?: string | null
+          skill_version?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_learning_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_learning_records_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_model_usage: {
+        Row: {
+          actual_usd: number | null
+          agent_id: string
+          attempt: number
+          company_id: string
+          completion_tokens: number | null
+          created_at: string
+          error: string | null
+          estimated_usd: number
+          generation_id: string | null
+          id: number
+          latency_ms: number
+          model: string
+          prompt_tokens: number | null
+          prompt_version: string | null
+          purpose: string
+          request_id: string
+          status: string
+          task_id: string | null
+        }
+        Insert: {
+          actual_usd?: number | null
+          agent_id: string
+          attempt: number
+          company_id: string
+          completion_tokens?: number | null
+          created_at?: string
+          error?: string | null
+          estimated_usd: number
+          generation_id?: string | null
+          id?: never
+          latency_ms: number
+          model: string
+          prompt_tokens?: number | null
+          prompt_version?: string | null
+          purpose: string
+          request_id: string
+          status: string
+          task_id?: string | null
+        }
+        Update: {
+          actual_usd?: number | null
+          agent_id?: string
+          attempt?: number
+          company_id?: string
+          completion_tokens?: number | null
+          created_at?: string
+          error?: string | null
+          estimated_usd?: number
+          generation_id?: string | null
+          id?: never
+          latency_ms?: number
+          model?: string
+          prompt_tokens?: number | null
+          prompt_version?: string | null
+          purpose?: string
+          request_id?: string
+          status?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_model_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_model_usage_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_reports: {
+        Row: {
+          agent_id: string
+          body: Json
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          task_id: string
+        }
+        Insert: {
+          agent_id: string
+          body: Json
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          task_id: string
+        }
+        Update: {
+          agent_id?: string
+          body?: Json
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_reports_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_recommendations: {
+        Row: {
+          action: string
+          baseline: Json | null
+          company_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_reason: string | null
+          evidence: Json
+          expected_effect: string
+          fingerprint: string
+          id: string
+          implemented_on: string | null
+          kind: string
+          outcome: Json | null
+          priority: number
+          problem: string
+          status: string
+          target: string
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          baseline?: Json | null
+          company_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          evidence: Json
+          expected_effect: string
+          fingerprint: string
+          id?: string
+          implemented_on?: string | null
+          kind: string
+          outcome?: Json | null
+          priority: number
+          problem: string
+          status?: string
+          target: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          baseline?: Json | null
+          company_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          evidence?: Json
+          expected_effect?: string
+          fingerprint?: string
+          id?: string
+          implemented_on?: string | null
+          kind?: string
+          outcome?: Json | null
+          priority?: number
+          problem?: string
+          status?: string
+          target?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_recommendations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_recommendations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_tasks: {
+        Row: {
+          agent_id: string
+          attempts: number
+          budget_usd: number
+          checkpoint: Json | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          deadline_at: string | null
+          id: string
+          idempotency_key: string
+          input: Json
+          last_error: string | null
+          lease_expires_at: string | null
+          lease_owner: string | null
+          max_attempts: number
+          objective: string | null
+          priority: number
+          result: Json | null
+          status: string
+          timeout_seconds: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          attempts?: number
+          budget_usd: number
+          checkpoint?: Json | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          deadline_at?: string | null
+          id?: string
+          idempotency_key: string
+          input?: Json
+          last_error?: string | null
+          lease_expires_at?: string | null
+          lease_owner?: string | null
+          max_attempts?: number
+          objective?: string | null
+          priority?: number
+          result?: Json | null
+          status?: string
+          timeout_seconds?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          attempts?: number
+          budget_usd?: number
+          checkpoint?: Json | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          deadline_at?: string | null
+          id?: string
+          idempotency_key?: string
+          input?: Json
+          last_error?: string | null
+          lease_expires_at?: string | null
+          lease_owner?: string | null
+          max_attempts?: number
+          objective?: string | null
+          priority?: number
+          result?: Json | null
+          status?: string
+          timeout_seconds?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       icp_profiles: {
         Row: {
           budget_level: string | null
@@ -8306,6 +9113,113 @@ export type Database = {
       get_meta_connection_status: { Args: never; Returns: Json }
       get_system_health_summary: { Args: { _hours?: number }; Returns: Json }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
+      growth_action_level: { Args: { _action: string }; Returns: number }
+      growth_business_impact: {
+        Args: { _from: string; _to: string }
+        Returns: Json
+      }
+      growth_can_approve: { Args: { _user_id: string }; Returns: boolean }
+      growth_can_operate: { Args: { _user_id: string }; Returns: boolean }
+      growth_checkpoint: {
+        Args: { _checkpoint: Json; _task_id: string; _worker: string }
+        Returns: boolean
+      }
+      growth_claim_task: {
+        Args: { _company_id?: string; _lease_seconds?: number; _worker: string }
+        Returns: {
+          agent_id: string
+          attempts: number
+          budget_usd: number
+          checkpoint: Json | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          deadline_at: string | null
+          id: string
+          idempotency_key: string
+          input: Json
+          last_error: string | null
+          lease_expires_at: string | null
+          lease_owner: string | null
+          max_attempts: number
+          objective: string | null
+          priority: number
+          result: Json | null
+          status: string
+          timeout_seconds: number
+          type: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "growth_tasks"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      growth_consume_approval: {
+        Args: { _action: string; _company_id: string; _payload_hash: string }
+        Returns: string
+      }
+      growth_decide_approval: {
+        Args: { _approve: boolean; _reason?: string; _request_id: string }
+        Returns: string
+      }
+      growth_decide_recommendation: {
+        Args: { _approve: boolean; _id: string; _reason?: string }
+        Returns: string
+      }
+      growth_enqueue_task: {
+        Args: {
+          _agent_id: string
+          _budget_usd?: number
+          _idempotency_key: string
+          _input: Json
+          _objective: string
+          _priority?: number
+          _type: string
+        }
+        Returns: string
+      }
+      growth_executable: {
+        Args: { _agent_id: string; _type: string }
+        Returns: boolean
+      }
+      growth_finish_task: {
+        Args: {
+          _error?: string
+          _result: Json
+          _status: string
+          _task_id: string
+          _worker: string
+        }
+        Returns: boolean
+      }
+      growth_is_system_admin: { Args: { _user_id: string }; Returns: boolean }
+      growth_mark_recommendation_implemented: {
+        Args: { _id: string; _implemented_on: string }
+        Returns: string
+      }
+      growth_request_analytics_connection: {
+        Args: { _ga4_property_id: string; _gsc_site_url: string }
+        Returns: string
+      }
+      growth_reserve_budget: {
+        Args: { _company_id: string; _usd: number }
+        Returns: boolean
+      }
+      growth_set_analytics_connection_status: {
+        Args: { _company_id: string; _status: string }
+        Returns: string
+      }
+      growth_set_budget: {
+        Args: { _daily_usd: number; _task_usd: number }
+        Returns: undefined
+      }
+      growth_settle_budget: {
+        Args: { _actual: number; _company_id: string; _reserved: number }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
