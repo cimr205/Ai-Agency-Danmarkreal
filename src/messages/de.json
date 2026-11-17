@@ -165,9 +165,22 @@
     "rememberMe": "Angemeldet bleiben"
   },
   "cookie": {
-    "message": "Wir verwenden Cookies zur Verbesserung Ihrer Erfahrung. Durch Fortfahren akzeptieren Sie unsere Cookie-Nutzung.",
-    "accept": "Akzeptieren",
-    "reject": "Ablehnen"
+    "title": "Cookies auf aiagencydanmark.dk",
+    "message": "Wir verwenden notwendige Cookies, damit Anmeldung und Sicherheit funktionieren. Mit Ihrer Einwilligung nutzen wir außerdem Analyse (Google Analytics 4, Leadfeeder), um Besuche unserer öffentlichen Website zu verstehen. Nichts Optionales läuft, bevor Sie gewählt haben, und nie in Ihrem CRM-Arbeitsbereich. Sie können Ihre Wahl jederzeit ändern oder widerrufen.",
+    "accept": "Alle akzeptieren",
+    "reject": "Alle ablehnen",
+    "save": "Auswahl speichern",
+    "customize": "Anpassen",
+    "hideDetails": "Details ausblenden",
+    "necessary": "Notwendig",
+    "necessaryDesc": "Erforderlich für Anmeldung, Sicherheit und das Speichern dieser Wahl",
+    "analytics": "Analyse",
+    "analyticsDesc": "Google Analytics 4 und Leadfeeder, nur auf öffentlichen Seiten",
+    "marketing": "Marketing",
+    "marketingDesc": "Erlaubt Google, Analysedaten für Werbung zu nutzen (Anzeigenspeicherung und Personalisierung)",
+    "policyHint": "Mehr über Anbieter, Speicherdauer und Ihre Rechte in unserer",
+    "policyLink": "Datenschutzerklärung",
+    "settings": "Cookie-Einstellungen"
   },
   "landing": {
     "features": "Funktionen",

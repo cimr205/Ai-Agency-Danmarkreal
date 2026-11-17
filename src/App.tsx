@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { applyGA4RoutePolicy, redactAnalyticsUrl } from "@/lib/analytics";
 import { I18nProvider, isLocale } from "@/lib/i18n";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
@@ -146,6 +147,8 @@ const CookieConsentWrapper = () => {
   // inside `/app/`, hide it so it doesn't cover the rail, logout menu, or form
   // submit buttons (especially on mobile viewports).
   const location = useLocation();
+  // GA4 must send nothing from private pages (CRM workspace, auth), even if it was loaded on a public page.
+  useEffect(() => { applyGA4RoutePolicy(location.pathname); }, [location.pathname]);
   if (location.pathname.includes('/app/')) return null;
   const loc = location.pathname.split('/')[1];
   const locale = isLocale(loc) ? loc : 'en';
@@ -242,7 +245,7 @@ const App = () => (
         <CurrencyProvider>
           <Toaster />
           <Sonner />
-          <Analytics />
+          <Analytics beforeSend={(event) => ({ ...event, url: redactAnalyticsUrl(event.url) })} />
           <SpeedInsights />
           <BrowserRouter>
             <SeoManager />
