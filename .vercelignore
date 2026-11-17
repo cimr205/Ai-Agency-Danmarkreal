@@ -4,4 +4,8 @@
 /scraper
 /twilio-server
 /docs
-/supabase/functions
+/supabase/functions/*
+# The Growth OS registry is shared by the edge/worker code and the frontend (src/growth-os/registry.ts).
+!/supabase/functions/_shared
+/supabase/functions/_shared/*
+!/supabase/functions/_shared/growth-os

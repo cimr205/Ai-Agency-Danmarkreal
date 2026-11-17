@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Briefcase, FileText, CreditCard,
   Calendar, ClipboardList, Mail, Settings,
   TrendingUp, Clock, LogOut, Target,
-  Megaphone, Bot, Send, Sparkles, Phone, Zap,
+  Megaphone, Bot, Send, Sparkles, Phone, Zap, Rocket,
   UserCheck, CalendarDays, Wallet, UserPlus, Activity, BarChart3, CalendarClock,
   Webhook, BookOpen, Menu, Linkedin,
 } from "lucide-react";
@@ -86,6 +86,7 @@ function useNavData() {
 
   const systemItems: NavItem[] = [
     { title: "Autopilot", url: "autopilot", icon: Zap },
+    { title: t('nav.growthOs'), url: "growth-os", icon: Rocket },
     { title: t('nav.clowdbot'), url: "pa", icon: Bot },
     { title: 'Hjælpecenter', url: "help", icon: BookOpen },
     { title: t('nav.settings'), url: "settings/company", icon: Settings },

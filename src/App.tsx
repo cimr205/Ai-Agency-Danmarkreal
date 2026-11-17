@@ -84,6 +84,7 @@ const AIConnectionPage = lazy(() => import("@/pages/app/settings/AIConnectionPag
 const MetaAdsManagePage = lazy(() => import("@/pages/app/marketing/MetaAdsManagePage"));
 const StudioPage = lazy(() => import("@/pages/app/marketing/StudioPage"));
 const MonitoringPage = lazy(() => import("@/pages/app/MonitoringPage"));
+const GrowthOsPage = lazy(() => import("@/pages/app/growth-os/GrowthOsPage"));
 const HelpCenterPage = lazy(() => import("@/pages/app/HelpCenterPage"));
 const SubscriptionPage = lazy(() => import("@/pages/app/SubscriptionPage"));
 const IndexPage = lazy(() => import("@/pages/Index"));
@@ -335,6 +336,7 @@ const App = () => (
                   <Route path="ai/media" element={<Navigate to="../marketing/studio" replace />} />
                   <Route path="pa" element={<ErrorBoundary><ClowdBotPage /></ErrorBoundary>} />
                   <Route path="autopilot" element={<ErrorBoundary><AutopilotPage /></ErrorBoundary>} />
+                  <Route path="growth-os/*" element={<ErrorBoundary><GrowthOsPage /></ErrorBoundary>} />
                   <Route path="clowdbot" element={<Navigate to="../pa" replace />} />
                   <Route path="email/bulk" element={<ErrorBoundary><BulkEmailPage /></ErrorBoundary>} />
                   <Route path="email/templates" element={<ErrorBoundary><EmailTemplatesPage /></ErrorBoundary>} />

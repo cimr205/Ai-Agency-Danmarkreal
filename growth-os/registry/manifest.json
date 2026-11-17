@@ -1,0 +1,2523 @@
+{
+  "generated_from": "supabase/functions/_shared/growth-os/registry",
+  "agents": [
+    {
+      "agent_id": "global-ceo",
+      "kind": "global_ceo",
+      "department": null,
+      "reports_to": null,
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "ceo-search",
+      "kind": "department_ceo",
+      "department": "search",
+      "reports_to": "global-ceo",
+      "status": "operational",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 2,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "ceo-experience",
+      "kind": "department_ceo",
+      "department": "experience",
+      "reports_to": "global-ceo",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 2,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "ceo-content",
+      "kind": "department_ceo",
+      "department": "content",
+      "reports_to": "global-ceo",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 2,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "ceo-paid",
+      "kind": "department_ceo",
+      "department": "paid",
+      "reports_to": "global-ceo",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 2,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "ceo-growth",
+      "kind": "department_ceo",
+      "department": "growth",
+      "reports_to": "global-ceo",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 2,
+      "allowed_actions": {
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "proposal.create": 1,
+        "experiment.start_controlled": 2,
+        "skill.activate": 2
+      }
+    },
+    {
+      "agent_id": "seo-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "operational",
+      "verifier_id": "seo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "keyword-intent-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "onpage-seo-audit",
+          "version": "1.0.0",
+          "status": "active",
+          "max_level": 0
+        },
+        {
+          "skill_id": "internal-link-optimization",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "search-console-analysis",
+          "version": "1.0.0",
+          "status": "active",
+          "max_level": 1
+        },
+        {
+          "skill_id": "seo-experiment-verification",
+          "version": "1.0.0",
+          "status": "active",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "geo-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "geo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "generative-search-monitoring",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "ai-citation-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "entity-visibility-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "ai-answer-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "geo-experiment-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "aeo-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "aeo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "question-intent-research",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "answer-quality-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "faq-structure-optimization",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "answer-accuracy-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "llmo-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "llmo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "llm-brand-consistency",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "entity-fact-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "model-response-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "citation-grounding-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "aio-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "aio-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "ai-search-experiment-design",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "search-agent-coordination",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "cross-model-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "duplicate-work-detection",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "sxo-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "sxo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "search-journey-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "intent-to-page-matching",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "search-conversion-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "navigation-friction-detection",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "sem-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "sem-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "search-channel-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "paid-organic-coordination",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "search-campaign-economics",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "search-demand-forecasting",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "aso-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "aso-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "app-store-metadata-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "app-keyword-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "store-conversion-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "app-listing-experimentation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "vso-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "vso-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "conversational-query-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "voice-intent-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "spoken-answer-clarity",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "voice-search-relevance-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "lso-agent",
+      "kind": "specialist",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": "lso-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "local-business-data-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "local-search-intent",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "business-profile-consistency",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "local-conversion-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "cro-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "cro-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "conversion-funnel-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "experiment-hypothesis-design",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "ab-test-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "conversion-friction-detection",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "uxo-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "uxo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "usability-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "accessibility-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "interaction-flow-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "user-task-completion-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [
+        "anthropic/webapp-testing",
+        "tool/axe-core"
+      ],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "lpo-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "lpo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "landing-page-message-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "landing-page-experimentation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "lead-form-friction-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "offer-clarity-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "tseo-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "tseo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "crawlability-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "indexing-diagnostics",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "metadata-schema-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "canonical-and-sitemap-checks",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "wpo-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "wpo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "lighthouse-performance-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "core-web-vitals-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "render-performance-optimization",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "bundle-and-resource-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [
+        "vercel/react-best-practices"
+      ],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "mseo-agent",
+      "kind": "specialist",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": "mseo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "mobile-search-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "responsive-interface-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "mobile-page-performance",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "mobile-navigation-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [
+        "anthropic/webapp-testing"
+      ],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "smo-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "smo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "social-profile-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "organic-social-optimization",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "channel-content-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "social-conversion-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "smm-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "smm-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "campaign-planning",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "audience-message-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "publishing-workflow-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "social-campaign-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "vmo-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "vmo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "video-marketing-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "video-retention-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "creative-hypothesis-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "video-to-lead-attribution",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "vseo-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "vseo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "video-metadata-optimization",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "video-search-intent",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "caption-and-transcript-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "video-discovery-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "cmo-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "cmo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "content-gap-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "editorial-quality-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "content-distribution-planning",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "content-business-impact-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "emo-agent",
+      "kind": "specialist",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": "emo-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "email-segmentation-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "deliverability-diagnostics",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "email-conversion-experiments",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "email-content-quality-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "ppc-agent",
+      "kind": "specialist",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": "ppc-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "paid-search-campaign-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "keyword-and-negative-keyword-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "bid-strategy-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "paid-conversion-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "roas-agent",
+      "kind": "specialist",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": "roas-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "ad-revenue-attribution",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "campaign-return-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "profit-adjusted-roas",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "attribution-uncertainty-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "cpa-agent",
+      "kind": "specialist",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": "cpa-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "acquisition-event-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "cost-per-acquisition-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "conversion-quality-assessment",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "acquisition-efficiency-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "cpl-agent",
+      "kind": "specialist",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": "cpl-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "lead-cost-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "lead-quality-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "channel-lead-comparison",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "lead-to-customer-conversion-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "cac-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "cac-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "customer-acquisition-cost-modeling",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "sales-cost-allocation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "payback-period-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "acquisition-unit-economics",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "ltv-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "ltv-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "customer-cohort-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "gross-margin-ltv-modeling",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "retention-scenario-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "customer-value-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "rro-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "rro-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "recurring-revenue-retention",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "churn-driver-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "expansion-opportunity-review",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "cohort-retention-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "abm-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "abm-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "target-account-selection",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "account-research",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "buyer-committee-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "account-engagement-measurement",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "funnel-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "funnel-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "funnel-event-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "stage-conversion-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "journey-dropoff-detection",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "funnel-experiment-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "activation-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "activation-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "onboarding-completion-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "time-to-value-measurement",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "activation-experiment-design",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "product-adoption-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "retention-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "retention-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "retention-cohort-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "churn-risk-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "customer-feedback-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "retention-intervention-testing",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "pricing-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "pricing-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "pricing-hypothesis-design",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "package-comparison",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "willingness-to-pay-research",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "pricing-margin-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "attribution-agent",
+      "kind": "specialist",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": "attribution-agent-verifier",
+      "skills": [
+        {
+          "skill_id": "event-tracking-quality-audit",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "source-attribution-analysis",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "analytics-consistency-check",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "experiment-measurement-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "draft.create": 1,
+        "proposal.create": 1,
+        "learning.record": 1,
+        "skill.candidate.create": 1
+      }
+    },
+    {
+      "agent_id": "seo-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "operational",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "seo-experiment-verification",
+          "version": "1.0.0",
+          "status": "active",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "geo-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "ai-answer-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "geo-experiment-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "aeo-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "answer-accuracy-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "llmo-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "entity-fact-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "aio-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "cross-model-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "sxo-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "sem-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "aso-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "vso-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "lso-agent-verifier",
+      "kind": "verifier",
+      "department": "search",
+      "reports_to": "ceo-search",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "cro-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "ab-test-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "uxo-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "accessibility-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "lpo-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "tseo-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "metadata-schema-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "wpo-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "mseo-agent-verifier",
+      "kind": "verifier",
+      "department": "experience",
+      "reports_to": "ceo-experience",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "responsive-interface-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "smo-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "smm-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "social-campaign-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "vmo-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "vseo-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "cmo-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "emo-agent-verifier",
+      "kind": "verifier",
+      "department": "content",
+      "reports_to": "ceo-content",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "ppc-agent-verifier",
+      "kind": "verifier",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "paid-conversion-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "roas-agent-verifier",
+      "kind": "verifier",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "cpa-agent-verifier",
+      "kind": "verifier",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "acquisition-event-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "cpl-agent-verifier",
+      "kind": "verifier",
+      "department": "paid",
+      "reports_to": "ceo-paid",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "lead-quality-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "cac-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "ltv-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "customer-value-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "rro-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "cohort-retention-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "abm-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "funnel-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "funnel-event-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        },
+        {
+          "skill_id": "funnel-experiment-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "activation-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "product-adoption-verification",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "retention-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "churn-risk-evaluation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "pricing-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    },
+    {
+      "agent_id": "attribution-agent-verifier",
+      "kind": "verifier",
+      "department": "growth",
+      "reports_to": "ceo-growth",
+      "status": "registered",
+      "verifier_id": null,
+      "skills": [
+        {
+          "skill_id": "experiment-measurement-validation",
+          "version": "0.1.0",
+          "status": "draft",
+          "max_level": 0
+        }
+      ],
+      "external_skills": [],
+      "max_autonomous_level": 1,
+      "allowed_actions": {
+        "read.public_url": 0,
+        "read.tenant_data": 0,
+        "analyze": 0,
+        "report.create": 0,
+        "eval.run_isolated": 1
+      }
+    }
+  ]
+}
