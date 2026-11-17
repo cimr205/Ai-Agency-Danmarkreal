@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { openCookieSettings } from '@/lib/consent';
 import logo from '@/assets/logo.png';
 import { useI18n, isLocale } from '@/lib/i18n';
 import { ArrowUpRight } from 'lucide-react';
@@ -87,6 +88,11 @@ export function Footer() {
                 <Link to={`/${locale}/privacy`} className="hover:text-foreground transition-colors">
                   {isDa ? 'Privatlivspolitik' : 'Privacy'}
                 </Link>
+              </li>
+              <li>
+                <button type="button" onClick={openCookieSettings} className="hover:text-foreground transition-colors">
+                  {t('cookie.settings')}
+                </button>
               </li>
               <li>
                 <Link to={`/${locale}/terms`} className="hover:text-foreground transition-colors">

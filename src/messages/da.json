@@ -165,9 +165,22 @@
     "rememberMe": "Husk mig"
   },
   "cookie": {
-    "message": "Vi bruger cookies og lokal lagring for at forbedre din oplevelse. Ved at fortsætte accepterer du vores brug af cookies.",
-    "accept": "Accepter",
-    "reject": "Afvis"
+    "title": "Cookies på aiagencydanmark.dk",
+    "message": "Vi bruger nødvendige cookies, så login og sikkerhed virker. Med dit samtykke bruger vi også analyse (Google Analytics 4, Leadfeeder) til at forstå besøg på vores offentlige website. Intet valgfrit kører, før du har valgt, og aldrig inde i dit CRM-arbejdsområde. Du kan ændre eller trække dit valg tilbage når som helst.",
+    "accept": "Accepter alle",
+    "reject": "Afvis alle",
+    "save": "Gem valg",
+    "customize": "Tilpas",
+    "hideDetails": "Skjul detaljer",
+    "necessary": "Nødvendige",
+    "necessaryDesc": "Kræves for login, sikkerhed og for at huske dette valg",
+    "analytics": "Analyse",
+    "analyticsDesc": "Google Analytics 4 og Leadfeeder, kun på offentlige sider",
+    "marketing": "Marketing",
+    "marketingDesc": "Lader Google bruge analysedata til annoncering (annoncelagring og personalisering)",
+    "policyHint": "Læs mere om leverandører, opbevaring og dine rettigheder i vores",
+    "policyLink": "privatlivspolitik",
+    "settings": "Cookieindstillinger"
   },
   "landing": {
     "features": "Funktioner",
