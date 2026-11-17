@@ -370,7 +370,8 @@
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
     "linkedinOutreach": "LinkedIn Outreach",
-    "workflowStudio": "Workflow Studio"
+    "workflowStudio": "Workflow Studio",
+    "growthOs": "Growth OS"
   },
   "workforce": {
     "dashboardTitle": "Bemandingsoverblik",
@@ -3272,5 +3273,316 @@
     "editorTab": "Editor",
     "generateTab": "AI-generering",
     "pageDescription": "Redigér og generér video- og billedindhold uden at forlade platformen."
+  },
+  "growthOs": {
+    "subtitle": "35 specialister, uafhængig verificering og kontrolleret læring. Status kommer kun fra gemte data.",
+    "empty": "Intet registreret endnu.",
+    "notInstalled": "Growth OS-tabellerne er ikke installeret i dette miljø endnu (migration 20261114120000 er ikke kørt).",
+    "notBuiltTitle": "Ikke implementeret endnu",
+    "notBuiltBody": "Dette område er planlagt til fase {phase}. Intet her er simuleret.",
+    "score": "Score",
+    "noModel": "ingen model",
+    "nav": {
+      "commandCenter": "Command Center",
+      "globalCeo": "Global CEO",
+      "departments": "Afdelinger",
+      "allAgents": "Alle agenter",
+      "liveActivity": "Live-aktivitet",
+      "skillLibrary": "Skill-bibliotek",
+      "learningCenter": "Læringscenter",
+      "experiments": "Eksperimenter",
+      "analytics": "Analyse",
+      "approvals": "Godkendelser",
+      "budgetUsage": "Budget og forbrug",
+      "auditLog": "Auditlog",
+      "settings": "Indstillinger"
+    },
+    "runSeo": {
+      "title": "Kør SEO-specialisten",
+      "description": "Skrivebeskyttet audit af én offentlig side (niveau 0). Verifikatoren henter siden igen og genberegner resultatet.",
+      "objective": "On-page SEO-audit",
+      "run": "Kør audit",
+      "running": "Kører…",
+      "workerTimeout": "Lagt i kø, men ingen worker tog den inden for 3 minutter. Tjek at Growth OS-tjenesten på Railway kører."
+    },
+    "cc": {
+      "active": "Aktive sessioner",
+      "queued": "i kø",
+      "failed": "Fejlede opgaver",
+      "pendingApprovals": "Afventende godkendelser",
+      "spend30": "OpenRouter-forbrug (30 dage)",
+      "costUnknownPart": "Nogle kald har ingen rapporteret pris",
+      "today": "I dag",
+      "health": "Systemets sundhed",
+      "operationalAgents": "Operationelle specialister",
+      "activeSkills": "Aktive skill-versioner",
+      "verifiedResults": "Verificerede resultater",
+      "learningProposals": "Forbedringsforslag",
+      "kpis": "Kommercielle KPI'er",
+      "kpisMissing": "Ikke forbundet (ingen analysekilde)",
+      "latestVerified": "Seneste verificerede resultater"
+    },
+    "ceo": {
+      "escalations": "Afdelings-CEO'ernes beslutninger"
+    },
+    "col": {
+      "ceo": "CEO",
+      "decision": "Beslutning",
+      "priority": "Prioritet",
+      "reasons": "Begrundelse",
+      "when": "Hvornår",
+      "agent": "Agent",
+      "department": "Afdeling",
+      "kpi": "Primær KPI",
+      "status": "Status",
+      "objective": "Mål",
+      "skill": "Skill",
+      "version": "Version",
+      "commit": "Låst commit",
+      "license": "Licens",
+      "model": "Model",
+      "calls": "Kald",
+      "tokens": "Tokens",
+      "cost": "Pris",
+      "errors": "Fejl",
+      "actor": "Aktør",
+      "event": "Hændelse",
+      "subject": "Emne"
+    },
+    "dept": {
+      "specialists": "Specialister",
+      "operational": "operationelle"
+    },
+    "agents": {
+      "title": "Alle 35 specialister",
+      "all": "Alle",
+      "supplementary": "supplerende område"
+    },
+    "detail": {
+      "responsibility": "Ansvar",
+      "policy": "Politik",
+      "budgetTask": "Budget pr. opgave",
+      "budgetDay": "Budget pr. dag",
+      "modelExecute": "Modelklasse (udførelse)",
+      "maxLevel": "Højeste autonome niveau",
+      "evaluationScore": "Evalueringsscore",
+      "notMeasured": "ikke målt endnu",
+      "dataSources": "Datakilder",
+      "allowedActions": "Tilladte handlinger",
+      "registeredOnly": "Kun profil og skill-kontrakter; agenten har endnu ingen udfører.",
+      "settingsInCode": "Agentprofiler er versioneret i koden (supabase/functions/_shared/growth-os/registry) og ændres kun gennem et gennemgået commit."
+    },
+    "tab": {
+      "overview": "Overblik",
+      "tasks": "Opgaver",
+      "subagent": "Subagent",
+      "skills": "Skills",
+      "memory": "Hukommelse",
+      "learning": "Læring",
+      "evaluations": "Evalueringer",
+      "performance": "Performance",
+      "activity": "Aktivitetslog",
+      "approvals": "Godkendelser",
+      "settings": "Indstillinger"
+    },
+    "skills": {
+      "project": "Projektets skills",
+      "projectHint": "Kontrakter for alle 35 specialister. Kladde = kun interface, ingen udfører.",
+      "search": "Søg i skills eller agenter",
+      "external": "Eksterne GitHub-skills og værktøjer",
+      "externalHint": "Verificeret og låst til et commit. Behandles som data; de kan aldrig tilsidesætte politik eller godkendelser."
+    },
+    "learning": {
+      "phase2": "Læringsposter gemmes efter hver opgave. Kandidat-skillversioner, evalueringskørsler, sammenligning og rollback kommer i fase 2; ingen forbedring vises, før den er målt.",
+      "proposed": "Foreslået ændring"
+    },
+    "approvals": {
+      "approve": "Godkend",
+      "reject": "Afvis",
+      "rules": "Hver godkendelse er bundet til præcis det indhold, der godkendes (SHA-256). Et ændret indhold eller en afvist anmodning kan aldrig udføres; niveau 3 kræver en ejer eller virksomhedsadministrator."
+    },
+    "budget": {
+      "today": "Brugt i dag",
+      "limit": "Grænse",
+      "default": "standard",
+      "perTask": "Grænse pr. opgave",
+      "calls30": "Modelkald (30 dage)",
+      "byModel": "Forbrug pr. model",
+      "byModelHint": "Prisen er OpenRouters rapporterede usage.cost; kald uden den tælles som ukendte.",
+      "unknown": "ukendt"
+    },
+    "settings": {
+      "budget": "Growth OS-budget",
+      "budgetHint": "Håndhæves på serveren før hvert modelkald. Maks. 1 USD pr. dag i fase 1.",
+      "daily": "USD pr. dag",
+      "task": "USD pr. opgave",
+      "save": "Gem",
+      "saved": "Gemt."
+    },
+    "activity": {
+      "hint": "Hver hændelse er en gemt række med reference til opgaven; opdateres hvert 15. sekund."
+    },
+    "outcome": {
+      "new_learning": "Ny læring",
+      "method_confirmed": "Metode bekræftet",
+      "problem_documented": "Problem dokumenteret",
+      "improvement_proposed": "Forbedring foreslået"
+    },
+    "status": {
+      "ok": "OK",
+      "completed": "Fuldført",
+      "verified": "Verificeret",
+      "approved": "Godkendt",
+      "operational": "Operationel",
+      "registered": "Kun registreret",
+      "active": "Aktiv",
+      "draft": "Kun kontrakt",
+      "deprecated": "Udfaset",
+      "accept": "Accepteret",
+      "consumed": "Udført",
+      "failed": "Fejlet",
+      "discrepancy": "Uoverensstemmelse",
+      "rejected": "Afvist",
+      "dead": "Stoppet",
+      "error": "Fejl",
+      "invalid_output": "Ugyldigt output",
+      "reject": "Afvist",
+      "blocked": "Blokeret",
+      "inconclusive": "Ikke afgjort",
+      "pending": "Afventer",
+      "needs_human": "Kræver et menneske",
+      "refused_budget": "Afvist: budget",
+      "rerun": "Kør igen",
+      "queued": "I kø",
+      "leased": "Kører",
+      "cancelled": "Annulleret",
+      "expired": "Udløbet",
+      "skipped": "Sprunget over",
+      "cache_hit": "Cache",
+      "unknown": "Ukendt",
+      "not_evaluated": "ikke evalueret",
+      "evaluating": "evalueres",
+      "passed": "bestået",
+      "approved-reference": "Godkendt (reference)",
+      "approved-tool": "Godkendt værktøj",
+      "not-adopted": "Ikke taget i brug"
+    },
+    "analytics": {
+      "title": "Analyse",
+      "subtitle": "GA4- og Search Console-data for dit offentlige website, synkroniseret på serveren.",
+      "period": "Seneste 28 dage {from} – {to}, sammenlignet med {prevFrom} – {prevTo}.",
+      "vsPrevious": "ift. forrige 28 dage",
+      "noBaseline": "Ingen forrige periode at sammenligne med",
+      "notInstalledHint": "Kør Growth OS-migrationerne for at se analyse.",
+      "notConnected": "Ikke forbundet",
+      "notConnectedGa4": "Ingen aktiv GA4-forbindelse. Anmod om en nedenfor; tallene vises efter første synkronisering. Intet bliver anslået i mellemtiden.",
+      "notConnectedGsc": "Ingen aktiv Search Console-forbindelse. Anmod om en nedenfor; tallene vises efter første synkronisering.",
+      "noData": "Ingen data endnu",
+      "noDataBody": "Forbindelsen er aktiv, men der er endnu ikke synkroniseret data for perioden. Første synkronisering kører inden for en time.",
+      "chartTitle": "Daglig udvikling",
+      "chartNote": "GA4-sessioner og Search Console-klik er forskellige målinger og vises som separate linjer.",
+      "channels": "Trafikkilder (GA4-sessioner)",
+      "landingPages": "Landingssider (GA4)",
+      "topQueries": "Top-søgninger (Search Console)",
+      "topPages": "Top-sider (Search Console)",
+      "anonymisedNote": "Search Console skjuler anonymiserede søgninger, så rækkerne summerer ikke til totalerne.",
+      "gscNote": "Search Console-data er 2–3 dage forsinket. Periode: {from} – {to}.",
+      "kpi": {
+        "organicSessions": "Organiske sessioner",
+        "sessions": "Alle sessioner",
+        "keyEvents": "Key events (konverteringer)",
+        "organicKeyEvents": "{n} fra organisk søgning",
+        "engagement": "Engagementsrate",
+        "avgDailyUsers": "{n} aktive brugere pr. dag i gennemsnit",
+        "gscClicks": "Organiske klik",
+        "impressions": "Eksponeringer",
+        "ctr": "CTR",
+        "position": "Gns. placering"
+      },
+      "col": {
+        "channel": "Kanal",
+        "sessions": "Sessioner",
+        "organic": "Organisk",
+        "keyEvents": "Key events",
+        "page": "Side",
+        "query": "Søgning"
+      },
+      "tabs": {
+        "overview": "Overblik",
+        "seo": "SEO-performance",
+        "recs": "AI-anbefalinger",
+        "impact": "Forretningseffekt"
+      },
+      "connection": {
+        "title": "Forbind Google Analytics og Search Console",
+        "description": "Growth OS læser dine data med en Google-servicekonto, der kun kan læse. Dine Google-loginoplysninger gemmes aldrig her.",
+        "ga4Label": "GA4-ejendoms-ID (cifre)",
+        "gscLabel": "Search Console-site",
+        "request": "Anmod om forbindelse",
+        "adminOnly": "Kun ejeren eller en virksomhedsadministrator kan forbinde analyse.",
+        "howTo": "1) I GA4 (Admin → Ejendomsadgang) og i Search Console (Indstillinger → Brugere): tilføj ai-agency-danmark@ai-agency-472312.iam.gserviceaccount.com som Seer / Begrænset. 2) Indtast ejendoms-ID og site her. 3) En platformadministrator aktiverer forbindelsen efter at have tjekket, at ejendommen er jeres.",
+        "lastSync": "Seneste synkronisering {at}",
+        "pendingTitle": "Forbindelser der venter på aktivering",
+        "pendingHint": "Tjek at ejendommen tilhører arbejdsområdet, før du aktiverer.",
+        "activate": "Aktivér",
+        "status": {
+          "pending": "Venter på aktivering",
+          "active": "Aktiv",
+          "no_access": "Ingen Google-adgang",
+          "error": "Synkroniseringsfejl",
+          "disabled": "Slået fra"
+        }
+      },
+      "recs": {
+        "hint": "Forslag fra SEO-agenten, kun baseret på synkroniserede data. Intet ændres på dit website, før en person implementerer det.",
+        "run": "Find muligheder nu",
+        "queued": "Sat i kø – resultater om få minutter",
+        "objective": "Find SEO-muligheder i Search Console og GA4",
+        "none": "Ingen anbefalinger endnu",
+        "noneActive": "Kør analysen, eller vent på flere data: forslag kræver nok eksponeringer og trafik til at være meningsfulde.",
+        "problem": "Problem",
+        "basis": "Data",
+        "action": "Anbefalet handling",
+        "effect": "Forventet effekt",
+        "outcome": "Målt efter 28 dage",
+        "correlation": "Sammenhæng, ikke bevis for årsag.",
+        "approve": "Godkend",
+        "reject": "Afvis",
+        "markDone": "Markér som implementeret i dag",
+        "priority1": "Høj prioritet",
+        "priority2": "Mellem prioritet",
+        "priority3": "Lav prioritet",
+        "kind": {
+          "ctr_gap": "Lav CTR",
+          "traffic_drop": "Trafikfald",
+          "no_key_events": "Ingen konverteringer",
+          "striking_distance": "Tæt på side 1"
+        },
+        "status": {
+          "proposed": "Foreslået",
+          "approved": "Godkendt",
+          "rejected": "Afvist",
+          "implemented": "Implementeret",
+          "measured": "Målt"
+        },
+        "source": {
+          "search_console": "Search Console",
+          "ga4": "GA4"
+        }
+      },
+      "impact": {
+        "organicLeads": "Leads fra organisk søgning",
+        "ofLeads": "af {n} leads i perioden",
+        "conversion": "Lead → kunde",
+        "converted": "{n} blev kunder",
+        "payingOrganic": "Betalende kunder fra organisk",
+        "ofPaying": "af {n} betalende kunder",
+        "revenue": "Tilskrevet omsætning",
+        "revenueNote": "Betalte fakturaer fra kunder, hvis kilde er organisk søgning. Vises kun, når kilder er registreret.",
+        "untrackedTitle": "{n} af {total} leads har ingen kilde",
+        "untrackedBody": "Leads uden kilde kan ikke tilskrives SEO og tælles derfor ikke som organiske. Angiv kilden på nye leads for at måle det.",
+        "none": "Ingen CRM-data for perioden."
+      }
+    }
   }
 }

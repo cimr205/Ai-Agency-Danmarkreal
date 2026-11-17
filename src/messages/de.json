@@ -370,7 +370,8 @@
     "hrDashboard": "HR-Dashboard",
     "controlRoomDashboard": "Kontrollraum-Dashboard",
     "linkedinOutreach": "LinkedIn-Outreach",
-    "workflowStudio": "Workflow-Studio"
+    "workflowStudio": "Workflow-Studio",
+    "growthOs": "Growth OS"
   },
   "workforce": {
     "dashboardTitle": "Personalübersicht",
@@ -3272,5 +3273,316 @@
     "editorTab": "Editor",
     "generateTab": "KI-Generierung",
     "pageDescription": "Bearbeite und erstelle Video- und Bildinhalte, ohne die Plattform zu verlassen."
+  },
+  "growthOs": {
+    "subtitle": "35 Spezialisten, unabhängige Prüfung und kontrolliertes Lernen. Der Status stammt nur aus gespeicherten Daten.",
+    "empty": "Noch nichts erfasst.",
+    "notInstalled": "Die Growth-OS-Tabellen sind in dieser Umgebung noch nicht installiert (Migration 20261114120000 wurde nicht ausgeführt).",
+    "notBuiltTitle": "Noch nicht implementiert",
+    "notBuiltBody": "Dieser Bereich ist für Phase {phase} geplant. Hier wird nichts simuliert.",
+    "score": "Score",
+    "noModel": "kein Modell",
+    "nav": {
+      "commandCenter": "Command Center",
+      "globalCeo": "Global CEO",
+      "departments": "Abteilungen",
+      "allAgents": "Alle Agenten",
+      "liveActivity": "Live-Aktivität",
+      "skillLibrary": "Skill-Bibliothek",
+      "learningCenter": "Lernzentrum",
+      "experiments": "Experimente",
+      "analytics": "Analyse",
+      "approvals": "Freigaben",
+      "budgetUsage": "Budget & Nutzung",
+      "auditLog": "Audit-Log",
+      "settings": "Einstellungen"
+    },
+    "runSeo": {
+      "title": "SEO-Spezialist ausführen",
+      "description": "Nur lesender Audit einer öffentlichen Seite (Stufe 0). Der Prüfer lädt erneut und berechnet neu.",
+      "objective": "On-Page-SEO-Audit",
+      "run": "Audit starten",
+      "running": "Läuft…",
+      "workerTimeout": "In der Warteschlange, aber kein Worker hat sie innerhalb von 3 Minuten übernommen. Prüfen Sie, ob der Growth-OS-Dienst auf Railway läuft."
+    },
+    "cc": {
+      "active": "Aktive Sitzungen",
+      "queued": "in der Warteschlange",
+      "failed": "Fehlgeschlagene Aufgaben",
+      "pendingApprovals": "Offene Freigaben",
+      "spend30": "OpenRouter-Kosten (30 Tage)",
+      "costUnknownPart": "Einige Aufrufe ohne gemeldete Kosten",
+      "today": "Heute",
+      "health": "Systemzustand",
+      "operationalAgents": "Einsatzbereite Spezialisten",
+      "activeSkills": "Aktive Skill-Versionen",
+      "verifiedResults": "Geprüfte Ergebnisse",
+      "learningProposals": "Verbesserungsvorschläge",
+      "kpis": "Kommerzielle KPIs",
+      "kpisMissing": "Nicht verbunden (keine Analysequelle)",
+      "latestVerified": "Neueste geprüfte Ergebnisse"
+    },
+    "ceo": {
+      "escalations": "Entscheidungen der Abteilungs-CEOs"
+    },
+    "col": {
+      "ceo": "CEO",
+      "decision": "Entscheidung",
+      "priority": "Priorität",
+      "reasons": "Gründe",
+      "when": "Wann",
+      "agent": "Agent",
+      "department": "Abteilung",
+      "kpi": "Primärer KPI",
+      "status": "Status",
+      "objective": "Ziel",
+      "skill": "Skill",
+      "version": "Version",
+      "commit": "Fixierter Commit",
+      "license": "Lizenz",
+      "model": "Modell",
+      "calls": "Aufrufe",
+      "tokens": "Tokens",
+      "cost": "Kosten",
+      "errors": "Fehler",
+      "actor": "Akteur",
+      "event": "Ereignis",
+      "subject": "Objekt"
+    },
+    "dept": {
+      "specialists": "Spezialisten",
+      "operational": "einsatzbereit"
+    },
+    "agents": {
+      "title": "Alle 35 Spezialisten",
+      "all": "Alle",
+      "supplementary": "ergänzender Bereich"
+    },
+    "detail": {
+      "responsibility": "Verantwortung",
+      "policy": "Richtlinie",
+      "budgetTask": "Budget pro Aufgabe",
+      "budgetDay": "Budget pro Tag",
+      "modelExecute": "Modellklasse (Ausführung)",
+      "maxLevel": "Höchste autonome Stufe",
+      "evaluationScore": "Bewertung",
+      "notMeasured": "noch nicht gemessen",
+      "dataSources": "Datenquellen",
+      "allowedActions": "Erlaubte Aktionen",
+      "registeredOnly": "Nur Profil und Skill-Verträge; dieser Agent hat noch keine Ausführung.",
+      "settingsInCode": "Agentenprofile sind im Code versioniert (supabase/functions/_shared/growth-os/registry) und ändern sich nur durch einen geprüften Commit."
+    },
+    "tab": {
+      "overview": "Übersicht",
+      "tasks": "Aufgaben",
+      "subagent": "Subagent",
+      "skills": "Skills",
+      "memory": "Gedächtnis",
+      "learning": "Lernen",
+      "evaluations": "Bewertungen",
+      "performance": "Leistung",
+      "activity": "Aktivitätsprotokoll",
+      "approvals": "Freigaben",
+      "settings": "Einstellungen"
+    },
+    "skills": {
+      "project": "Projekt-Skills",
+      "projectHint": "Verträge für alle 35 Spezialisten. Entwurf = nur Schnittstelle, keine Ausführung.",
+      "search": "Skills oder Agenten suchen",
+      "external": "Externe GitHub-Skills und Tools",
+      "externalHint": "Geprüft und auf einen Commit fixiert. Werden als Daten behandelt und setzen nie Richtlinien oder Freigaben außer Kraft."
+    },
+    "learning": {
+      "phase2": "Lerneinträge werden nach jeder Aufgabe gespeichert. Kandidaten-Versionen, Bewertungsläufe, Vergleich und Rollback folgen in Phase 2; keine Verbesserung wird vor ihrer Messung angezeigt.",
+      "proposed": "Vorgeschlagene Änderung"
+    },
+    "approvals": {
+      "approve": "Freigeben",
+      "reject": "Ablehnen",
+      "rules": "Jede Freigabe ist an den exakten Inhalt gebunden (SHA-256). Geänderte Inhalte oder abgelehnte Anfragen werden nie ausgeführt; Stufe 3 erfordert Inhaber oder Firmenadmin."
+    },
+    "budget": {
+      "today": "Heute ausgegeben",
+      "limit": "Limit",
+      "default": "Standard",
+      "perTask": "Limit pro Aufgabe",
+      "calls30": "Modellaufrufe (30 Tage)",
+      "byModel": "Nutzung nach Modell",
+      "byModelHint": "Kosten sind das von OpenRouter gemeldete usage.cost; Aufrufe ohne diesen Wert zählen als unbekannt.",
+      "unknown": "unbekannt"
+    },
+    "settings": {
+      "budget": "Growth-OS-Budget",
+      "budgetHint": "Wird vor jedem Modellaufruf auf dem Server durchgesetzt. Max. 1 USD pro Tag in Phase 1.",
+      "daily": "USD pro Tag",
+      "task": "USD pro Aufgabe",
+      "save": "Speichern",
+      "saved": "Gespeichert."
+    },
+    "activity": {
+      "hint": "Jedes Ereignis ist eine gespeicherte Zeile mit Aufgabenbezug; Aktualisierung alle 15 Sekunden."
+    },
+    "outcome": {
+      "new_learning": "Neue Erkenntnis",
+      "method_confirmed": "Methode bestätigt",
+      "problem_documented": "Problem dokumentiert",
+      "improvement_proposed": "Verbesserung vorgeschlagen"
+    },
+    "status": {
+      "ok": "OK",
+      "completed": "Abgeschlossen",
+      "verified": "Geprüft",
+      "approved": "Freigegeben",
+      "operational": "Einsatzbereit",
+      "registered": "Nur registriert",
+      "active": "Aktiv",
+      "draft": "Nur Vertrag",
+      "deprecated": "Veraltet",
+      "accept": "Akzeptiert",
+      "consumed": "Ausgeführt",
+      "failed": "Fehlgeschlagen",
+      "discrepancy": "Abweichung",
+      "rejected": "Abgelehnt",
+      "dead": "Gestoppt",
+      "error": "Fehler",
+      "invalid_output": "Ungültige Ausgabe",
+      "reject": "Abgelehnt",
+      "blocked": "Blockiert",
+      "inconclusive": "Nicht eindeutig",
+      "pending": "Ausstehend",
+      "needs_human": "Mensch nötig",
+      "refused_budget": "Abgelehnt: Budget",
+      "rerun": "Erneut ausführen",
+      "queued": "Wartend",
+      "leased": "Läuft",
+      "cancelled": "Abgebrochen",
+      "expired": "Abgelaufen",
+      "skipped": "Übersprungen",
+      "cache_hit": "Cache",
+      "unknown": "Unbekannt",
+      "not_evaluated": "nicht bewertet",
+      "evaluating": "wird bewertet",
+      "passed": "bestanden",
+      "approved-reference": "Freigegeben (Referenz)",
+      "approved-tool": "Freigegebenes Tool",
+      "not-adopted": "Nicht übernommen"
+    },
+    "analytics": {
+      "title": "Analyse",
+      "subtitle": "GA4- und Search-Console-Daten Ihrer öffentlichen Website, serverseitig synchronisiert.",
+      "period": "Letzte 28 Tage {from} – {to}, verglichen mit {prevFrom} – {prevTo}.",
+      "vsPrevious": "ggü. vorherigen 28 Tagen",
+      "noBaseline": "Kein Vorzeitraum zum Vergleich",
+      "notInstalledHint": "Wenden Sie die Growth-OS-Migrationen an, um Analysen zu sehen.",
+      "notConnected": "Nicht verbunden",
+      "notConnectedGa4": "Keine aktive GA4-Verbindung. Fordern Sie unten eine an; Zahlen erscheinen nach der ersten Synchronisierung. Bis dahin wird nichts geschätzt.",
+      "notConnectedGsc": "Keine aktive Search-Console-Verbindung. Fordern Sie unten eine an; Zahlen erscheinen nach der ersten Synchronisierung.",
+      "noData": "Noch keine Daten",
+      "noDataBody": "Die Verbindung ist aktiv, aber für diesen Zeitraum wurde noch nichts synchronisiert. Die erste Synchronisierung läuft innerhalb einer Stunde.",
+      "chartTitle": "Täglicher Verlauf",
+      "chartNote": "GA4-Sitzungen und Search-Console-Klicks sind unterschiedliche Messungen und werden als getrennte Linien gezeigt.",
+      "channels": "Traffic-Quellen (GA4-Sitzungen)",
+      "landingPages": "Landingpages (GA4)",
+      "topQueries": "Top-Suchanfragen (Search Console)",
+      "topPages": "Top-Seiten (Search Console)",
+      "anonymisedNote": "Search Console blendet anonymisierte Anfragen aus, daher ergeben die Zeilen nicht die Summen.",
+      "gscNote": "Search-Console-Daten sind 2–3 Tage verzögert. Zeitraum: {from} – {to}.",
+      "kpi": {
+        "organicSessions": "Organische Sitzungen",
+        "sessions": "Alle Sitzungen",
+        "keyEvents": "Key Events (Conversions)",
+        "organicKeyEvents": "{n} aus organischer Suche",
+        "engagement": "Engagement-Rate",
+        "avgDailyUsers": "Durchschnittlich {n} aktive Nutzer pro Tag",
+        "gscClicks": "Organische Klicks",
+        "impressions": "Impressionen",
+        "ctr": "CTR",
+        "position": "Ø Position"
+      },
+      "col": {
+        "channel": "Kanal",
+        "sessions": "Sitzungen",
+        "organic": "Organisch",
+        "keyEvents": "Key Events",
+        "page": "Seite",
+        "query": "Suchanfrage"
+      },
+      "tabs": {
+        "overview": "Übersicht",
+        "seo": "SEO-Performance",
+        "recs": "KI-Empfehlungen",
+        "impact": "Geschäftswirkung"
+      },
+      "connection": {
+        "title": "Google Analytics und Search Console verbinden",
+        "description": "Growth OS liest Ihre Daten mit einem Google-Dienstkonto mit reinen Leserechten. Ihre Google-Zugangsdaten werden hier nie gespeichert.",
+        "ga4Label": "GA4-Property-ID (Ziffern)",
+        "gscLabel": "Search-Console-Property",
+        "request": "Verbindung anfragen",
+        "adminOnly": "Nur der Inhaber oder ein Firmenadministrator kann Analysen verbinden.",
+        "howTo": "1) In GA4 (Verwaltung → Property-Zugriff) und in Search Console (Einstellungen → Nutzer) ai-agency-danmark@ai-agency-472312.iam.gserviceaccount.com als Betrachter / Eingeschränkt hinzufügen. 2) Property-ID und Website hier eintragen. 3) Ein Plattform-Administrator aktiviert die Verbindung, nachdem er geprüft hat, dass die Property Ihnen gehört.",
+        "lastSync": "Letzte Synchronisierung {at}",
+        "pendingTitle": "Verbindungen, die auf Aktivierung warten",
+        "pendingHint": "Prüfen Sie vor dem Aktivieren, dass die Property zum Arbeitsbereich gehört.",
+        "activate": "Aktivieren",
+        "status": {
+          "pending": "Wartet auf Aktivierung",
+          "active": "Aktiv",
+          "no_access": "Kein Google-Zugriff",
+          "error": "Synchronisierungsfehler",
+          "disabled": "Deaktiviert"
+        }
+      },
+      "recs": {
+        "hint": "Vorschläge des SEO-Agenten, nur auf Basis synchronisierter Daten. Auf Ihrer Website ändert sich nichts, bis eine Person es umsetzt.",
+        "run": "Jetzt Chancen finden",
+        "queued": "In der Warteschlange – Ergebnisse in wenigen Minuten",
+        "objective": "SEO-Chancen in Search Console und GA4 finden",
+        "none": "Noch keine Empfehlungen",
+        "noneActive": "Führen Sie die Analyse aus oder warten Sie auf mehr Daten: Vorschläge brauchen genug Impressionen und Traffic.",
+        "problem": "Problem",
+        "basis": "Daten",
+        "action": "Empfohlene Maßnahme",
+        "effect": "Erwartete Wirkung",
+        "outcome": "Nach 28 Tagen gemessen",
+        "correlation": "Korrelation, kein Beweis der Ursache.",
+        "approve": "Genehmigen",
+        "reject": "Ablehnen",
+        "markDone": "Heute als umgesetzt markieren",
+        "priority1": "Hohe Priorität",
+        "priority2": "Mittlere Priorität",
+        "priority3": "Niedrige Priorität",
+        "kind": {
+          "ctr_gap": "Niedrige CTR",
+          "traffic_drop": "Traffic-Rückgang",
+          "no_key_events": "Keine Conversions",
+          "striking_distance": "Nah an Seite 1"
+        },
+        "status": {
+          "proposed": "Vorgeschlagen",
+          "approved": "Genehmigt",
+          "rejected": "Abgelehnt",
+          "implemented": "Umgesetzt",
+          "measured": "Gemessen"
+        },
+        "source": {
+          "search_console": "Search Console",
+          "ga4": "GA4"
+        }
+      },
+      "impact": {
+        "organicLeads": "Leads aus organischer Suche",
+        "ofLeads": "von {n} Leads im Zeitraum",
+        "conversion": "Lead → Kunde",
+        "converted": "{n} wurden Kunden",
+        "payingOrganic": "Zahlende Kunden aus organischer Suche",
+        "ofPaying": "von {n} zahlenden Kunden",
+        "revenue": "Zugeordneter Umsatz",
+        "revenueNote": "Bezahlte Rechnungen von Kunden mit Quelle organische Suche. Nur sichtbar, wenn Quellen erfasst sind.",
+        "untrackedTitle": "{n} von {total} Leads haben keine Quelle",
+        "untrackedBody": "Leads ohne Quelle können SEO nicht zugeordnet werden und zählen daher nicht als organisch. Erfassen Sie die Quelle bei neuen Leads, um dies zu messen.",
+        "none": "Keine CRM-Daten für den Zeitraum."
+      }
+    }
   }
 }

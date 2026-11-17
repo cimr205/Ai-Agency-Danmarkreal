@@ -350,7 +350,8 @@
     "hrDashboard": "HR Dashboard",
     "controlRoomDashboard": "Control room Dashboard",
     "linkedinOutreach": "LinkedIn Outreach",
-    "workflowStudio": "Workflow Studio"
+    "workflowStudio": "Workflow Studio",
+    "growthOs": "Growth OS"
   },
   "workforce": {
     "dashboardTitle": "Workforce Dashboard",
@@ -3272,5 +3273,316 @@
     "reject": "Reject",
     "preparing": "Preparing…",
     "prepare": "Prepare follow-up (AI)"
+  },
+  "growthOs": {
+    "subtitle": "35 specialists, independent verification and controlled learning. Status comes from stored data only.",
+    "empty": "Nothing recorded yet.",
+    "notInstalled": "The Growth OS database tables are not installed in this environment yet (migration 20261114120000 has not been applied).",
+    "notBuiltTitle": "Not implemented yet",
+    "notBuiltBody": "This area is planned for Phase {phase}. Nothing here is simulated.",
+    "score": "Score",
+    "noModel": "no model",
+    "nav": {
+      "commandCenter": "Command Center",
+      "globalCeo": "Global CEO",
+      "departments": "Departments",
+      "allAgents": "All Agents",
+      "liveActivity": "Live Activity",
+      "skillLibrary": "Skill Library",
+      "learningCenter": "Learning Center",
+      "experiments": "Experiments",
+      "analytics": "Analytics",
+      "approvals": "Approvals",
+      "budgetUsage": "Budget & Usage",
+      "auditLog": "Audit Log",
+      "settings": "Settings"
+    },
+    "runSeo": {
+      "title": "Run the SEO specialist",
+      "description": "Read-only audit of one public page (Level 0). The verifier refetches and recomputes the result.",
+      "objective": "On-page SEO audit",
+      "run": "Run audit",
+      "running": "Running…",
+      "workerTimeout": "Queued, but no worker picked it up within 3 minutes. Check that the Growth OS service on Railway is running."
+    },
+    "cc": {
+      "active": "Active sessions",
+      "queued": "queued",
+      "failed": "Failed tasks",
+      "pendingApprovals": "Pending approvals",
+      "spend30": "OpenRouter spend (30 days)",
+      "costUnknownPart": "Some calls have no reported cost",
+      "today": "Today",
+      "health": "System health",
+      "operationalAgents": "Operational specialists",
+      "activeSkills": "Active skill versions",
+      "verifiedResults": "Verified results",
+      "learningProposals": "Improvement proposals",
+      "kpis": "Commercial KPIs",
+      "kpisMissing": "Not connected (no analytics source)",
+      "latestVerified": "Latest verified results"
+    },
+    "ceo": {
+      "escalations": "Department CEO decisions"
+    },
+    "col": {
+      "ceo": "CEO",
+      "decision": "Decision",
+      "priority": "Priority",
+      "reasons": "Reasons",
+      "when": "When",
+      "agent": "Agent",
+      "department": "Department",
+      "kpi": "Primary KPI",
+      "status": "Status",
+      "objective": "Objective",
+      "skill": "Skill",
+      "version": "Version",
+      "commit": "Pinned commit",
+      "license": "Licence",
+      "model": "Model",
+      "calls": "Calls",
+      "tokens": "Tokens",
+      "cost": "Cost",
+      "errors": "Errors",
+      "actor": "Actor",
+      "event": "Event",
+      "subject": "Subject"
+    },
+    "dept": {
+      "specialists": "Specialists",
+      "operational": "operational"
+    },
+    "agents": {
+      "title": "All 35 specialists",
+      "all": "All",
+      "supplementary": "supplementary area"
+    },
+    "detail": {
+      "responsibility": "Responsibility",
+      "policy": "Policy",
+      "budgetTask": "Budget per task",
+      "budgetDay": "Budget per day",
+      "modelExecute": "Model class (execute)",
+      "maxLevel": "Max autonomous level",
+      "evaluationScore": "Evaluation score",
+      "notMeasured": "not measured yet",
+      "dataSources": "Data sources",
+      "allowedActions": "Allowed actions",
+      "registeredOnly": "Profile and skill contracts only; this agent has no executor yet.",
+      "settingsInCode": "Agent profiles are versioned in code (supabase/functions/_shared/growth-os/registry) and change only through a reviewed commit."
+    },
+    "tab": {
+      "overview": "Overview",
+      "tasks": "Tasks",
+      "subagent": "Subagent",
+      "skills": "Skills",
+      "memory": "Memory",
+      "learning": "Learning",
+      "evaluations": "Evaluations",
+      "performance": "Performance",
+      "activity": "Activity Log",
+      "approvals": "Approvals",
+      "settings": "Settings"
+    },
+    "skills": {
+      "project": "Project skills",
+      "projectHint": "Contracts for all 35 specialists. Draft = interface only, no executor.",
+      "search": "Search skills or agents",
+      "external": "External GitHub skills and tools",
+      "externalHint": "Verified and pinned to a commit. Treated as data; they never override policy or approvals."
+    },
+    "learning": {
+      "phase2": "Learning records are stored after every task. Candidate skill versions, evaluation runs, comparison and rollback come in Phase 2; no improvement is shown before it is measured.",
+      "proposed": "Proposed change"
+    },
+    "approvals": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "rules": "Each approval is bound to the exact payload (SHA-256). A changed payload or a rejected request can never be executed; Level 3 needs an owner or company admin."
+    },
+    "budget": {
+      "today": "Spent today",
+      "limit": "Limit",
+      "default": "default",
+      "perTask": "Limit per task",
+      "calls30": "Model calls (30 days)",
+      "byModel": "Usage by model",
+      "byModelHint": "Cost is OpenRouter's reported usage.cost; calls without it are counted as unknown.",
+      "unknown": "unknown"
+    },
+    "settings": {
+      "budget": "Growth OS budget",
+      "budgetHint": "Enforced on the server before every model call. Max 1 USD per day in Phase 1.",
+      "daily": "USD per day",
+      "task": "USD per task",
+      "save": "Save",
+      "saved": "Saved."
+    },
+    "activity": {
+      "hint": "Every event is a stored row with a task reference; refreshed every 15 seconds."
+    },
+    "outcome": {
+      "new_learning": "New learning",
+      "method_confirmed": "Method confirmed",
+      "problem_documented": "Problem documented",
+      "improvement_proposed": "Improvement proposed"
+    },
+    "status": {
+      "ok": "OK",
+      "completed": "Completed",
+      "verified": "Verified",
+      "approved": "Approved",
+      "operational": "Operational",
+      "registered": "Registered only",
+      "active": "Active",
+      "draft": "Contract only",
+      "deprecated": "Deprecated",
+      "accept": "Accepted",
+      "consumed": "Executed",
+      "failed": "Failed",
+      "discrepancy": "Discrepancy",
+      "rejected": "Rejected",
+      "dead": "Stopped",
+      "error": "Error",
+      "invalid_output": "Invalid output",
+      "reject": "Rejected",
+      "blocked": "Blocked",
+      "inconclusive": "Inconclusive",
+      "pending": "Pending",
+      "needs_human": "Needs a human",
+      "refused_budget": "Refused: budget",
+      "rerun": "Re-run",
+      "queued": "Queued",
+      "leased": "Running",
+      "cancelled": "Cancelled",
+      "expired": "Expired",
+      "skipped": "Skipped",
+      "cache_hit": "Cache",
+      "unknown": "Unknown",
+      "not_evaluated": "not evaluated",
+      "evaluating": "evaluating",
+      "passed": "passed",
+      "approved-reference": "Approved (reference)",
+      "approved-tool": "Approved tool",
+      "not-adopted": "Not adopted"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "GA4 and Search Console data for your public website, synced server-side.",
+      "period": "Last 28 days {from} – {to}, compared with {prevFrom} – {prevTo}.",
+      "vsPrevious": "vs previous 28 days",
+      "noBaseline": "No previous period to compare",
+      "notInstalledHint": "Apply the Growth OS migrations to see analytics.",
+      "notConnected": "Not connected",
+      "notConnectedGa4": "No active GA4 connection. Request one below; numbers appear after the first sync. Nothing is estimated in the meantime.",
+      "notConnectedGsc": "No active Search Console connection. Request one below; numbers appear after the first sync.",
+      "noData": "No data yet",
+      "noDataBody": "The connection is active but nothing has been synced for this period yet. The first sync runs within an hour.",
+      "chartTitle": "Daily trend",
+      "chartNote": "GA4 sessions and Search Console clicks are different measurements and are shown as separate lines.",
+      "channels": "Traffic sources (GA4 sessions)",
+      "landingPages": "Landing pages (GA4)",
+      "topQueries": "Top search queries (Search Console)",
+      "topPages": "Top pages (Search Console)",
+      "anonymisedNote": "Search Console hides anonymised queries, so these rows do not add up to the totals.",
+      "gscNote": "Search Console data lags 2–3 days. Period: {from} – {to}.",
+      "kpi": {
+        "organicSessions": "Organic sessions",
+        "sessions": "All sessions",
+        "keyEvents": "Key events (conversions)",
+        "organicKeyEvents": "{n} from organic search",
+        "engagement": "Engagement rate",
+        "avgDailyUsers": "{n} active users per day on average",
+        "gscClicks": "Organic clicks",
+        "impressions": "Impressions",
+        "ctr": "CTR",
+        "position": "Avg. position"
+      },
+      "col": {
+        "channel": "Channel",
+        "sessions": "Sessions",
+        "organic": "Organic",
+        "keyEvents": "Key events",
+        "page": "Page",
+        "query": "Query"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "seo": "SEO performance",
+        "recs": "AI recommendations",
+        "impact": "Business impact"
+      },
+      "connection": {
+        "title": "Connect Google Analytics and Search Console",
+        "description": "Growth OS reads your data with a read-only Google service account. Your Google credentials are never stored here.",
+        "ga4Label": "GA4 property ID (digits)",
+        "gscLabel": "Search Console site",
+        "request": "Request connection",
+        "adminOnly": "Only the owner or a company admin can connect analytics.",
+        "howTo": "1) In GA4 (Admin → Property access) and in Search Console (Settings → Users), add ai-agency-danmark@ai-agency-472312.iam.gserviceaccount.com as Viewer / Restricted. 2) Enter the property ID and site here. 3) A platform admin activates the connection after checking the property is yours.",
+        "lastSync": "Last sync {at}",
+        "pendingTitle": "Connections waiting for activation",
+        "pendingHint": "Check that the property belongs to the workspace before activating.",
+        "activate": "Activate",
+        "status": {
+          "pending": "Waiting for activation",
+          "active": "Active",
+          "no_access": "No Google access",
+          "error": "Sync error",
+          "disabled": "Disabled"
+        }
+      },
+      "recs": {
+        "hint": "Proposals from the SEO agent, based only on synced data. Nothing changes on your website until a person implements it.",
+        "run": "Find opportunities now",
+        "queued": "Queued – results appear in a few minutes",
+        "objective": "Find SEO opportunities in Search Console and GA4",
+        "none": "No recommendations yet",
+        "noneActive": "Run the analysis, or wait for more data: proposals need enough impressions and traffic to be meaningful.",
+        "problem": "Problem",
+        "basis": "Data",
+        "action": "Recommended action",
+        "effect": "Expected effect",
+        "outcome": "Measured after 28 days",
+        "correlation": "Correlation, not proof of cause.",
+        "approve": "Approve",
+        "reject": "Reject",
+        "markDone": "Mark as implemented today",
+        "priority1": "High priority",
+        "priority2": "Medium priority",
+        "priority3": "Low priority",
+        "kind": {
+          "ctr_gap": "Low CTR",
+          "traffic_drop": "Traffic drop",
+          "no_key_events": "No conversions",
+          "striking_distance": "Close to page 1"
+        },
+        "status": {
+          "proposed": "Proposed",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "implemented": "Implemented",
+          "measured": "Measured"
+        },
+        "source": {
+          "search_console": "Search Console",
+          "ga4": "GA4"
+        }
+      },
+      "impact": {
+        "organicLeads": "Leads from organic search",
+        "ofLeads": "of {n} leads in the period",
+        "conversion": "Lead → customer",
+        "converted": "{n} became customers",
+        "payingOrganic": "Paying customers from organic",
+        "ofPaying": "of {n} paying customers",
+        "revenue": "Attributed revenue",
+        "revenueNote": "Paid invoices from customers whose source is organic search. Shown only when sources are recorded.",
+        "untrackedTitle": "{n} of {total} leads have no source",
+        "untrackedBody": "Leads without a source cannot be attributed to SEO, so they are not counted as organic. Set the source on new leads to measure this.",
+        "none": "No CRM data for this period."
+      }
+    }
   }
 }
