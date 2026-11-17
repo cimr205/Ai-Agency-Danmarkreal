@@ -2,85 +2,85 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://aiagencydanmark.dk/da</loc>
-    <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <loc>https://www.aiagencydanmark.dk/da</loc>
+    <xhtml:link rel="alternate" hreflang="da" href="https://www.aiagencydanmark.dk/da"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.aiagencydanmark.dk/en"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://www.aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.aiagencydanmark.dk/da"/>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/en</loc>
-    <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <loc>https://www.aiagencydanmark.dk/en</loc>
+    <xhtml:link rel="alternate" hreflang="da" href="https://www.aiagencydanmark.dk/da"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.aiagencydanmark.dk/en"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://www.aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.aiagencydanmark.dk/da"/>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/de</loc>
-    <xhtml:link rel="alternate" hreflang="da" href="https://aiagencydanmark.dk/da"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://aiagencydanmark.dk/en"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://aiagencydanmark.dk/de"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://aiagencydanmark.dk/da"/>
+    <loc>https://www.aiagencydanmark.dk/de</loc>
+    <xhtml:link rel="alternate" hreflang="da" href="https://www.aiagencydanmark.dk/da"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.aiagencydanmark.dk/en"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://www.aiagencydanmark.dk/de"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.aiagencydanmark.dk/da"/>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/da/privacy</loc>
+    <loc>https://www.aiagencydanmark.dk/da/privacy</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/en/privacy</loc>
+    <loc>https://www.aiagencydanmark.dk/en/privacy</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/da/terms</loc>
+    <loc>https://www.aiagencydanmark.dk/da/terms</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/en/terms</loc>
+    <loc>https://www.aiagencydanmark.dk/en/terms</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/da/dpa</loc>
+    <loc>https://www.aiagencydanmark.dk/da/dpa</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/en/dpa</loc>
+    <loc>https://www.aiagencydanmark.dk/en/dpa</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/de/privacy</loc>
+    <loc>https://www.aiagencydanmark.dk/de/privacy</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/de/terms</loc>
+    <loc>https://www.aiagencydanmark.dk/de/terms</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aiagencydanmark.dk/de/dpa</loc>
+    <loc>https://www.aiagencydanmark.dk/de/dpa</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
