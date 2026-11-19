@@ -11,6 +11,7 @@ const STALE = 60_000;
 export interface SeoSite {
   company_id: string; site_url: string; enabled: boolean; crawl_every_hours: number; max_pages: number;
   max_pending_drafts: number; llm_calls_per_day: number; product_facts: string; last_run_at: string | null; updated_at: string;
+  auto_publish: boolean; auto_publish_since: string | null; publish_min_score: number; max_publish_per_day: number; last_deploy_requested_at: string | null;
 }
 export interface SeoRun {
   id: string; kind: 'loop' | 'ga4' | 'rea'; trigger: 'schedule' | 'manual' | 'import'; status: 'running' | 'ok' | 'error';
@@ -24,6 +25,7 @@ export interface SeoDraft {
   id: string; kind: 'page' | 'audit'; slug: string | null; title: string; meta_description: string | null; h1: string | null; summary: string | null; body: string;
   worker_model: string | null; review_model: string | null; review_score: number | null; review_notes: string | null;
   review_status: 'pending' | 'passed' | 'failed'; decision: 'pending' | 'approved' | 'rejected'; decided_at: string | null; created_at: string;
+  published_at: string | null; published_by: 'autopilot' | 'user' | null; unpublished_at: string | null; publish_block_reason: string | null;
 }
 export interface SeoReport { id: string; kind: 'rea' | 'ga4'; target: string | null; title: string; body: string; created_at: string }
 
@@ -81,7 +83,7 @@ export function useSeoTasks() {
 export function useSeoDrafts() {
   return useQuery({ queryKey: key('drafts'), staleTime: STALE, retry: false, queryFn: async () => {
     const { data, error } = await db.from('growth_seo_drafts')
-      .select('id, kind, slug, title, meta_description, h1, summary, body, worker_model, review_model, review_score, review_notes, review_status, decision, decided_at, created_at')
+      .select('id, kind, slug, title, meta_description, h1, summary, body, worker_model, review_model, review_score, review_notes, review_status, decision, decided_at, created_at, published_at, published_by, unpublished_at, publish_block_reason')
       .order('created_at', { ascending: false }).limit(100);
     check(error);
     return (data ?? []) as SeoDraft[];
@@ -113,6 +115,22 @@ export function useConfigureSeoSite() {
 export function useDecideSeoDraft() {
   return useSeoMutation(async (v: { id: string; approve: boolean }) => {
     const { error } = await db.rpc('growth_seo_decide_draft', { _id: v.id, _approve: v.approve, _note: null });
+    check(error);
+  });
+}
+
+/** Owner switch: the autopilot publishes its own articles (score threshold, content checks, daily cap). */
+export function useSetSeoAutoPublish() {
+  return useSeoMutation(async (v: { enabled: boolean; minScore: number; maxPerDay: number }) => {
+    const { error } = await db.rpc('growth_seo_set_auto_publish', { _enabled: v.enabled, _min_score: v.minScore, _max_per_day: v.maxPerDay });
+    check(error);
+  });
+}
+
+/** Takes a live article off the website (the next site build removes its static page). */
+export function useUnpublishSeoDraft() {
+  return useSeoMutation(async (id: string) => {
+    const { error } = await db.rpc('growth_seo_unpublish', { _id: id, _note: null });
     check(error);
   });
 }

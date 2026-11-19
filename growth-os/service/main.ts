@@ -18,6 +18,7 @@ import { type AnalyticsStatus, runAnalyticsLoop } from "../../supabase/functions
 import { GoogleClient, parseServiceAccount } from "../../supabase/functions/_shared/growth-os/google.ts";
 import { type AutopilotStatus, runAutopilotLoop } from "../../supabase/functions/_shared/growth-os/seo/autopilot.ts";
 import { freeModelsFromEnv } from "../../supabase/functions/_shared/growth-os/seo/free-llm.ts";
+import { validDeployHook } from "../../supabase/functions/_shared/growth-os/seo/publish.ts";
 import { healthHandler, LLM_ENV, missingEnv } from "./health.ts";
 
 const env = (k: string) => Deno.env.get(k) || undefined;
@@ -50,8 +51,12 @@ if (missing.length) {
   ).catch((e) => { status.state = "error"; status.last_error = (e as Error).message; });
 
   // SEO autopilot: hourly check; each enabled site runs when its interval has passed.
+  // GROWTH_OS_SITE_DEPLOY_HOOK_URL (optional): Vercel deploy hook, called when articles were published or unpublished.
+  const deployHook = validDeployHook(env("GROWTH_OS_SITE_DEPLOY_HOOK_URL"));
+  if (env("GROWTH_OS_SITE_DEPLOY_HOOK_URL") && !deployHook) console.warn("[growth-os] GROWTH_OS_SITE_DEPLOY_HOOK_URL ignored: not a Vercel deploy hook URL");
+  seoAutopilot.deploy_hook = deployHook ? "configured" : "not_configured";
   seoLoop = runAutopilotLoop(db, { fetch, now: Date.now, gateway: () => gatewayConfigFromEnv(env), freeModels }, {
-    checkMs: 3_600_000, signal: abort.signal, status: seoAutopilot,
+    checkMs: 3_600_000, signal: abort.signal, status: seoAutopilot, deployHook,
   }).catch((e) => { seoAutopilot.state = "error"; seoAutopilot.last_error = (e as Error).message; });
   console.log(`[growth-os] seo autopilot on (free models only: ${freeModels.join(", ")})`);
 

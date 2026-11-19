@@ -3690,6 +3690,9 @@ export type Database = {
           kind: string
           legacy_id: number | null
           meta_description: string | null
+          publish_block_reason: string | null
+          published_at: string | null
+          published_by: string | null
           review_model: string | null
           review_notes: string | null
           review_score: number | null
@@ -3699,6 +3702,8 @@ export type Database = {
           summary: string | null
           task_id: string | null
           title: string
+          unpublished_at: string | null
+          unpublished_by: string | null
           worker_model: string | null
         }
         Insert: {
@@ -3714,6 +3719,9 @@ export type Database = {
           kind: string
           legacy_id?: number | null
           meta_description?: string | null
+          publish_block_reason?: string | null
+          published_at?: string | null
+          published_by?: string | null
           review_model?: string | null
           review_notes?: string | null
           review_score?: number | null
@@ -3723,6 +3731,8 @@ export type Database = {
           summary?: string | null
           task_id?: string | null
           title: string
+          unpublished_at?: string | null
+          unpublished_by?: string | null
           worker_model?: string | null
         }
         Update: {
@@ -3738,6 +3748,9 @@ export type Database = {
           kind?: string
           legacy_id?: number | null
           meta_description?: string | null
+          publish_block_reason?: string | null
+          published_at?: string | null
+          published_by?: string | null
           review_model?: string | null
           review_notes?: string | null
           review_score?: number | null
@@ -3747,6 +3760,8 @@ export type Database = {
           summary?: string | null
           task_id?: string | null
           title?: string
+          unpublished_at?: string | null
+          unpublished_by?: string | null
           worker_model?: string | null
         }
         Relationships: [
@@ -4120,45 +4135,60 @@ export type Database = {
       }
       growth_seo_sites: {
         Row: {
+          auto_publish: boolean
+          auto_publish_since: string | null
           company_id: string
           crawl_every_hours: number
           created_at: string
           enabled: boolean
+          last_deploy_requested_at: string | null
           last_run_at: string | null
           llm_calls_per_day: number
           max_pages: number
           max_pending_drafts: number
+          max_publish_per_day: number
           product_facts: string
+          publish_min_score: number
           site_url: string
           topics: Json
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          auto_publish?: boolean
+          auto_publish_since?: string | null
           company_id: string
           crawl_every_hours?: number
           created_at?: string
           enabled?: boolean
+          last_deploy_requested_at?: string | null
           last_run_at?: string | null
           llm_calls_per_day?: number
           max_pages?: number
           max_pending_drafts?: number
+          max_publish_per_day?: number
           product_facts?: string
+          publish_min_score?: number
           site_url: string
           topics?: Json
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          auto_publish?: boolean
+          auto_publish_since?: string | null
           company_id?: string
           crawl_every_hours?: number
           created_at?: string
           enabled?: boolean
+          last_deploy_requested_at?: string | null
           last_run_at?: string | null
           llm_calls_per_day?: number
           max_pages?: number
           max_pending_drafts?: number
+          max_publish_per_day?: number
           product_facts?: string
+          publish_min_score?: number
           site_url?: string
           topics?: Json
           updated_at?: string
@@ -9807,6 +9837,25 @@ export type Database = {
       }
       growth_seo_decide_draft: {
         Args: { _approve: boolean; _id: string; _note?: string }
+        Returns: string
+      }
+      growth_seo_published_articles: {
+        Args: { _company: string }
+        Returns: {
+          body: string
+          h1: string
+          meta_description: string
+          path: string
+          published_at: string
+          title: string
+        }[]
+      }
+      growth_seo_set_auto_publish: {
+        Args: { _enabled: boolean; _max_per_day?: number; _min_score?: number }
+        Returns: string
+      }
+      growth_seo_unpublish: {
+        Args: { _id: string; _note?: string }
         Returns: string
       }
       growth_set_analytics_connection_status: {
