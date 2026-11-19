@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { tx } from '@/lib/inlineI18n';
+import { hasSubscriptionAccess } from '@/lib/subscriptionAccess';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -24,8 +25,6 @@ interface CompanyGateState {
   subscriptionStatus: string | null;
   trialEndsAt: string | null;
 }
-
-const ACTIVE_STATUSES = new Set(['active', 'trialing']);
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -136,15 +135,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     path.includes('/onboarding') ||
     path.includes('/admin');
 
-  // Permanent bypass: trial_ends_at far in the future (manual partner/test accounts, per spec)
-  const trialFarFuture = gate.trialEndsAt
-    ? new Date(gate.trialEndsAt).getTime() > Date.now() + 5 * 365 * 24 * 60 * 60 * 1000
-    : false;
-
-  const hasActiveSubscription =
-    trialFarFuture || ACTIVE_STATUSES.has(gate.subscriptionStatus ?? '');
-
-  if (!hasActiveSubscription && !isExempt) {
+  if (!hasSubscriptionAccess(gate.subscriptionStatus, gate.trialEndsAt) && !isExempt) {
     return <Navigate to={`/${locale}/app/subscription`} replace />;
   }
 

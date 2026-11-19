@@ -95,8 +95,11 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       setPendingStage({ width: preset.width, height: preset.height });
       setOpenProjectId(project.id);
     } catch (err) {
+      // Never surface the raw Postgres/Storage error to the customer — log it for
+      // diagnosis and show a plain message (or the "not deployed" hint).
+      console.error('[VideoStudio] create project failed:', err);
       const msg = getErrorMessage(err) || '';
-      toast.error(/video_projects|PGRST205|schema cache/i.test(msg) ? t('videoStudio.notDeployedHint') : (msg || t('videoStudio.createError') || 'Could not create project'));
+      toast.error(/video_projects|PGRST205|schema cache/i.test(msg) ? t('videoStudio.notDeployedHint') : (t('videoStudio.createError') || 'Could not create project'));
     }
   };
 
@@ -111,7 +114,8 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       await deleteMutation.mutateAsync(id);
       toast.success(t('videoStudio.deleted') || 'Video deleted');
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('common.error') || 'Something went wrong');
+      console.error('[VideoStudio] delete project failed:', err);
+      toast.error(t('common.error') || 'Something went wrong');
     }
   };
 
@@ -123,7 +127,8 @@ export default function VideoStudioPage({ showHeader = true, onEditorOpenChange 
       const url = await signVideoAssetUrl(path);
       window.open(url, '_blank', 'noopener');
     } catch (err) {
-      toast.error(getErrorMessage(err) || t('common.error') || 'Something went wrong');
+      console.error('[VideoStudio] download export failed:', err);
+      toast.error(t('common.error') || 'Something went wrong');
     }
   };
 

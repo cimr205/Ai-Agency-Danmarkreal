@@ -100,22 +100,13 @@ Deno.serve(withSentry("cvr-search", async (req) => {
       );
     }
 
-    // Get company_id
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("company_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!profile?.company_id) {
-      return new Response(
-        JSON.stringify({ error: "Ingen virksomhed tilknyttet" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Rate limit check
-    if (!checkRateLimit(profile.company_id)) {
+    // Rate-limited per user, not per company: CVR lookup is used during
+    // onboarding, before a company (and therefore profile.company_id)
+    // exists yet — gating this on company_id locked every new signup out
+    // of CVR lookup with a 403. The data itself is public Danish company
+    // registry data, so there's nothing tenant-sensitive to additionally
+    // scope here; any authenticated user is fine.
+    if (!checkRateLimit(user.id)) {
       return new Response(
         JSON.stringify({
           error: "For mange forespørgsler. Vent venligst et minut.",

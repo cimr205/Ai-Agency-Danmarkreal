@@ -8,6 +8,7 @@ import { Loader2, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from '@/lib/errors';
 import { t3 } from '@/lib/inlineI18n';
+import { useI18n } from '@/lib/i18n';
 
 type InvitationPreview = {
   email: string;
@@ -23,6 +24,7 @@ export default function AcceptInvite() {
   const navigate = useNavigate();
   const { locale } = useParams();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { t } = useI18n();
 
   const [status, setStatus] = useState<"loading" | "ready" | "accepting" | "success" | "error">("loading");
   const [invitation, setInvitation] = useState<InvitationPreview | null>(null);
@@ -32,7 +34,7 @@ export default function AcceptInvite() {
   useEffect(() => {
     if (!token) {
       setStatus("error");
-      setErrorMsg("Intet invitation-token fundet i linket.");
+      setErrorMsg(t('acceptInvite.noTokenInLink'));
       return;
     }
 
@@ -42,7 +44,7 @@ export default function AcceptInvite() {
         const inv = data?.[0];
         if (error || !inv) {
           setStatus("error");
-          setErrorMsg("Ugyldigt invitation-link.");
+          setErrorMsg(t('acceptInvite.invalidLink'));
           return;
         }
         if (inv.status !== "pending") {
@@ -69,7 +71,8 @@ export default function AcceptInvite() {
     if (!isAuthenticated && status === "ready" && token) {
       localStorage.setItem('pending_invite_token', token);
       const returnUrl = `/${locale || "en"}/invite?token=${token}`;
-      navigate(`/${locale || "en"}/auth/signup?redirect=${encodeURIComponent(returnUrl)}`);
+      const emailParam = invitation?.email ? `&email=${encodeURIComponent(invitation.email)}` : '';
+      navigate(`/${locale || "en"}/auth/signup?redirect=${encodeURIComponent(returnUrl)}${emailParam}`);
     }
   }, [isAuthenticated, authLoading, status]);
 
@@ -99,7 +102,7 @@ export default function AcceptInvite() {
     );
   }
 
-  const companyName = invitation?.company_name || "Virksomheden";
+  const companyName = invitation?.company_name || t('acceptInvite.defaultCompanyName');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -122,8 +125,8 @@ export default function AcceptInvite() {
               <Mail className="h-12 w-12 text-primary mx-auto mb-2" />
               <CardTitle>{t3("Du er inviteret!", "You are invited!", "Sie sind eingeladen!")}</CardTitle>
               <CardDescription>
-                Du er blevet inviteret til at slutte dig til <strong>{companyName}</strong> som{" "}
-                <strong>{invitation?.role === "company_admin" ? "administrator" : "medarbejder"}</strong>.
+                {t('acceptInvite.invitedToJoinAs')} <strong>{companyName}</strong> {t('acceptInvite.as')}{" "}
+                <strong>{invitation?.role === "company_admin" ? t('acceptInvite.roleAdministrator') : t('acceptInvite.roleEmployee')}</strong>.
               </CardDescription>
             </>
           )}
@@ -132,11 +135,11 @@ export default function AcceptInvite() {
           {status === "ready" && isAuthenticated && (
             <>
               <p className="text-sm text-muted-foreground text-center">
-                Logget ind som <strong>{user?.email}</strong>
+                {t('acceptInvite.loggedInAs')} <strong>{user?.email}</strong>
               </p>
               {user?.email?.toLowerCase() !== invitation?.email?.toLowerCase() && (
                 <p className="text-sm text-amber-600 text-center">
-                  ⚠️ Din e-mail matcher ikke invitationens e-mail ({invitation?.email}). Du skal logge ind med den korrekte e-mail.
+                  ⚠️ {t('acceptInvite.emailMismatch').replace('{email}', invitation?.email ?? '')}
                 </p>
               )}
               <Button
@@ -144,7 +147,7 @@ export default function AcceptInvite() {
                 className="w-full"
                 disabled={user?.email?.toLowerCase() !== invitation?.email?.toLowerCase()}
               >
-                Acceptér invitation
+                {t('acceptInvite.acceptInvitation')}
               </Button>
             </>
           )}

@@ -31,7 +31,7 @@ Deno.serve(withSentry("ai-health", async (req) => {
       throw new Error(`Modellen "${ai.model}" findes ikke længere hos udbyderen. Opdatér LOCAL_LLM_MODEL. / The model "${ai.model}" is no longer offered by the provider. Update LOCAL_LLM_MODEL.`);
     }
 
-    return new Response(JSON.stringify({ online: true, model: ai.model, provider: ai.provider }), {
+    return new Response(JSON.stringify({ online: true, model: ai.model, models: ai.models, provider: ai.provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

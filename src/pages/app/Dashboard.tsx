@@ -1,11 +1,13 @@
-import type { ComponentType } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, type ComponentType } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertTriangle, ArrowRight, Briefcase, Calendar, CheckCircle2, Clock3, FileText, Mail, PhoneCall, RadioTower, ShieldCheck, Target, Users, Wallet } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as RTooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { isLocale, getLocaleFromPath } from "@/lib/i18n";
-import { isOnboardingComplete } from "@/lib/onboarding";
+import { isLocale, getLocaleFromPath, useI18n } from "@/lib/i18n";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { OnboardingGoalPicker } from "@/components/onboarding/OnboardingGoalPicker";
+import { useToast } from "@/hooks/use-toast";
 import { useDashboard, type FocusItem } from "@/hooks/api/useDashboard";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
@@ -53,16 +55,35 @@ export default function Dashboard() {
   const base = "/" + routeLocale + "/app";
   const dateLocale = routeLocale === "da" ? "da-DK" : routeLocale === "de" ? "de-DE" : "en-GB";
   const { format } = useCurrency();
-  // The localStorage flag is per browser; the profile flag is the durable
-  // record. Checking only localStorage showed "Færdiggør opsætningen" on
-  // every new device even though /onboarding (correctly) sends you back here.
-  const showOnboardingBanner = isAdmin && !isOnboardingComplete() && !profile?.onboarding_completed;
+  const { t } = useI18n();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // Returning from Stripe Checkout (success or cancel) must tell the user
+  // whether the subscription went through, then drop the query param.
+  useEffect(() => {
+    const subscriptionResult = searchParams.get("subscription");
+    if (subscriptionResult === "success") {
+      toast({ title: t("subscription.checkoutSuccessTitle"), description: t("subscription.checkoutSuccessDesc") });
+    } else if (subscriptionResult === "cancelled") {
+      toast({ variant: "destructive", title: t("subscription.checkoutCancelledTitle"), description: t("subscription.checkoutCancelledDesc") });
+    }
+    if (subscriptionResult) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("subscription");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const firstName = (profile?.full_name || "").split(" ")[0] || "";
   const today = new Date().toLocaleDateString(routeLocale === "da" ? "da-DK" : routeLocale === "de" ? "de-DE" : "en-GB", { weekday: "long", day: "numeric", month: "short" }).replace(/\.$/, "");
   const monthValue = d?.invoices?.monthValue ?? 0;
-  const lastMonthValue = d?.invoices?.lastMonthValue ?? 0;
-  const momDelta = lastMonthValue > 0 ? Math.round(((monthValue - lastMonthValue) / lastMonthValue) * 100) : null;
+  // "Cash collected" is actual received payments, not the invoiced amount
+  // (monthValue is "Invoiced", shown in the revenue panel).
+  const cashCollected = d?.payments?.monthValue ?? 0;
+  const lastCashCollected = d?.payments?.lastMonthValue ?? 0;
+  const momDelta = lastCashCollected > 0 ? Math.round(((cashCollected - lastCashCollected) / lastCashCollected) * 100) : null;
   const openDeals = (d?.deals?.total ?? 0) - (d?.deals?.won ?? 0) - (d?.deals?.lost ?? 0);
   const overdueValue = d?.invoices?.overdueValue ?? 0;
   const activeWork = (d?.tasks?.pending ?? 0) + (d?.tasks?.inProgress ?? 0);
@@ -72,7 +93,7 @@ export default function Dashboard() {
   const tasks = d?.today?.tasks ?? [];
 
   const pulse = [
-    { label: "Cash collected", value: isLoading ? null : format(monthValue), detail: typeof momDelta === "number" ? (momDelta >= 0 ? "+" : "-") + Math.abs(momDelta) + "%" + tx(" vs. sidste måned", " vs. last month") : tx("første aktive måned", "first active month"), href: base + "/finance/invoices", tone: momDelta !== null && momDelta < 0 ? "risk" : "blue", icon: Wallet },
+    { label: "Cash collected", value: isLoading ? null : format(cashCollected), detail: typeof momDelta === "number" ? (momDelta >= 0 ? "+" : "-") + Math.abs(momDelta) + "%" + tx(" vs. sidste måned", " vs. last month") : tx("første aktive måned", "first active month"), href: base + "/finance/invoices", tone: momDelta !== null && momDelta < 0 ? "risk" : "blue", icon: Wallet },
     { label: "Pipeline", value: isLoading ? null : format(d?.deals?.openValue ?? 0), detail: openDeals + tx(" åbne muligheder", " open opportunities"), href: base + "/crm/deals?view=board", tone: "violet", icon: Briefcase },
     { label: "Pressure", value: isLoading ? null : format(overdueValue), detail: (d?.invoices?.overdue ?? 0) + tx(" forfaldne fakturaer", " overdue invoices"), href: base + "/finance/invoices", tone: overdueValue > 0 ? "risk" : "cyan", icon: AlertTriangle },
     { label: "Workload", value: isLoading ? null : String(activeWork), detail: tasks.length + tx(" næste åbne opgaver", " next open tasks"), href: base + "/work/tasks", tone: activeWork > 8 ? "risk" : "blue", icon: CheckCircle2 },
@@ -101,6 +122,8 @@ export default function Dashboard() {
   ];
 
   return (
+    <>
+    <OnboardingGoalPicker onDone={() => {}} />
     <div className="relative -m-4 min-h-[calc(100vh-76px)] overflow-hidden bg-[#eef4ff] p-4 text-slate-950 sm:-m-6 sm:p-6 lg:-m-8 lg:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(82,113,255,0.34),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(236,124,255,0.24),transparent_26%),radial-gradient(circle_at_52%_78%,rgba(50,214,255,0.20),transparent_36%),linear-gradient(135deg,#f8fbff_0%,#edf4ff_48%,#f9f2ff_100%)]" />
       <div className="pointer-events-none absolute left-6 top-8 h-[520px] w-[520px] rounded-full bg-blue-400/20 blur-3xl" />
@@ -118,13 +141,14 @@ export default function Dashboard() {
             <div className="relative border-t border-white/60 bg-slate-950/90 p-6 text-white lg:border-l lg:border-t-0 lg:p-8"><div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_8%,rgba(92,124,255,0.48),transparent_32%),radial-gradient(circle_at_92%_28%,rgba(244,114,255,0.30),transparent_34%)]" /><div className="relative"><div className="flex items-center justify-between"><div><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Today signal</p><h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em]">{tx("Live drift", "Live operations")}</h2></div><span className="grid h-12 w-12 place-items-center rounded-full bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl"><RadioTower className="h-5 w-5 text-cyan-200" /></span></div><div className="mt-8 grid grid-cols-2 gap-3"><SignalPill label="Leads" value={d?.leads?.newThisMonth ?? 0} loading={isLoading} /><SignalPill label="Deals" value={openDeals} loading={isLoading} /><SignalPill label="Tasks" value={activeWork} loading={isLoading} /><SignalPill label="Team" value={d?.employees?.active ?? 0} loading={isLoading} /></div><div className="mt-7 rounded-[1.75rem] border border-white/12 bg-white/8 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-xl"><p className="text-sm leading-6 text-white/72">{tx("Start med røde signaler, luk derefter dagens opgaver, og brug resten på pipeline eller fakturering.", "Start with red signals, then close today's tasks, and spend the rest on pipeline or invoicing.")}</p><div className="mt-5 flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" /><span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">{tx("Systemet er klar", "System is ready")}</span></div></div></div></div>
           </div>
         </section>
-        {showOnboardingBanner && <section className="mt-5 flex flex-wrap items-center gap-4 rounded-[1.75rem] border border-blue-200/70 bg-white/70 px-5 py-4 shadow-[0_18px_60px_rgba(45,77,150,0.12)] backdrop-blur-xl"><span className="grid h-10 w-10 place-items-center rounded-full bg-blue-600 text-white"><ShieldCheck className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="text-[14px] font-semibold text-slate-950">{tx("Færdiggør opsætningen for at åbne hele workspace.", "Finish setup to unlock the whole workspace.")}</p><p className="mt-0.5 text-[12.5px] text-slate-500">{tx("CRM, fakturering og team kan være klar på under to minutter.", "CRM, invoicing and team can be ready in under two minutes.")}</p></div><button onClick={() => navigate(base + "/onboarding")} className="flex h-10 items-center gap-2 rounded-full bg-slate-950 px-4 text-[12px] font-semibold text-white">{tx("Fortsæt", "Continue")} <ArrowRight className="h-3.5 w-3.5" /></button></section>}
+        {isAdmin && <div className="mt-5"><OnboardingChecklist /></div>}
         <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">{pulse.map((item) => <PulseMetric key={item.label} {...item} />)}</section>
         <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_430px]"><div className="rounded-[2rem] border border-white/70 bg-white/64 p-4 shadow-[0_24px_80px_rgba(45,77,150,0.13)] backdrop-blur-2xl sm:p-5"><PanelHeader eyebrow="Revenue" title="Cashflow & tempo" action={tx("Åbn fakturaer", "Open invoices")} href={base + "/finance/invoices"} /><div className="mt-4 grid gap-4 lg:grid-cols-[1fr_260px]"><div className="min-h-[310px] rounded-[1.6rem] border border-white/70 bg-gradient-to-br from-slate-950 to-[#162554] p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">{d?.revenueByDay && d.revenueByDay.length > 0 ? <ResponsiveContainer width="100%" height={285}><BarChart data={d.revenueByDay} barCategoryGap="28%"><XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.48)", fontSize: 11 }} /><RTooltip cursor={{ fill: "rgba(255,255,255,0.06)" }} contentStyle={{ background: "rgba(15,23,42,0.94)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 18, color: "#fff", fontSize: 12 }} formatter={(value: number) => [format(value), tx("Omsætning", "Revenue")]} /><Bar dataKey="value" radius={[12, 12, 4, 4]} maxBarSize={42}>{d.revenueByDay.map((entry, index) => <Cell key={entry.label + "-" + index} fill={AURORA_COLORS[index % AURORA_COLORS.length]} />)}</Bar></BarChart></ResponsiveContainer> : <EmptyLane title={tx("Ingen faktureret omsætning endnu", "No invoiced revenue yet")} text={tx("Opret første faktura, så revenue-lanen begynder at vise tempo og månedlig udvikling.", "Create your first invoice and the revenue lane starts showing pace and monthly trend.")} href={base + "/finance/invoices?create=true"} action={tx("Opret faktura", "Create invoice")} dark />}</div><div className="rounded-[1.6rem] border border-white/70 bg-white/72 p-5 shadow-sm"><MicroStack items={[{ label: tx("Faktureret", "Invoiced"), value: format(monthValue) }, { label: tx("Udestående", "Overdue"), value: format(overdueValue), tone: overdueValue > 0 ? "risk" : undefined }, { label: tx("Betalte", "Paid"), value: String(d?.invoices?.paid ?? 0) }, { label: tx("Total", "Total"), value: String(d?.invoices?.total ?? 0) }]} /></div></div></div><SpotlightPanel items={spotlightItems} isLoading={isLoading} base={base} /></section>
         <section className="mt-6 grid gap-6 xl:grid-cols-3"><PipelinePanel stages={pipelineStages} base={base} /><FlowPanel icon={Calendar} title={tx("Dagens kalender", "Today's calendar")} eyebrow="Timing" emptyText={tx("Ingen møder planlagt i dag.", "No meetings scheduled today.")} href={base + "/work/calendar"} isLoading={isLoading} items={meetings.map((meeting) => ({ id: meeting.id, primary: meeting.title, secondary: new Date(meeting.start_time).toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" }) }))} /><FlowPanel icon={CheckCircle2} title={tx("Arbejdskø", "Work queue")} eyebrow="Execution" emptyText={tx("Alt er lukket for i dag.", "Everything is closed for today.")} href={base + "/work/tasks"} isLoading={isLoading} items={tasks.map((task) => ({ id: task.id, primary: task.title, secondary: task.due_date ? new Date(task.due_date).toLocaleDateString(dateLocale, { day: "numeric", month: "short" }) : tx("uden frist", "no due date"), tone: task.priority === "high" ? "risk" : undefined }))} /></section>
         <section className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]"><VelocityPanel leads={d?.leads?.newThisMonth ?? 0} customers={d?.customers?.total ?? 0} unread={d?.emails?.unread ?? 0} loading={isLoading} base={base} /><WorkforcePanel active={d?.employees?.active ?? 0} total={d?.employees?.total ?? 0} pending={d?.tasks?.pending ?? 0} completed={d?.tasks?.completed ?? 0} loading={isLoading} base={base} /></section>
       </div>
     </div>
+    </>
   );
 }
 
