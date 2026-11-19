@@ -3493,7 +3493,8 @@
       "approvals": "Freigaben",
       "budgetUsage": "Budget & Nutzung",
       "auditLog": "Audit-Log",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "seoAutopilot": "SEO-Autopilot"
     },
     "runSeo": {
       "title": "SEO-Spezialist ausführen",
@@ -3780,6 +3781,115 @@
         "untrackedTitle": "{n} von {total} Leads haben keine Quelle",
         "untrackedBody": "Leads ohne Quelle können SEO nicht zugeordnet werden und zählen daher nicht als organisch. Erfassen Sie die Quelle bei neuen Leads, um dies zu messen.",
         "none": "Keine CRM-Daten für den Zeitraum."
+      }
+    },
+    "seo": {
+      "title": "SEO-Autopilot",
+      "subtitle": "Überwacht die eigene Website nach Zeitplan und entwirft Korrekturen zur Freigabe. Nichts wird automatisch veröffentlicht.",
+      "notInstalled": "Die Tabellen des SEO-Autopiloten sind in dieser Umgebung noch nicht installiert (Migration 20261118120000).",
+      "runNow": "Jetzt eine Runde starten",
+      "running": "Eine Runde läuft",
+      "queued": "In der Warteschlange. Der Growth-OS-Dienst startet sie innerhalb einer Minute.",
+      "none": "Noch nichts.",
+      "noChanges": "Noch keine Änderungen zwischen Crawls.",
+      "chart": "Website-Score pro Crawl",
+      "findingsTitle": "Befunde des letzten Crawls",
+      "findingsHint": "Gemessen im rohen HTML, das ein Crawler ohne JavaScript sieht.",
+      "changesTitle": "Was sich seit dem letzten Crawl geändert hat",
+      "draftsHint": "Entwürfe werden von kostenlosen KI-Modellen geschrieben und bewertet. Eine Bewertung ist keine Freigabe: Sie entscheiden, und eine Freigabe veröffentlicht nichts.",
+      "waiting": "Wartet auf Sie",
+      "all": "Alle",
+      "read": "Lesen",
+      "hide": "Ausblenden",
+      "approve": "Freigeben",
+      "reject": "Ablehnen",
+      "reviewNotes": "Prüfer",
+      "models": "Autor: {w} · Prüfer: {r}",
+      "historyHint": "Berichte des früheren eigenständigen Autopiloten (Wettbewerbs- und GA4-Berichte), zur Referenz aufbewahrt.",
+      "tab": {
+        "overview": "Übersicht",
+        "drafts": "Freigabe",
+        "tasks": "Aufgaben",
+        "runs": "Runden",
+        "history": "Verlauf",
+        "setup": "Einrichtung"
+      },
+      "kpi": {
+        "score": "Website-Score",
+        "noPrevious": "Kein früherer Crawl zum Vergleich",
+        "delta": "{d} seit dem letzten Crawl",
+        "pages": "Gecrawlte Seiten",
+        "crawled": "Gecrawlt {at}",
+        "findings": "Befunde",
+        "bySeverity": "{h} hoch · {m} mittel · {l} niedrig",
+        "next": "Zeitplan",
+        "every": "Alle {h} Std.",
+        "paused": "Pausiert",
+        "calls": "Max. {n} kostenlose Modellaufrufe pro Tag"
+      },
+      "col": {
+        "severity": "Schwere",
+        "page": "Seite",
+        "issue": "Problem",
+        "fix": "Korrektur",
+        "field": "Feld",
+        "before": "Vorher",
+        "after": "Nachher",
+        "task": "Aufgabe",
+        "type": "Typ",
+        "status": "Status",
+        "created": "Erstellt"
+      },
+      "sev": {
+        "high": "Hoch",
+        "medium": "Mittel",
+        "low": "Niedrig"
+      },
+      "kind": {
+        "page": "Neue Seite",
+        "audit": "Technischer Bericht"
+      },
+      "review": {
+        "pending": "Noch nicht geprüft",
+        "passed": "Prüfer: bestanden",
+        "failed": "Prüfer: nicht gut genug"
+      },
+      "decision": {
+        "approved": "Von einer Person freigegeben",
+        "rejected": "Von einer Person abgelehnt"
+      },
+      "type": {
+        "technical_audit": "Technische Prüfung",
+        "page_draft": "Seitenentwurf"
+      },
+      "taskStatus": {
+        "open": "Offen",
+        "done": "Erledigt",
+        "failed": "Fehlgeschlagen"
+      },
+      "runStatus": {
+        "running": "Läuft",
+        "ok": "OK",
+        "error": "Fehler"
+      },
+      "trigger": {
+        "schedule": "geplant",
+        "manual": "manuell",
+        "import": "importiert"
+      },
+      "setup": {
+        "title": "Website und Zeitplan",
+        "description": "Die Website muss auf der Domain Ihrer verifizierten Search-Console-Verbindung liegen.",
+        "site": "Website (https://host)",
+        "every": "Crawl alle (Stunden)",
+        "calls": "Kostenlose Modellaufrufe pro Tag",
+        "facts": "Produktfakten für den Autor",
+        "factsHint": "Ein Fakt pro Zeile. Der Autor darf nichts anderes über Ihr Produkt behaupten. Ohne Fakten werden keine Seitenentwürfe geschrieben.",
+        "enabled": "Autopilot an",
+        "save": "Speichern",
+        "saved": "Gespeichert.",
+        "adminOnly": "Nur ein Inhaber oder Firmenadmin kann die Einrichtung ändern.",
+        "freeNote": "Es werden nur kostenlose OpenRouter-Modelle mit Tageslimit genutzt. Sind sie ausgelastet, wartet die Aufgabe auf die nächste Runde."
       }
     }
   },

@@ -3611,6 +3611,271 @@ export type Database = {
           },
         ]
       }
+      growth_seo_changes: {
+        Row: {
+          after: string | null
+          before: string | null
+          company_id: string
+          field: string
+          id: number
+          run_id: string
+          url: string
+        }
+        Insert: {
+          after?: string | null
+          before?: string | null
+          company_id: string
+          field: string
+          id?: never
+          run_id: string
+          url: string
+        }
+        Update: {
+          after?: string | null
+          before?: string | null
+          company_id?: string
+          field?: string
+          id?: never
+          run_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_changes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_changes_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_drafts: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string
+          decision_note: string | null
+          h1: string | null
+          id: string
+          kind: string
+          legacy_id: number | null
+          meta_description: string | null
+          review_model: string | null
+          review_notes: string | null
+          review_score: number | null
+          review_status: string
+          run_id: string | null
+          slug: string | null
+          summary: string | null
+          task_id: string | null
+          title: string
+          worker_model: string | null
+        }
+        Insert: {
+          body?: string
+          company_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          decision_note?: string | null
+          h1?: string | null
+          id?: string
+          kind: string
+          legacy_id?: number | null
+          meta_description?: string | null
+          review_model?: string | null
+          review_notes?: string | null
+          review_score?: number | null
+          review_status?: string
+          run_id?: string | null
+          slug?: string | null
+          summary?: string | null
+          task_id?: string | null
+          title: string
+          worker_model?: string | null
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          decision_note?: string | null
+          h1?: string | null
+          id?: string
+          kind?: string
+          legacy_id?: number | null
+          meta_description?: string | null
+          review_model?: string | null
+          review_notes?: string | null
+          review_score?: number | null
+          review_status?: string
+          run_id?: string | null
+          slug?: string | null
+          summary?: string | null
+          task_id?: string | null
+          title?: string
+          worker_model?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_drafts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_drafts_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_drafts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_findings: {
+        Row: {
+          company_id: string
+          fix: string
+          id: number
+          issue: string
+          run_id: string
+          severity: string
+          url: string
+        }
+        Insert: {
+          company_id: string
+          fix: string
+          id?: never
+          issue: string
+          run_id: string
+          severity: string
+          url: string
+        }
+        Update: {
+          company_id?: string
+          fix?: string
+          id?: never
+          issue?: string
+          run_id?: string
+          severity?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_findings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_findings_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_pages: {
+        Row: {
+          bytes: number | null
+          canonical: string | null
+          company_id: string
+          h1_count: number
+          has_og_image: boolean
+          id: number
+          internal_links: number
+          json_ld: string[]
+          lang: string | null
+          meta_description: string | null
+          ms: number | null
+          robots: string | null
+          run_id: string
+          score: number
+          status: number
+          title: string | null
+          url: string
+          word_count: number
+        }
+        Insert: {
+          bytes?: number | null
+          canonical?: string | null
+          company_id: string
+          h1_count?: number
+          has_og_image?: boolean
+          id?: never
+          internal_links?: number
+          json_ld?: string[]
+          lang?: string | null
+          meta_description?: string | null
+          ms?: number | null
+          robots?: string | null
+          run_id: string
+          score: number
+          status: number
+          title?: string | null
+          url: string
+          word_count?: number
+        }
+        Update: {
+          bytes?: number | null
+          canonical?: string | null
+          company_id?: string
+          h1_count?: number
+          has_og_image?: boolean
+          id?: never
+          internal_links?: number
+          json_ld?: string[]
+          lang?: string | null
+          meta_description?: string | null
+          ms?: number | null
+          robots?: string | null
+          run_id?: string
+          score?: number
+          status?: number
+          title?: string | null
+          url?: string
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_pages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_pages_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_seo_recommendations: {
         Row: {
           action: string
@@ -3691,6 +3956,266 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_reports: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          legacy_id: number | null
+          run_id: string | null
+          target: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          legacy_id?: number | null
+          run_id?: string | null
+          target?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          legacy_id?: number | null
+          run_id?: string | null
+          target?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_reports_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_runs: {
+        Row: {
+          changes: number | null
+          company_id: string
+          completion_tokens: number
+          cost_usd: number
+          error: string | null
+          findings: number | null
+          finished_at: string | null
+          id: string
+          kind: string
+          legacy_id: number | null
+          llm_calls: number
+          log: Json
+          models: string[]
+          pages: number | null
+          prompt_tokens: number
+          score: number | null
+          started_at: string
+          status: string
+          summary: string | null
+          task_id: string | null
+          trigger: string
+        }
+        Insert: {
+          changes?: number | null
+          company_id: string
+          completion_tokens?: number
+          cost_usd?: number
+          error?: string | null
+          findings?: number | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          legacy_id?: number | null
+          llm_calls?: number
+          log?: Json
+          models?: string[]
+          pages?: number | null
+          prompt_tokens?: number
+          score?: number | null
+          started_at?: string
+          status?: string
+          summary?: string | null
+          task_id?: string | null
+          trigger: string
+        }
+        Update: {
+          changes?: number | null
+          company_id?: string
+          completion_tokens?: number
+          cost_usd?: number
+          error?: string | null
+          findings?: number | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          legacy_id?: number | null
+          llm_calls?: number
+          log?: Json
+          models?: string[]
+          pages?: number | null
+          prompt_tokens?: number
+          score?: number | null
+          started_at?: string
+          status?: string
+          summary?: string | null
+          task_id?: string | null
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "growth_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_sites: {
+        Row: {
+          company_id: string
+          crawl_every_hours: number
+          created_at: string
+          enabled: boolean
+          last_run_at: string | null
+          llm_calls_per_day: number
+          max_pages: number
+          max_pending_drafts: number
+          product_facts: string
+          site_url: string
+          topics: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          crawl_every_hours?: number
+          created_at?: string
+          enabled?: boolean
+          last_run_at?: string | null
+          llm_calls_per_day?: number
+          max_pages?: number
+          max_pending_drafts?: number
+          product_facts?: string
+          site_url: string
+          topics?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          crawl_every_hours?: number
+          created_at?: string
+          enabled?: boolean
+          last_run_at?: string | null
+          llm_calls_per_day?: number
+          max_pages?: number
+          max_pending_drafts?: number
+          product_facts?: string
+          site_url?: string
+          topics?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_sites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_seo_tasks: {
+        Row: {
+          attempts: number
+          company_id: string
+          created_at: string
+          error: string | null
+          id: string
+          legacy_id: number | null
+          priority: number
+          rationale: string | null
+          run_id: string | null
+          status: string
+          target: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          company_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          legacy_id?: number | null
+          priority?: number
+          rationale?: string | null
+          run_id?: string | null
+          status?: string
+          target?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          legacy_id?: number | null
+          priority?: number
+          rationale?: string | null
+          run_id?: string | null
+          status?: string
+          target?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_seo_tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "growth_seo_tasks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "growth_seo_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -9249,6 +9774,20 @@ export type Database = {
       growth_reserve_budget: {
         Args: { _company_id: string; _usd: number }
         Returns: boolean
+      }
+      growth_seo_configure_site: {
+        Args: {
+          _crawl_every_hours?: number
+          _enabled: boolean
+          _llm_calls_per_day?: number
+          _product_facts?: string
+          _site_url: string
+        }
+        Returns: string
+      }
+      growth_seo_decide_draft: {
+        Args: { _approve: boolean; _id: string; _note?: string }
+        Returns: string
       }
       growth_set_analytics_connection_status: {
         Args: { _company_id: string; _status: string }

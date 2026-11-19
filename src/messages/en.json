@@ -3493,7 +3493,8 @@
       "approvals": "Approvals",
       "budgetUsage": "Budget & Usage",
       "auditLog": "Audit Log",
-      "settings": "Settings"
+      "settings": "Settings",
+      "seoAutopilot": "SEO autopilot"
     },
     "runSeo": {
       "title": "Run the SEO specialist",
@@ -3780,6 +3781,115 @@
         "untrackedTitle": "{n} of {total} leads have no source",
         "untrackedBody": "Leads without a source cannot be attributed to SEO, so they are not counted as organic. Set the source on new leads to measure this.",
         "none": "No CRM data for this period."
+      }
+    },
+    "seo": {
+      "title": "SEO autopilot",
+      "subtitle": "Watches your own site on a schedule and drafts fixes for you to approve. Nothing is published automatically.",
+      "notInstalled": "The SEO autopilot tables are not installed in this environment yet (migration 20261118120000).",
+      "runNow": "Run a round now",
+      "running": "A round is running",
+      "queued": "Queued. The Growth OS service starts it within a minute.",
+      "none": "Nothing yet.",
+      "noChanges": "No changes between crawls yet.",
+      "chart": "Site score per crawl",
+      "findingsTitle": "Findings from the latest crawl",
+      "findingsHint": "Measured in the raw HTML a crawler sees, without running JavaScript.",
+      "changesTitle": "What changed since the previous crawl",
+      "draftsHint": "Drafts are written and scored by free AI models. A score is not an approval: you decide, and approving does not publish anything.",
+      "waiting": "Waiting for you",
+      "all": "All",
+      "read": "Read",
+      "hide": "Hide",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reviewNotes": "Reviewer",
+      "models": "Writer: {w} · reviewer: {r}",
+      "historyHint": "Reports from the earlier standalone autopilot (competitor and GA4 reports), kept for reference.",
+      "tab": {
+        "overview": "Overview",
+        "drafts": "Approval queue",
+        "tasks": "Tasks",
+        "runs": "Rounds",
+        "history": "History",
+        "setup": "Setup"
+      },
+      "kpi": {
+        "score": "Site score",
+        "noPrevious": "No earlier crawl to compare",
+        "delta": "{d} since the previous crawl",
+        "pages": "Pages crawled",
+        "crawled": "Crawled {at}",
+        "findings": "Findings",
+        "bySeverity": "{h} high · {m} medium · {l} low",
+        "next": "Schedule",
+        "every": "Every {h} h",
+        "paused": "Paused",
+        "calls": "Max {n} free model calls per day"
+      },
+      "col": {
+        "severity": "Severity",
+        "page": "Page",
+        "issue": "Issue",
+        "fix": "Fix",
+        "field": "Field",
+        "before": "Before",
+        "after": "After",
+        "task": "Task",
+        "type": "Type",
+        "status": "Status",
+        "created": "Created"
+      },
+      "sev": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "kind": {
+        "page": "New page",
+        "audit": "Technical report"
+      },
+      "review": {
+        "pending": "Not reviewed yet",
+        "passed": "Reviewer: passed",
+        "failed": "Reviewer: not good enough"
+      },
+      "decision": {
+        "approved": "Approved by a person",
+        "rejected": "Rejected by a person"
+      },
+      "type": {
+        "technical_audit": "Technical audit",
+        "page_draft": "Page draft"
+      },
+      "taskStatus": {
+        "open": "Open",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "runStatus": {
+        "running": "Running",
+        "ok": "OK",
+        "error": "Error"
+      },
+      "trigger": {
+        "schedule": "scheduled",
+        "manual": "manual",
+        "import": "imported"
+      },
+      "setup": {
+        "title": "Site and schedule",
+        "description": "The site must be on the domain of your verified Search Console connection.",
+        "site": "Site (https://host)",
+        "every": "Crawl every (hours)",
+        "calls": "Free model calls per day",
+        "facts": "Product facts the writer may use",
+        "factsHint": "One fact per line. The writer may state nothing else about your product. Without facts, no page drafts are written.",
+        "enabled": "Autopilot on",
+        "save": "Save",
+        "saved": "Saved.",
+        "adminOnly": "Only an owner or company admin can change the setup.",
+        "freeNote": "Only free OpenRouter models are used, capped per day. When they are busy, the task waits for the next round."
       }
     }
   },

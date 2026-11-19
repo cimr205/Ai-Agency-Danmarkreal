@@ -31,7 +31,7 @@ export const SPECIALISTS: SpecialistDef[] = [
   s(1, "SEO", "SEO Specialist", D("search"), "Organic search visibility and on-page quality of the tenant's own pages.",
     "Organic sign-ups from search (needs GSC + analytics)",
     ["Public HTML of the tenant's own URLs (fetch)", "Google Search Console (not connected)"],
-    ["keyword-intent-analysis", "onpage-seo-audit", "internal-link-optimization", "search-console-analysis", "seo-experiment-verification"],
+    ["keyword-intent-analysis", "onpage-seo-audit", "internal-link-optimization", "search-console-analysis", "seo-experiment-verification", "seo-autopilot"],
     [], { status: "operational" }),
   s(2, "GEO", "GEO Specialist", D("search"), "Visibility and citation of the brand in generative search answers.",
     "Share of tracked AI answers citing the brand",

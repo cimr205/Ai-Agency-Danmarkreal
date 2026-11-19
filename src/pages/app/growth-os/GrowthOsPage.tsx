@@ -1,10 +1,11 @@
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { SeoAutopilot } from './SeoAutopilot';
 import { useMemo, useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Activity, AlertTriangle, BookOpen, Building2, CheckCircle2, ClipboardCheck, Crown, FlaskConical, Gauge,
-  GraduationCap, LayoutDashboard, LineChart, ScrollText, Settings2, ShieldCheck, Users, Wallet, XCircle,
+  GraduationCap, LayoutDashboard, LineChart, ScrollText, Search, Settings2, ShieldCheck, Users, Wallet, XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ const SECTIONS = [
   { path: 'learning', key: 'learningCenter', icon: GraduationCap },
   { path: 'experiments', key: 'experiments', icon: FlaskConical },
   { path: 'analytics', key: 'analytics', icon: LineChart },
+  { path: 'seo', key: 'seoAutopilot', icon: Search },
   { path: 'approvals', key: 'approvals', icon: ClipboardCheck },
   { path: 'budget', key: 'budgetUsage', icon: Wallet },
   { path: 'audit', key: 'auditLog', icon: ScrollText },
@@ -600,6 +602,7 @@ export default function GrowthOsPage() {
             <Route path="learning" element={<LearningCenter t={t} />} />
             <Route path="experiments" element={<NotBuilt t={t} phase="2" />} />
             <Route path="analytics" element={<AnalyticsDashboard t={t} />} />
+            <Route path="seo" element={<SeoAutopilot t={t} />} />
             <Route path="approvals" element={<Approvals t={t} />} />
             <Route path="budget" element={<BudgetUsage t={t} />} />
             <Route path="audit" element={<AuditLog t={t} />} />
