@@ -24,7 +24,7 @@ Deno.test("every specialist has a skill contract per assigned skill; only SEO is
     for (const s of sp.skills) assert(SKILLS.some((k) => k.id === s && k.agentId === sp.id), `${sp.id} ${s}`);
   }
   assertEquals(SPECIALISTS.filter((s) => s.status === "operational").map((s) => s.id), ["seo-agent"]);
-  assertEquals(SKILLS.filter((s) => s.status === "active").map((s) => s.id).sort(), ["onpage-seo-audit", "search-console-analysis", "seo-experiment-verification"]);
+  assertEquals(SKILLS.filter((s) => s.status === "active").map((s) => s.id).sort(), ["onpage-seo-audit", "search-console-analysis", "seo-autopilot", "seo-experiment-verification"]);
 });
 
 Deno.test("external skills are pinned to full commit SHAs", () => {

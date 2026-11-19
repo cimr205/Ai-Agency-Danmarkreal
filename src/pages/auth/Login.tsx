@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, Link, Navigate, useLocation, type Location } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,9 @@ import { isLocale, useI18n } from '@/lib/i18n';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import { loginSchema } from '@/lib/validations';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 import { describeAuthError } from '@/lib/authErrors';
+import { describeValidationError } from '@/lib/validationErrors';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -15,6 +17,7 @@ export default function LoginPage() {
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const { t } = useI18n();
   const { toast } = useToast();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,8 +27,15 @@ export default function LoginPage() {
 
   useEffect(() => () => clearTimeout(stuckTimerRef.current), []);
 
+  // ProtectedRoute redirects here with { state: { from: location } } — honour
+  // it so the user lands back where they were headed. `from` is a react-router
+  // Location object (not a raw string from the URL), so this can't be turned
+  // into an open redirect by a crafted query param.
+  const from = (location.state as { from?: Location } | null)?.from;
+  const redirectTarget = from ? `${from.pathname}${from.search}${from.hash}` : `/${locale}/app/dashboard`;
+
   if (!authLoading && isAuthenticated) {
-    return <Navigate to={`/${locale}/app/dashboard`} replace />;
+    return <Navigate to={redirectTarget} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +46,7 @@ export default function LoginPage() {
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach(err => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+        if (err.path[0]) fieldErrors[err.path[0] as string] = describeValidationError(err.message, t);
       });
       setErrors(fieldErrors);
       return;
@@ -103,7 +113,7 @@ export default function LoginPage() {
               {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
-              <Input placeholder={t('auth.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.password} className="h-11" />
+              <PasswordInput placeholder={t('auth.password')} value={password} onChange={e => setPassword(e.target.value)} required minLength={8} aria-invalid={!!errors.password} className="h-11" />
               {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
             </div>
             <div className="flex items-center justify-between">

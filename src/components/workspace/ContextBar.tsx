@@ -24,9 +24,25 @@ export function ContextBar({ onOpenPalette }: Props) {
   const locale = isLocale(params.locale) ? params.locale : "en";
   const base = `/${locale}/app`;
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
   const { t } = useI18n();
   const { currency, setCurrency, allCurrencies } = useCurrency();
+
+  // Each currency implies a market, so switch the UI language to match —
+  // only en/da/de exist, so GBP/SEK/NOK fall back to English alongside USD.
+  const CURRENCY_LOCALE: Record<Currency, typeof locale> = {
+    DKK: "da", EUR: "de", USD: "en", GBP: "en", SEK: "en", NOK: "en",
+  };
+
+  const handleSelectCurrency = (c: Currency) => {
+    setCurrency(c);
+    const target = CURRENCY_LOCALE[c];
+    if (target !== locale) {
+      const rest = location.pathname.split("/").slice(2).join("/");
+      navigate(`/${target}/${rest}${location.search}`);
+    }
+  };
 
   const today = new Date().toLocaleDateString(locale === "da" ? "da-DK" : locale === "de" ? "de-DE" : "en-US", {
     weekday: "short", day: "numeric", month: "short",
@@ -66,7 +82,7 @@ export function ContextBar({ onOpenPalette }: Props) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {allCurrencies.map(c => (
-              <DropdownMenuItem key={c} onClick={() => setCurrency(c)} className={c === currency ? "bg-accent font-medium" : ""}>
+              <DropdownMenuItem key={c} onClick={() => handleSelectCurrency(c)} className={c === currency ? "bg-accent font-medium" : ""}>
                 <span className="w-5 text-center mr-2">{CURRENCY_SYMBOLS[c]}</span>{c}
               </DropdownMenuItem>
             ))}

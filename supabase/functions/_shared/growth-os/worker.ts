@@ -7,6 +7,8 @@ import { runTask, type EngineDeps, type GrowthTask } from "./engine.ts";
 import { SupabaseGrowthStore } from "./supabase-store.ts";
 import type { GatewayConfig } from "./openrouter.ts";
 import { runOpportunities } from "./seo/opportunities-runner.ts";
+import { closeStaleRuns, hasRunningRun, runAutopilot, type SiteRow } from "./seo/autopilot.ts";
+import { DEFAULT_FREE_MODELS } from "./seo/free-llm.ts";
 
 // deno-lint-ignore no-explicit-any
 type Db = SupabaseClient<any, any, any>;
@@ -21,6 +23,9 @@ export interface WorkerDeps {
   /** Overridable for tests; defaults to the real engine. */
   run?: (task: GrowthTask, deps: EngineDeps) => ReturnType<typeof runTask>;
   runOpportunities?: typeof runOpportunities;
+  runAutopilot?: typeof runAutopilot;
+  /** Free OpenRouter models for the SEO autopilot (GROWTH_OS_SEO_FREE_MODELS). */
+  freeModels?: string[];
   fetch?: typeof fetch;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
@@ -49,6 +54,8 @@ export async function workOne(d: WorkerDeps, companyId: string | null = null): P
     // Each task type has its own executor; growth_executable() in SQL lists the same pairs.
     const res = task.type === "seo.opportunities"
       ? await (d.runOpportunities ?? runOpportunities)(d.db, task, { fetch: d.fetch ?? fetch, now: d.now ?? Date.now }).then((r) => ({ report: r.report, verification: r.verification, ceo: null }))
+      : task.type === "seo.autopilot"
+      ? await manualAutopilot(d, task)
       : await (d.run ?? runTask)(task, {
         store, gateway: d.gateway(), fetch: d.fetch ?? fetch,
         now: d.now ?? Date.now, sleep, newId: () => crypto.randomUUID(),
@@ -65,6 +72,23 @@ export async function workOne(d: WorkerDeps, companyId: string | null = null): P
     await d.db.from("growth_audit_log").insert({ company_id: task.companyId, actor_type: "agent", actor_id: task.agentId, event: "task.error", subject_id: task.id, detail: { error: msg, worker: d.worker } });
     return { task_id: task.id, status: "failed", error: msg };
   }
+}
+
+/** A manual "run now" of the SEO autopilot (the hourly schedule lives in seo/autopilot.ts). */
+async function manualAutopilot(d: WorkerDeps, task: GrowthTask) {
+  const now = d.now ?? Date.now;
+  const { data: site, error } = await d.db.from("growth_seo_sites").select("*").eq("company_id", task.companyId).maybeSingle();
+  if (error) throw new Error(`seo site: ${error.message}`);
+  const blocked = (reason: string) => ({ report: { status: "blocked", reason }, verification: { status: "inconclusive" as const, findings: [reason] }, ceo: null });
+  if (!site) return blocked("the SEO autopilot is not set up for this company");
+  await closeStaleRuns(d.db, task.companyId, now());
+  if (await hasRunningRun(d.db, task.companyId)) return blocked("a round is already running");
+  const r = await (d.runAutopilot ?? runAutopilot)(d.db, site as SiteRow, "manual", {
+    fetch: d.fetch ?? fetch, now, gateway: d.gateway, freeModels: d.freeModels ?? DEFAULT_FREE_MODELS,
+  }, task.id);
+  const report = { status: r.status === "ok" ? "completed" : "failed", agent: "seo-agent", skill: "seo-autopilot@1.0.0", run_id: r.run_id, summary: r.summary, score: r.score, llm_calls: r.llm_calls, note: "Drafts wait for human approval; nothing was published." };
+  // The crawl checks are deterministic and stored row by row; the round is verified when its run row closed cleanly.
+  return { report, verification: { status: r.status === "ok" ? "verified" as const : "inconclusive" as const, findings: r.error ? [r.error] : [] }, ceo: null };
 }
 
 export type WorkerState = "starting" | "idle" | "working" | "not_installed" | "error" | "stopping";

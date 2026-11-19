@@ -9,12 +9,15 @@
 // Google data:   GOOGLE_SERVICE_ACCOUNT_JSON (read-only GA4 + Search Console); without it the
 //                analytics sync stays off and the dashboard says "not connected".
 // Optional env:  GROWTH_OS_POLL_SECONDS (15), GROWTH_OS_LEASE_SECONDS (180), GROWTH_OS_ANALYTICS_SYNC_HOURS (6),
-//                GROWTH_OS_MODEL_CLASSES, GROWTH_OS_COMPLEX_PROVIDERS, GROWTH_OS_OLLAMA_*, PORT
+//                GROWTH_OS_MODEL_CLASSES, GROWTH_OS_COMPLEX_PROVIDERS, GROWTH_OS_OLLAMA_*, PORT,
+//                GROWTH_OS_SEO_FREE_MODELS (comma list; only models priced 0 in the live catalogue are ever used)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { gatewayConfigFromEnv } from "../../supabase/functions/_shared/growth-os/openrouter.ts";
 import { runLoop, type WorkerStatus } from "../../supabase/functions/_shared/growth-os/worker.ts";
 import { type AnalyticsStatus, runAnalyticsLoop } from "../../supabase/functions/_shared/growth-os/analytics-sync.ts";
 import { GoogleClient, parseServiceAccount } from "../../supabase/functions/_shared/growth-os/google.ts";
+import { type AutopilotStatus, runAutopilotLoop } from "../../supabase/functions/_shared/growth-os/seo/autopilot.ts";
+import { freeModelsFromEnv } from "../../supabase/functions/_shared/growth-os/seo/free-llm.ts";
 import { healthHandler, LLM_ENV, missingEnv } from "./health.ts";
 
 const env = (k: string) => Deno.env.get(k) || undefined;
@@ -28,6 +31,8 @@ const status: WorkerStatus = {
 const abort = new AbortController();
 let loop: Promise<void> = Promise.resolve();
 let analyticsLoop: Promise<void> = Promise.resolve();
+let seoLoop: Promise<void> = Promise.resolve();
+const seoAutopilot: AutopilotStatus = { state: "idle", last_check_at: null, last_results: [], last_error: null };
 const analytics: AnalyticsStatus = { state: "not_configured", last_run_at: null, connections_synced: 0, last_result: [], last_error: null };
 
 if (missing.length) {
@@ -38,10 +43,17 @@ if (missing.length) {
   const db = createClient(env("SUPABASE_URL")!, env("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false, autoRefreshToken: false } });
   const pollMs = 1000 * Math.max(5, Number(env("GROWTH_OS_POLL_SECONDS") ?? 15));
   console.log(`[growth-os] worker ${worker} polling every ${pollMs / 1000}s`);
+  const freeModels = freeModelsFromEnv(env);
   loop = runLoop(
-    { db, worker, leaseSeconds: Math.max(60, Number(env("GROWTH_OS_LEASE_SECONDS") ?? 180)), gateway: () => gatewayConfigFromEnv(env) },
+    { db, worker, leaseSeconds: Math.max(60, Number(env("GROWTH_OS_LEASE_SECONDS") ?? 180)), gateway: () => gatewayConfigFromEnv(env), freeModels },
     { pollMs, maxBackoffMs: 5 * 60_000, signal: abort.signal, status },
   ).catch((e) => { status.state = "error"; status.last_error = (e as Error).message; });
+
+  // SEO autopilot: hourly check; each enabled site runs when its interval has passed.
+  seoLoop = runAutopilotLoop(db, { fetch, now: Date.now, gateway: () => gatewayConfigFromEnv(env), freeModels }, {
+    checkMs: 3_600_000, signal: abort.signal, status: seoAutopilot,
+  }).catch((e) => { seoAutopilot.state = "error"; seoAutopilot.last_error = (e as Error).message; });
+  console.log(`[growth-os] seo autopilot on (free models only: ${freeModels.join(", ")})`);
 
   const sa = parseServiceAccount(env("GOOGLE_SERVICE_ACCOUNT_JSON"));
   if (sa) {
@@ -62,14 +74,14 @@ const info = {
   complexFallback: env("GROWTH_OS_OLLAMA_BASE_URL") ? "ollama" as const : "none" as const,
 };
 if (info.llm === "not_configured") console.warn(`[growth-os] model calls disabled: missing ${missingEnv(env, LLM_ENV).join(", ")}`);
-const server = Deno.serve({ port: Number(env("PORT") ?? 8080), hostname: "0.0.0.0" }, healthHandler(status, info, analytics));
+const server = Deno.serve({ port: Number(env("PORT") ?? 8080), hostname: "0.0.0.0" }, healthHandler(status, info, analytics, seoAutopilot));
 
 // Railway sends SIGTERM on redeploy: finish the task in hand, then exit. A task cut
 // off harder than that keeps its lease and is reclaimed after it expires.
 Deno.addSignalListener("SIGTERM", async () => {
   console.log("[growth-os] SIGTERM: finishing current task");
   abort.abort();
-  await Promise.all([loop, analyticsLoop]);
+  await Promise.all([loop, analyticsLoop, seoLoop]);
   await server.shutdown();
   Deno.exit(0);
 });

@@ -152,6 +152,12 @@
           "version": "1.0.0",
           "status": "active",
           "max_level": 0
+        },
+        {
+          "skill_id": "seo-autopilot",
+          "version": "1.0.0",
+          "status": "active",
+          "max_level": 1
         }
       ],
       "external_skills": [],
