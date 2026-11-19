@@ -1,32 +1,14 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { isLocale } from '@/lib/i18n';
+import seo from '@/lib/seo/seo-copy.json';
 
-const SITE_URL = 'https://aiagencydanmark.dk';
+// One canonical host: the apex domain 308-redirects to www, so every canonical,
+// hreflang and og:url must point at www (shared with scripts/prerender-seo.mjs).
+const SITE_URL = seo.siteUrl;
 const SOCIAL_IMAGE = `${SITE_URL}/social-card.png`;
-
-const copy = {
-  da: {
-    homeTitle: 'AI Agency Danmark | CRM, drift og automatisering samlet ét sted',
-    homeDescription: 'Saml leads, kunder, opgaver, økonomi og automatisering i én arbejdsflade bygget til danske virksomheder.',
-    privacyTitle: 'Privatlivspolitik | AI Agency Danmark',
-    privacyDescription: 'Læs hvordan AI Agency Danmark behandler og beskytter personoplysninger.',
-    termsTitle: 'Vilkår og betingelser | AI Agency Danmark',
-    termsDescription: 'Læs vilkårene for brug af AI Agency Danmark.',
-    dpaTitle: 'Databehandleraftale | AI Agency Danmark',
-    dpaDescription: 'Læs databehandleraftalen for AI Agency Danmark.',
-  },
-  en: {
-    homeTitle: 'AI Agency Danmark | CRM, operations and automation in one place',
-    homeDescription: 'Bring leads, clients, tasks, finance and automation into one workspace for growing companies.',
-    privacyTitle: 'Privacy policy | AI Agency Danmark',
-    privacyDescription: 'Learn how AI Agency Danmark processes and protects personal data.',
-    termsTitle: 'Terms and conditions | AI Agency Danmark',
-    termsDescription: 'Read the terms governing use of AI Agency Danmark.',
-    dpaTitle: 'Data processing agreement | AI Agency Danmark',
-    dpaDescription: 'Read the data processing agreement for AI Agency Danmark.',
-  },
-} as const;
+const copy = seo.copy;
+const PUBLIC_PAGES = ['/', '/privacy', '/terms', '/dpa'];
 
 function setMeta(selector: string, attribute: 'name' | 'property', key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(selector);
@@ -95,6 +77,19 @@ export function SeoManager() {
       document.head.appendChild(link);
     }
     link.href = canonical;
+
+    // hreflang alternates for this page (index.html only carries the home page's).
+    document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((el) => el.remove());
+    if (!isPrivate && PUBLIC_PAGES.includes(suffix)) {
+      const path = suffix === '/' ? '' : suffix;
+      for (const [lang, loc] of [['da', 'da'], ['en', 'en'], ['de', 'de'], ['x-default', 'da']] as const) {
+        const alt = document.createElement('link');
+        alt.rel = 'alternate';
+        alt.hreflang = lang;
+        alt.href = `${SITE_URL}/${loc}${path}`;
+        document.head.appendChild(alt);
+      }
+    }
   }, [pathname]);
 
   return null;

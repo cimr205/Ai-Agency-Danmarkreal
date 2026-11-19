@@ -6,4 +6,4 @@ Disallow: /*/app/
 Disallow: /*/auth/
 Disallow: /*/admin/
 
-Sitemap: https://aiagencydanmark.dk/sitemap.xml
+Sitemap: https://www.aiagencydanmark.dk/sitemap.xml

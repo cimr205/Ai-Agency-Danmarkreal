@@ -1,0 +1,25 @@
+{
+  "siteUrl": "https://www.aiagencydanmark.dk",
+  "copy": {
+    "da": {
+      "homeTitle": "AI Agency Danmark | CRM, drift og automatisering samlet ét sted",
+      "homeDescription": "Saml leads, kunder, opgaver, økonomi og automatisering i én arbejdsflade bygget til danske virksomheder.",
+      "privacyTitle": "Privatlivspolitik | AI Agency Danmark",
+      "privacyDescription": "Læs hvordan AI Agency Danmark behandler og beskytter personoplysninger.",
+      "termsTitle": "Vilkår og betingelser | AI Agency Danmark",
+      "termsDescription": "Læs vilkårene for brug af AI Agency Danmark.",
+      "dpaTitle": "Databehandleraftale | AI Agency Danmark",
+      "dpaDescription": "Læs databehandleraftalen for AI Agency Danmark."
+    },
+    "en": {
+      "homeTitle": "AI Agency Danmark | CRM, operations and automation in one place",
+      "homeDescription": "Bring leads, clients, tasks, finance and automation into one workspace for growing companies.",
+      "privacyTitle": "Privacy policy | AI Agency Danmark",
+      "privacyDescription": "Learn how AI Agency Danmark processes and protects personal data.",
+      "termsTitle": "Terms and conditions | AI Agency Danmark",
+      "termsDescription": "Read the terms governing use of AI Agency Danmark.",
+      "dpaTitle": "Data processing agreement | AI Agency Danmark",
+      "dpaDescription": "Read the data processing agreement for AI Agency Danmark."
+    }
+  }
+}
