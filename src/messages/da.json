@@ -3796,7 +3796,7 @@
       "findingsTitle": "Fund fra seneste crawl",
       "findingsHint": "Målt i den rå HTML, som en crawler ser uden at køre JavaScript.",
       "changesTitle": "Hvad er ændret siden forrige crawl",
-      "draftsHint": "Udkast skrives og scores af gratis AI-modeller. En score er ikke en godkendelse: det er jer, der beslutter, og en godkendelse publicerer ikke noget.",
+      "draftsHint": "Udkast skrives og scores af gratis AI-modeller. Når automatisk udgivelse er slået til, går de bedste artikler selv live under /da/guide. Ellers udgiver en godkendelse artiklen.",
       "waiting": "Venter på dig",
       "all": "Alle",
       "read": "Læs",
@@ -3890,6 +3890,26 @@
         "saved": "Gemt.",
         "adminOnly": "Kun en ejer eller virksomhedsadministrator kan ændre opsætningen.",
         "freeNote": "Der bruges kun gratis OpenRouter-modeller med et dagligt loft. Når de er optaget, venter opgaven til næste runde."
+      },
+      "publish": {
+        "title": "Automatisk udgivelse",
+        "description": "Autopiloten udgiver selv sine artikler på jeres website, uden at I skal godkende dem.",
+        "rule1": "Kun artikler, der er skrevet efter I slog det til, og som revieweren har givet mindst den valgte score.",
+        "rule2": "Hver artikel tjekkes først for opfundne priser, prøveperioder og links til andre websites. Fejler den, venter den på jer.",
+        "rule3": "Artiklerne ligger under /da/guide/. Autopiloten kan ikke ændre andre sider, og I kan tage enhver artikel offline med ét klik.",
+        "switch": "Udgiv automatisk",
+        "minScore": "Mindste score",
+        "perDay": "Artikler pr. døgn",
+        "statusOn": "Slået til siden {since}.",
+        "statusOff": "Slået fra: artikler går først live, når I godkender dem.",
+        "viewGuides": "Se guides på websitet",
+        "live": "Live",
+        "liveAuto": "Live (udgivet automatisk)",
+        "offline": "Taget offline",
+        "blocked": "Ikke udgivet automatisk: {reason}. Læs den og godkend den selv, hvis den er i orden.",
+        "approvePublish": "Godkend og udgiv",
+        "unpublish": "Tag offline",
+        "liveTab": "Live"
       }
     }
   },
@@ -4166,5 +4186,15 @@
     "firstEmployeeInvited": "Første medarbejder inviteret",
     "firstIntegrationConnected": "Første integration forbundet",
     "firstTaskCompleted": "Første arbejdsopgave gennemført"
+  },
+  "guide": {
+    "title": "Guides",
+    "subtitle": "Praktiske guides om CRM, salg og drift til danske virksomheder.",
+    "empty": "Der er ikke udgivet nogen guides endnu.",
+    "back": "Alle guides",
+    "notFound": "Guiden findes ikke eller er fjernet.",
+    "loading": "Indlæser…",
+    "published": "Udgivet {date}",
+    "footerLink": "Guides"
   }
 }

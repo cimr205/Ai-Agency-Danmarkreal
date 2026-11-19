@@ -15,7 +15,7 @@ vi.mock('@/hooks/api/useSeoAutopilot', () => {
   return {
     useSeoSite: q(() => state.site), useSeoRuns: q(() => state.runs), useSeoDrafts: q(() => state.drafts), useSeoFindings: q(() => state.findings),
     useSeoChanges: q(() => []), useSeoTasks: q(() => []), useSeoReports: q(() => []),
-    useConfigureSeoSite: m, useDecideSeoDraft: m, useRunSeoAutopilot: m,
+    useConfigureSeoSite: m, useDecideSeoDraft: m, useRunSeoAutopilot: m, useSetSeoAutoPublish: m, useUnpublishSeoDraft: m,
   };
 });
 
@@ -61,8 +61,22 @@ describe('Growth OS SEO autopilot', () => {
     fireEvent.mouseDown(screen.getByRole('tab', { name: 'Approval queue' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Approval queue' }));
     expect(screen.getByText('Reviewer: passed · 8/10')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Approve/ }));
     expect(state.mutate).toHaveBeenCalledWith({ id: 'd1', approve: true });
+  });
+
+  it('the owner switches automatic publishing on, and can take a live article offline', () => {
+    state.site = SITE; state.drafts = [{ ...draft, decision: 'approved', published_at: '2026-11-19T10:00:00Z', published_by: 'autopilot', unpublished_at: null }];
+    renderIt();
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Approval queue' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Approval queue' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Publish automatically' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
+    expect(state.mutate).toHaveBeenCalledWith({ enabled: true, minScore: 8, maxPerDay: 1 });
+    fireEvent.click(screen.getByRole('button', { name: 'Live' }));
+    expect(screen.getByText('Live (published automatically)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Take offline' }));
+    expect(state.mutate).toHaveBeenCalledWith('d1');
   });
 
   it('employees can read drafts but not decide or run', () => {

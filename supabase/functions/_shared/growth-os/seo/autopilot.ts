@@ -5,8 +5,9 @@
 //   2. finish the model review of any draft whose review was cut off earlier;
 //   3. if no task is open, a planner model picks 1–3 tasks (deterministic fallback plan);
 //   4. a writer model drafts the top task, a reviewer model scores it.
-// The reviewer's verdict is NOT an approval: every draft waits for a human
-// (growth_seo_decide_draft). Nothing is published to the website.
+// The reviewer's verdict alone is NOT an approval. A draft goes live only when a
+// human approves it (growth_seo_decide_draft), or, when the owner switched
+// auto-publish on, through publish.ts (score threshold, content checks, daily cap).
 //
 // Model use is free-only and capped per company per 24 h (growth_seo_sites.llm_calls_per_day).
 // When every free model is rate limited the task simply waits for the next round.
@@ -15,6 +16,7 @@ import type { GatewayConfig } from "../openrouter.ts";
 import { crawlSite, diffPageFields, type PrevPageRow, siteScoreFromPages } from "./site-audit.ts";
 import { callFree, type FreeCall, type FreeResult, FreeModelCostError, RateLimitedError } from "./free-llm.ts";
 import { extractJson } from "./json.ts";
+import { autoPublish, type PublishSite, syncDeploy } from "./publish.ts";
 
 // deno-lint-ignore no-explicit-any
 type Db = SupabaseClient<any, any, any>;
@@ -22,6 +24,7 @@ type Db = SupabaseClient<any, any, any>;
 export interface SiteRow {
   company_id: string; site_url: string; enabled: boolean; crawl_every_hours: number; max_pages: number;
   max_pending_drafts: number; llm_calls_per_day: number; product_facts: string; topics: Topic[]; last_run_at: string | null;
+  auto_publish?: boolean; auto_publish_since?: string | null; publish_min_score?: number; max_publish_per_day?: number; last_deploy_requested_at?: string | null;
 }
 export interface Topic { slug: string; keyword: string; title: string }
 interface TaskRow { id: string; type: "technical_audit" | "page_draft"; title: string; target: string | null; rationale: string | null; priority: number; attempts: number }
@@ -290,7 +293,7 @@ export async function runAutopilot(db: Db, site: SiteRow, trigger: "schedule" | 
     if (typeof r.score !== "number") r.notes = "Revieweren gav ingen score; udkastet regnes som ikke bestået.";
     const passed = s > 3;
     await must(db.from("growth_seo_drafts").update({ review_score: s, review_notes: typeof r.notes === "string" ? r.notes.slice(0, 2000) : null, review_model: model, review_status: passed ? "passed" : "failed" }).eq("id", d.id), "review");
-    say(`Review af "${d.title}": score ${s} → ${passed ? "venter på menneskelig godkendelse" : "afvist af reviewer"}.`);
+    say(`Review af "${d.title}": score ${s} → ${!passed ? "afvist af reviewer" : site.auto_publish && d.kind === "page" && s >= (site.publish_min_score ?? 8) ? "kan udgives automatisk (efter indholdstjek)" : "venter på menneskelig godkendelse"}.`);
     if (!t) return;
     if (passed) await finishTask(t, "done", null);
     else await retryOrFail(t, `Udkast afvist af reviewer (score ${s})`);
@@ -312,10 +315,13 @@ export function dueSites(sites: SiteRow[], nowMs: number): SiteRow[] {
   return sites.filter((s) => s.enabled && (!s.last_run_at || Date.parse(s.last_run_at) + s.crawl_every_hours * 3_600_000 <= nowMs));
 }
 
-export interface AutopilotStatus { state: "idle" | "running" | "error" | "not_installed"; last_check_at: string | null; last_results: AutopilotResult[]; last_error: string | null }
+export interface AutopilotStatus {
+  state: "idle" | "running" | "error" | "not_installed"; last_check_at: string | null; last_results: AutopilotResult[]; last_error: string | null;
+  last_published?: string[]; last_deploy_requested_at?: string | null; publish_error?: string | null; deploy_hook?: "configured" | "not_configured";
+}
 
 /** Hourly check on the Railway service: runs every due site, one at a time. */
-export async function runAutopilotLoop(db: Db, deps: AutopilotDeps, opts: { checkMs: number; signal: AbortSignal; status: AutopilotStatus }) {
+export async function runAutopilotLoop(db: Db, deps: AutopilotDeps, opts: { checkMs: number; signal: AbortSignal; status: AutopilotStatus; deployHook?: string | null }) {
   const wait = (ms: number) => new Promise<void>((resolve) => {
     if (opts.signal.aborted) return resolve();
     const t = setTimeout(() => { opts.signal.removeEventListener("abort", stop); resolve(); }, ms);
@@ -339,6 +345,7 @@ export async function runAutopilotLoop(db: Db, deps: AutopilotDeps, opts: { chec
           results.push(await runAutopilot(db, site, "schedule", deps));
         }
         opts.status.last_results = results;
+        await publishPass(db, (data ?? []) as SiteRow[], deps, opts);
         opts.status.state = "idle";
         opts.status.last_error = null;
       }
@@ -348,6 +355,25 @@ export async function runAutopilotLoop(db: Db, deps: AutopilotDeps, opts: { chec
     }
     await wait(opts.checkMs);
   }
+}
+
+/** Auto-publish and site rebuild for every enabled site; a failure here never stops the loop. */
+export async function publishPass(db: Db, sites: SiteRow[], deps: AutopilotDeps, opts: { status: AutopilotStatus; deployHook?: string | null }) {
+  const published: string[] = [];
+  opts.status.publish_error = null;
+  for (const site of sites.filter((s) => s.enabled)) {
+    const ps: PublishSite = {
+      company_id: site.company_id, site_url: site.site_url, auto_publish: !!site.auto_publish, auto_publish_since: site.auto_publish_since ?? null,
+      publish_min_score: site.publish_min_score ?? 8, max_publish_per_day: site.max_publish_per_day ?? 1, last_deploy_requested_at: site.last_deploy_requested_at ?? null,
+    };
+    try {
+      published.push(...await autoPublish(db, ps, deps.now()));
+      if (await syncDeploy(db, ps, deps, opts.deployHook ?? null)) opts.status.last_deploy_requested_at = new Date(deps.now()).toISOString();
+    } catch (e) {
+      opts.status.publish_error = `${site.company_id}: ${(e as Error).message}`;
+    }
+  }
+  opts.status.last_published = published;
 }
 
 /** A run still 'running' after 2 h was cut off (redeploy); mark it so a new round can start. */

@@ -3796,7 +3796,7 @@
       "findingsTitle": "Findings from the latest crawl",
       "findingsHint": "Measured in the raw HTML a crawler sees, without running JavaScript.",
       "changesTitle": "What changed since the previous crawl",
-      "draftsHint": "Drafts are written and scored by free AI models. A score is not an approval: you decide, and approving does not publish anything.",
+      "draftsHint": "Drafts are written and scored by free AI models. With automatic publishing on, the best articles go live under /da/guide by themselves. Otherwise an approval publishes the article.",
       "waiting": "Waiting for you",
       "all": "All",
       "read": "Read",
@@ -3890,6 +3890,26 @@
         "saved": "Saved.",
         "adminOnly": "Only an owner or company admin can change the setup.",
         "freeNote": "Only free OpenRouter models are used, capped per day. When they are busy, the task waits for the next round."
+      },
+      "publish": {
+        "title": "Automatic publishing",
+        "description": "The autopilot publishes its own articles on your website without waiting for your approval.",
+        "rule1": "Only articles written after you switched it on and scored at least the chosen minimum by the reviewer.",
+        "rule2": "Each article is first checked for invented prices, trial lengths and links to other websites. If it fails, it waits for you.",
+        "rule3": "Articles live under /da/guide/. The autopilot cannot change any other page, and you can take any article offline with one click.",
+        "switch": "Publish automatically",
+        "minScore": "Minimum score",
+        "perDay": "Articles per day",
+        "statusOn": "On since {since}.",
+        "statusOff": "Off: articles go live only when you approve them.",
+        "viewGuides": "View guides on the website",
+        "live": "Live",
+        "liveAuto": "Live (published automatically)",
+        "offline": "Taken offline",
+        "blocked": "Not published automatically: {reason}. Read it and approve it yourself if it is fine.",
+        "approvePublish": "Approve and publish",
+        "unpublish": "Take offline",
+        "liveTab": "Live"
       }
     }
   },
@@ -4166,5 +4186,15 @@
     "firstEmployeeInvited": "First employee invited",
     "firstIntegrationConnected": "First integration connected",
     "firstTaskCompleted": "First task completed"
+  },
+  "guide": {
+    "title": "Guides",
+    "subtitle": "Practical guides on CRM, sales and operations. The guides are written in Danish.",
+    "empty": "No guides published yet.",
+    "back": "All guides",
+    "notFound": "This guide does not exist or has been removed.",
+    "loading": "Loading…",
+    "published": "Published {date}",
+    "footerLink": "Guides"
   }
 }

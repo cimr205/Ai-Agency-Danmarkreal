@@ -76,6 +76,7 @@ export function Footer() {
               <li><a href="#features" className="hover:text-foreground transition-colors">{t('landing.features')}</a></li>
               <li><a href="#pricing" className="hover:text-foreground transition-colors">{t('landing.pricing')}</a></li>
               <li><a href="#faq" className="hover:text-foreground transition-colors">FAQ</a></li>
+              <li><Link to={`/${locale}/guide`} className="hover:text-foreground transition-colors">{t('guide.footerLink')}</Link></li>
             </ul>
           </div>
 

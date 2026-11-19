@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { GrowthNotInstalledError } from '@/hooks/api/useGrowthOs';
 import {
   type SeoDraft, type SeoRun, type SeoSite, useConfigureSeoSite, useDecideSeoDraft, useRunSeoAutopilot, useSeoChanges, useSeoDrafts,
-  useSeoFindings, useSeoReports, useSeoRuns, useSeoSite, useSeoTasks,
+  useSeoFindings, useSeoReports, useSeoRuns, useSeoSite, useSeoTasks, useSetSeoAutoPublish, useUnpublishSeoDraft,
 } from '@/hooks/api/useSeoAutopilot';
 import { cn } from '@/lib/utils';
 
@@ -70,6 +70,48 @@ function SetupCard({ t, site }: { t: T; site: SeoSite | null }) {
           </form>
         ) : <p className="text-muted-foreground">{t('growthOs.seo.setup.adminOnly')}</p>}
         <p className="text-xs text-muted-foreground">{t('growthOs.seo.setup.freeNote')}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── auto-publish (owner switch) ────────────────────────────────────────────
+const SITE_URL = 'https://www.aiagencydanmark.dk';
+const guideUrl = (slug: string) => `${SITE_URL}/da/guide${slug}`;
+
+function AutoPublishCard({ t, site }: { t: T; site: SeoSite }) {
+  const { roles } = useAuth();
+  const isAdmin = isRole(roles, ['owner', 'company_admin']);
+  const [on, setOn] = useState(site.auto_publish);
+  const [minScore, setMinScore] = useState(String(site.publish_min_score ?? 8));
+  const [perDay, setPerDay] = useState(String(site.max_publish_per_day ?? 1));
+  const save = useSetSeoAutoPublish();
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">{t('growthOs.seo.publish.title')}</CardTitle>
+        <CardDescription>{t('growthOs.seo.publish.description')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>{t('growthOs.seo.publish.rule1')}</li>
+          <li>{t('growthOs.seo.publish.rule2')}</li>
+          <li>{t('growthOs.seo.publish.rule3')}</li>
+        </ul>
+        {isAdmin ? (
+          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); save.mutate({ enabled: on, minScore: Number(minScore), maxPerDay: Number(perDay) }); }}>
+            <div className="flex items-center gap-2"><Switch id="seo-autopub" checked={on} onCheckedChange={setOn} /><Label htmlFor="seo-autopub">{t('growthOs.seo.publish.switch')}</Label></div>
+            <div className="space-y-1"><Label htmlFor="seo-minscore">{t('growthOs.seo.publish.minScore')}</Label><Input id="seo-minscore" className="w-24" type="number" min={6} max={10} value={minScore} onChange={(e) => setMinScore(e.target.value)} /></div>
+            <div className="space-y-1"><Label htmlFor="seo-perday">{t('growthOs.seo.publish.perDay')}</Label><Input id="seo-perday" className="w-24" type="number" min={0} max={5} value={perDay} onChange={(e) => setPerDay(e.target.value)} /></div>
+            <Button type="submit" disabled={save.isPending}>{t('growthOs.seo.setup.save')}</Button>
+            {save.isSuccess && <span className="text-success">{t('growthOs.seo.setup.saved')}</span>}
+          </form>
+        ) : <p className="text-muted-foreground">{t('growthOs.seo.setup.adminOnly')}</p>}
+        {save.error && <p className="text-destructive">{(save.error as Error).message}</p>}
+        <p className="text-xs text-muted-foreground">
+          {site.auto_publish ? t('growthOs.seo.publish.statusOn', { since: when(site.auto_publish_since) }) : t('growthOs.seo.publish.statusOff')}
+          {' · '}<a className="underline" href={`${SITE_URL}/da/guide`} target="_blank" rel="noreferrer">{t('growthOs.seo.publish.viewGuides')}</a>
+        </p>
       </CardContent>
     </Card>
   );
@@ -158,13 +200,17 @@ function Overview({ t, runs, site }: { t: T; runs: SeoRun[]; site: SeoSite }) {
 function DraftCard({ d, t, canDecide }: { d: SeoDraft; t: T; canDecide: boolean }) {
   const [open, setOpen] = useState(false);
   const decide = useDecideSeoDraft();
+  const unpublish = useUnpublishSeoDraft();
+  const live = !!d.published_at && !d.unpublished_at;
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{t(`growthOs.seo.kind.${d.kind}`)}</Badge>
           <Badge variant={d.review_status === 'failed' ? 'destructive' : 'secondary'}>{t(`growthOs.seo.review.${d.review_status}`)}{d.review_score !== null ? ` · ${d.review_score}/10` : ''}</Badge>
-          {d.decision !== 'pending' && <Badge>{t(`growthOs.seo.decision.${d.decision}`)}</Badge>}
+          {d.decision !== 'pending' && !d.published_at && <Badge>{t(`growthOs.seo.decision.${d.decision}`)}</Badge>}
+          {live && <Badge className="bg-success text-success-foreground">{t(d.published_by === 'autopilot' ? 'growthOs.seo.publish.liveAuto' : 'growthOs.seo.publish.live')}</Badge>}
+          {d.unpublished_at && <Badge variant="outline">{t('growthOs.seo.publish.offline')}</Badge>}
           <span className="text-xs text-muted-foreground">{when(d.created_at)}</span>
         </div>
         <CardTitle className="text-base">{d.title}</CardTitle>
@@ -173,6 +219,8 @@ function DraftCard({ d, t, canDecide }: { d: SeoDraft; t: T; canDecide: boolean 
       <CardContent className="space-y-2 text-sm">
         {d.summary && <p>{d.summary}</p>}
         {d.review_notes && <p className="text-muted-foreground">{t('growthOs.seo.reviewNotes')}: {d.review_notes}</p>}
+        {d.publish_block_reason && <p className="text-warning">{t('growthOs.seo.publish.blocked', { reason: d.publish_block_reason })}</p>}
+        {live && d.slug && <p><a className="text-primary underline" href={guideUrl(d.slug)} target="_blank" rel="noreferrer">{guideUrl(d.slug)}</a></p>}
         {open && (
           <div className="space-y-1 rounded-md border border-border bg-muted/40 p-3">
             {d.meta_description && <p><span className="font-medium">Meta:</span> {d.meta_description}</p>}
@@ -185,27 +233,34 @@ function DraftCard({ d, t, canDecide }: { d: SeoDraft; t: T; canDecide: boolean 
           <Button size="sm" variant="outline" onClick={() => setOpen(!open)}>{open ? t('growthOs.seo.hide') : t('growthOs.seo.read')}</Button>
           {canDecide && d.decision === 'pending' && d.review_status !== 'pending' && (
             <>
-              <Button size="sm" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: true })}>{t('growthOs.seo.approve')}</Button>
+              <Button size="sm" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: true })}>{t(d.kind === 'page' ? 'growthOs.seo.publish.approvePublish' : 'growthOs.seo.approve')}</Button>
               <Button size="sm" variant="outline" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: false })}>{t('growthOs.seo.reject')}</Button>
             </>
           )}
+          {canDecide && live && (
+            <Button size="sm" variant="outline" disabled={unpublish.isPending} onClick={() => unpublish.mutate(d.id)}>{t('growthOs.seo.publish.unpublish')}</Button>
+          )}
         </div>
         {decide.error && <p className="text-destructive">{(decide.error as Error).message}</p>}
+        {unpublish.error && <p className="text-destructive">{(unpublish.error as Error).message}</p>}
       </CardContent>
     </Card>
   );
 }
 
-function Drafts({ t }: { t: T }) {
+function Drafts({ t, site }: { t: T; site: SeoSite }) {
   const { roles } = useAuth();
   const drafts = useSeoDrafts();
-  const [show, setShow] = useState<'waiting' | 'all'>('waiting');
-  const list = (drafts.data ?? []).filter((d) => show === 'all' || (d.decision === 'pending' && d.review_status !== 'failed'));
+  const [show, setShow] = useState<'waiting' | 'live' | 'all'>('waiting');
+  const list = (drafts.data ?? []).filter((d) => show === 'all'
+    || (show === 'live' ? !!d.published_at && !d.unpublished_at : d.decision === 'pending' && d.review_status !== 'failed'));
   return (
     <div className="space-y-3">
+      <AutoPublishCard key={`${site.updated_at}-${site.auto_publish}`} t={t} site={site} />
       <p className="text-sm text-muted-foreground">{t('growthOs.seo.draftsHint')}</p>
       <div className="flex gap-2">
         <Button size="sm" variant={show === 'waiting' ? 'default' : 'outline'} onClick={() => setShow('waiting')}>{t('growthOs.seo.waiting')}</Button>
+        <Button size="sm" variant={show === 'live' ? 'default' : 'outline'} onClick={() => setShow('live')}>{t('growthOs.seo.publish.liveTab')}</Button>
         <Button size="sm" variant={show === 'all' ? 'default' : 'outline'} onClick={() => setShow('all')}>{t('growthOs.seo.all')}</Button>
       </div>
       {!list.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.none')}</p> : list.map((d) => <DraftCard key={d.id} d={d} t={t} canDecide={isRole(roles, ['owner', 'company_admin'])} />)}
@@ -306,7 +361,7 @@ export function SeoAutopilot({ t: rawT }: { t: (k: string) => string }) {
         {site.data && (
           <>
             <TabsContent value="overview" className="mt-4"><Overview t={t} runs={runs.data ?? []} site={site.data} /></TabsContent>
-            <TabsContent value="drafts" className="mt-4"><Drafts t={t} /></TabsContent>
+            <TabsContent value="drafts" className="mt-4"><Drafts t={t} site={site.data} /></TabsContent>
             <TabsContent value="tasks" className="mt-4"><Tasks t={t} /></TabsContent>
             <TabsContent value="runs" className="mt-4"><Runs t={t} runs={runs.data ?? []} /></TabsContent>
             <TabsContent value="history" className="mt-4"><History t={t} /></TabsContent>

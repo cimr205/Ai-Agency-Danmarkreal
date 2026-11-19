@@ -9,7 +9,9 @@
       "termsTitle": "Vilkår og betingelser | AI Agency Danmark",
       "termsDescription": "Læs vilkårene for brug af AI Agency Danmark.",
       "dpaTitle": "Databehandleraftale | AI Agency Danmark",
-      "dpaDescription": "Læs databehandleraftalen for AI Agency Danmark."
+      "dpaDescription": "Læs databehandleraftalen for AI Agency Danmark.",
+      "guideTitle": "Guides om CRM og drift | AI Agency Danmark",
+      "guideDescription": "Praktiske guides om CRM, salg og drift til danske virksomheder fra AI Agency Danmark."
     },
     "en": {
       "homeTitle": "AI Agency Danmark | CRM, operations and automation in one place",
@@ -19,7 +21,10 @@
       "termsTitle": "Terms and conditions | AI Agency Danmark",
       "termsDescription": "Read the terms governing use of AI Agency Danmark.",
       "dpaTitle": "Data processing agreement | AI Agency Danmark",
-      "dpaDescription": "Read the data processing agreement for AI Agency Danmark."
+      "dpaDescription": "Read the data processing agreement for AI Agency Danmark.",
+      "guideTitle": "Guides (in Danish) | AI Agency Danmark",
+      "guideDescription": "Practical guides on CRM, sales and operations for Danish companies, written in Danish."
     }
-  }
+  },
+  "articlesCompanyId": "31c78e6c-89ef-4dc2-840d-7610f2f666a8"
 }

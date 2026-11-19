@@ -3796,7 +3796,7 @@
       "findingsTitle": "Befunde des letzten Crawls",
       "findingsHint": "Gemessen im rohen HTML, das ein Crawler ohne JavaScript sieht.",
       "changesTitle": "Was sich seit dem letzten Crawl geändert hat",
-      "draftsHint": "Entwürfe werden von kostenlosen KI-Modellen geschrieben und bewertet. Eine Bewertung ist keine Freigabe: Sie entscheiden, und eine Freigabe veröffentlicht nichts.",
+      "draftsHint": "Entwürfe werden von kostenlosen KI-Modellen geschrieben und bewertet. Ist die automatische Veröffentlichung an, gehen die besten Artikel selbst unter /da/guide online. Sonst veröffentlicht eine Freigabe den Artikel.",
       "waiting": "Wartet auf Sie",
       "all": "Alle",
       "read": "Lesen",
@@ -3890,6 +3890,26 @@
         "saved": "Gespeichert.",
         "adminOnly": "Nur ein Inhaber oder Firmenadmin kann die Einrichtung ändern.",
         "freeNote": "Es werden nur kostenlose OpenRouter-Modelle mit Tageslimit genutzt. Sind sie ausgelastet, wartet die Aufgabe auf die nächste Runde."
+      },
+      "publish": {
+        "title": "Automatische Veröffentlichung",
+        "description": "Der Autopilot veröffentlicht seine Artikel selbst auf Ihrer Website, ohne auf Ihre Freigabe zu warten.",
+        "rule1": "Nur Artikel, die nach dem Einschalten geschrieben wurden und vom Prüfer mindestens die gewählte Bewertung erhielten.",
+        "rule2": "Jeder Artikel wird vorher auf erfundene Preise, Testzeiträume und Links zu anderen Websites geprüft. Scheitert er, wartet er auf Sie.",
+        "rule3": "Die Artikel liegen unter /da/guide/. Der Autopilot kann keine anderen Seiten ändern, und Sie können jeden Artikel mit einem Klick offline nehmen.",
+        "switch": "Automatisch veröffentlichen",
+        "minScore": "Mindestbewertung",
+        "perDay": "Artikel pro Tag",
+        "statusOn": "Aktiv seit {since}.",
+        "statusOff": "Aus: Artikel gehen erst online, wenn Sie sie freigeben.",
+        "viewGuides": "Ratgeber auf der Website ansehen",
+        "live": "Online",
+        "liveAuto": "Online (automatisch veröffentlicht)",
+        "offline": "Offline genommen",
+        "blocked": "Nicht automatisch veröffentlicht: {reason}. Lesen Sie ihn und geben Sie ihn selbst frei, wenn er in Ordnung ist.",
+        "approvePublish": "Freigeben und veröffentlichen",
+        "unpublish": "Offline nehmen",
+        "liveTab": "Online"
       }
     }
   },
@@ -4166,5 +4186,15 @@
     "firstEmployeeInvited": "Ersten Mitarbeiter eingeladen",
     "firstIntegrationConnected": "Erste Integration verbunden",
     "firstTaskCompleted": "Erste Aufgabe abgeschlossen"
+  },
+  "guide": {
+    "title": "Ratgeber",
+    "subtitle": "Praktische Ratgeber zu CRM, Vertrieb und Betrieb. Die Ratgeber sind auf Dänisch.",
+    "empty": "Noch keine Ratgeber veröffentlicht.",
+    "back": "Alle Ratgeber",
+    "notFound": "Dieser Ratgeber existiert nicht oder wurde entfernt.",
+    "loading": "Wird geladen…",
+    "published": "Veröffentlicht am {date}",
+    "footerLink": "Ratgeber"
   }
 }

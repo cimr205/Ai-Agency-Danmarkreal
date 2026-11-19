@@ -33,3 +33,13 @@ railway run node scripts/growth-os/import-seo-autopilot.mjs --db ~/seo-autopilot
 ```
 - The import can be re-run. Every row keeps its old id in `legacy_id`.
 - Old "approved" drafts are imported as reviewer-passed with the human decision still pending, because no person ever approved them.
+
+## Automatic publishing (migration 20261119120000)
+
+The owner can let the autopilot publish its own articles: Growth OS → SEO autopilot → Approval queue → "Automatic publishing" (owner/company_admin only, `growth_seo_set_auto_publish`).
+
+- **What may go live:** only `page` drafts written after the switch was turned on (never the imported backlog), with a reviewer score ≥ the chosen minimum (6–10, default 8), at most N per 24 h (0–5, default 1).
+- **Content checks before publishing** (`seo/publish.ts`, no model): at least 400 words, no price other than 499 kr., no trial length, no links to other websites, no HTML code, a clean path. A draft that fails gets `publish_block_reason` and waits for a person.
+- **Where:** articles live at `https://www.aiagencydanmark.dk/da/guide/<path>`. The agent cannot change any other page. The site reads them through `growth_seo_published_articles()` (public, read-only): in the browser at once, and as prerendered HTML plus sitemap entries at the next build.
+- **Rebuild:** set `GROWTH_OS_SITE_DEPLOY_HOOK_URL` on the Railway service to a Vercel deploy hook (Vercel → project → Settings → Git → Deploy Hooks, branch `main`). The service calls it after anything was published or taken offline. Only `https://api.vercel.com/v1/integrations/deploy/...` URLs are accepted.
+- **Human approval** of a page draft now publishes it too. **Take offline:** the "Take offline" button (`growth_seo_unpublish`). Every publish, block and unpublish is in `growth_audit_log`.

@@ -34,7 +34,7 @@ export function healthHandler(status: WorkerStatus, info: { llm: "configured" | 
       complex_fallback: info.complexFallback,
       // Company ids and per-company errors stay internal; only the sync state is public.
       analytics: analytics ? { state: analytics.state, last_run_at: analytics.last_run_at, connections_synced: analytics.connections_synced } : null,
-      seo_autopilot: seoAutopilot ? { state: seoAutopilot.state, last_check_at: seoAutopilot.last_check_at, rounds_last_check: seoAutopilot.last_results.length } : null,
+      seo_autopilot: seoAutopilot ? { state: seoAutopilot.state, last_check_at: seoAutopilot.last_check_at, rounds_last_check: seoAutopilot.last_results.length, published_last_check: seoAutopilot.last_published?.length ?? 0, deploy_hook: seoAutopilot.deploy_hook ?? "not_configured", last_deploy_requested_at: seoAutopilot.last_deploy_requested_at ?? null, publish_error: seoAutopilot.publish_error ?? null } : null,
     };
     return new Response(JSON.stringify(body), { status: ok ? 200 : 503, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   };

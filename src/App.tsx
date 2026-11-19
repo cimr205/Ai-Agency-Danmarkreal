@@ -93,6 +93,7 @@ const JoinCompanyPage = lazy(() => import("@/pages/auth/JoinCompany"));
 const ForgotPasswordPage = lazy(() => import("@/pages/auth/ForgotPassword"));
 const ResetPasswordPage = lazy(() => import("@/pages/auth/ResetPassword"));
 const PrivacyPolicyPage = lazy(() => import("@/pages/legal/PrivacyPolicy"));
+const GuidePage = lazy(() => import("@/pages/public/GuidePage"));
 const TermsOfServicePage = lazy(() => import("@/pages/legal/TermsOfService"));
 const DataProcessingAgreementPage = lazy(() => import("@/pages/legal/DataProcessingAgreement"));
 
@@ -283,6 +284,8 @@ const App = () => (
                 <Route path="privacy" element={<PrivacyPolicyPage />} />
                 <Route path="terms" element={<TermsOfServicePage />} />
                 <Route path="dpa" element={<DataProcessingAgreementPage />} />
+                <Route path="guide" element={<Suspense fallback={<PageLoader />}><GuidePage /></Suspense>} />
+                <Route path="guide/*" element={<Suspense fallback={<PageLoader />}><GuidePage /></Suspense>} />
                 <Route path="phone-companion" element={<Suspense fallback={<PageLoader />}><PhoneCompanionPage /></Suspense>} />
                 <Route
                   path="app"

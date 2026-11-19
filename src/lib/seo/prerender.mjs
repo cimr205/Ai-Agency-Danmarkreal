@@ -26,9 +26,9 @@ export function pageUrl(siteUrl, locale, page) {
 }
 
 /** Rewrites the <head> of the built index.html for one route. */
-export function renderHead(html, { siteUrl, locale, page, title, description }) {
+export function renderHead(html, { siteUrl, locale, page, title, description, locales = LOCALES }) {
   const url = pageUrl(siteUrl, locale, page);
-  const alternates = [...LOCALES.map((l) => [l, l]), ['x-default', 'da']]
+  const alternates = [...locales.map((l) => [l, l]), ['x-default', 'da']]
     .map(([hl, l]) => `<link rel="alternate" hreflang="${hl}" href="${pageUrl(siteUrl, l, page)}" />`).join('\n    ');
   const ogLocale = { da: 'da_DK', en: 'en_US', de: 'de_DE' }[locale];
   const replace = (re, value, label) => {
@@ -82,8 +82,38 @@ export function legalBody(headings, nav) {
 }
 
 export function navLinks(locale, labels) {
-  const items = [['/', labels.home], ['/privacy', labels.privacy], ['/terms', labels.terms], ['/dpa', labels.dpa]]
+  const items = [['/', labels.home], ...(labels.guide ? [['/guide', labels.guide]] : []), ['/privacy', labels.privacy], ['/terms', labels.terms], ['/dpa', labels.dpa]]
     .map(([p, l]) => `<li><a href="/${locale}${p === '/' ? '' : p}">${esc(l)}</a></li>`).join('');
   const langs = LOCALES.filter((l) => l !== locale).map((l) => `<li><a href="/${l}" hreflang="${l}">${l.toUpperCase()}</a></li>`).join('');
   return `<nav><ul>${items}${langs}</ul></nav>`;
+}
+
+// ── published guides (SEO autopilot articles, Danish only) ──────────────────
+
+export const GUIDE_PATH_RE = /^\/[a-z0-9\-/]{1,120}$/;
+
+/** Static body of one guide. `html` is the article's Markdown already rendered (no raw HTML allowed). */
+export function articleBody(a, html, nav) {
+  return `<main><p><a href="/da/guide">Alle guides</a></p><article lang="da"><h1>${esc(a.h1 || a.title)}</h1>${html}</article></main>${nav}`;
+}
+
+export function guideIndexBody(articles, nav) {
+  const items = articles.map((a) => `<li><a href="/da/guide${a.path}">${esc(a.h1 || a.title)}</a>${a.meta_description ? `<p>${esc(a.meta_description)}</p>` : ''}</li>`).join('');
+  return `<main><h1>Guides</h1><ul>${items}</ul></main>${nav}`;
+}
+
+/** <url> entries for the guide index and every article, inserted into sitemap.xml. */
+export function guideSitemapEntries(siteUrl, articles) {
+  const entry = (loc, lastmod, priority) => `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  const newest = articles[0]?.published_at?.slice(0, 10);
+  return [
+    ...(articles.length ? [entry(`${siteUrl}/da/guide`, newest, '0.7')] : []),
+    ...articles.map((a) => entry(`${siteUrl}/da/guide${a.path}`, a.published_at.slice(0, 10), '0.6')),
+  ].join('\n');
+}
+
+export function addToSitemap(xml, entries) {
+  if (!entries) return xml;
+  if (!xml.includes('</urlset>')) throw new Error('prerender: </urlset> not found in sitemap.xml');
+  return xml.replace('</urlset>', `${entries}\n</urlset>`);
 }
