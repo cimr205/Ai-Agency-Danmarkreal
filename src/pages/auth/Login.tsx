@@ -35,6 +35,9 @@ export default function LoginPage() {
   const from = (location.state as { from?: Location } | null)?.from;
   const redirectTarget = from ? `${from.pathname}${from.search}${from.hash}` : `/${locale}/app/dashboard`;
 
+  // Survives the Google round trip (and a return to the site root).
+  useEffect(() => { if (from) rememberPostLoginRedirect(redirectTarget); }, [from, redirectTarget]);
+
   if (!authLoading && isAuthenticated) {
     return <Navigate to={redirectTarget} replace />;
   }

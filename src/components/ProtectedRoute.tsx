@@ -7,7 +7,8 @@
  */
 
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { takePostLoginRedirect } from '@/lib/postLoginRedirect';
 import { useAuth } from '@/contexts/AuthContext';
 import { isLocale } from '@/lib/i18n';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const [gate, setGate] = useState<CompanyGateState | null>(null);
   const gateCompanyIdRef = useRef<string | null | undefined>(undefined);
+  const navigate = useNavigate();
+  // A Google sign-in can come back to any page (e.g. the dashboard, when
+  // Supabase falls back to its Site URL). Finish it once on the page the user
+  // originally asked for.
+  const [initialResume] = useState(() => takePostLoginRedirect(''));
+  const resumeRef = useRef(initialResume);
+  useEffect(() => {
+    if (!isAuthenticated || !resumeRef.current) return;
+    const target = resumeRef.current;
+    resumeRef.current = '';
+    if (target !== `${location.pathname}${location.search}${location.hash}`) navigate(target, { replace: true });
+  }, [isAuthenticated, location, navigate]);
 
   // Reset the gate the instant the company_id we last fetched for no longer
   // matches the current user. Without this, a stale gate computed for the

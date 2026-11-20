@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
 import { useAuth } from '@/hooks/useAuth';
 import { isLocale } from '@/lib/i18n';
+import { takePostLoginRedirect } from '@/lib/postLoginRedirect';
 
 // Lazy-load below-the-fold sections
 const Features = lazy(() => import('@/components/landing/Features').then(m => ({ default: m.Features })));
@@ -19,8 +20,12 @@ const Index = () => {
   const params = useParams();
   const locale = isLocale(params.locale) ? params.locale : 'en';
 
+  // Supabase may return a Google sign-in to the site root; finish it on the
+  // page the user originally asked for (read once per mount).
+  const [target] = useState(() => takePostLoginRedirect(`/${locale}/app/dashboard`));
+
   if (!isLoading && isAuthenticated) {
-    return <Navigate to={`/${locale}/app/dashboard`} replace />;
+    return <Navigate to={target} replace />;
   }
 
   return (
