@@ -10,6 +10,7 @@ import { loginSchema } from '@/lib/validations';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { describeAuthError } from '@/lib/authErrors';
 import { describeValidationError } from '@/lib/validationErrors';
+import { rememberPostLoginRedirect } from '@/lib/postLoginRedirect';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -74,6 +75,7 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
+    rememberPostLoginRedirect(redirectTarget);
     try {
       await loginWithGoogle();
     } catch (err) {

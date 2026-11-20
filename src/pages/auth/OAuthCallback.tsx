@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { isLocale, useI18n } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { takePostLoginRedirect } from '@/lib/postLoginRedirect';
 
 /**
  * OAuth / email-confirmation callback - waits for auth state to resolve,
@@ -17,6 +18,9 @@ export default function OAuthCallbackPage() {
   const { t } = useI18n();
   const { isAuthenticated, isLoading } = useAuth();
   const attemptedRef = useRef(false);
+  // Where the user was headed before Google sign-in (read once; dashboard otherwise).
+  const targetRef = useRef<string | null>(null);
+  const target = useCallback(() => (targetRef.current ??= takePostLoginRedirect(`/${locale}/app/dashboard`)), [locale]);
   const [providerError, setProviderError] = useState<string | null>(null);
 
   // The provider (or Supabase) reports failures via query/hash params —
@@ -36,7 +40,7 @@ export default function OAuthCallbackPage() {
 
     // If already authenticated via auth context, redirect immediately
     if (!isLoading && isAuthenticated) {
-      navigate(`/${locale}/app/dashboard`, { replace: true });
+      navigate(target(), { replace: true });
       return;
     }
 
@@ -59,7 +63,7 @@ export default function OAuthCallbackPage() {
             if (Date.now() - start > maxWait) {
               clearInterval(poll);
               // Force navigate - session exists
-              navigate(`/${locale}/app/dashboard`, { replace: true });
+              navigate(target(), { replace: true });
             }
           }, 500);
           return () => clearInterval(poll);
@@ -73,7 +77,7 @@ export default function OAuthCallbackPage() {
 
       checkSession();
     }
-  }, [isLoading, isAuthenticated, locale, navigate, providerError]);
+  }, [isLoading, isAuthenticated, locale, navigate, providerError, target]);
 
   // Also listen for auth state changes directly
   useEffect(() => {
@@ -81,12 +85,12 @@ export default function OAuthCallbackPage() {
       if (event === 'SIGNED_IN' && session) {
         // Small delay to let AuthContext catch up
         setTimeout(() => {
-          navigate(`/${locale}/app/dashboard`, { replace: true });
+          navigate(target(), { replace: true });
         }, 500);
       }
     });
     return () => subscription.unsubscribe();
-  }, [locale, navigate]);
+  }, [navigate, target]);
 
   if (providerError) {
     return (
