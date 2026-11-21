@@ -1,374 +1,502 @@
-import { useMemo, useState } from 'react';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { GrowthNotInstalledError } from '@/hooks/api/useGrowthOs';
+import { useGa4Daily } from '@/hooks/api/useGrowthAnalytics';
 import {
   type SeoDraft, type SeoRun, type SeoSite, useConfigureSeoSite, useDecideSeoDraft, useRunSeoAutopilot, useSeoChanges, useSeoDrafts,
   useSeoFindings, useSeoReports, useSeoRuns, useSeoSite, useSeoTasks, useSetSeoAutoPublish, useUnpublishSeoDraft,
 } from '@/hooks/api/useSeoAutopilot';
 import { cn } from '@/lib/utils';
+import { STAGES, inferStage } from './seoStage';
+import './seo-mission-control.css';
+
+// SEO autopilot "mission control": the dashboard the standalone autopilot had
+// on localhost:4317, fed by the Growth OS tables instead of a local SQLite file.
+// Everything shown comes from stored rows; nothing is estimated in the browser.
 
 type T = (k: string, vars?: Record<string, string | number>) => string;
 const withVars = (t: (k: string) => string): T => (k, vars) => t(k).replace(/\{(\w+)\}/g, (_, n: string) => String(vars?.[n] ?? ''));
 const isRole = (roles: { role: string }[], allowed: string[]) => roles.some((r) => allowed.includes(r.role));
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—');
-const SEV_TONE = { high: 'text-destructive', medium: 'text-warning', low: 'text-muted-foreground' } as const;
+const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString('da-DK') : '—');
+const shortWhen = (iso: string) => new Date(iso).toLocaleString('da-DK', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const path = (url: string) => url.replace(/^https?:\/\/[^/]+/, '') || '/';
+const SEV_ORDER = ['high', 'medium', 'low'] as const;
 
-function Kpi({ label, value, note }: { label: string; value: string; note?: string }) {
+const SITE_URL = 'https://www.aiagencydanmark.dk';
+const guideUrl = (slug: string) => `${SITE_URL}/da/guide${slug}`;
+
+// ── pipeline (stages and inference live in seoStage.ts) ──────────────────
+
+function Card({ title, right, children, className }: { title: string; right?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <Card>
-      <CardHeader className="pb-1"><CardDescription>{label}</CardDescription></CardHeader>
-      <CardContent className="space-y-1"><div className="text-2xl font-semibold tabular-nums">{value}</div>{note && <p className="text-xs text-muted-foreground">{note}</p>}</CardContent>
+    <section className={cn('mc-card', className)}>
+      <div className="mc-card-head"><h3>{title}</h3>{right}</div>
+      {children}
+    </section>
+  );
+}
+const Empty = ({ children }: { children: ReactNode }) => <div className="mc-empty">{children}</div>;
+
+// ── hero + pipeline ────────────────────────────────────────────────────────
+function Hero({ t, site, running, stage, lastRun }: { t: T; site: SeoSite; running: boolean; stage: number; lastRun?: SeoRun }) {
+  const next = site.last_run_at ? new Date(Date.parse(site.last_run_at) + site.crawl_every_hours * 3_600_000).toISOString() : null;
+  const state = running ? 'working' : site.enabled ? 'idle' : 'paused';
+  const icon = running ? (stage >= 0 ? STAGES[stage].icon : '⚙️') : site.enabled ? '😴' : '⏸️';
+  const title = running
+    ? t('growthOs.seo.mc.hero.working', { step: stage >= 0 ? t(`growthOs.seo.mc.stage.${STAGES[stage].key}`) : t('growthOs.seo.mc.hero.round') })
+    : site.enabled ? t('growthOs.seo.mc.hero.idle') : t('growthOs.seo.mc.hero.paused');
+  const sub = running
+    ? (stage >= 0 ? t(`growthOs.seo.mc.stageHint.${STAGES[stage].key}`) : t('growthOs.seo.mc.hero.roundHint'))
+    : site.enabled
+      ? t('growthOs.seo.mc.hero.next', { at: next ? when(next) : '—' }) + (lastRun?.summary ? ` · ${t('growthOs.seo.mc.hero.last')}: ${lastRun.summary}` : '')
+      : t('growthOs.seo.mc.hero.pausedHint');
+  return (
+    <section className={cn('mc-hero', state)} aria-live="polite">
+      <div className="mc-hero-icon" aria-hidden>{icon}</div>
+      <div className="min-w-0"><div className="mc-hero-title">{title}</div><div className="mc-hero-sub">{sub}</div></div>
+    </section>
+  );
+}
+
+function Pipeline({ t, running, stage, paused }: { t: T; running: boolean; stage: number; paused: boolean }) {
+  const xs = [90, 295, 500, 705, 910];
+  const caption = running
+    ? (stage >= 0 ? t(`growthOs.seo.mc.stageHint.${STAGES[stage].key}`) : t('growthOs.seo.mc.hero.roundHint'))
+    : paused ? t('growthOs.seo.mc.pipeline.paused') : t('growthOs.seo.mc.pipeline.idle');
+  return (
+    <Card title={t('growthOs.seo.mc.pipeline.title')} right={<span className="mc-muted text-xs">{caption}</span>}>
+      <svg className={cn('mc-pipeline', !running && 'idle')} viewBox="0 0 1000 140" preserveAspectRatio="xMidYMid meet" role="img" aria-label={caption}>
+        <path id="mc-flow" className="track" d="M90,55 H910" />
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <circle key={i} className="particle" r="5" cx="0" cy="0">
+            <animateMotion dur="6s" begin={`${i}s`} repeatCount="indefinite"><mpath href="#mc-flow" /></animateMotion>
+          </circle>
+        ))}
+        {STAGES.map((s, i) => (
+          <g key={s.key} className={cn('node', running && i === stage && 'active', running && stage >= 0 && i < stage && 'done')} transform={`translate(${xs[i]},55)`}>
+            <circle className="ring" r="22" /><circle className="base" r="22" />
+            <text className="icon" y="1">{s.icon}</text>
+            <text className="label" y="44">{t(`growthOs.seo.mc.stage.${s.key}`)}</text>
+          </g>
+        ))}
+      </svg>
     </Card>
   );
 }
 
-// ── setup ──────────────────────────────────────────────────────────────────
-function SetupCard({ t, site }: { t: T; site: SeoSite | null }) {
-  const { roles } = useAuth();
-  const isAdmin = isRole(roles, ['owner', 'company_admin']);
+// ── charts (plain SVG, like the original) ──────────────────────────────────
+function LineChart({ series, max, label }: { series: { values: number[]; stroke: string; fill?: boolean; width?: number; opacity?: number }[]; max: number; label: string }) {
+  const w = 1000, h = 130, padX = 10, padY = 16;
+  const n = Math.max(...series.map((s) => s.values.length));
+  const x = (i: number) => (n === 1 ? w / 2 : padX + (i / (n - 1)) * (w - padX * 2));
+  const y = (v: number) => h - padY - (v / Math.max(1, max)) * (h - padY * 2);
+  return (
+    <svg className="mc-chart" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={label}>
+      <defs><linearGradient id="mc-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--mc-accent)" stopOpacity="0.35" /><stop offset="100%" stopColor="var(--mc-accent)" stopOpacity="0" /></linearGradient></defs>
+      {[0, 0.25, 0.5, 0.75, 1].map((f) => <line key={f} x1={padX} x2={w - padX} y1={y(f * max)} y2={y(f * max)} stroke="var(--mc-border-soft)" strokeWidth={1} />)}
+      {series.map((s, si) => {
+        const pts = s.values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+        return (
+          <g key={si}>
+            {s.fill && <polygon points={`${padX},${h - padY} ${pts.join(' ')} ${x(s.values.length - 1).toFixed(1)},${h - padY}`} fill="url(#mc-fill)" />}
+            <polyline points={pts.join(' ')} fill="none" stroke={s.stroke} strokeWidth={s.width ?? 2.5} strokeLinejoin="round" strokeLinecap="round" opacity={s.opacity ?? 1} vectorEffect="non-scaling-stroke" />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── findings + changes ─────────────────────────────────────────────────────
+function Expandable<R>({ rows, limit = 8, t, render }: { rows: R[]; limit?: number; t: T; render: (rows: R[]) => ReactNode }) {
+  const [all, setAll] = useState(false);
+  return (
+    <>
+      {render(all ? rows : rows.slice(0, limit))}
+      {rows.length > limit && (
+        <div className="mt-2"><button type="button" className="mc-btn small" onClick={() => setAll(!all)}>{all ? t('growthOs.seo.mc.showLess') : t('growthOs.seo.mc.showAll', { n: rows.length })}</button></div>
+      )}
+    </>
+  );
+}
+
+// ── drafts ─────────────────────────────────────────────────────────────────
+function draftState(d: SeoDraft): 'live' | 'offline' | 'approved' | 'rejected' | 'pending' | 'failed' {
+  if (d.published_at && !d.unpublished_at) return 'live';
+  if (d.unpublished_at) return 'offline';
+  if (d.decision !== 'pending') return d.decision;
+  return d.review_status === 'failed' ? 'failed' : 'pending';
+}
+
+function Draft({ d, t, canDecide }: { d: SeoDraft; t: T; canDecide: boolean }) {
+  const [open, setOpen] = useState(false);
+  const decide = useDecideSeoDraft();
+  const unpublish = useUnpublishSeoDraft();
+  const state = draftState(d);
+  const live = state === 'live';
+  return (
+    <div className={cn('mc-draft', `s-${state === 'offline' ? 'rejected' : state === 'failed' ? 'rejected' : state}`)}>
+      <div className="mc-draft-head">
+        <div className="min-w-0 space-y-1">
+          <div><strong>{d.title}</strong> <span className="mc-muted">({t(`growthOs.seo.kind.${d.kind}`)}{d.slug ? ` · ${d.slug}` : ''})</span></div>
+          <div className="mc-row" style={{ gap: 6 }}>
+            <span className={cn('mc-badge', state === 'live' ? 'live' : state === 'offline' ? 'neutral' : state)}>{t(`growthOs.seo.mc.draftState.${state}`)}</span>
+            {d.review_score !== null && <span className="mc-muted text-xs">{t('growthOs.seo.mc.score', { s: d.review_score })}</span>}
+            {live && d.published_by && <span className="mc-muted text-xs">{t(d.published_by === 'autopilot' ? 'growthOs.seo.publish.liveAuto' : 'growthOs.seo.publish.live')}</span>}
+            <span className="mc-muted-2 text-xs">{when(d.created_at)}</span>
+          </div>
+        </div>
+        <div className="mc-row">
+          <button type="button" className="mc-btn small" onClick={() => setOpen(!open)}>{open ? t('growthOs.seo.hide') : t('growthOs.seo.read')}</button>
+          {canDecide && d.decision === 'pending' && d.review_status !== 'pending' && (
+            <>
+              <button type="button" className="mc-btn small primary" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: true })}>{t(d.kind === 'page' ? 'growthOs.seo.publish.approvePublish' : 'growthOs.seo.approve')}</button>
+              <button type="button" className="mc-btn small" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: false })}>{t('growthOs.seo.reject')}</button>
+            </>
+          )}
+          {canDecide && live && <button type="button" className="mc-btn small" disabled={unpublish.isPending} onClick={() => unpublish.mutate(d.id)}>{t('growthOs.seo.publish.unpublish')}</button>}
+        </div>
+      </div>
+      {d.publish_block_reason && <p className="mc-warn-text mt-2 text-xs">{t('growthOs.seo.publish.blocked', { reason: d.publish_block_reason })}</p>}
+      {live && d.slug && <p className="mt-2 text-xs"><a href={guideUrl(d.slug)} target="_blank" rel="noreferrer">{guideUrl(d.slug)}</a></p>}
+      {(decide.error || unpublish.error) && <p className="mc-err-text mt-2 text-xs">{((decide.error ?? unpublish.error) as Error).message}</p>}
+      {open && (
+        <div className="mt-3 space-y-1 text-sm">
+          {d.meta_description && <p className="mc-muted"><strong>Meta:</strong> {d.meta_description}</p>}
+          {d.h1 && <p className="mc-muted"><strong>H1:</strong> {d.h1}</p>}
+          {d.summary && <p className="mc-muted"><strong>{t('growthOs.seo.mc.summary')}:</strong> {d.summary}</p>}
+          {d.review_notes && <p className="mc-muted"><strong>{t('growthOs.seo.reviewNotes')}:</strong> {d.review_notes}</p>}
+          <pre className="mc-pre">{d.body || '—'}</pre>
+          <p className="mc-muted-2 text-xs">{t('growthOs.seo.models', { w: d.worker_model ?? '—', r: d.review_model ?? '—' })}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type DraftFilter = 'waiting' | 'live' | 'approved' | 'rejected' | 'all';
+function DraftQueue({ t, drafts, canDecide }: { t: T; drafts: SeoDraft[]; canDecide: boolean }) {
+  const [filter, setFilter] = useState<DraftFilter>('waiting');
+  const list = drafts.filter((d) => {
+    const s = draftState(d);
+    return filter === 'all' || (filter === 'waiting' ? s === 'pending' : filter === 'live' ? s === 'live' : filter === 'rejected' ? s === 'rejected' || s === 'failed' : s === 'approved');
+  });
+  return (
+    <Card title={t('growthOs.seo.mc.drafts')} right={
+      <select aria-label={t('growthOs.seo.mc.drafts')} value={filter} onChange={(e) => setFilter(e.target.value as DraftFilter)}>
+        {(['waiting', 'live', 'approved', 'rejected', 'all'] as const).map((f) => <option key={f} value={f}>{t(`growthOs.seo.mc.filter.${f}`)}</option>)}
+      </select>
+    }>
+      <p className="mc-muted mb-3 text-xs">{t('growthOs.seo.draftsHint')}</p>
+      {!list.length ? <Empty>{t('growthOs.seo.mc.noDrafts')}</Empty> : <div className="mc-scroll">{list.slice(0, 40).map((d) => <Draft key={d.id} d={d} t={t} canDecide={canDecide} />)}</div>}
+    </Card>
+  );
+}
+
+// ── settings ───────────────────────────────────────────────────────────────
+function Settings({ t, site, isAdmin }: { t: T; site: SeoSite | null; isAdmin: boolean }) {
   const [url, setUrl] = useState(site?.site_url ?? '');
   const [enabled, setEnabled] = useState(site?.enabled ?? true);
   const [hours, setHours] = useState(String(site?.crawl_every_hours ?? 6));
   const [calls, setCalls] = useState(String(site?.llm_calls_per_day ?? 12));
   const [facts, setFacts] = useState(site?.product_facts ?? '');
+  const [autoOn, setAutoOn] = useState(site?.auto_publish ?? false);
+  const [minScore, setMinScore] = useState(String(site?.publish_min_score ?? 8));
+  const [perDay, setPerDay] = useState(String(site?.max_publish_per_day ?? 1));
   const save = useConfigureSeoSite();
+  const savePublish = useSetSeoAutoPublish();
+  if (!isAdmin) return <Card title={t('growthOs.seo.mc.settings')}><p className="mc-muted text-sm">{t('growthOs.seo.setup.adminOnly')}</p></Card>;
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{t('growthOs.seo.setup.title')}</CardTitle>
-        <CardDescription>{t('growthOs.seo.setup.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        {isAdmin ? (
-          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save.mutate({ siteUrl: url, enabled, crawlEveryHours: Number(hours), llmCallsPerDay: Number(calls), productFacts: facts }); }}>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1 sm:col-span-1"><Label htmlFor="seo-site">{t('growthOs.seo.setup.site')}</Label><Input id="seo-site" placeholder="https://www.example.dk" value={url} onChange={(e) => setUrl(e.target.value)} /></div>
-              <div className="space-y-1"><Label htmlFor="seo-hours">{t('growthOs.seo.setup.every')}</Label><Input id="seo-hours" type="number" min={1} max={168} value={hours} onChange={(e) => setHours(e.target.value)} /></div>
-              <div className="space-y-1"><Label htmlFor="seo-calls">{t('growthOs.seo.setup.calls')}</Label><Input id="seo-calls" type="number" min={0} max={40} value={calls} onChange={(e) => setCalls(e.target.value)} /></div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="seo-facts">{t('growthOs.seo.setup.facts')}</Label>
-              <Textarea id="seo-facts" rows={5} maxLength={4000} value={facts} onChange={(e) => setFacts(e.target.value)} />
-              <p className="text-xs text-muted-foreground">{t('growthOs.seo.setup.factsHint')}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2"><Switch id="seo-on" checked={enabled} onCheckedChange={setEnabled} /><Label htmlFor="seo-on">{t('growthOs.seo.setup.enabled')}</Label></div>
-              <Button type="submit" disabled={save.isPending}>{t('growthOs.seo.setup.save')}</Button>
-              {save.isSuccess && <span className="text-success">{t('growthOs.seo.setup.saved')}</span>}
-            </div>
-            {save.error && <p className="text-destructive">{(save.error as Error).message}</p>}
-          </form>
-        ) : <p className="text-muted-foreground">{t('growthOs.seo.setup.adminOnly')}</p>}
-        <p className="text-xs text-muted-foreground">{t('growthOs.seo.setup.freeNote')}</p>
-      </CardContent>
+    <Card title={t('growthOs.seo.mc.settings')}>
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate({ siteUrl: url, enabled, crawlEveryHours: Number(hours), llmCallsPerDay: Number(calls), productFacts: facts }); }}>
+        <div className="mc-field"><label className="mc-label" htmlFor="mc-site">{t('growthOs.seo.setup.site')}</label><input id="mc-site" type="url" className="w-full" placeholder="https://www.example.dk" value={url} onChange={(e) => setUrl(e.target.value)} /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="mc-field"><label className="mc-label" htmlFor="mc-hours">{t('growthOs.seo.setup.every')}</label><input id="mc-hours" type="number" className="w-full" min={1} max={168} value={hours} onChange={(e) => setHours(e.target.value)} /></div>
+          <div className="mc-field"><label className="mc-label" htmlFor="mc-calls">{t('growthOs.seo.setup.calls')}</label><input id="mc-calls" type="number" className="w-full" min={0} max={40} value={calls} onChange={(e) => setCalls(e.target.value)} /></div>
+        </div>
+        <div className="mc-field">
+          <label className="mc-label" htmlFor="mc-facts">{t('growthOs.seo.setup.facts')}</label>
+          <textarea id="mc-facts" className="w-full" rows={4} maxLength={4000} value={facts} onChange={(e) => setFacts(e.target.value)} />
+          <p className="mc-muted-2 mt-1 text-xs">{t('growthOs.seo.setup.factsHint')}</p>
+        </div>
+        <div className="mc-row mb-1">
+          <label className="mc-switch"><input type="checkbox" checked={!enabled} onChange={(e) => setEnabled(!e.target.checked)} />{t('growthOs.seo.mc.pause')}</label>
+          <button type="submit" className="mc-btn primary" disabled={save.isPending}>{t('growthOs.seo.setup.save')}</button>
+          {save.isSuccess && <span className="mc-ok-text text-xs">{t('growthOs.seo.setup.saved')}</span>}
+        </div>
+        {save.error && <p className="mc-err-text text-xs">{(save.error as Error).message}</p>}
+      </form>
+      {site && (
+        <form className="mt-5 border-t pt-4" style={{ borderColor: 'var(--mc-border)' }} onSubmit={(e) => { e.preventDefault(); savePublish.mutate({ enabled: autoOn, minScore: Number(minScore), maxPerDay: Number(perDay) }); }}>
+          <label className="mc-label">{t('growthOs.seo.publish.title')}</label>
+          <ul className="mc-muted mb-3 list-disc space-y-1 pl-5 text-xs">
+            <li>{t('growthOs.seo.publish.rule1')}</li><li>{t('growthOs.seo.publish.rule2')}</li><li>{t('growthOs.seo.publish.rule3')}</li>
+          </ul>
+          <div className="mc-row">
+            <label className="mc-switch"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} />{t('growthOs.seo.publish.switch')}</label>
+            <label className="mc-switch">{t('growthOs.seo.publish.minScore')}<input type="number" className="w-16" min={6} max={10} value={minScore} onChange={(e) => setMinScore(e.target.value)} /></label>
+            <label className="mc-switch">{t('growthOs.seo.publish.perDay')}<input type="number" className="w-16" min={0} max={5} value={perDay} onChange={(e) => setPerDay(e.target.value)} /></label>
+            <button type="submit" className="mc-btn primary" disabled={savePublish.isPending}>{t('growthOs.seo.setup.save')}</button>
+            {savePublish.isSuccess && <span className="mc-ok-text text-xs">{t('growthOs.seo.setup.saved')}</span>}
+          </div>
+          {savePublish.error && <p className="mc-err-text mt-1 text-xs">{(savePublish.error as Error).message}</p>}
+          <p className="mc-muted-2 mt-2 text-xs">
+            {site.auto_publish ? t('growthOs.seo.publish.statusOn', { since: when(site.auto_publish_since) }) : t('growthOs.seo.publish.statusOff')}
+            {' · '}<a href={`${SITE_URL}/da/guide`} target="_blank" rel="noreferrer">{t('growthOs.seo.publish.viewGuides')}</a>
+          </p>
+        </form>
+      )}
+      <p className="mc-muted-2 mt-3 text-xs">{t('growthOs.seo.setup.freeNote')}</p>
     </Card>
   );
 }
 
-// ── auto-publish (owner switch) ────────────────────────────────────────────
-const SITE_URL = 'https://www.aiagencydanmark.dk';
-const guideUrl = (slug: string) => `${SITE_URL}/da/guide${slug}`;
+// ── page ───────────────────────────────────────────────────────────────────
+const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
-function AutoPublishCard({ t, site }: { t: T; site: SeoSite }) {
+export function SeoAutopilot({ t: rawT }: { t: (k: string) => string }) {
+  const t = useMemo(() => withVars(rawT), [rawT]);
   const { roles } = useAuth();
   const isAdmin = isRole(roles, ['owner', 'company_admin']);
-  const [on, setOn] = useState(site.auto_publish);
-  const [minScore, setMinScore] = useState(String(site.publish_min_score ?? 8));
-  const [perDay, setPerDay] = useState(String(site.max_publish_per_day ?? 1));
-  const save = useSetSeoAutoPublish();
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{t('growthOs.seo.publish.title')}</CardTitle>
-        <CardDescription>{t('growthOs.seo.publish.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-          <li>{t('growthOs.seo.publish.rule1')}</li>
-          <li>{t('growthOs.seo.publish.rule2')}</li>
-          <li>{t('growthOs.seo.publish.rule3')}</li>
-        </ul>
-        {isAdmin ? (
-          <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); save.mutate({ enabled: on, minScore: Number(minScore), maxPerDay: Number(perDay) }); }}>
-            <div className="flex items-center gap-2"><Switch id="seo-autopub" checked={on} onCheckedChange={setOn} /><Label htmlFor="seo-autopub">{t('growthOs.seo.publish.switch')}</Label></div>
-            <div className="space-y-1"><Label htmlFor="seo-minscore">{t('growthOs.seo.publish.minScore')}</Label><Input id="seo-minscore" className="w-24" type="number" min={6} max={10} value={minScore} onChange={(e) => setMinScore(e.target.value)} /></div>
-            <div className="space-y-1"><Label htmlFor="seo-perday">{t('growthOs.seo.publish.perDay')}</Label><Input id="seo-perday" className="w-24" type="number" min={0} max={5} value={perDay} onChange={(e) => setPerDay(e.target.value)} /></div>
-            <Button type="submit" disabled={save.isPending}>{t('growthOs.seo.setup.save')}</Button>
-            {save.isSuccess && <span className="text-success">{t('growthOs.seo.setup.saved')}</span>}
-          </form>
-        ) : <p className="text-muted-foreground">{t('growthOs.seo.setup.adminOnly')}</p>}
-        {save.error && <p className="text-destructive">{(save.error as Error).message}</p>}
-        <p className="text-xs text-muted-foreground">
-          {site.auto_publish ? t('growthOs.seo.publish.statusOn', { since: when(site.auto_publish_since) }) : t('growthOs.seo.publish.statusOff')}
-          {' · '}<a className="underline" href={`${SITE_URL}/da/guide`} target="_blank" rel="noreferrer">{t('growthOs.seo.publish.viewGuides')}</a>
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+  const site = useSeoSite();
+  const runs = useSeoRuns();
+  const drafts = useSeoDrafts();
+  const tasks = useSeoTasks();
+  const reports = useSeoReports();
+  const run = useRunSeoAutopilot();
+  const [from, to] = useMemo(() => [isoDay(Date.now() - 30 * 86_400_000), isoDay(Date.now())], []);
+  const ga4 = useGa4Daily(from, to, !!site.data);
 
-// ── overview ───────────────────────────────────────────────────────────────
-function Overview({ t, runs, site }: { t: T; runs: SeoRun[]; site: SeoSite }) {
-  const crawled = runs.filter((r) => r.status === 'ok' && (r.pages ?? 0) > 0);
+  const allRuns = useMemo(() => runs.data ?? [], [runs.data]);
+  const loops = allRuns.filter((r) => r.kind === 'loop');
+  const crawled = loops.filter((r) => r.status === 'ok' && (r.pages ?? 0) > 0);
   const last = crawled[0];
   const prev = crawled[1];
   const findings = useSeoFindings(last?.id);
   const changeRuns = crawled.filter((r) => (r.changes ?? 0) > 0).slice(0, 5).map((r) => r.id);
   const changes = useSeoChanges(changeRuns);
-  const series = useMemo(() => [...crawled].reverse().map((r) => ({ at: new Date(r.started_at).toLocaleDateString(), score: r.score })), [crawled]);
-  const bySev = (s: string) => (findings.data ?? []).filter((f) => f.severity === s).length;
-  const scoreDelta = last && prev && last.score !== null && prev.score !== null ? last.score - prev.score : null;
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label={t('growthOs.seo.kpi.score')} value={last?.score === null || !last ? '—' : `${last.score}/100`} note={scoreDelta === null ? t('growthOs.seo.kpi.noPrevious') : t('growthOs.seo.kpi.delta', { d: `${scoreDelta >= 0 ? '+' : ''}${scoreDelta}` })} />
-        <Kpi label={t('growthOs.seo.kpi.pages')} value={String(last?.pages ?? '—')} note={last ? t('growthOs.seo.kpi.crawled', { at: when(last.started_at) }) : undefined} />
-        <Kpi label={t('growthOs.seo.kpi.findings')} value={String(last?.findings ?? '—')} note={last ? t('growthOs.seo.kpi.bySeverity', { h: bySev('high'), m: bySev('medium'), l: bySev('low') }) : undefined} />
-        <Kpi label={t('growthOs.seo.kpi.next')} value={site.enabled ? t('growthOs.seo.kpi.every', { h: site.crawl_every_hours }) : t('growthOs.seo.kpi.paused')} note={t('growthOs.seo.kpi.calls', { n: site.llm_calls_per_day })} />
-      </div>
-      {series.length > 1 && (
-        <Card>
-          <CardHeader className="pb-1"><CardTitle className="text-base">{t('growthOs.seo.chart')}</CardTitle></CardHeader>
-          <CardContent className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series} margin={{ left: -20, right: 8, top: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="at" tick={{ fontSize: 11 }} minTickGap={24} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" dot={false} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">{t('growthOs.seo.findingsTitle')}</CardTitle><CardDescription>{t('growthOs.seo.findingsHint')}</CardDescription></CardHeader>
-        <CardContent className="overflow-x-auto">
-          {!findings.data?.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.none')}</p> : (
-            <Table>
-              <TableHeader><TableRow><TableHead>{t('growthOs.seo.col.severity')}</TableHead><TableHead>{t('growthOs.seo.col.page')}</TableHead><TableHead>{t('growthOs.seo.col.issue')}</TableHead><TableHead>{t('growthOs.seo.col.fix')}</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {(findings.data ?? []).slice().sort((a, b) => ['high', 'medium', 'low'].indexOf(a.severity) - ['high', 'medium', 'low'].indexOf(b.severity)).slice(0, 60).map((f) => (
-                  <TableRow key={f.id}>
-                    <TableCell className={cn('font-medium', SEV_TONE[f.severity])}>{t(`growthOs.seo.sev.${f.severity}`)}</TableCell>
-                    <TableCell className="max-w-[220px] truncate" title={f.url}>{f.url.replace(/^https?:\/\/[^/]+/, '') || '/'}</TableCell>
-                    <TableCell>{f.issue}</TableCell>
-                    <TableCell className="text-muted-foreground">{f.fix}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">{t('growthOs.seo.changesTitle')}</CardTitle></CardHeader>
-        <CardContent className="overflow-x-auto">
-          {!changes.data?.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.noChanges')}</p> : (
-            <Table>
-              <TableHeader><TableRow><TableHead>{t('growthOs.seo.col.page')}</TableHead><TableHead>{t('growthOs.seo.col.field')}</TableHead><TableHead>{t('growthOs.seo.col.before')}</TableHead><TableHead>{t('growthOs.seo.col.after')}</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {changes.data.slice(0, 50).map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="max-w-[200px] truncate" title={c.url}>{c.url.replace(/^https?:\/\/[^/]+/, '') || '/'}</TableCell>
-                    <TableCell>{c.field}</TableCell>
-                    <TableCell className="max-w-[220px] truncate text-muted-foreground" title={c.before ?? ''}>{c.before || '—'}</TableCell>
-                    <TableCell className="max-w-[220px] truncate" title={c.after ?? ''}>{c.after || '—'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+  const [logRun, setLogRun] = useState<string>('');
+  const [historyType, setHistoryType] = useState<'' | 'run' | 'task' | 'draft' | 'report'>('');
 
-// ── drafts (human approval) ────────────────────────────────────────────────
-function DraftCard({ d, t, canDecide }: { d: SeoDraft; t: T; canDecide: boolean }) {
-  const [open, setOpen] = useState(false);
-  const decide = useDecideSeoDraft();
-  const unpublish = useUnpublishSeoDraft();
-  const live = !!d.published_at && !d.unpublished_at;
+  if ([site, runs].some((q) => q.error instanceof GrowthNotInstalledError)) {
+    return <div className="seo-mc"><div className="mc-main"><Empty>{t('growthOs.seo.notInstalled')}</Empty></div></div>;
+  }
+  if (site.isLoading) {
+    return <div className="seo-mc"><div className="mc-main"><Empty>{t('growthOs.seo.mc.loading')}</Empty></div></div>;
+  }
+  if (site.error) {
+    return <div className="seo-mc"><div className="mc-main"><p className="mc-err-text text-sm">{(site.error as Error).message}</p></div></div>;
+  }
+
+  const s = site.data;
+  const running = allRuns.find((r) => r.status === 'running');
+  const stage = running ? inferStage(running.log ?? []) : -1;
+  const draftList = drafts.data ?? [];
+  const pendingDrafts = draftList.filter((d) => draftState(d) === 'pending').length;
+  const liveDrafts = draftList.filter((d) => draftState(d) === 'live').length;
+  const taskList = tasks.data ?? [];
+  const openTasks = taskList.filter((x) => x.status === 'open').length;
+  const cost = allRuns.reduce((a, r) => a + Number(r.cost_usd ?? 0), 0);
+  const calls = allRuns.reduce((a, r) => a + (r.llm_calls ?? 0), 0);
+  const models = [...new Set(allRuns.flatMap((r) => r.models ?? []))];
+  const findingRows = (findings.data ?? []).slice().sort((a, b) => SEV_ORDER.indexOf(a.severity) - SEV_ORDER.indexOf(b.severity));
+  const bySev = (sev: string) => findingRows.filter((f) => f.severity === sev).length;
+  const scoreDelta = last && prev && last.score !== null && prev.score !== null ? last.score - prev.score : null;
+  const scored = [...crawled].reverse().filter((r) => r.score !== null);
+  const selectedRun = allRuns.find((r) => r.id === logRun) ?? allRuns[0];
+
+  const organic = new Map<string, { all: number; organic: number }>();
+  for (const r of ga4.data ?? []) {
+    const e = organic.get(r.day) ?? { all: 0, organic: 0 };
+    e.all += r.sessions;
+    if (r.channel_group === 'Organic Search') e.organic += r.sessions;
+    organic.set(r.day, e);
+  }
+  const traffic = [...organic.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+  type Ev = { type: 'run' | 'task' | 'draft' | 'report'; at: string; title: string; detail?: string; tone: 'ok' | 'error' | 'running' | '' };
+  const history: Ev[] = [
+    ...allRuns.map((r): Ev => ({ type: 'run', at: r.started_at, title: t('growthOs.seo.mc.history.runTitle', { kind: r.kind.toUpperCase(), status: t(`growthOs.seo.runStatus.${r.status}`) }), detail: r.error ?? r.summary ?? undefined, tone: r.status === 'ok' ? 'ok' : r.status === 'error' ? 'error' : 'running' })),
+    ...taskList.map((x): Ev => ({ type: 'task', at: x.created_at, title: x.title, detail: `${t(`growthOs.seo.type.${x.type}`)} · ${t(`growthOs.seo.taskStatus.${x.status}`)}${x.error ? ` · ${x.error}` : ''}`, tone: x.status === 'done' ? 'ok' : x.status === 'failed' ? 'error' : 'running' })),
+    ...draftList.map((d): Ev => { const st = draftState(d); return { type: 'draft', at: d.published_at ?? d.decided_at ?? d.created_at, title: d.title, detail: t(`growthOs.seo.mc.draftState.${st}`) + (d.review_score !== null ? ` · ${t('growthOs.seo.mc.score', { s: d.review_score })}` : ''), tone: st === 'live' || st === 'approved' ? 'ok' : st === 'rejected' || st === 'failed' ? 'error' : 'running' }; }),
+    ...(reports.data ?? []).map((r): Ev => ({ type: 'report', at: r.created_at, title: r.title, detail: r.kind.toUpperCase(), tone: '' })),
+  ].filter((e) => !historyType || e.type === historyType).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 200);
+  const HISTORY_ICON = { run: '🔁', task: '🗂️', draft: '📝', report: '🛰️' } as const;
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{t(`growthOs.seo.kind.${d.kind}`)}</Badge>
-          <Badge variant={d.review_status === 'failed' ? 'destructive' : 'secondary'}>{t(`growthOs.seo.review.${d.review_status}`)}{d.review_score !== null ? ` · ${d.review_score}/10` : ''}</Badge>
-          {d.decision !== 'pending' && !d.published_at && <Badge>{t(`growthOs.seo.decision.${d.decision}`)}</Badge>}
-          {live && <Badge className="bg-success text-success-foreground">{t(d.published_by === 'autopilot' ? 'growthOs.seo.publish.liveAuto' : 'growthOs.seo.publish.live')}</Badge>}
-          {d.unpublished_at && <Badge variant="outline">{t('growthOs.seo.publish.offline')}</Badge>}
-          <span className="text-xs text-muted-foreground">{when(d.created_at)}</span>
+    <div className="seo-mc">
+      <header className="mc-header">
+        <div className="mc-brand">
+          <div className="mc-mark" aria-hidden>🛰️</div>
+          <div><h2>{t('growthOs.seo.title')}</h2><div className="mc-muted-2 text-xs">{s ? t('growthOs.seo.mc.watching', { site: s.site_url }) : t('growthOs.seo.mc.notSetUp')}</div></div>
         </div>
-        <CardTitle className="text-base">{d.title}</CardTitle>
-        {d.slug && <CardDescription>{d.slug}</CardDescription>}
-      </CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        {d.summary && <p>{d.summary}</p>}
-        {d.review_notes && <p className="text-muted-foreground">{t('growthOs.seo.reviewNotes')}: {d.review_notes}</p>}
-        {d.publish_block_reason && <p className="text-warning">{t('growthOs.seo.publish.blocked', { reason: d.publish_block_reason })}</p>}
-        {live && d.slug && <p><a className="text-primary underline" href={guideUrl(d.slug)} target="_blank" rel="noreferrer">{guideUrl(d.slug)}</a></p>}
-        {open && (
-          <div className="space-y-1 rounded-md border border-border bg-muted/40 p-3">
-            {d.meta_description && <p><span className="font-medium">Meta:</span> {d.meta_description}</p>}
-            {d.h1 && <p><span className="font-medium">H1:</span> {d.h1}</p>}
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap font-sans text-sm">{d.body}</pre>
-            <p className="text-xs text-muted-foreground">{t('growthOs.seo.models', { w: d.worker_model ?? '—', r: d.review_model ?? '—' })}</p>
+        {s && (
+          <div className="mc-row">
+            <span className="mc-row" style={{ gap: 6 }}>
+              <span className={cn('mc-dot', running ? 'running' : s.enabled ? 'ok' : 'error')} />
+              <span className="mc-muted text-xs">{running ? t('growthOs.seo.running') : s.enabled ? t('growthOs.seo.mc.ready') : t('growthOs.seo.kpi.paused')}</span>
+            </span>
+            {isRole(roles, ['owner', 'company_admin', 'manager']) && (
+              <button type="button" className="mc-btn small primary" disabled={run.isPending || !!running} onClick={() => run.mutate('SEO autopilot round started from the Growth OS page')}>
+                {running ? t('growthOs.seo.running') : t('growthOs.seo.runNow')}
+              </button>
+            )}
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setOpen(!open)}>{open ? t('growthOs.seo.hide') : t('growthOs.seo.read')}</Button>
-          {canDecide && d.decision === 'pending' && d.review_status !== 'pending' && (
-            <>
-              <Button size="sm" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: true })}>{t(d.kind === 'page' ? 'growthOs.seo.publish.approvePublish' : 'growthOs.seo.approve')}</Button>
-              <Button size="sm" variant="outline" disabled={decide.isPending} onClick={() => decide.mutate({ id: d.id, approve: false })}>{t('growthOs.seo.reject')}</Button>
-            </>
-          )}
-          {canDecide && live && (
-            <Button size="sm" variant="outline" disabled={unpublish.isPending} onClick={() => unpublish.mutate(d.id)}>{t('growthOs.seo.publish.unpublish')}</Button>
-          )}
-        </div>
-        {decide.error && <p className="text-destructive">{(decide.error as Error).message}</p>}
-        {unpublish.error && <p className="text-destructive">{(unpublish.error as Error).message}</p>}
-      </CardContent>
-    </Card>
-  );
-}
+      </header>
 
-function Drafts({ t, site }: { t: T; site: SeoSite }) {
-  const { roles } = useAuth();
-  const drafts = useSeoDrafts();
-  const [show, setShow] = useState<'waiting' | 'live' | 'all'>('waiting');
-  const list = (drafts.data ?? []).filter((d) => show === 'all'
-    || (show === 'live' ? !!d.published_at && !d.unpublished_at : d.decision === 'pending' && d.review_status !== 'failed'));
-  return (
-    <div className="space-y-3">
-      <AutoPublishCard key={`${site.updated_at}-${site.auto_publish}`} t={t} site={site} />
-      <p className="text-sm text-muted-foreground">{t('growthOs.seo.draftsHint')}</p>
-      <div className="flex gap-2">
-        <Button size="sm" variant={show === 'waiting' ? 'default' : 'outline'} onClick={() => setShow('waiting')}>{t('growthOs.seo.waiting')}</Button>
-        <Button size="sm" variant={show === 'live' ? 'default' : 'outline'} onClick={() => setShow('live')}>{t('growthOs.seo.publish.liveTab')}</Button>
-        <Button size="sm" variant={show === 'all' ? 'default' : 'outline'} onClick={() => setShow('all')}>{t('growthOs.seo.all')}</Button>
-      </div>
-      {!list.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.none')}</p> : list.map((d) => <DraftCard key={d.id} d={d} t={t} canDecide={isRole(roles, ['owner', 'company_admin'])} />)}
-    </div>
-  );
-}
+      <div className="mc-main">
+        {run.isSuccess && <p className="mc-ok-text text-sm">{t('growthOs.seo.queued')}</p>}
+        {run.error && <p className="mc-err-text text-sm">{(run.error as Error).message}</p>}
 
-function Tasks({ t }: { t: T }) {
-  const tasks = useSeoTasks();
-  return (
-    <Card><CardContent className="overflow-x-auto pt-4">
-      {!tasks.data?.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.none')}</p> : (
-        <Table>
-          <TableHeader><TableRow><TableHead>{t('growthOs.seo.col.task')}</TableHead><TableHead>{t('growthOs.seo.col.type')}</TableHead><TableHead>{t('growthOs.seo.col.status')}</TableHead><TableHead>{t('growthOs.seo.col.created')}</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {tasks.data.map((x) => (
-              <TableRow key={x.id}>
-                <TableCell><div className="font-medium">{x.title}</div><div className="text-xs text-muted-foreground">{x.target ?? ''}{x.error ? ` · ${x.error}` : ''}</div></TableCell>
-                <TableCell>{t(`growthOs.seo.type.${x.type}`)}</TableCell>
-                <TableCell>{t(`growthOs.seo.taskStatus.${x.status}`)}{x.attempts ? ` (${x.attempts})` : ''}</TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">{when(x.created_at)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </CardContent></Card>
-  );
-}
-
-function Runs({ t, runs }: { t: T; runs: SeoRun[] }) {
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <Card><CardContent className="space-y-2 pt-4 text-sm">
-      {!runs.length ? <p className="text-muted-foreground">{t('growthOs.seo.none')}</p> : runs.map((r) => (
-        <div key={r.id} className="rounded-md border border-border p-2">
-          <button type="button" className="flex w-full flex-wrap items-center gap-2 text-left" onClick={() => setOpen(open === r.id ? null : r.id)}>
-            <Badge variant={r.status === 'error' ? 'destructive' : 'outline'}>{t(`growthOs.seo.runStatus.${r.status}`)}</Badge>
-            <span className="text-muted-foreground">{when(r.started_at)} · {t(`growthOs.seo.trigger.${r.trigger}`)}</span>
-            <span className="min-w-0 flex-1 truncate">{r.error ?? r.summary ?? ''}</span>
-          </button>
-          {open === r.id && <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">{(r.log ?? []).join('\n') || '—'}</pre>}
-        </div>
-      ))}
-    </CardContent></Card>
-  );
-}
-
-function History({ t }: { t: T }) {
-  const reports = useSeoReports();
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">{t('growthOs.seo.historyHint')}</p>
-      {!reports.data?.length ? <p className="text-sm text-muted-foreground">{t('growthOs.seo.none')}</p> : reports.data.map((r) => (
-        <Card key={r.id}><CardContent className="space-y-2 pt-4 text-sm">
-          <button type="button" className="flex w-full flex-wrap items-center gap-2 text-left" onClick={() => setOpen(open === r.id ? null : r.id)}>
-            <Badge variant="outline">{r.kind.toUpperCase()}</Badge><span className="font-medium">{r.title}</span><span className="text-muted-foreground">{when(r.created_at)}</span>
-          </button>
-          {open === r.id && <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap font-sans">{r.body}</pre>}
-        </CardContent></Card>
-      ))}
-    </div>
-  );
-}
-
-export function SeoAutopilot({ t: rawT }: { t: (k: string) => string }) {
-  const t = useMemo(() => withVars(rawT), [rawT]);
-  const { roles } = useAuth();
-  const site = useSeoSite();
-  const runs = useSeoRuns();
-  const run = useRunSeoAutopilot();
-  if (site.error instanceof GrowthNotInstalledError || runs.error instanceof GrowthNotInstalledError) {
-    return <Card><CardContent className="py-6 text-sm text-muted-foreground">{t('growthOs.seo.notInstalled')}</CardContent></Card>;
-  }
-  if (site.isLoading) return <p className="text-sm text-muted-foreground">…</p>;
-  const running = (runs.data ?? []).some((r) => r.status === 'running');
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{t('growthOs.seo.title')}</h2>
-          <p className="text-sm text-muted-foreground">{site.data ? site.data.site_url : t('growthOs.seo.subtitle')}</p>
-        </div>
-        {site.data && isRole(roles, ['owner', 'company_admin', 'manager']) && (
-          <Button disabled={run.isPending || running} onClick={() => run.mutate('SEO autopilot round started from the Growth OS page')}>
-            {running ? t('growthOs.seo.running') : t('growthOs.seo.runNow')}
-          </Button>
-        )}
-      </div>
-      {run.isSuccess && <p className="text-sm text-success">{t('growthOs.seo.queued')}</p>}
-      {run.error && <p className="text-sm text-destructive">{(run.error as Error).message}</p>}
-      <Tabs defaultValue={site.data ? 'overview' : 'setup'}>
-        <TabsList className="flex-wrap">
-          {site.data && ['overview', 'drafts', 'tasks', 'runs', 'history'].map((k) => <TabsTrigger key={k} value={k}>{t(`growthOs.seo.tab.${k}`)}</TabsTrigger>)}
-          <TabsTrigger value="setup">{t('growthOs.seo.tab.setup')}</TabsTrigger>
-        </TabsList>
-        {site.data && (
+        {!s ? <Settings t={t} site={null} isAdmin={isAdmin} /> : (
           <>
-            <TabsContent value="overview" className="mt-4"><Overview t={t} runs={runs.data ?? []} site={site.data} /></TabsContent>
-            <TabsContent value="drafts" className="mt-4"><Drafts t={t} site={site.data} /></TabsContent>
-            <TabsContent value="tasks" className="mt-4"><Tasks t={t} /></TabsContent>
-            <TabsContent value="runs" className="mt-4"><Runs t={t} runs={runs.data ?? []} /></TabsContent>
-            <TabsContent value="history" className="mt-4"><History t={t} /></TabsContent>
+            <Hero t={t} site={s} running={!!running} stage={stage} lastRun={loops[0]} />
+
+            <div className="mc-kpis">
+              <div className="mc-kpi score">
+                <div className="mc-kpi-label">{t('growthOs.seo.kpi.score')}</div>
+                <div className="mc-kpi-value">{last?.score ?? '—'}<span className="mc-kpi-unit">/100</span></div>
+                <div className={cn('mc-kpi-note', scoreDelta !== null && scoreDelta > 0 && 'up', scoreDelta !== null && scoreDelta < 0 && 'down')}>
+                  {scoreDelta === null ? t('growthOs.seo.kpi.noPrevious') : scoreDelta === 0 ? t('growthOs.seo.mc.unchanged') : t('growthOs.seo.kpi.delta', { d: `${scoreDelta > 0 ? '+' : ''}${scoreDelta}` })}
+                </div>
+              </div>
+              <div className="mc-kpi"><div className="mc-kpi-label">{t('growthOs.seo.kpi.pages')}</div><div className="mc-kpi-value">{last?.pages ?? '—'}</div><div className="mc-kpi-note">{last ? t('growthOs.seo.kpi.crawled', { at: shortWhen(last.started_at) }) : ''}</div></div>
+              <div className="mc-kpi">
+                <div className="mc-kpi-label">{t('growthOs.seo.mc.openFindings')}</div><div className="mc-kpi-value">{last ? findingRows.length || last.findings || 0 : '—'}</div>
+                <div className="mc-row mt-2" style={{ gap: 4 }}>{SEV_ORDER.filter((x) => bySev(x) > 0).map((x) => <span key={x} className={cn('mc-badge', x)}>{bySev(x)} {t(`growthOs.seo.sev.${x}`)}</span>)}</div>
+              </div>
+              <div className="mc-kpi"><div className="mc-kpi-label">{t('growthOs.seo.mc.draftsWaiting')}</div><div className="mc-kpi-value">{pendingDrafts}</div><div className="mc-kpi-note">{t('growthOs.seo.mc.liveCount', { n: liveDrafts })}</div></div>
+              <div className="mc-kpi"><div className="mc-kpi-label">{t('growthOs.seo.mc.openTasks')}</div><div className="mc-kpi-value">{openTasks}</div><div className="mc-kpi-note">{t('growthOs.seo.mc.ofTotal', { n: taskList.length })}</div></div>
+              <div className="mc-kpi"><div className="mc-kpi-label">{t('growthOs.seo.mc.cost')}</div><div className="mc-kpi-value">${cost.toFixed(3)}</div><div className="mc-kpi-note">{t('growthOs.seo.mc.calls', { n: calls })}</div></div>
+            </div>
+
+            <Pipeline t={t} running={!!running} stage={stage} paused={!s.enabled} />
+
+            <Card title={t('growthOs.seo.chart')}>
+              {scored.length === 0 ? <Empty>{t('growthOs.seo.mc.noRuns')}</Empty> : (
+                <>
+                  <LineChart label={t('growthOs.seo.chart')} max={100} series={[{ values: scored.map((r) => r.score as number), stroke: 'var(--mc-accent)', fill: true }]} />
+                  <div className="mc-legend">{t('growthOs.seo.mc.scoreLegend', { s: scored[scored.length - 1].score ?? '—', at: when(scored[scored.length - 1].started_at), n: scored.length })}</div>
+                </>
+              )}
+            </Card>
+
+            <div className="mc-grid-2">
+              <Card title={t('growthOs.seo.findingsTitle')}>
+                {!findingRows.length ? <Empty>{last ? t('growthOs.seo.mc.noFindings') : t('growthOs.seo.mc.noRuns')}</Empty> : (
+                  <Expandable rows={findingRows} t={t} render={(rows) => (
+                    <div className="mc-table-wrap"><table>
+                      <thead><tr><th>{t('growthOs.seo.col.page')}</th><th>{t('growthOs.seo.col.severity')}</th><th>{t('growthOs.seo.col.issue')}</th><th>{t('growthOs.seo.col.fix')}</th></tr></thead>
+                      <tbody>{rows.map((f) => <tr key={f.id}><td title={f.url}>{path(f.url)}</td><td><span className={cn('mc-badge', f.severity)}>{t(`growthOs.seo.sev.${f.severity}`)}</span></td><td>{f.issue}</td><td className="mc-muted">{f.fix}</td></tr>)}</tbody>
+                    </table></div>
+                  )} />
+                )}
+              </Card>
+              <Card title={t('growthOs.seo.changesTitle')}>
+                {!changes.data?.length ? <Empty>{t('growthOs.seo.noChanges')}</Empty> : (
+                  <Expandable rows={changes.data} t={t} render={(rows) => (
+                    <div className="mc-table-wrap"><table>
+                      <thead><tr><th>{t('growthOs.seo.col.page')}</th><th>{t('growthOs.seo.col.field')}</th><th>{t('growthOs.seo.col.before')}</th><th>{t('growthOs.seo.col.after')}</th></tr></thead>
+                      <tbody>{rows.map((c) => <tr key={c.id}><td title={c.url}>{path(c.url)}</td><td>{c.field}</td><td className="mc-muted" title={c.before ?? ''}>{(c.before ?? '—').slice(0, 40)}</td><td title={c.after ?? ''}>{(c.after ?? '—').slice(0, 40)}</td></tr>)}</tbody>
+                    </table></div>
+                  )} />
+                )}
+              </Card>
+            </div>
+
+            <DraftQueue t={t} drafts={draftList} canDecide={isAdmin} />
+
+            <div className="mc-grid-2">
+              <Card title={t('growthOs.seo.tab.tasks')}>
+                {!taskList.length ? <Empty>{t('growthOs.seo.none')}</Empty> : (
+                  <div className="mc-table-wrap mc-scroll"><table>
+                    <thead><tr><th>{t('growthOs.seo.col.task')}</th><th>{t('growthOs.seo.col.type')}</th><th>{t('growthOs.seo.col.status')}</th><th>{t('growthOs.seo.mc.attempts')}</th></tr></thead>
+                    <tbody>{taskList.slice(0, 20).map((x) => (
+                      <tr key={x.id}>
+                        <td><div>{x.title}</div>{x.error && <div className="mc-err-text text-xs">{x.error}</div>}</td>
+                        <td className="mc-muted">{t(`growthOs.seo.type.${x.type}`)}</td>
+                        <td><span className={cn('mc-badge', x.status === 'done' ? 'done' : x.status === 'failed' ? 'failed' : 'open')}>{t(`growthOs.seo.taskStatus.${x.status}`)}</span></td>
+                        <td>{x.attempts}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table></div>
+                )}
+              </Card>
+              <Card title={t('growthOs.seo.mc.reports')}>
+                {!reports.data?.length ? <Empty>{t('growthOs.seo.none')}</Empty> : <div className="mc-scroll">{reports.data.slice(0, 12).map((r) => <Report key={r.id} r={r} t={t} />)}</div>}
+              </Card>
+            </div>
+
+            <Card title={t('growthOs.seo.mc.runLog')} right={
+              <select aria-label={t('growthOs.seo.mc.runLog')} value={selectedRun?.id ?? ''} onChange={(e) => setLogRun(e.target.value)}>
+                {allRuns.slice(0, 60).map((r) => <option key={r.id} value={r.id}>{`${shortWhen(r.started_at)} · ${r.kind} · ${t(`growthOs.seo.runStatus.${r.status}`)} · ${t(`growthOs.seo.trigger.${r.trigger}`)}`}</option>)}
+              </select>
+            }>
+              <div className="mc-log">{selectedRun ? ((selectedRun.log ?? []).join('\n') || selectedRun.summary || '—') : '—'}</div>
+            </Card>
+
+            <Card title={t('growthOs.seo.mc.history.title')} right={
+              <select aria-label={t('growthOs.seo.mc.history.title')} value={historyType} onChange={(e) => setHistoryType(e.target.value as typeof historyType)}>
+                {(['', 'run', 'task', 'draft', 'report'] as const).map((k) => <option key={k || 'all'} value={k}>{t(`growthOs.seo.mc.history.${k || 'all'}`)}</option>)}
+              </select>
+            }>
+              {!history.length ? <Empty>{t('growthOs.seo.none')}</Empty> : (
+                <div className="mc-history">
+                  {history.map((e, i) => (
+                    <div key={`${e.type}-${i}`} className={cn('mc-history-item', e.tone)}>
+                      <span aria-hidden>{HISTORY_ICON[e.type]}</span>
+                      <div className="mc-h-body"><div className="mc-h-title">{e.title}</div>{e.detail && <div className="mc-h-detail">{e.detail}</div>}</div>
+                      <div className="mc-h-time">{shortWhen(e.at)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card title={t('growthOs.seo.mc.traffic')}>
+              {!traffic.length ? <Empty>{t('growthOs.seo.mc.noTraffic')}</Empty> : (
+                <>
+                  <LineChart label={t('growthOs.seo.mc.traffic')} max={Math.max(1, ...traffic.map(([, v]) => v.all))} series={[
+                    { values: traffic.map(([, v]) => v.all), stroke: 'var(--mc-accent-2)', width: 2, opacity: 0.6 },
+                    { values: traffic.map(([, v]) => v.organic), stroke: 'var(--mc-low)' },
+                  ]} />
+                  <div className="mc-legend">
+                    <span style={{ color: 'var(--mc-low)' }}>■</span> {t('growthOs.seo.mc.organic', { n: traffic.reduce((a, [, v]) => a + v.organic, 0).toLocaleString('da-DK'), d: traffic.length })}
+                    {'  '}<span style={{ color: 'var(--mc-accent-2)' }}>■</span> {t('growthOs.seo.mc.allChannels')}
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <div className="mc-grid-2">
+              <Card title={t('growthOs.seo.mc.usage')}>
+                <div className="mc-table-wrap"><table><tbody>
+                  <tr><th>{t('growthOs.seo.mc.rounds')}</th><td>{loops.length.toLocaleString('da-DK')}</td></tr>
+                  <tr><th>{t('growthOs.seo.mc.modelCalls')}</th><td>{calls.toLocaleString('da-DK')}</td></tr>
+                  <tr><th>{t('growthOs.seo.mc.cost')}</th><td>${cost.toFixed(4)}</td></tr>
+                  <tr><th>{t('growthOs.seo.mc.models')}</th><td className="break-all">{models.join(', ') || '—'}</td></tr>
+                  <tr><th>{t('growthOs.seo.mc.limit')}</th><td>{t('growthOs.seo.kpi.calls', { n: s.llm_calls_per_day })}</td></tr>
+                </tbody></table></div>
+              </Card>
+              <Settings key={`${s.updated_at}-${s.auto_publish}`} t={t} site={s} isAdmin={isAdmin} />
+            </div>
           </>
         )}
-        <TabsContent value="setup" className="mt-4"><SetupCard key={site.data?.updated_at ?? 'new'} t={t} site={site.data ?? null} /></TabsContent>
-      </Tabs>
+      </div>
+    </div>
+  );
+}
+
+function Report({ r, t }: { r: { id: string; kind: string; title: string; body: string; created_at: string }; t: T }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mc-draft">
+      <div className="mc-draft-head">
+        <div className="min-w-0"><strong>{r.title}</strong> <span className="mc-muted text-xs">{r.kind.toUpperCase()} · {when(r.created_at)}</span></div>
+        <button type="button" className="mc-btn small" onClick={() => setOpen(!open)}>{open ? t('growthOs.seo.hide') : t('growthOs.seo.read')}</button>
+      </div>
+      {open && <pre className="mc-pre mt-3">{r.body}</pre>}
     </div>
   );
 }

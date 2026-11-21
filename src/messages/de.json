@@ -3910,6 +3910,96 @@
         "approvePublish": "Freigeben und veröffentlichen",
         "unpublish": "Offline nehmen",
         "liveTab": "Online"
+      },
+      "mc": {
+        "loading": "SEO-Autopilot wird geladen …",
+        "watching": "überwacht {site}",
+        "notSetUp": "Noch nicht eingerichtet",
+        "ready": "Bereit",
+        "hero": {
+          "working": "Arbeitet gerade: {step}",
+          "round": "Runde läuft",
+          "roundHint": "Eine Runde läuft. Die Schritte siehst du in der Agenten-Pipeline unten.",
+          "idle": "In Ruhe",
+          "next": "Nächste automatische Runde: {at}",
+          "last": "Letzte Runde",
+          "paused": "Pausiert",
+          "pausedHint": "Läuft gerade nicht automatisch. Schalte die Pause unten in den Einstellungen aus, um fortzufahren."
+        },
+        "stage": {
+          "crawl": "Crawl",
+          "plan": "Planung",
+          "write": "Autor",
+          "review": "Review",
+          "queue": "Entwurfs-Warteschlange"
+        },
+        "stageHint": {
+          "crawl": "Der Crawler besucht Sitemap und Seiten",
+          "plan": "Der leitende Agent plant Aufgaben",
+          "write": "Der Autor schreibt einen Entwurf",
+          "review": "Der Reviewer bewertet den Entwurf",
+          "queue": "Der Entwurf landet in der Warteschlange oder geht live"
+        },
+        "pipeline": {
+          "title": "Agenten-Pipeline",
+          "idle": "In Ruhe, wartet auf die nächste Runde.",
+          "paused": "Pausiert."
+        },
+        "unchanged": "unverändert seit dem letzten Crawl",
+        "openFindings": "Offene Befunde",
+        "draftsWaiting": "Wartende Entwürfe",
+        "liveCount": "{n} live auf der Website",
+        "openTasks": "Offene Aufgaben",
+        "ofTotal": "{n} insgesamt",
+        "cost": "Kosten gesamt",
+        "calls": "{n} Modellaufrufe",
+        "noRuns": "Noch keine Runden.",
+        "noFindings": "Keine Befunde. Super!",
+        "scoreLegend": "Letzter Score: {s}/100 ({at}) · {n} Crawls angezeigt.",
+        "showAll": "Alle {n} anzeigen",
+        "showLess": "Weniger anzeigen",
+        "drafts": "Entwurfs-Warteschlange",
+        "noDrafts": "Keine Entwürfe in dieser Kategorie.",
+        "filter": {
+          "waiting": "Wartend",
+          "live": "Live auf der Website",
+          "approved": "Freigegeben",
+          "rejected": "Abgelehnt",
+          "all": "Alle"
+        },
+        "draftState": {
+          "pending": "Wartend",
+          "live": "Live",
+          "offline": "Offline genommen",
+          "approved": "Freigegeben",
+          "rejected": "Abgelehnt",
+          "failed": "Nicht gut genug"
+        },
+        "score": "Score {s}/10",
+        "summary": "Zusammenfassung",
+        "attempts": "Versuche",
+        "reports": "Berichte (REA und GA4)",
+        "runLog": "Laufprotokoll",
+        "history": {
+          "title": "Verlauf: alles, woran gearbeitet wurde",
+          "all": "Alles",
+          "run": "Runden",
+          "task": "Aufgaben",
+          "draft": "Entwürfe",
+          "report": "Berichte",
+          "runTitle": "{kind}-Runde · {status}"
+        },
+        "traffic": "Organischer Traffic (Google Analytics, 30 Tage)",
+        "noTraffic": "Noch keine GA4-Daten. Sie erscheinen, sobald die Google-Analytics-Verbindung synchronisiert hat.",
+        "organic": "Organische Suche ({n} Sitzungen über {d} Tage)",
+        "allChannels": "Alle Kanäle",
+        "usage": "Modellaufrufe und Kosten",
+        "rounds": "Runden",
+        "modelCalls": "Modellaufrufe",
+        "models": "Verwendete Modelle",
+        "limit": "Limit",
+        "settings": "Einstellungen",
+        "pause": "Pause (nicht automatisch ausführen)"
       }
     }
   },

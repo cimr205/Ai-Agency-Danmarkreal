@@ -3910,6 +3910,96 @@
         "approvePublish": "Approve and publish",
         "unpublish": "Take offline",
         "liveTab": "Live"
+      },
+      "mc": {
+        "loading": "Loading the SEO autopilot …",
+        "watching": "watching {site}",
+        "notSetUp": "Not set up yet",
+        "ready": "Ready",
+        "hero": {
+          "working": "Working now: {step}",
+          "round": "round in progress",
+          "roundHint": "A round is running. See the steps in the agent pipeline below.",
+          "idle": "Resting",
+          "next": "Next automatic round: {at}",
+          "last": "Last round",
+          "paused": "Paused",
+          "pausedHint": "Not running automatically right now. Turn off pause under Settings at the bottom to continue."
+        },
+        "stage": {
+          "crawl": "Crawl",
+          "plan": "Planning",
+          "write": "Writer",
+          "review": "Review",
+          "queue": "Draft queue"
+        },
+        "stageHint": {
+          "crawl": "The crawler visits the sitemap and pages",
+          "plan": "The lead agent plans tasks",
+          "write": "The writer drafts a page",
+          "review": "The reviewer scores the draft",
+          "queue": "The draft lands in the queue or goes live"
+        },
+        "pipeline": {
+          "title": "Agent pipeline",
+          "idle": "Resting, waiting for the next round.",
+          "paused": "Paused."
+        },
+        "unchanged": "unchanged since the previous crawl",
+        "openFindings": "Open findings",
+        "draftsWaiting": "Drafts waiting",
+        "liveCount": "{n} live on the site",
+        "openTasks": "Open tasks",
+        "ofTotal": "{n} in total",
+        "cost": "Total cost",
+        "calls": "{n} model calls",
+        "noRuns": "No rounds yet.",
+        "noFindings": "No findings. Nice!",
+        "scoreLegend": "Latest score: {s}/100 ({at}) · {n} crawls shown.",
+        "showAll": "Show all {n}",
+        "showLess": "Show fewer",
+        "drafts": "Draft queue",
+        "noDrafts": "No drafts in this category.",
+        "filter": {
+          "waiting": "Waiting",
+          "live": "Live on the site",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "all": "All"
+        },
+        "draftState": {
+          "pending": "Waiting",
+          "live": "Live",
+          "offline": "Taken offline",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "failed": "Not good enough"
+        },
+        "score": "score {s}/10",
+        "summary": "Summary",
+        "attempts": "Attempts",
+        "reports": "Reports (REA and GA4)",
+        "runLog": "Run log",
+        "history": {
+          "title": "History: everything worked on",
+          "all": "Everything",
+          "run": "Rounds",
+          "task": "Tasks",
+          "draft": "Drafts",
+          "report": "Reports",
+          "runTitle": "{kind} round · {status}"
+        },
+        "traffic": "Organic traffic (Google Analytics, 30 days)",
+        "noTraffic": "No GA4 data yet. It appears once the Google Analytics connection has synced.",
+        "organic": "Organic search ({n} sessions over {d} days)",
+        "allChannels": "All channels",
+        "usage": "Model calls and cost",
+        "rounds": "Rounds",
+        "modelCalls": "Model calls",
+        "models": "Models used",
+        "limit": "Limit",
+        "settings": "Settings",
+        "pause": "Pause (don't run automatically)"
       }
     }
   },

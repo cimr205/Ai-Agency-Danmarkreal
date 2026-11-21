@@ -3910,6 +3910,96 @@
         "approvePublish": "Godkend og udgiv",
         "unpublish": "Tag offline",
         "liveTab": "Live"
+      },
+      "mc": {
+        "loading": "Indlæser SEO-autopiloten …",
+        "watching": "overvåger {site}",
+        "notSetUp": "Ikke sat op endnu",
+        "ready": "Klar",
+        "hero": {
+          "working": "Arbejder nu: {step}",
+          "round": "runde i gang",
+          "roundHint": "En runde er i gang. Se trinnene i agent-pipelinen nedenfor.",
+          "idle": "I hvile",
+          "next": "Næste automatiske runde: {at}",
+          "last": "Seneste runde",
+          "paused": "Sat på pause",
+          "pausedHint": "Kører ikke automatisk lige nu. Slå pausen fra under Indstillinger nederst for at fortsætte."
+        },
+        "stage": {
+          "crawl": "Crawl",
+          "plan": "Planlægning",
+          "write": "Skribent",
+          "review": "Review",
+          "queue": "Udkast-kø"
+        },
+        "stageHint": {
+          "crawl": "Crawleren besøger sitemap og sider",
+          "plan": "Hovedet planlægger opgaver",
+          "write": "Skribenten skriver et udkast",
+          "review": "Revieweren vurderer udkastet",
+          "queue": "Udkastet lander i køen eller går live"
+        },
+        "pipeline": {
+          "title": "Agent-pipeline",
+          "idle": "I hvile, venter på næste runde.",
+          "paused": "Sat på pause."
+        },
+        "unchanged": "uændret siden forrige crawl",
+        "openFindings": "Åbne fund",
+        "draftsWaiting": "Udkast afventer",
+        "liveCount": "{n} live på sitet",
+        "openTasks": "Åbne opgaver",
+        "ofTotal": "{n} i alt",
+        "cost": "Omkostning i alt",
+        "calls": "{n} modelkald",
+        "noRuns": "Ingen runder endnu.",
+        "noFindings": "Ingen fund. Flot!",
+        "scoreLegend": "Seneste score: {s}/100 ({at}) · {n} crawls vist.",
+        "showAll": "Vis alle {n}",
+        "showLess": "Vis færre",
+        "drafts": "Udkast-kø",
+        "noDrafts": "Ingen udkast i denne kategori.",
+        "filter": {
+          "waiting": "Afventer",
+          "live": "Live på sitet",
+          "approved": "Godkendt",
+          "rejected": "Afvist",
+          "all": "Alle"
+        },
+        "draftState": {
+          "pending": "Afventer",
+          "live": "Live",
+          "offline": "Taget offline",
+          "approved": "Godkendt",
+          "rejected": "Afvist",
+          "failed": "Ikke god nok"
+        },
+        "score": "score {s}/10",
+        "summary": "Resumé",
+        "attempts": "Forsøg",
+        "reports": "Rapporter (REA og GA4)",
+        "runLog": "Kørselslog",
+        "history": {
+          "title": "Historik: alt der er arbejdet på",
+          "all": "Alt",
+          "run": "Runder",
+          "task": "Opgaver",
+          "draft": "Udkast",
+          "report": "Rapporter",
+          "runTitle": "{kind}-runde · {status}"
+        },
+        "traffic": "Organisk trafik (Google Analytics, 30 dage)",
+        "noTraffic": "Ingen GA4-data endnu. De kommer, når Google Analytics-forbindelsen har synkroniseret.",
+        "organic": "Organisk søgning ({n} sessioner over {d} dage)",
+        "allChannels": "Alle kanaler",
+        "usage": "Modelkald og omkostning",
+        "rounds": "Runder",
+        "modelCalls": "Modelkald",
+        "models": "Modeller brugt",
+        "limit": "Loft",
+        "settings": "Indstillinger",
+        "pause": "Pause (kør ikke automatisk)"
       }
     }
   },
