@@ -72,7 +72,7 @@ describe('published guides', () => {
       { ...articles[1], lang: 'de', path: '/crm/was-ist-ein-crm' },
       { ...articles[1], lang: null, path: '/crm/ai-crm' },
     ];
-    expect(articleBody(mixed[1], '<p>x</p>', '', 'de')).toContain('<a href="/de/guide">Alle Ratgeber</a><article lang="de">');
+    expect(articleBody(mixed[1], '<p>x</p>', '', 'de')).toContain('<a href="/de/guide">Alle Ratgeber</a></p><article lang="de">');
     expect(guideIndexBody([mixed[0]], '', 'en')).toContain('<a href="/en/guide/crm/what-is-crm">');
     const xml = guideSitemapEntries('https://www.x.dk', mixed);
     expect(xml).toContain('<loc>https://www.x.dk/en/guide/crm/what-is-crm</loc>');

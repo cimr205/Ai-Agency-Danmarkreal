@@ -3688,6 +3688,7 @@ export type Database = {
           h1: string | null
           id: string
           kind: string
+          lang: string
           legacy_id: number | null
           meta_description: string | null
           publish_block_reason: string | null
@@ -3717,6 +3718,7 @@ export type Database = {
           h1?: string | null
           id?: string
           kind: string
+          lang?: string
           legacy_id?: number | null
           meta_description?: string | null
           publish_block_reason?: string | null
@@ -3746,6 +3748,7 @@ export type Database = {
           h1?: string | null
           id?: string
           kind?: string
+          lang?: string
           legacy_id?: number | null
           meta_description?: string | null
           publish_block_reason?: string | null
@@ -4141,6 +4144,7 @@ export type Database = {
           crawl_every_hours: number
           created_at: string
           enabled: boolean
+          ingest_token_sha256: string | null
           last_deploy_requested_at: string | null
           last_run_at: string | null
           llm_calls_per_day: number
@@ -4161,6 +4165,7 @@ export type Database = {
           crawl_every_hours?: number
           created_at?: string
           enabled?: boolean
+          ingest_token_sha256?: string | null
           last_deploy_requested_at?: string | null
           last_run_at?: string | null
           llm_calls_per_day?: number
@@ -4181,6 +4186,7 @@ export type Database = {
           crawl_every_hours?: number
           created_at?: string
           enabled?: boolean
+          ingest_token_sha256?: string | null
           last_deploy_requested_at?: string | null
           last_run_at?: string | null
           llm_calls_per_day?: number
@@ -9839,11 +9845,28 @@ export type Database = {
         Args: { _approve: boolean; _id: string; _note?: string }
         Returns: string
       }
+      growth_seo_ingest_article: {
+        Args: {
+          _body: string
+          _h1: string
+          _lang: string
+          _meta_description: string
+          _review_model: string
+          _review_notes: string
+          _review_score: number
+          _slug: string
+          _title: string
+          _token: string
+          _worker_model: string
+        }
+        Returns: string
+      }
       growth_seo_published_articles: {
         Args: { _company: string }
         Returns: {
           body: string
           h1: string
+          lang: string
           meta_description: string
           path: string
           published_at: string
