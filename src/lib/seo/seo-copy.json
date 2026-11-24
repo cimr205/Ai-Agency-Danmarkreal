@@ -22,8 +22,12 @@
       "termsDescription": "Read the terms governing use of AI Agency Danmark.",
       "dpaTitle": "Data processing agreement | AI Agency Danmark",
       "dpaDescription": "Read the data processing agreement for AI Agency Danmark.",
-      "guideTitle": "Guides (in Danish) | AI Agency Danmark",
-      "guideDescription": "Practical guides on CRM, sales and operations for Danish companies, written in Danish."
+      "guideTitle": "Guides on CRM, sales and operations | AI Agency Danmark",
+      "guideDescription": "Practical guides on CRM, sales, invoicing and operations for small and mid-sized businesses, from AI Agency Danmark."
+    },
+    "de": {
+      "guideTitle": "Ratgeber zu CRM, Vertrieb und Betrieb | AI Agency Danmark",
+      "guideDescription": "Praktische Ratgeber zu CRM, Vertrieb, Rechnungen und Betrieb für kleine und mittlere Unternehmen, von AI Agency Danmark."
     }
   },
   "articlesCompanyId": "31c78e6c-89ef-4dc2-840d-7610f2f666a8"

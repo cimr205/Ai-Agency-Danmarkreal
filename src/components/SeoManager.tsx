@@ -39,8 +39,10 @@ export function SeoManager() {
     const { htmlLang, locale, suffix } = splitLocalePath(pathname);
     const localized = copy[locale];
     const isPrivate = /^\/(app|auth|admin)(\/|$)/.test(suffix);
-    // Guides are Danish only: /en|de/guide/... point their canonical at /da/guide/...
-    // GuidePage sets an article's own title and description once it has loaded.
+    // Guides exist per language (/da|en|de/guide/...), each canonical to itself.
+    // GuidePage sets an article's own title and description once it has loaded,
+    // and noindex when the guide list or article is empty.
+    const guideCopy = htmlLang === 'de' ? copy.de : localized;
     const isGuide = /^\/guide(\/|$)/.test(suffix);
 
     let title: string = localized.homeTitle;
@@ -55,19 +57,19 @@ export function SeoManager() {
       title = localized.dpaTitle;
       description = localized.dpaDescription;
     } else if (isGuide) {
-      title = localized.guideTitle;
-      description = localized.guideDescription;
+      title = guideCopy.guideTitle;
+      description = guideCopy.guideDescription;
     } else if (suffix !== '/' && !isPrivate) {
       title = locale === 'da' ? 'Side ikke fundet | AI Agency Danmark' : htmlLang === 'de' ? 'Seite nicht gefunden | AI Agency Danmark' : 'Page not found | AI Agency Danmark';
       description = localized.homeDescription;
     }
 
-    const canonicalPath = isPrivate ? `/${locale}` : isGuide ? `/da${suffix.replace(/\/+$/, '')}` : `/${locale}${suffix === '/' ? '' : suffix}`;
+    const canonicalPath = isPrivate ? `/${locale}` : isGuide ? `/${htmlLang}${suffix.replace(/\/+$/, '')}` : `/${locale}${suffix === '/' ? '' : suffix}`;
     const canonical = `${SITE_URL}${canonicalPath}`;
     document.title = title;
     document.documentElement.lang = htmlLang;
     setMeta('meta[name="description"]', 'name', 'description', description);
-    setMeta('meta[name="robots"]', 'name', 'robots', isGuide ? (htmlLang === 'da' ? 'index, follow' : 'noindex, follow') : isPrivate || (suffix !== '/' && !['/privacy', '/terms', '/dpa'].includes(suffix)) ? 'noindex, nofollow' : 'index, follow');
+    setMeta('meta[name="robots"]', 'name', 'robots', isGuide ? 'index, follow' : isPrivate || (suffix !== '/' && !['/privacy', '/terms', '/dpa'].includes(suffix)) ? 'noindex, nofollow' : 'index, follow');
     setMeta('meta[property="og:title"]', 'property', 'og:title', title);
     setMeta('meta[property="og:description"]', 'property', 'og:description', description);
     setMeta('meta[property="og:url"]', 'property', 'og:url', canonical);
