@@ -56,16 +56,19 @@ export function injectRoot(html, body) {
 
 const FEATURES = ['Crm', 'Ai', 'Hr', 'Invoice', 'Marketing', 'Calendar', 'Tasks', 'Inbox'];
 
-/** Static copy of the landing page. `hero` comes from Hero.tsx (da / non-da). */
+/** Static copy of the landing page. `hero` comes from Hero.tsx (da / non-da);
+ *  `hero.headings` holds the section h2s that Features/Pricing/FAQ hard-code, so
+ *  crawlers see the same headings as users. Falls back to messages/*.json. */
 export function homeBody(m, hero, nav) {
   const L = m.landing;
+  const H = hero.headings || {};
   const f = FEATURES.map((k) => `<li><h3>${esc(L[`feature${k}`])}</h3><p>${esc(L[`feature${k}Desc`])}</p></li>`).join('');
   const pricing = Array.from({ length: 10 }, (_, i) => `<li>${esc(L[`pricingF${i + 1}`])}</li>`).join('');
   const faq = Array.from({ length: 5 }, (_, i) => `<h3>${esc(L[`faq${i + 1}q`])}</h3><p>${esc(L[`faq${i + 1}a`])}</p>`).join('');
   return `<main><h1>${esc(hero.h1)}</h1><p>${esc(hero.subtitle)}</p>`
-    + `<section id="features"><h2>${esc(L.featuresTitle)} ${esc(L.featuresHighlight)}</h2><p>${esc(L.featuresSubtitle)}</p><ul>${f}</ul></section>`
-    + `<section id="pricing"><h2>${esc(L.pricingTitle)}</h2><p>${esc(L.pricingDesc)}</p><p>499 kr. ${esc(L.pricingPer)}</p><ul>${pricing}</ul></section>`
-    + `<section id="faq"><h2>${esc(L.faqTitle)}</h2>${faq}</section></main>${nav}`;
+    + `<section id="features"><h2>${esc(H.features || `${L.featuresTitle} ${L.featuresHighlight}`)}</h2><p>${esc(L.featuresSubtitle)}</p><ul>${f}</ul></section>`
+    + `<section id="pricing"><h2>${esc(H.pricing || L.pricingTitle)}</h2><p>${esc(L.pricingDesc)}</p><p>499 kr. ${esc(L.pricingPer)}</p><ul>${pricing}</ul></section>`
+    + `<section id="faq"><h2>${esc(H.faq || L.faqTitle)}</h2>${faq}</section></main>${nav}`;
 }
 
 /** h1/h2 headings of a legal page, read from its TSX source (`isDa ? 'x' : 'y'`). */

@@ -20,6 +20,16 @@ const heroSrc = read('src/components/landing/Hero.tsx');
 for (const h of Object.values(HERO)) for (const part of h.h1.split(/[ .]+/).filter((w) => w.length > 4)) {
   if (!heroSrc.includes(part)) throw new Error(`prerender: Hero.tsx no longer contains "${part}"; update HERO in scripts/prerender-seo.mjs`);
 }
+// Section h2s are hard-coded in their components too (not in messages/*.json).
+HERO.da.headings = { features: 'Otte værktøjer. Ét sammenhængende system.', pricing: 'Én pris. Alt med. Ingen tier-spil.', faq: 'Spørgsmål, vi faktisk får.' };
+HERO.en.headings = { features: 'Eight tools. One coherent system.', pricing: 'One price. Everything in. No tier games.', faq: 'Questions we actually get.' };
+const HEADING_SRC = { features: 'Features', pricing: 'Pricing', faq: 'FAQ' };
+for (const h of Object.values(HERO)) for (const [k, text] of Object.entries(h.headings)) {
+  const src = read(`src/components/landing/${HEADING_SRC[k]}.tsx`);
+  for (const part of text.split(/[ .,]+/).filter((w) => w.length > 4)) {
+    if (!src.includes(part)) throw new Error(`prerender: ${HEADING_SRC[k]}.tsx no longer contains "${part}"; update HERO.headings in scripts/prerender-seo.mjs`);
+  }
+}
 const LEGAL_SRC = { '/privacy': 'PrivacyPolicy', '/terms': 'TermsOfService', '/dpa': 'DataProcessingAgreement' };
 const LABELS = {
   da: { home: 'Forside', guide: 'Guides', privacy: 'Privatlivspolitik', terms: 'Vilkår', dpa: 'Databehandleraftale' },

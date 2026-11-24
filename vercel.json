@@ -3,8 +3,14 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/", "destination": "/da", "permanent": true }
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/:locale(da|en|de)", "destination": "/" },
+    { "source": "/:locale(da|en|de)/:path*", "destination": "/" },
+    { "source": "/auth/meta/callback", "destination": "/" },
+    { "source": "/__qa_preview/:path*", "destination": "/" }
   ],
   "headers": [
     {

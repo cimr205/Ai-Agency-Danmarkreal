@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Shield, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logo from '@/assets/logo.png';
 import LanguagePicker from '@/components/LanguagePicker';
@@ -66,9 +66,6 @@ export function Navbar() {
 
           {/* Right cluster */}
           <div className="hidden md:flex items-center gap-1">
-            <Link to={`/${locale}/admin`} className="text-muted-foreground/30 hover:text-muted-foreground transition-colors p-2" title="Admin">
-              <Shield className="w-3 h-3" />
-            </Link>
             <LanguagePicker />
             <div className="w-px h-4 bg-foreground/10 mx-2" />
             <Button asChild variant="ghost" size="sm" className="text-[13px] text-muted-foreground h-8 hover:text-foreground hover:bg-transparent font-medium px-3">
