@@ -91,28 +91,35 @@ export function navLinks(locale, labels) {
   return `<nav><ul>${items}${langs}</ul></nav>`;
 }
 
-// ── published guides (SEO autopilot articles, Danish only) ──────────────────
+// ── published guides (SEO autopilot articles, per language: a.lang, default da) ──
 
 export const GUIDE_PATH_RE = /^\/[a-z0-9\-/]{1,120}$/;
 
 /** Static body of one guide. `html` is the article's Markdown already rendered (no raw HTML allowed). */
-export function articleBody(a, html, nav) {
-  return `<main><p><a href="/da/guide">Alle guides</a></p><article lang="da"><h1>${esc(a.h1 || a.title)}</h1>${html}</article></main>${nav}`;
+const ALL_GUIDES = { da: 'Alle guides', en: 'All guides', de: 'Alle Ratgeber' };
+const GUIDES_H1 = { da: 'Guides', en: 'Guides', de: 'Ratgeber' };
+export const articleLang = (a) => (a.lang === 'en' || a.lang === 'de' ? a.lang : 'da');
+
+export function articleBody(a, html, nav, locale = 'da') {
+  return `<main><p><a href="/${locale}/guide">${ALL_GUIDES[locale]}</a></p><article lang="${locale}"><h1>${esc(a.h1 || a.title)}</h1>${html}</article></main>${nav}`;
 }
 
-export function guideIndexBody(articles, nav) {
-  const items = articles.map((a) => `<li><a href="/da/guide${a.path}">${esc(a.h1 || a.title)}</a>${a.meta_description ? `<p>${esc(a.meta_description)}</p>` : ''}</li>`).join('');
-  return `<main><h1>Guides</h1><ul>${items}</ul></main>${nav}`;
+export function guideIndexBody(articles, nav, locale = 'da') {
+  const items = articles.map((a) => `<li><a href="/${locale}/guide${a.path}">${esc(a.h1 || a.title)}</a>${a.meta_description ? `<p>${esc(a.meta_description)}</p>` : ''}</li>`).join('');
+  return `<main><h1>${GUIDES_H1[locale]}</h1><ul>${items}</ul></main>${nav}`;
 }
 
 /** <url> entries for the guide index and every article, inserted into sitemap.xml. */
 export function guideSitemapEntries(siteUrl, articles) {
   const entry = (loc, lastmod, priority) => `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
-  const newest = articles[0]?.published_at?.slice(0, 10);
-  return [
-    ...(articles.length ? [entry(`${siteUrl}/da/guide`, newest, '0.7')] : []),
-    ...articles.map((a) => entry(`${siteUrl}/da/guide${a.path}`, a.published_at.slice(0, 10), '0.6')),
-  ].join('\n');
+  const out = [];
+  for (const locale of LOCALES) {
+    const mine = articles.filter((a) => articleLang(a) === locale);
+    if (!mine.length) continue;
+    out.push(entry(`${siteUrl}/${locale}/guide`, mine[0].published_at.slice(0, 10), '0.7'));
+    for (const a of mine) out.push(entry(`${siteUrl}/${locale}/guide${a.path}`, a.published_at.slice(0, 10), '0.6'));
+  }
+  return out.join('\n');
 }
 
 export function addToSitemap(xml, entries) {

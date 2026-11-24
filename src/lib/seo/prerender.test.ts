@@ -66,6 +66,20 @@ describe('published guides', () => {
     expect(xml).toContain('<loc>https://www.x.dk/da/guide/crm/ai-crm</loc>\n    <lastmod>2026-11-18</lastmod>');
     expect(addToSitemap('<urlset></urlset>', '')).toBe('<urlset></urlset>');
   });
+  it('puts each article under its own language', () => {
+    const mixed = [
+      { ...articles[0], lang: 'en', path: '/crm/what-is-crm' },
+      { ...articles[1], lang: 'de', path: '/crm/was-ist-ein-crm' },
+      { ...articles[1], lang: null, path: '/crm/ai-crm' },
+    ];
+    expect(articleBody(mixed[1], '<p>x</p>', '', 'de')).toContain('<a href="/de/guide">Alle Ratgeber</a></p><article lang="de">');
+    expect(guideIndexBody([mixed[0]], '', 'en')).toContain('<a href="/en/guide/crm/what-is-crm">');
+    const xml = guideSitemapEntries('https://www.x.dk', mixed);
+    expect(xml).toContain('<loc>https://www.x.dk/en/guide/crm/what-is-crm</loc>');
+    expect(xml).toContain('<loc>https://www.x.dk/de/guide</loc>');
+    expect(xml).toContain('<loc>https://www.x.dk/da/guide/crm/ai-crm</loc>');
+    expect(xml).not.toContain('/da/guide/crm/what-is-crm');
+  });
   it('an article head lists only Danish alternates', () => {
     const html = renderHead(template, { siteUrl: 'https://www.x.dk', locale: 'da', page: '/guide/crm/ai-crm', title: 'T', description: 'D', locales: ['da'] });
     expect(html).toContain('<link rel="canonical" href="https://www.x.dk/da/guide/crm/ai-crm" />');

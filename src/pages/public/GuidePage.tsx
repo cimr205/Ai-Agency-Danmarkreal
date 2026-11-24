@@ -10,7 +10,7 @@ import seo from '@/lib/seo/seo-copy.json';
 
 // Articles the SEO autopilot published (or a person approved) for this site.
 // Public: read through growth_seo_published_articles(), no login needed.
-export interface PublishedArticle { path: string; title: string; meta_description: string | null; h1: string | null; body: string; published_at: string }
+export interface PublishedArticle { path: string; title: string; meta_description: string | null; h1: string | null; body: string; published_at: string; lang?: string | null }
 
 const db = supabase as unknown as SupabaseClient;
 
@@ -35,7 +35,9 @@ export default function GuidePage() {
   const { t, locale } = useI18n();
   const params = useParams();
   const path = params['*'] ? `/${params['*'].replace(/\/+$/, '')}` : '';
-  const { data, isLoading, isError } = usePublishedArticles();
+  const { data: all, isLoading, isError } = usePublishedArticles();
+  // Each language has its own articles; rows from before lang existed are Danish.
+  const data = all?.filter((a) => (a.lang ?? 'da') === locale);
   const article = path ? data?.find((a) => a.path === path) : undefined;
   const dateLocale = locale === 'da' ? 'da-DK' : locale === 'de' ? 'de-DE' : 'en-GB';
 
@@ -72,7 +74,7 @@ export default function GuidePage() {
         ) : isError || (path && !article) ? (
           <p className="text-muted-foreground">{path ? t('guide.notFound') : t('guide.empty')}</p>
         ) : article ? (
-          <article lang="da" className="prose dark:prose-invert max-w-none">
+          <article lang={locale} className="prose dark:prose-invert max-w-none">
             <h1>{article.h1 || article.title}</h1>
             <p className="text-sm text-muted-foreground">
               {t('guide.published').replace('{date}', new Date(article.published_at).toLocaleDateString(dateLocale))}

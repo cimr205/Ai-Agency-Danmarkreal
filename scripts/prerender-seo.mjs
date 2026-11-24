@@ -4,7 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LOCALES, PAGES, pageMeta, renderHead, injectRoot, homeBody, legalHeadings, legalBody, navLinks, GUIDE_PATH_RE, articleBody, guideIndexBody, guideSitemapEntries, addToSitemap } from '../src/lib/seo/prerender.mjs';
+import { LOCALES, PAGES, pageMeta, renderHead, injectRoot, homeBody, legalHeadings, legalBody, navLinks, GUIDE_PATH_RE, articleBody, articleLang, guideIndexBody, guideSitemapEntries, addToSitemap } from '../src/lib/seo/prerender.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -78,17 +78,22 @@ if (articles.length) {
   const { createElement } = await import('react');
   const { renderToStaticMarkup } = await import('react-dom/server');
   const { default: Markdown } = await import('react-markdown');
-  const nav = navLinks('da', LABELS.da);
-  const write = (page, title, description, body) => {
-    const html = injectRoot(renderHead(template, { siteUrl: seo.siteUrl, locale: 'da', page, title, description, locales: ['da'] }), body);
-    const out = join(root, 'dist', `da${page}.html`);
-    mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, html);
-  };
-  write('/guide', seo.copy.da.guideTitle, seo.copy.da.guideDescription, guideIndexBody(articles, nav));
-  for (const a of articles) {
-    const html = renderToStaticMarkup(createElement(Markdown, null, a.body));
-    write(`/guide${a.path}`, `${a.title} | AI Agency Danmark`, a.meta_description || seo.copy.da.guideDescription, articleBody(a, html, nav));
+  for (const locale of LOCALES) {
+    const mine = articles.filter((a) => articleLang(a) === locale);
+    if (!mine.length) continue;
+    const copy = seo.copy[locale] ?? seo.copy.en;
+    const nav = navLinks(locale, LABELS[locale === 'da' ? 'da' : 'en']);
+    const write = (page, title, description, body) => {
+      const html = injectRoot(renderHead(template, { siteUrl: seo.siteUrl, locale, page, title, description, locales: [locale] }), body);
+      const out = join(root, 'dist', `${locale}${page}.html`);
+      mkdirSync(dirname(out), { recursive: true });
+      writeFileSync(out, html);
+    };
+    write('/guide', copy.guideTitle, copy.guideDescription, guideIndexBody(mine, nav, locale));
+    for (const a of mine) {
+      const html = renderToStaticMarkup(createElement(Markdown, null, a.body));
+      write(`/guide${a.path}`, `${a.title} | AI Agency Danmark`, a.meta_description || copy.guideDescription, articleBody(a, html, nav, locale));
+    }
   }
   const sitemap = join(root, 'dist', 'sitemap.xml');
   writeFileSync(sitemap, addToSitemap(readFileSync(sitemap, 'utf8'), guideSitemapEntries(seo.siteUrl, articles)));
