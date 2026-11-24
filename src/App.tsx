@@ -251,7 +251,7 @@ const App = () => (
           <BrowserRouter>
             <SeoManager />
             <SentryRoutes>
-              <Route path="/" element={<Navigate to="/en" replace />} />
+              <Route path="/" element={<Navigate to="/da" replace />} />
               <Route path="/auth/meta/callback" element={<Suspense fallback={<PageLoader />}><MetaOAuthCallbackPage /></Suspense>} />
               {/* TEMP — visual QA only, removed before this change ships. Unauthenticated
                   preview of ColdCallerPage's ?demo=1 states for screenshotting. */}

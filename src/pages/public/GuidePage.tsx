@@ -43,6 +43,13 @@ export default function GuidePage() {
     if (article) setHead(`${article.title} | AI Agency Danmark`, article.meta_description);
   }, [article]);
 
+  // An empty guide index or an unknown guide path is a thin page: keep it out
+  // of the index until there is something to show (SeoManager defaults to index).
+  const isThin = !isLoading && !isError && (path ? !article : !data?.length);
+  useEffect(() => {
+    if (isThin) document.head.querySelector<HTMLMetaElement>('meta[name="robots"]')?.setAttribute('content', 'noindex, follow');
+  }, [isThin]);
+
   return (
     <div className="light min-h-screen bg-background text-foreground">
       <div className="max-w-3xl mx-auto px-6 py-16 space-y-6">

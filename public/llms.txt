@@ -1,0 +1,27 @@
+# AI Agency Danmark
+
+> All-in-one business software for Danish companies: CRM and sales pipeline, invoicing, HR, tasks, calendar, inbox, marketing and an AI assistant in one system. Built in Denmark (CVR 45949923, Copenhagen). One price: 499 DKK per user per month, every module included, no lock-in. 3-day free trial.
+
+Available in Danish (primary), English and German under the locale prefixes /da, /en and /de.
+
+## Pages
+
+- [Homepage (Danish)](https://www.aiagencydanmark.dk/da): modules, pricing, FAQ
+- [Homepage (English)](https://www.aiagencydanmark.dk/en)
+- [Homepage (German)](https://www.aiagencydanmark.dk/de)
+- [Guides (Danish)](https://www.aiagencydanmark.dk/da/guide): practical guides on CRM, sales and operations
+- [Privacy policy](https://www.aiagencydanmark.dk/da/privacy)
+- [Terms](https://www.aiagencydanmark.dk/da/terms)
+- [Data processing agreement](https://www.aiagencydanmark.dk/da/dpa)
+
+## Facts
+
+- Modules: CRM & sales pipeline, lead generation, invoicing & payments, HR (employees, leave, payroll, recruitment), tasks, calendar, inbox, bulk email, Meta Ads management, AI assistant
+- Pricing: 499 DKK per user per month, all modules and API access included
+- Contract: cancel at any time, no binding period
+- Data import: CSV import of leads, customers and employees, plus an API
+
+## Notes
+
+- The application itself (/*/app/*, /*/auth/*, /*/admin/*) requires sign-in and is excluded from indexing; see /robots.txt.
+- Sitemap: https://www.aiagencydanmark.dk/sitemap.xml
