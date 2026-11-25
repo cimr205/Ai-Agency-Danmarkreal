@@ -16,8 +16,8 @@ export function PhonePopup() {
   return (
     <div className="fixed bottom-24 right-6 z-50 animate-fade-in">
       <div className="landing-glass rounded-2xl px-5 py-4 shadow-xl flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-[var(--success-color)] flex items-center justify-center shrink-0">
-          <Phone className="w-5 h-5 text-white" />
+        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <Phone className="w-5 h-5 text-primary-foreground" />
         </div>
         <div>
           <p className="text-xs text-muted-foreground">{t('phone.callUs')}</p>

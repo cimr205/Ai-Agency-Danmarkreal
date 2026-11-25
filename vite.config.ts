@@ -21,6 +21,8 @@ export default defineConfig(({ mode }) => ({
   define: {
     __SENTRY_RELEASE__: JSON.stringify(sentryRelease),
     __SENTRY_ENVIRONMENT__: JSON.stringify(sentryEnvironment),
+    // Real build timestamp for the landing page footer — "last updated", not a guess.
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   server: {
     host: "::",
