@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
@@ -282,9 +281,15 @@ export function SalesPdfDownload() {
   };
 
   return (
-    <Button onClick={generatePdf} disabled={loading} variant="outline" size="lg" className="h-[46px] px-5 text-[13.5px] font-medium rounded-[7px] gap-2">
-      <Download className="h-4 w-4" />
-      {loading ? '...' : locale === 'da' ? 'Download præsentation' : locale === 'de' ? 'Präsentation herunterladen' : 'Download presentation'}
-    </Button>
+    <button
+      onClick={generatePdf}
+      disabled={loading}
+      className="inline-flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors group"
+    >
+      <Download className="h-3.5 w-3.5 opacity-60" />
+      <span className="border-b border-foreground/20 group-hover:border-foreground/60 transition-colors pb-px">
+        {loading ? '...' : locale === 'da' ? 'Download præsentation' : locale === 'de' ? 'Präsentation herunterladen' : 'Download presentation'}
+      </span>
+    </button>
   );
 }

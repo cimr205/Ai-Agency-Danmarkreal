@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useI18n, isLocale } from '@/lib/i18n';
-import { useParams } from 'react-router-dom';
+import { useI18n } from '@/lib/i18n';
+import { ScrollReveal } from './ScrollReveal';
 
 export function FAQ() {
   const { t } = useI18n();
-  const params = useParams();
-  const locale = isLocale(params.locale) ? params.locale : 'en';
-  const isDa = locale === 'da';
 
   const faqs = [
     { q: t('landing.faq1q'), a: t('landing.faq1a') },
@@ -15,6 +12,7 @@ export function FAQ() {
     { q: t('landing.faq3q'), a: t('landing.faq3a') },
     { q: t('landing.faq4q'), a: t('landing.faq4a') },
     { q: t('landing.faq5q'), a: t('landing.faq5a') },
+    { q: t('landing.faq6q'), a: t('landing.faq6a') },
   ];
   const [open, setOpen] = useState<number | null>(0);
 
@@ -23,34 +21,22 @@ export function FAQ() {
       <div className="relative z-10 max-w-[1340px] mx-auto px-5 lg:px-10">
         <div className="grid grid-cols-12 gap-6 lg:gap-10">
           {/* Left sticky editorial column */}
-          <div className="col-span-12 lg:col-span-4 lg:sticky lg:top-28 lg:self-start mb-12 lg:mb-0">
+          <ScrollReveal className="col-span-12 lg:col-span-4 lg:sticky lg:top-28 lg:self-start mb-12 lg:mb-0">
             <div className="flex items-center gap-3 mb-8">
               <span className="font-mono text-[10.5px] tracking-[0.22em] text-muted-foreground/70 uppercase">
-                05 — FAQ
+                FAQ
               </span>
               <div className="h-px w-10 bg-foreground/20" />
             </div>
             <h2 className="font-display text-[clamp(1.9rem,3.6vw,2.8rem)] text-foreground tracking-[-0.03em] leading-[1.02] mb-6">
-              {isDa ? (
-                <>Spørgsmål, vi{' '}
-                  <span className="italic font-normal text-foreground/75" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
-                    faktisk
-                  </span>{' '}får.
-                </>
-              ) : (
-                <>Questions we{' '}
-                  <span className="italic font-normal text-foreground/75" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
-                    actually
-                  </span>{' '}get.
-                </>
-              )}
+              {t('landing.faqHeadlinePre')}{' '}
+              <span className="text-primary">{t('landing.faqHeadlineItalic')}</span>{' '}
+              {t('landing.faqHeadlinePost')}
             </h2>
             <p className="text-[14px] text-muted-foreground leading-[1.6] max-w-[300px]">
-              {isDa
-                ? 'Stadig i tvivl? Skriv til os, så vender vi tilbage på hverdage.'
-                : 'Still unsure? Write to us and we will get back to you on a business day.'}
+              {t('landing.faqSubtitle')}
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Right — accordion list, hairline rules, no boxes */}
           <div className="col-span-12 lg:col-span-8">
@@ -58,7 +44,7 @@ export function FAQ() {
               {faqs.map((faq, i) => {
                 const isOpen = open === i;
                 return (
-                  <li key={i} className="border-b border-foreground/[0.08]">
+                  <ScrollReveal key={i} as="li" delay={i * 0.04} y={6} duration={0.4} className="border-b border-foreground/[0.08] block">
                     <button
                       onClick={() => setOpen(isOpen ? null : i)}
                       className="w-full flex items-start justify-between gap-6 py-7 text-left group"
@@ -90,7 +76,7 @@ export function FAQ() {
                         </div>
                       </div>
                     </div>
-                  </li>
+                  </ScrollReveal>
                 );
               })}
             </ul>

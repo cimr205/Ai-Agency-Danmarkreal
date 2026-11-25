@@ -1,13 +1,12 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
-import { useI18n, isLocale } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
+import { ScrollReveal } from './ScrollReveal';
+import { AnimatedPrice } from './AnimatedPrice';
 
 export function Pricing() {
-  const { t } = useI18n();
-  const params = useParams();
-  const locale = isLocale(params.locale) ? params.locale : 'en';
-  const isDa = locale === 'da';
+  const { t, locale } = useI18n();
 
   const featureKeys = [
     'landing.pricingF1', 'landing.pricingF2', 'landing.pricingF3',
@@ -24,26 +23,16 @@ export function Pricing() {
           <div className="col-span-12 lg:col-span-3">
             <div className="flex items-center gap-3">
               <span className="font-mono text-[10.5px] tracking-[0.22em] text-muted-foreground/70 uppercase">
-                04 — {isDa ? 'Pris' : 'Price'}
+                {t('landing.sectionPriceLabel')}
               </span>
               <div className="h-px w-10 bg-foreground/20" />
             </div>
           </div>
           <div className="col-span-12 lg:col-span-9 lg:pl-8">
             <h2 className="font-display text-[clamp(1.9rem,3.8vw,3rem)] text-foreground tracking-[-0.03em] leading-[1.02] max-w-[680px]">
-              {isDa ? (
-                <>Én pris.{' '}
-                  <span className="italic font-normal text-foreground/75" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
-                    Alt med
-                  </span>. Ingen tier-spil.
-                </>
-              ) : (
-                <>One price.{' '}
-                  <span className="italic font-normal text-foreground/75" style={{ fontFamily: "'Instrument Serif', Georgia, serif" }}>
-                    Everything in
-                  </span>. No tier games.
-                </>
-              )}
+              {t('landing.pricingHeadlinePre')}{' '}
+              <span className="text-primary">{t('landing.pricingHeadlineItalic')}</span>
+              {t('landing.pricingHeadlinePost')}
             </h2>
           </div>
         </div>
@@ -51,14 +40,14 @@ export function Pricing() {
         {/* Asymmetric pricing — left negative space, right monolithic block */}
         <div className="grid grid-cols-12 gap-6 lg:gap-10 items-stretch">
           {/* Left side — editorial price column */}
-          <div className="col-span-12 lg:col-span-5 lg:py-2 flex flex-col justify-between">
+          <ScrollReveal y={0} x={-28} duration={0.7} className="col-span-12 lg:col-span-5 lg:py-2 flex flex-col justify-between">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
-                {isDa ? 'Platform · 14 dages prøve' : 'Platform · 14-day trial'}
+                {t('landing.pricingPlatformTag')}
               </span>
               <div className="mt-6 flex items-baseline gap-3">
-                <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em]">
-                  499
+                <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em] tabular-nums">
+                  <AnimatedPrice value={499} />
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
                   <span className="text-[14px] font-display font-semibold text-foreground/80">kr</span>
@@ -87,10 +76,10 @@ export function Pricing() {
                 {t('landing.pricingNote')}
               </p>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Right side — included list, full block, hairline grid */}
-          <div className="col-span-12 lg:col-span-7 lg:pl-10 lg:border-l lg:border-foreground/[0.07]">
+          <ScrollReveal delay={0.1} y={0} x={28} duration={0.7} className="col-span-12 lg:col-span-7 lg:pl-10 lg:border-l lg:border-foreground/[0.07]">
             <div className="flex items-center justify-between mb-8">
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
                 {t('landing.pricingIncluded')}
@@ -101,19 +90,16 @@ export function Pricing() {
             </div>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
               {featureKeys.map((key, i) => (
-                <li
-                  key={key}
-                  className="flex items-start gap-3 py-4 border-t border-foreground/[0.06] first:border-t-0 sm:[&:nth-child(2)]:border-t-0"
-                >
+                <ScrollReveal key={key} as="li" delay={0.12 + i * 0.04} y={6} className="flex items-start gap-3 py-4 border-t border-foreground/[0.06] first:border-t-0 sm:[&:nth-child(2)]:border-t-0">
                   <span className="font-mono text-[10px] text-muted-foreground/50 mt-1.5 w-5 shrink-0">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <Check className="w-3.5 h-3.5 text-primary mt-1 shrink-0" strokeWidth={2.5} />
                   <span className="text-[13.5px] text-foreground/80 leading-[1.5]">{t(key)}</span>
-                </li>
+                </ScrollReveal>
               ))}
             </ul>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>

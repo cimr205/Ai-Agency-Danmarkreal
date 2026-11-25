@@ -427,3 +427,31 @@
   .bg-workspace-panel { background-image: var(--workspace-panel); }
   .bg-workspace-frame { background: var(--workspace-frame); }
 }
+
+/* Landing page identity — weathered Copenhagen copper roofs: warm stone
+   paper, warm ink, one patina-green accent. Scoped so the marketing page
+   gets its own palette without touching the app's blue theme elsewhere. */
+.landing-theme {
+  --background: 40 25% 98%;
+  --foreground: 20 20% 7%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 20% 7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 20% 7%;
+  --primary: 158 75% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 15% 93%;
+  --secondary-foreground: 20 15% 15%;
+  --muted: 40 15% 94%;
+  --muted-foreground: 20 10% 32%;
+  --accent: 40 15% 92%;
+  --accent-foreground: 20 20% 7%;
+  --border: 30 15% 86%;
+  --input: 30 15% 86%;
+  --ring: 158 75% 32%;
+  /* Second, warmer signal color — copper, not a default-theme color. Used
+     sparingly: hover glows, the integrations strip, label accents on the
+     3D cluster. Keeps the "weathered copper roof" world present in the
+     chrome, not just the one green accent. */
+  --accent-warm: 28 72% 46%;
+}
