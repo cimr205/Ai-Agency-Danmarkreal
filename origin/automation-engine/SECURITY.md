@@ -5,8 +5,8 @@ State: 2026-11-25, Railway `sunny-perception` / service `Postgres` (PostgreSQL 1
 ## Roles
 | Role | Login | Superuser | BYPASSRLS | Purpose |
 |---|---|---|---|---|
-| `postgres` | yes | **yes** | **yes** | Admin and migrations. **Still used by the n8n credential** (see "Remaining superuser dependencies") |
-| `origin_app` | yes | no | no | Intended workflow role. Password only in the macOS keychain (`origin-app-db-sunny-perception`) |
+| `postgres` | yes | **yes** | **yes** | Admin and migrations only. No live workflow uses it since 2026-11-25 |
+| `origin_app` | yes | no | no | **Used by every Postgres node in A, B/C/E and D** (n8n credential "Postgres account", id `TGLwtt5UMJ96MwLr`, max 10 connections, SSL require). The password is kept only in the macOS keychain (`origin-app-db-sunny-perception`) and in n8n |
 | `origin_scheduler` | **no** | no | no | Owner of the two scheduler functions only. Nobody can log in as it, and `origin_app` is not a member |
 
 ## Grants (live)
@@ -50,9 +50,12 @@ This returns no row, so it adds nothing to the n8n node output. `is_local = true
 | D "Find recoverable jobs": a cross-tenant UPDATE+SELECT that returned payloads | `SELECT tenant_id, job_key FROM origin_find_recoverable_jobs(25)`, then the new node "Load recovery job" loads the payload **under tenant RLS** | Input check (`1 <= p_limit <= 100`), only `job_type='recovery'`, only tenants with automation on, returns no payload |
 
 ## Remaining superuser dependencies
-1. **n8n credential "Railway Postgres - Automation Engine" (`postgres`).** Every Postgres node in A, B/C/E and D uses it, and so do the three inactive `BACKUP 2026-11-19` copies. RLS is therefore not enforced for n8n yet. The queries are ready: switching is a credential change per node.
-2. That superuser is reachable over the public TCP proxy (`roundhouse.proxy.rlwy.net:17500`).
-3. Migrations run as `postgres`, which is correct and intended.
+Switched 2026-11-25. All 18 Postgres nodes now use origin_app: A 2, B/C/E 5, D 11 (draft and published). This was verified with n8n `get_dependencies` and `pg_stat_activity`, where the only connection from n8n is `origin_app`.
+1. The superuser credential "Railway Postgres - Automation Engine" (`0EId4tdlfoIJF4yW`) is still used by the three **inactive** `BACKUP 2026-11-19` workflows (draft only). Recommendation: archive them, or switch them before they are ever run.
+2. The superuser can still be reached over the public TCP proxy, because migrations need it. Next step: once the backups no longer need it, rotate the `postgres` password (with approval), or restrict access.
+3. Migrations run as `postgres`, which is intended.
+
+Live tests as origin_app: n8n executions 111 (A heartbeat 23), 112 (B/C/E: both tenants through the function), 113 (D manual: job 58), 114 (D recovery of tenant_demo job 57). The isolation suite `tests/security-dryrun.mjs`, logged in as origin_app, passed 28/28.
 
 ## Rollback
 | Change | Rollback |
@@ -60,7 +63,8 @@ This returns no row, so it adds nothing to the n8n node output. `is_local = true
 | Migration 004 | `sql/004_tenant_security.down.sql`: drops the functions, policies and role, disables RLS on automation_errors, restores origin_app's tenants grant. No data is lost |
 | Migration 003 | `REVOKE ALL ... FROM origin_app; DROP ROLE origin_app;` (see the file header) |
 | Migration 002 | `sql/002_trend_intelligence.down.sql`. Drops only the new tables, which are empty today |
-| Workflow D | restore n8n version `9677a153-1d56-4ed0-b61a-579c627b5997` (before tenant scoping) |
+| Workflow D | restore n8n version `c9494de1-dcf9-43d4-bfe1-a498a379d6e6` (tenant-scoped, still postgres) or `9677a153-1d56-4ed0-b61a-579c627b5997` (before tenant scoping) |
+| Credential switch | in each node, set the credential back to "Railway Postgres - Automation Engine" (the superuser credential is unchanged) |
 | Workflow B/C/E | restore n8n version `9940eca5-25ea-49ef-9850-f4f0fc4ca71b` |
 
 ## Backup and restore

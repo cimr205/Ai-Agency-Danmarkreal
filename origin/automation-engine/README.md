@@ -34,5 +34,5 @@ The migration tests (16 checks on PGlite) are in the session report.
 ## Known gaps
 - Third-party video metrics are limited by the platforms. TikTok Research API is non-commercial only. Instagram hashtag search returns no view counts and allows 30 hashtags per 7 days. Retention, replays and first-3-seconds data exist only for **own** content, through insights.
 - No Meta, TikTok or OpenRouter credentials exist in n8n.
-- The workflows still connect as `postgres`. The queries are ready for `origin_app`, but the n8n credential has to be created by hand (see SECURITY.md).
+- The workflows run as `origin_app` (no superuser). Only the three inactive BACKUP workflows still reference the superuser credential (see SECURITY.md).
 - Railway volume backups are not verified (the API refuses the CLI token). The logical backup is verified but not yet scheduled to off-site storage.
