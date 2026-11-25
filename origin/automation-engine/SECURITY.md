@@ -51,8 +51,8 @@ This returns no row, so it adds nothing to the n8n node output. `is_local = true
 
 ## Remaining superuser dependencies
 Switched 2026-11-25. All 18 Postgres nodes now use origin_app: A 2, B/C/E 5, D 11 (draft and published). This was verified with n8n `get_dependencies` and `pg_stat_activity`, where the only connection from n8n is `origin_app`.
-1. The superuser credential "Railway Postgres - Automation Engine" (`0EId4tdlfoIJF4yW`) is still used by the three **inactive** `BACKUP 2026-11-19` workflows (draft only). Recommendation: archive them, or switch them before they are ever run.
-2. The superuser can still be reached over the public TCP proxy, because migrations need it. Next step: once the backups no longer need it, rotate the `postgres` password (with approval), or restrict access.
+1. **Done 2026-11-25:** the three `BACKUP 2026-11-19` workflows are archived (they can be restored in n8n). No workflow references the superuser credential any more.
+2. **Done 2026-11-25: `postgres` password rotated.** It was changed in the database and in the Railway variable `POSTGRES_PASSWORD` (via stdin, `--skip-deploys`, no database restart). `PGPASSWORD`, `DATABASE_URL` and `DATABASE_PUBLIC_URL` follow it. The old password is now refused. A logical backup was taken first. The n8n credential "Railway Postgres - Automation Engine" still holds the old password, is unused, and can be deleted in n8n. The superuser is still reachable through the public proxy, but only with the new password, which exists only in Railway.
 3. Migrations run as `postgres`, which is intended.
 
 Live tests as origin_app: n8n executions 111 (A heartbeat 23), 112 (B/C/E: both tenants through the function), 113 (D manual: job 58), 114 (D recovery of tenant_demo job 57). The isolation suite `tests/security-dryrun.mjs`, logged in as origin_app, passed 28/28.
