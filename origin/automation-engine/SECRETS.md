@@ -11,6 +11,9 @@ Rule: a secret has **one** home. It is never placed in this repository, workflow
 | OpenRouter API key | **n8n Credential** (type OpenRouter, or Header Auth `Authorization: Bearer …`) | Future trend-analysis workflow | not created (blocker) |
 | Meta App Secret + app access token | **n8n Credential** "Facebook Graph API (App)", which holds both the app secret and the access token | Future Instagram/Facebook workflows (appsecret_proof, webhook signature check) | not created (blocker) |
 | Meta page / Instagram account tokens (9 connections) | **n8n Credential**, one per brand account. The DB only stores the credential **name** in `social_connections.credential_ref` | Future workflows | not created |
+| TikTok `TIKTOK_CLIENT_KEY` + `TIKTOK_CLIENT_SECRET` | **n8n Credential**: TikTok OAuth2 if the n8n version has it, otherwise generic OAuth2 with `client_key` added as an extra parameter | Future TikTok workflows | not created; app is *pending* at TikTok |
+| `TIKTOK_REDIRECT_URI` (not a secret) | Registered under TikTok Login Kit **and** shown in the n8n OAuth2 credential: `https://aiagencydanmark.app.n8n.cloud/rest/oauth2-credential/callback` | OAuth login | must match exactly |
+| `TIKTOK_ACCESS_TOKEN` (24 h) + `TIKTOK_REFRESH_TOKEN` (365 days) | **Owned and refreshed by the n8n OAuth2 credential.** Never stored as static values in Railway or the repo | n8n | not created |
 | Backup destination keys | **Railway Variables** on the future backup-runner service, as `ORIGIN_BACKUP_*` | Scheduled backup | not created |
 | Local operator copy of `origin_app` password | macOS Keychain `origin-app-db-sunny-perception` | `tests/run-as-origin-app.mjs` only | exists; delete it when no longer needed |
 
