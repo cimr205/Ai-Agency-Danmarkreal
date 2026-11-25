@@ -127,6 +127,8 @@ Deno.serve(withSentry("stripe-subscription-webhook", async (req) => {
       stripe_subscription_id: sub.id,
       subscription_status: sub.status,
       purchased_seats: sub.status === "active" ? quantity : undefined,
+      // Number of users the customer chose on the checkout page (or later in the portal).
+      seat_limit_trial: ["trialing", "active"].includes(sub.status) && quantity > 0 ? quantity : undefined,
       trial_ends_at: trialEndsAt ?? undefined,
     }).eq("id", company.id);
 

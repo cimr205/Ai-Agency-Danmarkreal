@@ -26,6 +26,11 @@ describe('create-checkout no longer grants/extends a trial on its own (regressio
     expect(CHECKOUT_SRC).not.toMatch(/subscription_status:\s*["']trialing["'],?\s*\n[\s\S]{0,40}\.eq\("id", company\.id\)/);
   });
 
+  it('lets the customer choose the number of users on the checkout page (no hidden 5-seat default)', () => {
+    expect(CHECKOUT_SRC).toMatch(/adjustable_quantity:\s*\{\s*enabled:\s*true/);
+    expect(CHECKOUT_SRC).not.toMatch(/seat_limit_trial\s*\|\|\s*5/);
+  });
+
   it('only offers a Stripe trial period when the company has never had one', () => {
     expect(CHECKOUT_SRC).toMatch(/company\.trial_ends_at\s*\?\s*\{\}\s*:\s*\{\s*trial_period_days:\s*3\s*\}/);
   });
