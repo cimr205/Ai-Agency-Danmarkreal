@@ -2,12 +2,15 @@ import { lazy, Suspense, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
+import { IntegrationsStrip } from '@/components/landing/IntegrationsStrip';
 import { useAuth } from '@/hooks/useAuth';
 import { isLocale } from '@/lib/i18n';
 import { takePostLoginRedirect } from '@/lib/postLoginRedirect';
 
 // Lazy-load below-the-fold sections
 const Features = lazy(() => import('@/components/landing/Features').then(m => ({ default: m.Features })));
+const ConnectedBusiness = lazy(() => import('@/components/landing/ConnectedBusiness').then(m => ({ default: m.ConnectedBusiness })));
+const DashboardPreview = lazy(() => import('@/components/landing/DashboardPreview').then(m => ({ default: m.DashboardPreview })));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials').then(m => ({ default: m.Testimonials })));
 const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })));
 const FAQ = lazy(() => import('@/components/landing/FAQ').then(m => ({ default: m.FAQ })));
@@ -29,14 +32,17 @@ const Index = () => {
   }
 
   return (
-    <div className="light min-h-screen bg-background text-foreground">
+    <div className="light landing-theme min-h-screen bg-background text-foreground">
       <Navbar />
       <main>
         <Hero />
+        <IntegrationsStrip />
         <Suspense fallback={null}>
           <section id="features">
             <Features />
           </section>
+          <ConnectedBusiness />
+          <DashboardPreview />
           <Testimonials />
           <section id="pricing">
             <Pricing />

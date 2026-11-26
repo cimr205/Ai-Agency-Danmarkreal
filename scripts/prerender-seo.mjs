@@ -11,24 +11,25 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 const seo = JSON.parse(read('src/lib/seo/seo-copy.json'));
 const template = read('dist/index.html');
 
-// Hero.tsx hard-codes its copy (Danish for /da, English otherwise).
-const HERO = {
-  da: { h1: 'Mindre stack. Mere forretning.', subtitle: 'CRM, HR, finans, marketing og AI-agenter samlet i ét system. Bygget i Danmark, til teams der har fået nok af 8 forskellige værktøjer.' },
-  en: { h1: 'Less stack. More business.', subtitle: 'CRM, HR, finance, marketing and AI agents in a single system. Built in Denmark, for teams done juggling 8 disconnected tools.' },
-};
-const heroSrc = read('src/components/landing/Hero.tsx');
-for (const h of Object.values(HERO)) for (const part of h.h1.split(/[ .]+/).filter((w) => w.length > 4)) {
-  if (!heroSrc.includes(part)) throw new Error(`prerender: Hero.tsx no longer contains "${part}"; update HERO in scripts/prerender-seo.mjs`);
+// The landing page's hero and section headings come from messages/<locale>.json
+// (landing.*), joined the same way Hero.tsx, Features.tsx, Pricing.tsx and FAQ.tsx
+// render them, so the prerendered HTML always matches what visitors see.
+function heroCopy(messages) {
+  const L = messages.landing;
+  const need = (k) => { if (typeof L[k] !== 'string') throw new Error(`prerender: landing.${k} missing in messages`); return L[k]; };
+  return {
+    h1: `${need('heroHeadlineLine1')} ${need('heroHeadlinePre')}${need('heroHeadlineItalic')}.`,
+    subtitle: `${need('heroSubtitleLead')} ${need('heroSubtitleTail')}`,
+    headings: {
+      features: `${need('featuresHeadlinePre')} ${need('featuresHeadlineItalic')} ${need('featuresHeadlineSystem')}.`,
+      pricing: `${need('pricingHeadlinePre')} ${need('pricingHeadlineItalic')}${need('pricingHeadlinePost')}`,
+      faq: `${need('faqHeadlinePre')} ${need('faqHeadlineItalic')} ${need('faqHeadlinePost')}`,
+    },
+  };
 }
-// Section h2s are hard-coded in their components too (not in messages/*.json).
-HERO.da.headings = { features: 'Otte værktøjer. Ét sammenhængende system.', pricing: 'Én pris. Alt med. Ingen tier-spil.', faq: 'Spørgsmål, vi faktisk får.' };
-HERO.en.headings = { features: 'Eight tools. One coherent system.', pricing: 'One price. Everything in. No tier games.', faq: 'Questions we actually get.' };
-const HEADING_SRC = { features: 'Features', pricing: 'Pricing', faq: 'FAQ' };
-for (const h of Object.values(HERO)) for (const [k, text] of Object.entries(h.headings)) {
-  const src = read(`src/components/landing/${HEADING_SRC[k]}.tsx`);
-  for (const part of text.split(/[ .,]+/).filter((w) => w.length > 4)) {
-    if (!src.includes(part)) throw new Error(`prerender: ${HEADING_SRC[k]}.tsx no longer contains "${part}"; update HERO.headings in scripts/prerender-seo.mjs`);
-  }
+const SECTION_SRC = { Hero: 'heroHeadlineLine1', Features: 'featuresHeadlinePre', Pricing: 'pricingHeadlinePre', FAQ: 'faqHeadlinePre' };
+for (const [file, key] of Object.entries(SECTION_SRC)) {
+  if (!read(`src/components/landing/${file}.tsx`).includes(`landing.${key}`)) throw new Error(`prerender: ${file}.tsx no longer renders landing.${key}; update heroCopy in scripts/prerender-seo.mjs`);
 }
 const LEGAL_SRC = { '/privacy': 'PrivacyPolicy', '/terms': 'TermsOfService', '/dpa': 'DataProcessingAgreement' };
 const LABELS = {
@@ -44,7 +45,7 @@ for (const locale of LOCALES) {
   for (const page of PAGES) {
     const { title, description } = pageMeta(seo, locale, page);
     const body = page === '/'
-      ? homeBody(messages, HERO[isDa ? 'da' : 'en'], nav)
+      ? homeBody(messages, heroCopy(messages), nav)
       : legalBody(legalHeadings(read(`src/pages/legal/${LEGAL_SRC[page]}.tsx`), isDa), nav);
     const html = injectRoot(renderHead(template, { siteUrl: seo.siteUrl, locale, page, title, description }), body);
     const out = join(root, 'dist', `${locale}${page === '/' ? '' : page}.html`);

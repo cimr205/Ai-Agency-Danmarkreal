@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import logo from '@/assets/logo.png';
 import LanguagePicker from '@/components/LanguagePicker';
 import { useI18n, isLocale } from '@/lib/i18n';
@@ -13,6 +14,7 @@ export function Navbar() {
   const locale = isLocale(params.locale) ? params.locale : 'en';
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 12);
@@ -24,11 +26,14 @@ export function Navbar() {
     { href: '#features', label: t('landing.features') },
     { href: '#pricing', label: t('landing.pricing') },
     { href: '#faq', label: 'FAQ' },
-    { href: '#testimonials', label: tl(locale, 'Om platformen', 'About') },
+    { href: '#testimonials', label: t('landing.navAbout') },
   ];
 
   return (
-    <nav
+    <motion.nav
+      initial={reduceMotion ? false : { y: -24, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? 'bg-background/70 backdrop-blur-2xl border-b border-foreground/[0.06] shadow-[0_1px_0_0_hsl(var(--foreground)/0.04)]'
@@ -40,10 +45,7 @@ export function Navbar() {
           {/* Brand */}
           <div className="flex items-center gap-10">
             <Link to={`/${locale}`} className="flex items-center gap-2.5 group shrink-0">
-              <div className="relative">
-                <img src={logo} alt="AI Agency Danmark" className="h-[26px] w-auto" loading="eager" width="26" height="26" />
-                <span className="absolute -inset-2 rounded-full bg-primary/15 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
+              <img src={logo} alt="AI Agency Danmark" className="h-[26px] w-auto" loading="eager" width="26" height="26" />
               <span className="font-display text-[14px] font-semibold text-foreground tracking-[-0.025em] hidden sm:inline leading-none">
                 AI Agency<span className="text-primary">.</span>
               </span>
@@ -109,6 +111,6 @@ export function Navbar() {
           </div>
         )}
       </div>
-    </nav>
+    </motion.nav>
   );
 }
