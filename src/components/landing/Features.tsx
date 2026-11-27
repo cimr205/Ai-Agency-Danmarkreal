@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useScroll, useTransform, useInView, motion } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
@@ -6,10 +6,46 @@ import { Users, Building2, FileText, Megaphone, Bot, Calendar, ClipboardList, Ma
 import { ScrollReveal } from './ScrollReveal';
 import { explodeFromProgress } from './clusterMath';
 import type { ModuleSpec } from './ModuleCluster3D';
+import { playTick } from './clickSound';
+import { MODULE_COLORS } from './moduleColors';
 
 // three.js + drei is ~240 KB gzip. Load it only on desktop, and only once the
 // cluster is about to scroll into view — mobile never downloads it.
-const ModuleCluster3D = lazy(() => import('./ModuleCluster3D'));
+const loadCluster = () => import('./ModuleCluster3D');
+const ModuleCluster3D = lazy(loadCluster);
+
+/**
+ * Starting WebGL (parsing three.js, creating the context, compiling shaders)
+ * is one ~0.5 s main-thread task. Do it while the browser is idle, before the
+ * visitor reaches the section, so it never lands in the middle of a scroll.
+ */
+function useIdleWarmup(enabled: boolean) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!enabled || ready) return;
+    let cancelled = false;
+    const ric: (cb: () => void, o?: { timeout: number }) => number =
+      window.requestIdleCallback ?? ((cb) => window.setTimeout(cb, 1200));
+    const cic: (id: number) => void = window.cancelIdleCallback ?? window.clearTimeout;
+    let id = 0;
+    const start = () => {
+      id = ric(() => {
+        loadCluster().then(() => {
+          if (cancelled) return;
+          id = ric(() => !cancelled && setReady(true), { timeout: 3000 });
+        });
+      }, { timeout: 3000 });
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => {
+      cancelled = true;
+      cic(id);
+      window.removeEventListener('load', start);
+    };
+  }, [enabled, ready]);
+  return ready;
+}
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
 function useIsDesktop() {
@@ -32,9 +68,12 @@ function ClusterFallback({ modules, mergedLabel }: { modules: ModuleSpec[]; merg
         {modules.map((m) => (
           <span
             key={m.label}
-            className="h-11 w-11 rounded-[10px] border"
-            style={{ background: `${m.color}2e`, borderColor: `${m.color}66` }}
-          />
+            className="flex h-12 w-12 items-center justify-center rounded-[11px] bg-[#FBF8F3] shadow-[0_6px_16px_-8px_rgb(0_0_0/0.5)]"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-[8px]" style={{ background: `${m.color}1f` }}>
+              <m.icon size={18} color={m.color} strokeWidth={1.75} />
+            </span>
+          </span>
         ))}
       </div>
       <span className="whitespace-nowrap rounded-full bg-foreground text-background px-3 py-1 text-[11px] font-semibold">
@@ -43,8 +82,6 @@ function ClusterFallback({ modules, mergedLabel }: { modules: ModuleSpec[]; merg
     </div>
   );
 }
-import { playTick } from './clickSound';
-import { MODULE_COLORS } from './moduleColors';
 
 export function Features() {
   const { t, locale } = useI18n();
@@ -60,6 +97,7 @@ export function Features() {
   // Mount once it is within ~one screen; after that keep it mounted and just
   // pause the render loop while it is offscreen.
   const nearView = useInView(clusterSectionRef, { once: true, margin: '800px 0px' });
+  const warmedUp = useIdleWarmup(isDesktop);
   const inView = useInView(clusterSectionRef, { margin: '100px 0px' });
 
   const primary = [
@@ -75,7 +113,12 @@ export function Features() {
     { icon: Mail, titleKey: 'landing.featureInbox', descKey: 'landing.featureInboxDesc', color: MODULE_COLORS.inbox },
   ];
 
-  const clusterModules = [...primary, ...secondary].map((f) => ({ label: t(f.titleKey), color: f.color }));
+  const clusterModules = useMemo<ModuleSpec[]>(
+    () => [...primary, ...secondary].map((f) => ({ label: t(f.titleKey), color: f.color, icon: f.icon })),
+    // primary/secondary are static lists; only the language changes the labels
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
 
   return (
     <section className="landing-dark relative py-28 md:py-40 overflow-hidden" aria-label="Features">
@@ -116,6 +159,12 @@ export function Features() {
         {/* Scroll-driven moment — the 8 modules fly apart, then merge into
             one block, as you scroll past. Object + verb: scroll explodes it. */}
         <div ref={clusterSectionRef} className="hidden lg:block relative h-[520px] -mt-4 mb-16">
+          {/* Static floor shadow — replaces a per-frame contact-shadow render pass */}
+          <div
+            aria-hidden
+            className="absolute left-1/2 bottom-[86px] h-16 w-[440px] -translate-x-1/2 rounded-[50%] pointer-events-none"
+            style={{ background: 'radial-gradient(closest-side, rgb(0 0 0 / 0.45), transparent)' }}
+          />
           <div aria-hidden className="absolute left-0 top-6 z-10 text-primary rotate-[-3deg] pointer-events-none">
             <span className="font-hand text-[24px] leading-none">{t('landing.clusterHandNote')}</span>
             <svg viewBox="0 0 40 60" className="w-8 h-12 ml-10 mt-1" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -148,7 +197,7 @@ export function Features() {
               {soundOn ? <Volume2 className="w-3.5 h-3.5" strokeWidth={1.75} /> : <VolumeX className="w-3.5 h-3.5" strokeWidth={1.75} />}
             </button>
           </div>
-          {isDesktop && nearView ? (
+          {isDesktop && (warmedUp || nearView) ? (
             <Suspense
               fallback={
                 <div className="w-full h-full flex items-center justify-center">
