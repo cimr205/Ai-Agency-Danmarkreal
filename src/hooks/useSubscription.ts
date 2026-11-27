@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { resolveCurrency } from '@/lib/currency';
 import { invokeFunction } from '@/lib/functions';
 
 export interface SeatMismatch {
@@ -63,10 +64,11 @@ export function useSubscription() {
   }, [checkSubscription]);
 
   const startCheckout = async (seatLimit?: number) => {
-    // Detect locale from URL (/en/... → USD, everything else → DKK)
     const localeMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
     const locale = localeMatch?.[1] ?? 'da';
-    const currency = locale === 'en' ? 'usd' : 'dkk';
+    // Currency follows the visitor's IP country (US → USD, else DKK), the same
+    // rule the landing page used to show the price — not the UI language.
+    const currency = await resolveCurrency();
     const data = await invokeFunction<{ url?: string }>('create-checkout', {
       body: { seat_limit: seatLimit, currency, locale },
     });

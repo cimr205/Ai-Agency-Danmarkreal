@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { useCurrency, formatPrice } from '@/lib/currency';
 import { SalesPdfDownload } from './SalesPdfDownload';
 import { ScrollReveal } from './ScrollReveal';
 import dashboardHome from '@/assets/landing/dashboard-home.jpg';
@@ -12,6 +13,7 @@ const RETURNING_VISITOR_KEY = 'aiad_seen_landing';
 export function Hero() {
   const { t, locale } = useI18n();
   const [isReturning, setIsReturning] = useState(false);
+  const currency = useCurrency();
 
   useEffect(() => {
     try {
@@ -147,7 +149,7 @@ export function Hero() {
 
             {/* Concrete trust facts — risk-reversal stated up front, not buried in a FAQ */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-7 border-t border-foreground/[0.08] max-w-[520px]">
-              {[t('landing.heroTrustTrial'), t('landing.heroTrustCancel'), t('landing.heroTrustCvr'), t('landing.heroTrustSupport')].map((item) => (
+              {[t('landing.heroTrustTrial').replace('{zero}', formatPrice(currency, 0)), t('landing.heroTrustCancel'), t('landing.heroTrustCvr'), t('landing.heroTrustSupport')].map((item) => (
                 <span key={item} className="text-[12px] text-muted-foreground font-mono">
                   {item}
                 </span>

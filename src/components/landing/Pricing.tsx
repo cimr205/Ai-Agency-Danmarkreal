@@ -4,9 +4,13 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { ScrollReveal } from './ScrollReveal';
 import { AnimatedPrice } from './AnimatedPrice';
+import { useCurrency, formatPrice, SEAT_PRICE } from '@/lib/currency';
 
 export function Pricing() {
   const { t, locale } = useI18n();
+  // DK (and everyone else) sees kroner, US visitors see dollars — chosen from the IP country.
+  const currency = useCurrency();
+  const price = SEAT_PRICE[currency];
 
   const featureKeys = [
     'landing.pricingF1', 'landing.pricingF2', 'landing.pricingF3',
@@ -47,10 +51,16 @@ export function Pricing() {
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em] tabular-nums">
-                  <AnimatedPrice value={499} />
+                  {price.symbolBefore && <span className="text-[0.5em] align-top mr-1">{price.symbol}</span>}
+                  <AnimatedPrice value={price.amount} />
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
-                  <span className="text-[14px] font-display font-semibold text-foreground/80">kr</span>
+                  {!price.symbolBefore && (
+                    <span className="text-[14px] font-display font-semibold text-foreground/80">{price.symbol}</span>
+                  )}
+                  {price.symbolBefore && (
+                    <span className="text-[14px] font-display font-semibold text-foreground/80">USD</span>
+                  )}
                   <span className="text-[12px] text-muted-foreground font-mono mt-1">{t('landing.pricingPer')}</span>
                 </div>
               </div>
@@ -73,7 +83,7 @@ export function Pricing() {
                 </Link>
               </Button>
               <p className="mt-5 text-[12px] text-muted-foreground/70 font-mono">
-                {t('landing.pricingNote')}
+                {t('landing.pricingNote').replace('{zero}', formatPrice(currency, 0))}
               </p>
             </div>
           </ScrollReveal>
