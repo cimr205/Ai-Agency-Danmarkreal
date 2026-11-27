@@ -44,6 +44,7 @@ function ClusterFallback({ modules, mergedLabel }: { modules: ModuleSpec[]; merg
   );
 }
 import { playTick } from './clickSound';
+import { MODULE_COLORS } from './moduleColors';
 
 export function Features() {
   const { t, locale } = useI18n();
@@ -62,22 +63,22 @@ export function Features() {
   const inView = useInView(clusterSectionRef, { margin: '100px 0px' });
 
   const primary = [
-    { icon: Users, titleKey: 'landing.featureCrm', descKey: 'landing.featureCrmDesc', tag: 'CRM', color: '#2FA87A' },
-    { icon: Bot, titleKey: 'landing.featureAi', descKey: 'landing.featureAiDesc', tag: 'AI', color: '#C9E23B' },
+    { icon: Users, titleKey: 'landing.featureCrm', descKey: 'landing.featureCrmDesc', tag: 'CRM', color: MODULE_COLORS.crm },
+    { icon: Bot, titleKey: 'landing.featureAi', descKey: 'landing.featureAiDesc', tag: 'AI', color: MODULE_COLORS.ai },
   ];
   const secondary = [
-    { icon: Building2, titleKey: 'landing.featureHr', descKey: 'landing.featureHrDesc', color: '#E0A526' },
-    { icon: FileText, titleKey: 'landing.featureInvoice', descKey: 'landing.featureInvoiceDesc', color: '#3B6FE2' },
-    { icon: Megaphone, titleKey: 'landing.featureMarketing', descKey: 'landing.featureMarketingDesc', color: '#E2583B' },
-    { icon: Calendar, titleKey: 'landing.featureCalendar', descKey: 'landing.featureCalendarDesc', color: '#8B5CE2' },
-    { icon: ClipboardList, titleKey: 'landing.featureTasks', descKey: 'landing.featureTasksDesc', color: '#2BC4C9' },
-    { icon: Mail, titleKey: 'landing.featureInbox', descKey: 'landing.featureInboxDesc', color: '#D43F8D' },
+    { icon: Building2, titleKey: 'landing.featureHr', descKey: 'landing.featureHrDesc', color: MODULE_COLORS.hr },
+    { icon: FileText, titleKey: 'landing.featureInvoice', descKey: 'landing.featureInvoiceDesc', color: MODULE_COLORS.invoice },
+    { icon: Megaphone, titleKey: 'landing.featureMarketing', descKey: 'landing.featureMarketingDesc', color: MODULE_COLORS.marketing },
+    { icon: Calendar, titleKey: 'landing.featureCalendar', descKey: 'landing.featureCalendarDesc', color: MODULE_COLORS.calendar },
+    { icon: ClipboardList, titleKey: 'landing.featureTasks', descKey: 'landing.featureTasksDesc', color: MODULE_COLORS.tasks },
+    { icon: Mail, titleKey: 'landing.featureInbox', descKey: 'landing.featureInboxDesc', color: MODULE_COLORS.inbox },
   ];
 
   const clusterModules = [...primary, ...secondary].map((f) => ({ label: t(f.titleKey), color: f.color }));
 
   return (
-    <section className="relative py-28 md:py-40 overflow-hidden" aria-label="Features">
+    <section className="landing-dark relative py-28 md:py-40 overflow-hidden" aria-label="Features">
       {/* Quiet background — no glow blobs */}
       <div
         aria-hidden
@@ -115,6 +116,13 @@ export function Features() {
         {/* Scroll-driven moment — the 8 modules fly apart, then merge into
             one block, as you scroll past. Object + verb: scroll explodes it. */}
         <div ref={clusterSectionRef} className="hidden lg:block relative h-[520px] -mt-4 mb-16">
+          <div aria-hidden className="absolute left-0 top-6 z-10 text-primary rotate-[-3deg] pointer-events-none">
+            <span className="font-hand text-[24px] leading-none">{t('landing.clusterHandNote')}</span>
+            <svg viewBox="0 0 40 60" className="w-8 h-12 ml-10 mt-1" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M8 4 C 4 22, 12 40, 26 54" />
+              <path d="M16 50 L 27 55 L 30 43" />
+            </svg>
+          </div>
           <div className="absolute top-0 right-0 z-10 flex items-center gap-4">
             <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
               <motion.span>{toolCount}</motion.span> / 08

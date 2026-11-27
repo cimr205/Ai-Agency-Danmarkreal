@@ -63,7 +63,7 @@ export function Pricing() {
               <Button
                 asChild
                 size="lg"
-                className="h-[50px] px-6 text-[14px] font-medium rounded-[8px] bg-foreground text-background hover:bg-foreground border-0 group transition-all
+                className="h-[50px] px-6 text-[14px] font-medium rounded-[8px] bg-primary text-primary-foreground hover:bg-primary border-0 group transition-all
                   shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.18),0_1px_2px_hsl(222_47%_11%/0.25),0_12px_32px_-8px_hsl(222_47%_11%/0.3)]
                   hover:-translate-y-px"
               >

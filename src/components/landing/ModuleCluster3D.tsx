@@ -154,7 +154,7 @@ function Tiles({
       {/* The merged center block — "one system" */}
       <RoundedBox ref={centerRef} args={[0.95, 0.95, 0.18]} radius={0.1} smoothness={4}>
         <meshPhysicalMaterial
-          color={blueprint ? '#0a2a4a' : '#241C16'}
+          color={blueprint ? '#0a2a4a' : '#CC3D19'}
           roughness={0.28}
           metalness={0.5}
           clearcoat={0.7}
