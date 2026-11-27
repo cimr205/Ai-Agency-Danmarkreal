@@ -1,0 +1,8 @@
+{
+  "name": "origin-local-dashboard",
+  "private": true,
+  "type": "module",
+  "description": "Local-only ORIGIN operator dashboard (127.0.0.1). Shows status, never secret values.",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": { "pg": "^8.13.1" }
+}
