@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Lightformer, RoundedBox, ContactShadows, Html } from '@react-three/drei';
 import { useReducedMotion, type MotionValue } from 'framer-motion';
 import type { Group, Mesh } from 'three';
+import { explodeFromProgress } from './clusterMath';
 
 export interface ModuleSpec {
   label: string;
@@ -18,18 +19,6 @@ export interface ModuleSpec {
  * it slightly and a toggle swaps every surface for its edges — proof this
  * is live geometry, not a looping video.
  */
-function ease(t: number) {
-  const c = Math.min(Math.max(t, 0), 1);
-  return c * c * (3 - 2 * c);
-}
-
-// 0 → 1 (apart, labels readable) → 0 (merged) across the section's scroll range
-export function explodeFromProgress(p: number) {
-  if (p < 0.32) return ease(p / 0.32);
-  if (p < 0.58) return 1;
-  return 1 - ease((p - 0.58) / 0.42);
-}
-
 function PointerTilt({ children }: { children: React.ReactNode }) {
   const outer = useRef<Group>(null);
 
@@ -191,6 +180,7 @@ export function ModuleCluster3D({
   mergedLabel,
   progress,
   blueprint = false,
+  active = true,
   onTick,
   className,
 }: {
@@ -198,6 +188,8 @@ export function ModuleCluster3D({
   mergedLabel: string;
   progress: MotionValue<number>;
   blueprint?: boolean;
+  /** false stops the render loop entirely (section scrolled offscreen). */
+  active?: boolean;
   onTick?: () => void;
   className?: string;
 }) {
@@ -205,7 +197,7 @@ export function ModuleCluster3D({
 
   return (
     <div className={className} aria-hidden>
-      <Canvas camera={{ position: [3.2, 2.1, 3.2], fov: 36 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]}>
+      <Canvas camera={{ position: [3.2, 2.1, 3.2], fov: 36 }} gl={{ antialias: true, alpha: true }} dpr={[1, 1.5]} frameloop={active ? 'always' : 'never'}>
         <ambientLight intensity={0.5} />
         <Suspense fallback={null}>
           <Environment resolution={64} frames={1}>
@@ -229,3 +221,5 @@ export function ModuleCluster3D({
     </div>
   );
 }
+
+export default ModuleCluster3D;
