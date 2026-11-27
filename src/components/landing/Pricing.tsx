@@ -4,13 +4,14 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { ScrollReveal } from './ScrollReveal';
 import { AnimatedPrice } from './AnimatedPrice';
-import { useCurrency, formatPrice, SEAT_PRICE } from '@/lib/currency';
+import { useLocalPrice, formatMoney, currencySymbol, DKK_SEAT_PRICE } from '@/lib/currency';
 
 export function Pricing() {
   const { t, locale } = useI18n();
-  // DK (and everyone else) sees kroner, US visitors see dollars — chosen from the IP country.
-  const currency = useCurrency();
-  const price = SEAT_PRICE[currency];
+  // Price in the visitor's own currency, from their IP country (see lib/currency).
+  const price = useLocalPrice();
+  const isDkk = price.currency === 'DKK';
+  const symbol = currencySymbol(price.currency);
 
   const featureKeys = [
     'landing.pricingF1', 'landing.pricingF2', 'landing.pricingF3',
@@ -51,16 +52,14 @@ export function Pricing() {
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em] tabular-nums">
-                  {price.symbolBefore && <span className="text-[0.5em] align-top mr-1">{price.symbol}</span>}
+                  {price.approximate && <span className="text-[0.4em] align-top mr-1 text-muted-foreground">≈</span>}
+                  {!isDkk && <span className="text-[0.5em] align-top mr-1">{symbol}</span>}
                   <AnimatedPrice value={price.amount} />
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
-                  {!price.symbolBefore && (
-                    <span className="text-[14px] font-display font-semibold text-foreground/80">{price.symbol}</span>
-                  )}
-                  {price.symbolBefore && (
-                    <span className="text-[14px] font-display font-semibold text-foreground/80">USD</span>
-                  )}
+                  <span className="text-[14px] font-display font-semibold text-foreground/80">
+                    {isDkk ? 'kr' : price.currency}
+                  </span>
                   <span className="text-[12px] text-muted-foreground font-mono mt-1">{t('landing.pricingPer')}</span>
                 </div>
               </div>
@@ -83,7 +82,13 @@ export function Pricing() {
                 </Link>
               </Button>
               <p className="mt-5 text-[12px] text-muted-foreground/70 font-mono">
-                {t('landing.pricingNote').replace('{zero}', formatPrice(currency, 0))}
+                {t('landing.pricingNote').replace('{zero}', formatMoney(price.currency, 0))}
+                {price.approximate && (
+                  <>
+                    <br />
+                    {t('landing.pricingConverted').replace('{dkk}', `${DKK_SEAT_PRICE} DKK`)}
+                  </>
+                )}
               </p>
             </div>
           </ScrollReveal>

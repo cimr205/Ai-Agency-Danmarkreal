@@ -1,49 +1,67 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-describe('geo currency', () => {
+const geo = (body: unknown) => vi.fn().mockResolvedValue({ ok: true, json: async () => body });
+
+describe('local price by IP country', () => {
   beforeEach(() => {
     vi.resetModules();
     sessionStorage.clear();
     window.history.replaceState(null, '', '/da');
   });
+  afterEach(() => vi.unstubAllGlobals());
 
-  it('maps only US to USD, everything else to DKK', async () => {
-    const { currencyForCountry } = await import('@/lib/currency');
-    expect(currencyForCountry('US')).toBe('usd');
-    expect(currencyForCountry('us')).toBe('usd');
-    expect(currencyForCountry('DK')).toBe('dkk');
-    expect(currencyForCountry('DE')).toBe('dkk');
-    expect(currencyForCountry(null)).toBe('dkk');
+  it('Denmark gets the exact DKK price, USA the exact USD price', async () => {
+    const { priceFor } = await import('@/lib/currency');
+    expect(priceFor('DKK', 1)).toEqual({ currency: 'DKK', amount: 499, approximate: false, checkout: 'dkk' });
+    expect(priceFor('USD', 0.1468)).toEqual({ currency: 'USD', amount: 69, approximate: false, checkout: 'usd' });
   });
 
-  it('resolves from /api/geo and caches for the session', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ country: 'US' }) });
-    vi.stubGlobal('fetch', fetchMock);
-    const { resolveCurrency, cachedCurrency } = await import('@/lib/currency');
-    expect(cachedCurrency()).toBe('dkk');
-    expect(await resolveCurrency()).toBe('usd');
-    expect(await resolveCurrency()).toBe('usd');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(cachedCurrency()).toBe('usd');
-    vi.unstubAllGlobals();
+  it('every other currency is converted from 499 DKK, approximate, DKK checkout', async () => {
+    const { priceFor } = await import('@/lib/currency');
+    expect(priceFor('EUR', 0.1338)).toEqual({ currency: 'EUR', amount: 67, approximate: true, checkout: 'dkk' });
+    expect(priceFor('SEK', 1.4996)).toMatchObject({ currency: 'SEK', amount: 748, approximate: true });
+    expect(priceFor('JPY', 22.37)).toMatchObject({ currency: 'JPY', amount: 11160 });
   });
 
-  it('falls back to DKK when the lookup fails or is not JSON (local dev)', async () => {
+  it('falls back to DKK without currency or rate', async () => {
+    const { priceFor, DKK_PRICE } = await import('@/lib/currency');
+    expect(priceFor(null, null)).toBe(DKK_PRICE);
+    expect(priceFor('EUR', null)).toBe(DKK_PRICE);
+    expect(priceFor('EUR', 0)).toBe(DKK_PRICE);
+  });
+
+  it('resolves from /api/geo once per session', async () => {
+    const f = geo({ country: 'DE', currency: 'EUR', rate: 0.134 });
+    vi.stubGlobal('fetch', f);
+    const { resolvePrice, cachedPrice, resolveCheckoutCurrency } = await import('@/lib/currency');
+    expect(cachedPrice().currency).toBe('DKK');
+    expect((await resolvePrice()).currency).toBe('EUR');
+    expect(await resolveCheckoutCurrency()).toBe('dkk');
+    expect(f).toHaveBeenCalledTimes(1);
+    expect(cachedPrice().currency).toBe('EUR');
+  });
+
+  it('falls back to DKK when the lookup is not JSON (local dev SPA fallback)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => { throw new Error('html'); } }));
-    const { resolveCurrency } = await import('@/lib/currency');
-    expect(await resolveCurrency()).toBe('dkk');
-    vi.unstubAllGlobals();
+    const { resolvePrice } = await import('@/lib/currency');
+    expect((await resolvePrice()).currency).toBe('DKK');
   });
 
-  it('honours ?currency= override', async () => {
-    window.history.replaceState(null, '', '/da?currency=usd');
-    const { resolveCurrency } = await import('@/lib/currency');
-    expect(await resolveCurrency()).toBe('usd');
+  it('?country= is forwarded for QA and not cached', async () => {
+    window.history.replaceState(null, '', '/en?country=us');
+    const f = geo({ country: 'US', currency: 'USD', rate: 0.1468 });
+    vi.stubGlobal('fetch', f);
+    const { resolvePrice } = await import('@/lib/currency');
+    expect((await resolvePrice()).checkout).toBe('usd');
+    expect(f.mock.calls[0][0]).toBe('/api/geo?country=US');
+    expect(sessionStorage.length).toBe(0);
   });
 
-  it('formats both currencies', async () => {
-    const { formatPrice } = await import('@/lib/currency');
-    expect(formatPrice('dkk', 499)).toBe('499 kr.');
-    expect(formatPrice('usd', 0)).toBe('$0');
+  it('formats money', async () => {
+    const { formatMoney, formatLocalPrice, priceFor } = await import('@/lib/currency');
+    expect(formatMoney('DKK', 499)).toBe('499 kr.');
+    window.history.replaceState(null, '', '/en');
+    expect(formatMoney('USD', 0)).toBe('$0');
+    expect(formatLocalPrice(priceFor('EUR', 0.1338))).toBe('≈ €67');
   });
 });

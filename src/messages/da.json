@@ -297,6 +297,7 @@
     "pricingF8": "Bulk email",
     "pricingF9": "Salgspipeline",
     "pricingF10": "Privatlivs- og databehandlervilkår",
+    "pricingConverted": "Omregnet fra {dkk} til din valuta. Stripe opkræver i din egen valuta til dagskurs.",
     "pricingNote": "Betalingskort kræves · {zero} i 3 dage · annullér når som helst. Ingen demo-opkald.",
     "footerRights": "Alle rettigheder forbeholdes.",
     "navAbout": "Om platformen",

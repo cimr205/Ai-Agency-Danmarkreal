@@ -18,7 +18,7 @@ import { invokeFunction } from '@/lib/functions';
 import { showError } from '@/lib/showError';
 import { dateLocaleTag } from '@/lib/inlineI18n';
 import { CvrLookupField } from '@/components/shared/CvrLookupField';
-import { formatPrice, resolveCurrency, SEAT_PRICE, useCurrency } from '@/lib/currency';
+import { formatLocalPrice, resolveCheckoutCurrency, useLocalPrice } from '@/lib/currency';
 import { logProductEvent } from '@/lib/productEvents';
 
 interface OnboardingWizardProps {
@@ -66,7 +66,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { toast } = useToast();
   const { user, refreshProfile } = useAuth();
   const { t } = useI18n();
-  const displayCurrency = useCurrency();
+  const localPrice = useLocalPrice();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
   const [loading, setLoading] = useState(false);
@@ -153,9 +153,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
       const localeMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
       const locale = localeMatch?.[1] ?? 'da';
-      // Full suite follows the IP country (US → USD, else DKK). Per-module
-      // prices exist only in DKK in Stripe, so that mode always uses DKK.
-      const currency = billingMode === 'per_module' ? 'dkk' : await resolveCurrency();
+      // Full suite: US → USD price, everyone else → DKK price (Stripe Adaptive
+      // Pricing converts to local currency). Per-module prices exist only in DKK.
+      const currency = billingMode === 'per_module' ? 'dkk' : await resolveCheckoutCurrency();
 
       const checkoutBody: Record<string, unknown> = { currency, locale, billing_mode: billingMode };
       if (billingMode === 'per_module') {
@@ -320,7 +320,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   <div>
                     <div className="font-medium">{t('wizard.billingModeFullSuite')}</div>
                     <div className="text-sm text-muted-foreground">
-                      {t('wizard.billingModeFullSuiteDesc').replace('{price}', formatPrice(displayCurrency, SEAT_PRICE[displayCurrency].amount))}
+                      {t('wizard.billingModeFullSuiteDesc').replace('{price}', formatLocalPrice(localPrice))}
                     </div>
                   </div>
                 </label>

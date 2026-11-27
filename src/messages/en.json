@@ -297,6 +297,7 @@
     "pricingF8": "Bulk email",
     "pricingF9": "Sales pipeline",
     "pricingF10": "Privacy and data processing terms",
+    "pricingConverted": "Converted from {dkk}. Stripe charges you in your own currency at the day's rate.",
     "pricingNote": "Card required · {zero} for 3 days · cancel anytime. No demo calls.",
     "footerRights": "All rights reserved.",
     "navAbout": "About",

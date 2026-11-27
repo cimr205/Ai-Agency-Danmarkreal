@@ -297,6 +297,7 @@
     "pricingF8": "Massen-E-Mail",
     "pricingF9": "Vertriebspipeline",
     "pricingF10": "Datenschutz- und Auftragsverarbeitungsbedingungen",
+    "pricingConverted": "Umgerechnet von {dkk}. Stripe rechnet in deiner Landeswährung zum Tageskurs ab.",
     "pricingNote": "Karte erforderlich · {zero} für 3 Tage · jederzeit kündbar. Keine Demo-Anrufe.",
     "footerRights": "Alle Rechte vorbehalten.",
     "navAbout": "Über uns",
