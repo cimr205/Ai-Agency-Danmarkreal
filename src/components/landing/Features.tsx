@@ -1,10 +1,48 @@
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useScroll, useTransform, motion } from 'framer-motion';
+import { useScroll, useTransform, useInView, motion } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 import { Users, Building2, FileText, Megaphone, Bot, Calendar, ClipboardList, Mail, ArrowUpRight, Scan, Volume2, VolumeX } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal';
-import { ModuleCluster3D, explodeFromProgress } from './ModuleCluster3D';
+import { explodeFromProgress } from './clusterMath';
+import type { ModuleSpec } from './ModuleCluster3D';
+
+// three.js + drei is ~240 KB gzip. Load it only on desktop, and only once the
+// cluster is about to scroll into view — mobile never downloads it.
+const ModuleCluster3D = lazy(() => import('./ModuleCluster3D'));
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const update = () => setDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return desktop;
+}
+
+/** Static stand-in: shown on mobile and while the 3D chunk loads. */
+function ClusterFallback({ modules, mergedLabel }: { modules: ModuleSpec[]; mergedLabel: string }) {
+  return (
+    <div className="flex flex-col items-center gap-5" aria-hidden>
+      <div className="grid grid-cols-4 gap-2.5">
+        {modules.map((m) => (
+          <span
+            key={m.label}
+            className="h-11 w-11 rounded-[10px] border"
+            style={{ background: `${m.color}2e`, borderColor: `${m.color}66` }}
+          />
+        ))}
+      </div>
+      <span className="whitespace-nowrap rounded-full bg-foreground text-background px-3 py-1 text-[11px] font-semibold">
+        {mergedLabel}
+      </span>
+    </div>
+  );
+}
 import { playTick } from './clickSound';
 
 export function Features() {
@@ -17,6 +55,11 @@ export function Features() {
   const toolCount = useTransform(scrollYProgress, (v) => String(Math.round(1 + explodeFromProgress(v) * 7)).padStart(2, '0'));
   const [blueprint, setBlueprint] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const isDesktop = useIsDesktop();
+  // Mount once it is within ~one screen; after that keep it mounted and just
+  // pause the render loop while it is offscreen.
+  const nearView = useInView(clusterSectionRef, { once: true, margin: '800px 0px' });
+  const inView = useInView(clusterSectionRef, { margin: '100px 0px' });
 
   const primary = [
     { icon: Users, titleKey: 'landing.featureCrm', descKey: 'landing.featureCrmDesc', tag: 'CRM', color: '#2FA87A' },
@@ -97,14 +140,29 @@ export function Features() {
               {soundOn ? <Volume2 className="w-3.5 h-3.5" strokeWidth={1.75} /> : <VolumeX className="w-3.5 h-3.5" strokeWidth={1.75} />}
             </button>
           </div>
-          <ModuleCluster3D
-            modules={clusterModules}
-            mergedLabel={t('landing.clusterMergedLabel')}
-            progress={scrollYProgress}
-            blueprint={blueprint}
-            onTick={soundOn ? playTick : undefined}
-            className="w-full h-full"
-          />
+          {isDesktop && nearView ? (
+            <Suspense
+              fallback={
+                <div className="w-full h-full flex items-center justify-center">
+                  <ClusterFallback modules={clusterModules} mergedLabel={t('landing.clusterMergedLabel')} />
+                </div>
+              }
+            >
+              <ModuleCluster3D
+                modules={clusterModules}
+                mergedLabel={t('landing.clusterMergedLabel')}
+                progress={scrollYProgress}
+                blueprint={blueprint}
+                active={inView}
+                onTick={soundOn ? playTick : undefined}
+                className="w-full h-full"
+              />
+            </Suspense>
+          ) : null}
+        </div>
+
+        <div className="lg:hidden -mt-6 mb-14">
+          <ClusterFallback modules={clusterModules} mergedLabel={t('landing.clusterMergedLabel')} />
         </div>
 
         {/* Two anchor features — large editorial slabs */}
