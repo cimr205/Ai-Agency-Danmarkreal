@@ -1,4 +1,6 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
+// npm, not esm.sh: esm.sh serves different builds of transitive deps
+// (async-function) per edge, which broke the lock-file integrity check in CI.
+import Stripe from "npm:stripe@18.5.0";
 import { assertRejects } from "jsr:@std/assert@1";
 
 Deno.test("Stripe fixture accepts a valid signature and rejects a tampered payload",async()=>{
