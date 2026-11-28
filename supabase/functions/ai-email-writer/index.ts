@@ -2,6 +2,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,9 @@ serve(withSentry("ai-email-writer", async (req) => {
     // Service-role client bypasses RLS, so tenant isolation must be enforced explicitly here.
     const { data: callerProfile } = await supabase.from("profiles").select("company_id").eq("user_id", user.id).single();
     if (!callerProfile?.company_id) return new Response(JSON.stringify({ error: "No company associated" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const paywall = await requireActiveCompany(callerProfile.company_id);
+    if (paywall) return paywall;
 
     const { data: withinQuota } = await supabase.rpc("increment_usage_quota", { _company_id: callerProfile.company_id, _quota_type: "ai_email_writer" });
     if (withinQuota === false) return new Response(JSON.stringify({ error: "Monthly AI limit reached for your company." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });

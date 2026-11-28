@@ -1,5 +1,6 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,9 @@ Deno.serve(withSentry("voice-agent-call", async (req) => {
       .eq("user_id", user.id)
       .single();
     if (!profile?.company_id) return jsonError("No company", 400);
+
+    const paywall = await requireActiveCompany(profile.company_id);
+    if (paywall) return paywall;
 
     const { agentId, toNumber, leadId } = await req.json();
     if (!agentId || !toNumber) return jsonError("Missing agentId or toNumber");

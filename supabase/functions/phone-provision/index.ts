@@ -1,5 +1,6 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,9 @@ Deno.serve(withSentry("phone-provision", async (req) => {
       .eq("user_id", user.id)
       .single();
     if (!profile?.company_id) throw new Error("No company");
+
+    const paywall = await requireActiveCompany(profile.company_id);
+    if (paywall) return paywall;
 
     const twilioSid = Deno.env.get("TWILIO_SID");
     const twilioToken = Deno.env.get("TWILIO_TOKEN");

@@ -1,6 +1,7 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
+import { requireActiveSubscription } from "../_shared/subscriptionGate.ts";
 
 interface EmailAccount {
   id: string;
@@ -63,6 +64,9 @@ Deno.serve(withSentry("gmail-sync", async (req) => {
     if (userErr || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const paywall = await requireActiveSubscription(user.id);
+    if (paywall) return paywall;
 
     const userId = user.id;
 

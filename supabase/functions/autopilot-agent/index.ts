@@ -9,6 +9,7 @@ import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@^2";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -258,6 +259,9 @@ app.post("/*", async (c) => {
     }
 
     const companyId = profile.company_id as string;
+
+    const paywall = await requireActiveCompany(companyId);
+    if (paywall) return paywall;
     const userId = user.id;
 
     const { data: withinQuota } = await serviceClient.rpc("increment_usage_quota", { _company_id: companyId, _quota_type: "ai_autopilot_agent" });
