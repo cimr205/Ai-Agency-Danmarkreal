@@ -124,6 +124,9 @@ serve(withSentry("check-subscription", async (req) => {
       stripe_subscription_id: sub.id,
       subscription_status: status,
       purchased_seats: status === "active" ? currentQuantity : company.purchased_seats,
+      // The customer picks the number of users on the checkout page, so the
+      // subscription's quantity (not what checkout started with) is the limit.
+      ...(isActive && currentQuantity > 0 ? { seat_limit_trial: currentQuantity } : {}),
       trial_ends_at: trialEnd || company.trial_ends_at,
     }).eq("id", profile.company_id);
 

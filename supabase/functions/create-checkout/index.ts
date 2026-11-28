@@ -19,6 +19,10 @@ const MODULE_PRICE_IDS_DKK: Record<string, string> = {
   finance: "price_1U5RQ0RmhuA1UO2DEUz0Meg4",
 };
 
+// Seats the customer can pick on the Stripe checkout page (full suite).
+const MIN_SEATS = 1;
+const MAX_SEATS = 100;
+
 serve(withSentry("create-checkout", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -79,7 +83,11 @@ serve(withSentry("create-checkout", async (req) => {
     // modules: { crm?: number, hr?: number, marketing?: number, finance?: number }
     const modules = (body.modules && typeof body.modules === "object") ? body.modules as Record<string, number> : {};
 
-    let lineItems: { price: string; quantity: number }[] = [];
+    // The customer chooses the number of users on Stripe's checkout page
+    // (adjustable_quantity). The final number is synced back from the
+    // subscription by check-subscription and stripe-subscription-webhook.
+    type LineItem = { price: string; quantity: number; adjustable_quantity?: { enabled: boolean; minimum: number; maximum: number } };
+    let lineItems: LineItem[] = [];
     let totalSeats = 0;
 
     if (billingMode === "per_module") {
@@ -96,9 +104,11 @@ serve(withSentry("create-checkout", async (req) => {
       }
       if (lineItems.length === 0) throw new Error("Select at least one module with seats");
     } else {
-      const seatLimit = body.seat_limit || company.seat_limit_trial || 5;
+      // Starting value only (default 1 user); the customer can change it on the checkout page.
+      const requested = Math.floor(Number(body.seat_limit));
+      const seatLimit = Number.isFinite(requested) ? Math.min(Math.max(requested, MIN_SEATS), MAX_SEATS) : MIN_SEATS;
       const priceId = currency === "usd" ? PRICE_ID_USD : PRICE_ID_DKK;
-      lineItems = [{ price: priceId, quantity: seatLimit }];
+      lineItems = [{ price: priceId, quantity: seatLimit, adjustable_quantity: { enabled: true, minimum: MIN_SEATS, maximum: MAX_SEATS } }];
       totalSeats = seatLimit;
     }
 
