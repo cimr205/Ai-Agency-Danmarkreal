@@ -9492,6 +9492,7 @@ export type Database = {
         }
       }
       cleanup_old_sessions: { Args: never; Returns: number }
+      company_has_access: { Args: { _company_id: string }; Returns: boolean }
       complete_email_delivery: {
         Args: {
           p_delivery_id: string
