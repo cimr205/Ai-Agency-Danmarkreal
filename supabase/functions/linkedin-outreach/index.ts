@@ -3,6 +3,7 @@ import { requireCompanyAuth, jsonError } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE, describeOpenAIError } from "../_shared/aiConnection.ts";
 import { buildOutreachRows, clampNote } from "../_shared/linkedinOutreach.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 // LinkedIn outreach (semi-automatic). Composio's LinkedIn toolkit has no
 // connection-request or messaging tools, so this function only:
@@ -33,6 +34,8 @@ Deno.serve(withSentry("linkedin-outreach", async (req) => {
   const ctx = await requireCompanyAuth(req);
   if (ctx instanceof Response) return ctx;
   const { supabase, user, companyId } = ctx;
+  const paywall = await requireActiveCompany(companyId);
+  if (paywall) return paywall;
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* no body */ }

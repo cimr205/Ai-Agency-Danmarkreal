@@ -2,6 +2,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,9 @@ serve(withSentry("csv-import-leads", async (req) => {
       .eq("user_id", user.id)
       .single();
     if (!profile?.company_id) throw new Error("No company found");
+
+    const paywall = await requireActiveCompany(profile.company_id);
+    if (paywall) return paywall;
 
     const { rows, mapping, useAi } = await req.json() as {
       rows: Record<string, string>[];

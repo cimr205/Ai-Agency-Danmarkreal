@@ -1,5 +1,6 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { requireActiveSubscription } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +78,9 @@ Deno.serve(withSentry("verify-emails", async (req) => {
     );
     const { data: { user } } = await supabase.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const paywall = await requireActiveSubscription(user.id);
+    if (paywall) return paywall;
 
     const { emails } = await req.json();
     if (!Array.isArray(emails) || emails.length === 0) {

@@ -6,6 +6,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI, AI_NOT_CONNECTED_MESSAGE } from "../_shared/aiConnection.ts";
 import { drainDurableQueue } from "./worker.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +39,9 @@ Deno.serve(withSentry("workflow-runner", async (req) => {
       .from("profiles").select("company_id").eq("user_id", user.id).maybeSingle();
     const companyId = profile?.company_id;
     if (!companyId) return json({ error: "No company" }, 400);
+
+    const paywall = await requireActiveCompany(companyId);
+    if (paywall) return paywall;
 
     const { workflow_id, payload = {}, mode = "test", ai_prompt } =
       body as { workflow_id: string; payload?: Record<string, unknown>; mode?: "test" | "live"; ai_prompt?: string };

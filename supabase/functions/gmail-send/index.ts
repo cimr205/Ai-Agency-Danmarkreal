@@ -1,5 +1,6 @@
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
+import { requireActiveSubscription } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,9 @@ Deno.serve(withSentry("gmail-send", async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+
+    const paywall = await requireActiveSubscription(userId);
+    if (paywall) return paywall;
 
     const body = await req.json();
     const { to, subject, message, cc, reply_to_message_id, attachments, html, customer_id, deal_id } = body;

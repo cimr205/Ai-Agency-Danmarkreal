@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.0";
 import { getCompanyAI } from "../_shared/aiConnection.ts";
 import { normalizePhoneNumber } from "../_shared/normalizePhone.ts";
 import { constantTimeEqual } from "../_shared/providerSignatures.ts";
+import { requireActiveCompany } from "../_shared/subscriptionGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1342,6 +1343,12 @@ Deno.serve(withSentry("lead-gen-api", async (req) => {
 
     // All other routes need auth
     const ctx = await getAuthContext(req);
+    // Reads (GET) stay available after a subscription lapses; starting,
+    // importing or changing lead-gen work is a paid feature.
+    if (req.method !== "GET") {
+      const paywall = await requireActiveCompany(ctx.companyId);
+      if (paywall) return paywall;
+    }
     const { userId, companyId, supabase } = ctx;
 
     // ── POST /sessions ──
