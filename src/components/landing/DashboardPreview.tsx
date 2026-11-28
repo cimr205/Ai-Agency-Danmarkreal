@@ -9,18 +9,19 @@ import dashboardMarketing from '@/assets/landing/dashboard-marketing.jpg';
 import dashboardFinance from '@/assets/landing/dashboard-finance.jpg';
 import dashboardHr from '@/assets/landing/dashboard-hr.jpg';
 import dashboardControlRoom from '@/assets/landing/dashboard-control-room.jpg';
+import { MODULE_COLORS } from './moduleColors';
 
 export function DashboardPreview() {
   const { t } = useI18n();
   const [active, setActive] = useState(0);
 
   const tabs = [
-    { icon: LayoutDashboard, labelKey: 'landing.previewHomeLabel', image: dashboardHome, color: '#2FA87A' },
-    { icon: Users, labelKey: 'landing.featureCrm', image: dashboardCrm, color: '#2FA87A' },
-    { icon: Building2, labelKey: 'landing.featureHr', image: dashboardHr, color: '#E0A526' },
-    { icon: FileText, labelKey: 'landing.featureInvoice', image: dashboardFinance, color: '#3B6FE2' },
-    { icon: Megaphone, labelKey: 'landing.featureMarketing', image: dashboardMarketing, color: '#E2583B' },
-    { icon: Bot, labelKey: 'landing.featureAi', image: dashboardControlRoom, color: '#C9E23B' },
+    { icon: LayoutDashboard, labelKey: 'landing.previewHomeLabel', image: dashboardHome, color: MODULE_COLORS.dashboard },
+    { icon: Users, labelKey: 'landing.featureCrm', image: dashboardCrm, color: MODULE_COLORS.crm },
+    { icon: Building2, labelKey: 'landing.featureHr', image: dashboardHr, color: MODULE_COLORS.hr },
+    { icon: FileText, labelKey: 'landing.featureInvoice', image: dashboardFinance, color: MODULE_COLORS.invoice },
+    { icon: Megaphone, labelKey: 'landing.featureMarketing', image: dashboardMarketing, color: MODULE_COLORS.marketing },
+    { icon: Bot, labelKey: 'landing.featureAi', image: dashboardControlRoom, color: MODULE_COLORS.ai },
   ];
 
   return (

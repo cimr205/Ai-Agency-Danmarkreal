@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { resolveCheckoutCurrency } from '@/lib/currency';
 import { invokeFunction } from '@/lib/functions';
 
 export interface SeatMismatch {
@@ -63,10 +64,11 @@ export function useSubscription() {
   }, [checkSubscription]);
 
   const startCheckout = async (seatLimit?: number) => {
-    // Detect locale from URL (/en/... → USD, everything else → DKK)
     const localeMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
     const locale = localeMatch?.[1] ?? 'da';
-    const currency = locale === 'en' ? 'usd' : 'dkk';
+    // US → the USD price; everyone else → the DKK price, which Stripe Adaptive
+    // Pricing charges in the customer's local currency.
+    const currency = await resolveCheckoutCurrency();
     const data = await invokeFunction<{ url?: string }>('create-checkout', {
       body: { seat_limit: seatLimit, currency, locale },
     });

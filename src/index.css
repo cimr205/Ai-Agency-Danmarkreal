@@ -428,9 +428,10 @@
   .bg-workspace-frame { background: var(--workspace-frame); }
 }
 
-/* Landing page identity — weathered Copenhagen copper roofs: warm stone
-   paper, warm ink, one patina-green accent. Scoped so the marketing page
-   gets its own palette without touching the app's blue theme elsewhere. */
+/* Landing page identity — "kontrast, modig, human": warm stone paper, warm
+   ink, and one brave signature: tegl, the brick red of Danish roofs. The
+   red passes WCAG AA as text on paper (4.7:1) and under white button text
+   (4.9:1). Scoped so the app keeps its own blue theme. */
 .landing-theme {
   --background: 40 25% 98%;
   --foreground: 20 20% 7%;
@@ -438,7 +439,7 @@
   --card-foreground: 20 20% 7%;
   --popover: 0 0% 100%;
   --popover-foreground: 20 20% 7%;
-  --primary: 158 75% 32%;
+  --primary: 12 78% 45%;
   --primary-foreground: 0 0% 100%;
   --secondary: 40 15% 93%;
   --secondary-foreground: 20 15% 15%;
@@ -448,10 +449,38 @@
   --accent-foreground: 20 20% 7%;
   --border: 30 15% 86%;
   --input: 30 15% 86%;
-  --ring: 158 75% 32%;
-  /* Second, warmer signal color — copper, not a default-theme color. Used
-     sparingly: hover glows, the integrations strip, label accents on the
-     3D cluster. Keeps the "weathered copper roof" world present in the
-     chrome, not just the one green accent. */
-  --accent-warm: 28 72% 46%;
+  --ring: 12 78% 45%;
+  /* Second signal: okker. Used sparingly for hover glows and small labels. */
+  --accent-warm: 36 68% 42%;
+}
+
+/* Contrast section — the page drops into warm ink once, so the 3D cluster
+   and the modules glow. Same token names, so components need no changes. */
+.landing-theme .landing-dark {
+  --background: 20 18% 7%;
+  --foreground: 38 30% 94%;
+  --card: 20 14% 11%;
+  --card-foreground: 38 30% 94%;
+  --muted: 20 12% 14%;
+  --muted-foreground: 30 12% 70%;
+  --border: 20 10% 20%;
+  /* brighter tegl on ink: 5.6:1 */
+  --primary: 14 85% 58%;
+  --ring: 14 85% 58%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.landing-theme .landing-dark article {
+  box-shadow: 0 0 0 1px hsl(var(--border)), 0 30px 60px -30px rgb(0 0 0 / 0.6) !important;
+}
+
+/* Hand-drawn stroke under a headline word; draws in once on load. */
+.hand-underline path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hand-draw 0.9s 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes hand-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hand-underline path { animation: none; stroke-dashoffset: 0; }
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { useLocalPrice, formatMoney } from '@/lib/currency';
 import { SalesPdfDownload } from './SalesPdfDownload';
 import { ScrollReveal } from './ScrollReveal';
 import dashboardHome from '@/assets/landing/dashboard-home.jpg';
@@ -12,6 +13,7 @@ const RETURNING_VISITOR_KEY = 'aiad_seen_landing';
 export function Hero() {
   const { t, locale } = useI18n();
   const [isReturning, setIsReturning] = useState(false);
+  const price = useLocalPrice();
 
   useEffect(() => {
     try {
@@ -77,7 +79,26 @@ export function Hero() {
               </span>
               <span className="block text-[clamp(2.6rem,5.6vw,4.8rem)] font-semibold pl-[0.06em]">
                 {t('landing.heroHeadlinePre')}
-                <span className="text-primary">{t('landing.heroHeadlineItalic')}</span>
+                <span className="relative inline-block text-primary">
+                  {t('landing.heroHeadlineItalic')}
+                  {/* Hand-drawn stroke — a human mark on a machined headline */}
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 300 24"
+                    preserveAspectRatio="none"
+                    className="hand-underline absolute left-[-2%] -bottom-[0.12em] w-[104%] h-[0.32em] overflow-visible"
+                  >
+                    <path
+                      d="M4 15 C 60 6, 120 4, 180 9 S 270 16, 296 7"
+                      pathLength={1}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      opacity="0.85"
+                    />
+                  </svg>
+                </span>
                 <span className="text-primary">.</span>
               </span>
             </h1>
@@ -89,11 +110,19 @@ export function Hero() {
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3 mb-12">
+            <div className="relative flex flex-wrap items-center gap-3 mb-12">
+              {/* Handwritten aside — reads like a note from the people behind it */}
+              <div aria-hidden className="hidden lg:flex absolute left-[330px] -top-12 items-end gap-1 text-primary rotate-[-4deg] pointer-events-none">
+                <svg viewBox="0 0 60 50" className="w-12 h-10 -mb-3 scale-x-[-1]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M6 6 C 20 8, 40 20, 48 42" />
+                  <path d="M38 36 L 48 43 L 52 31" />
+                </svg>
+                <span className="font-hand text-[22px] leading-none whitespace-nowrap">{t('landing.heroHandNote')}</span>
+              </div>
               <Button
                 asChild
                 size="lg"
-                className="h-[46px] px-5 text-[13.5px] font-medium rounded-[7px] bg-foreground text-background hover:bg-foreground border-0 group relative overflow-hidden transition-all
+                className="h-[46px] px-5 text-[13.5px] font-medium rounded-[7px] bg-primary text-primary-foreground hover:bg-primary border-0 group relative overflow-hidden transition-all
                   shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.18),0_1px_2px_hsl(222_47%_11%/0.25),0_8px_24px_-6px_hsl(222_47%_11%/0.25)]
                   hover:shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.22),0_2px_4px_hsl(222_47%_11%/0.3),0_14px_32px_-8px_hsl(222_47%_11%/0.35)]
                   hover:-translate-y-px"
@@ -120,7 +149,7 @@ export function Hero() {
 
             {/* Concrete trust facts — risk-reversal stated up front, not buried in a FAQ */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-7 border-t border-foreground/[0.08] max-w-[520px]">
-              {[t('landing.heroTrustTrial'), t('landing.heroTrustCancel'), t('landing.heroTrustCvr'), t('landing.heroTrustSupport')].map((item) => (
+              {[t('landing.heroTrustTrial').replace('{zero}', formatMoney(price.currency, 0)), t('landing.heroTrustCancel'), t('landing.heroTrustCvr'), t('landing.heroTrustSupport')].map((item) => (
                 <span key={item} className="text-[12px] text-muted-foreground font-mono">
                   {item}
                 </span>

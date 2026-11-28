@@ -143,6 +143,7 @@ export default {
         display: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
         serif: ["Instrument Serif", "Georgia", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        hand: ["Caveat", "Segoe Print", "cursive"],
         cal: ["Inter", "system-ui", "sans-serif"],
       },
       keyframes: {

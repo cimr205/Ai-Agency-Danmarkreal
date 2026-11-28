@@ -6,6 +6,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useAuth } from '@/hooks/useAuth';
 import { showError } from '@/lib/showError';
 import { useI18n } from '@/lib/i18n';
+import { useLocalPrice, formatLocalPrice } from '@/lib/currency';
 import { dateLocaleTag, t3, tx } from '@/lib/inlineI18n';
 
 const FEATURE_KEYS = [
@@ -25,6 +26,7 @@ export default function SubscriptionPage() {
   const { subscribed, status, trialEndsAt, periodEnd, seatLimit, seatMismatch, isLoading, startCheckout, openPortal, checkSubscription, confirmSeatSync } = useSubscription();
   const { isAdmin } = useAuth();
   const { t, locale } = useI18n();
+  const price = useLocalPrice();
 
   const handleSubscribe = async () => {
     try {
@@ -88,7 +90,7 @@ export default function SubscriptionPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">499</span>
+            <span className="text-4xl font-bold">{formatLocalPrice(price)}</span>
             <span className="text-muted-foreground">{t('subscription.priceSuffix')}</span>
           </div>
 

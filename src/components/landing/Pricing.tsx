@@ -4,9 +4,14 @@ import { ArrowRight, Check } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { ScrollReveal } from './ScrollReveal';
 import { AnimatedPrice } from './AnimatedPrice';
+import { useLocalPrice, formatMoney, currencySymbol, DKK_SEAT_PRICE } from '@/lib/currency';
 
 export function Pricing() {
   const { t, locale } = useI18n();
+  // Price in the visitor's own currency, from their IP country (see lib/currency).
+  const price = useLocalPrice();
+  const isDkk = price.currency === 'DKK';
+  const symbol = currencySymbol(price.currency);
 
   const featureKeys = [
     'landing.pricingF1', 'landing.pricingF2', 'landing.pricingF3',
@@ -47,10 +52,14 @@ export function Pricing() {
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-[clamp(4.5rem,9vw,7.2rem)] font-semibold text-foreground leading-[0.85] tracking-[-0.045em] tabular-nums">
-                  <AnimatedPrice value={499} />
+                  {price.approximate && <span className="text-[0.4em] align-top mr-1 text-muted-foreground">≈</span>}
+                  {!isDkk && <span className="text-[0.5em] align-top mr-1">{symbol}</span>}
+                  <AnimatedPrice value={price.amount} />
                 </span>
                 <div className="flex flex-col leading-tight pb-2">
-                  <span className="text-[14px] font-display font-semibold text-foreground/80">kr</span>
+                  <span className="text-[14px] font-display font-semibold text-foreground/80">
+                    {isDkk ? 'kr' : price.currency}
+                  </span>
                   <span className="text-[12px] text-muted-foreground font-mono mt-1">{t('landing.pricingPer')}</span>
                 </div>
               </div>
@@ -63,7 +72,7 @@ export function Pricing() {
               <Button
                 asChild
                 size="lg"
-                className="h-[50px] px-6 text-[14px] font-medium rounded-[8px] bg-foreground text-background hover:bg-foreground border-0 group transition-all
+                className="h-[50px] px-6 text-[14px] font-medium rounded-[8px] bg-primary text-primary-foreground hover:bg-primary border-0 group transition-all
                   shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.18),0_1px_2px_hsl(222_47%_11%/0.25),0_12px_32px_-8px_hsl(222_47%_11%/0.3)]
                   hover:-translate-y-px"
               >
@@ -73,7 +82,13 @@ export function Pricing() {
                 </Link>
               </Button>
               <p className="mt-5 text-[12px] text-muted-foreground/70 font-mono">
-                {t('landing.pricingNote')}
+                {t('landing.pricingNote').replace('{zero}', formatMoney(price.currency, 0))}
+                {price.approximate && (
+                  <>
+                    <br />
+                    {t('landing.pricingConverted').replace('{dkk}', `${DKK_SEAT_PRICE} DKK`)}
+                  </>
+                )}
               </p>
             </div>
           </ScrollReveal>
