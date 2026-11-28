@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORIGIN Kontrolpanel</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --fg:#161a20; --muted:#667085; --line:#e4e7ec; --ok:#12805c; --okbg:#e7f6ef; --bad:#b42318; --badbg:#fdecea; --warn:#9a6700; --warnbg:#fff4d6; --accent:#2f5bea; --accentfg:#fff; --code:#f2f4f7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#171a21; --fg:#e7e9ee; --muted:#98a2b3; --line:#2a2f3a; --ok:#4ade9b; --okbg:#10291f; --bad:#ff7a6b; --badbg:#2c1513; --warn:#f5c451; --warnbg:#2b2310; --accent:#6d8cff; --accentfg:#0f1115; --code:#1f232c; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding:20px 24px 8px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; }
+  header .sub { color:var(--muted); }
+  main { display:grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap:16px; padding:12px 24px 32px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; min-width:0; }
+  section.wide { grid-column: 1 / -1; }
+  h2 { font-size:15px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  h3 { font-size:13px; margin:14px 0 6px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .ok { background:var(--okbg); color:var(--ok); } .bad { background:var(--badbg); color:var(--bad); } .warn { background:var(--warnbg); color:var(--warn); } .mut { background:var(--code); color:var(--muted); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { text-align:left; padding:5px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }
+  code { background:var(--code); padding:1px 5px; border-radius:4px; }
+  button { background:var(--accent); color:var(--accentfg); border:0; border-radius:8px; padding:8px 12px; font-weight:600; cursor:pointer; font-size:13px; }
+  button.sec { background:var(--code); color:var(--fg); border:1px solid var(--line); }
+  button:disabled { opacity:.5; cursor:wait; }
+  input[type=text] { width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font-family: ui-monospace, Menlo, monospace; font-size:12px; }
+  .step { border-left:3px solid var(--line); padding:4px 0 10px 14px; margin-left:4px; }
+  .step.done { border-color:var(--ok); }
+  .step b { display:block; margin-bottom:4px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--muted); }
+  .out { margin-top:8px; }
+  .log { max-height:260px; overflow:auto; }
+  .note { font-size:12px; color:var(--muted); margin-top:6px; }
+  .videos td:nth-child(1) { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ORIGIN Kontrolpanel</h1>
+  <span class="sub">Kun lokalt (127.0.0.1) · viser aldrig hemmeligheder · publicerer intet</span>
+</header>
+<main>
+  <section>
+    <h2>Konfiguration <span id="envfile" class="pill mut">…</span></h2>
+    <div id="secrets" class="muted">Indlæser…</div>
+  </section>
+
+  <section>
+    <h2>TikTok: forbind konto</h2>
+    <div class="step" id="s1"><b>1. Tjek client key + secret</b>
+      <div class="row"><button data-act="client">Tjek nøgler</button><span id="o-client"></span></div>
+    </div>
+    <div class="step" id="s2"><b>2. Log ind på TikTok (kun læse-adgang)</b>
+      <div class="row"><button data-act="start">Start TikTok-login</button></div>
+      <div class="note">Åbner TikTok i ny fane. Efter "Godkend" lander du på en n8n-fejlside – det er forventet. Kopiér hele adressen derfra.</div>
+      <div id="o-start" class="out"></div>
+    </div>
+    <div class="step" id="s3"><b>3. Indsæt adressen fra n8n-siden</b>
+      <input type="text" id="cb" placeholder="https://aiagencydanmark.app.n8n.cloud/rest/oauth2-credential/callback?code=…&state=…" autocomplete="off" spellcheck="false">
+      <div class="row" style="margin-top:8px"><button data-act="finish">Gem tokens</button><span id="o-finish"></span></div>
+      <div class="note">Koden udløber efter få minutter. Tokens gemmes kun i den git-ignorerede <code>.env</code>.</div>
+    </div>
+    <div class="step" id="s4"><b>4. Test tilladelser (read-only)</b>
+      <div class="row"><button data-act="probes">Kør test</button><button class="sec" data-act="refresh">Forny access-token</button><span id="o-refresh"></span></div>
+      <div id="tok" class="note"></div>
+    </div>
+  </section>
+
+  <section class="wide">
+    <h2>TikTok: resultat af tilladelsestest</h2>
+    <div id="probes" class="muted">Ingen test kørt endnu.</div>
+  </section>
+
+  <section class="wide">
+    <h2>Database & automation <button class="sec" data-act="db" style="margin-left:auto">Opdater</button></h2>
+    <div id="db" class="muted">Tryk "Opdater" for at hente status (som origin_app, under RLS).</div>
+  </section>
+
+  <section class="wide">
+    <h2>Aktivitet (denne session)</h2>
+    <div id="activity" class="log muted">Intet endnu.</div>
+  </section>
+</main>
+<script>
+const SESSION = '__SESSION__';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const pill = (ok, yes = 'OK', no = 'Mangler') => `<span class="pill ${ok ? 'ok' : 'bad'}">${ok ? yes : no}</span>`;
+const fmt = (t) => t ? new Date(t).toLocaleString('da-DK') : '–';
+const num = (n) => n == null ? '–' : Number(n).toLocaleString('da-DK');
+const post = async (p, body = {}) => (await fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-session': SESSION }, body: JSON.stringify(body) })).json();
+
+async function refreshStatus() {
+  const s = await (await fetch('/api/status')).json();
+  $('envfile').textContent = '.env ' + s.envFile;
+  let h = '';
+  for (const [g, rows] of Object.entries(s.groups)) {
+    h += `<h3>${esc(g)}</h3><table>`;
+    for (const r of rows) h += `<tr><td class="mono">${esc(r.key)}</td><td>${pill(r.filled, 'Udfyldt', 'Tom')}${r.note ? ` <span class="pill ${r.note.startsWith('matches') ? 'ok' : 'warn'}">${r.note.startsWith('matches') ? 'matcher n8n' : 'afviger'}</span>` : ''}</td></tr>`;
+    h += '</table>';
+  }
+  $('secrets').innerHTML = h;
+  const t = s.tiktokToken;
+  const tk = s.groups.TikTok;
+  const has = (k) => tk.find((r) => r.key === k)?.filled;
+  $('s1').classList.toggle('done', has('TIKTOK_CLIENT_KEY') && has('TIKTOK_CLIENT_SECRET'));
+  $('s3').classList.toggle('done', has('TIKTOK_ACCESS_TOKEN'));
+  $('s2').classList.toggle('done', has('TIKTOK_ACCESS_TOKEN'));
+  if (t.accessExpiresAt) {
+    const left = (new Date(t.accessExpiresAt) - Date.now()) / 36e5;
+    $('tok').innerHTML = `Access-token udløber ${fmt(t.accessExpiresAt)} ${left > 0 ? `<span class="pill ok">${left.toFixed(1)} t tilbage</span>` : '<span class="pill bad">udløbet – tryk forny</span>'} · refresh-token udløber ${fmt(t.refreshExpiresAt)}<br>Givne scopes: <code>${esc(t.grantedScopes || '–')}</code>`;
+  } else $('tok').textContent = has('TIKTOK_ACCESS_TOKEN') ? 'Token findes (udløbstid ukendt).' : 'Ingen bruger-token endnu.';
+  $('activity').innerHTML = s.activity.length ? '<table>' + s.activity.map((a) => `<tr><td class="mono muted">${new Date(a.at).toLocaleTimeString('da-DK')}</td><td>${esc(a.area)}</td><td>${pill(a.ok, '✓', '✗')} ${esc(a.msg)}</td></tr>`).join('') + '</table>' : 'Intet endnu.';
+}
+
+const SCOPE_HELP = {
+  'user.info.basic': 'Login Kit – grundlæggende profil',
+  'user.info.profile': 'Login Kit – brugernavn, bio, verificering',
+  'user.info.stats': 'Display API – følgere, likes, antal videoer',
+  'video.list': 'Display API – egne videoer + visninger',
+  'video.publish': 'Content Posting API – kræver review + audit. Publicering er slået fra.',
+};
+function renderProbes(r) {
+  if (!r.ok) { $('probes').innerHTML = `<span class="pill bad">Fejl</span> ${esc(r.error)}`; return; }
+  let h = '<table><tr><th>Scope</th><th>Hvad</th><th>Status</th><th>Detalje</th></tr>';
+  let videos = null, user = {};
+  for (const p of r.results) {
+    const ok = p.result === 'OK';
+    if (ok && p.data?.user) Object.assign(user, p.data.user);
+    if (ok && p.data?.videos) videos = p.data.videos;
+    const detail = ok ? (p.scope === 'video.publish' ? 'Kan læse posting-indstillinger (intet uploadet)' : 'Adgang virker') : `${esc(p.result)}: ${esc(p.message)}`;
+    h += `<tr><td class="mono">${esc(p.scope)}</td><td>${esc(SCOPE_HELP[p.scope] || p.label)}</td><td>${pill(ok, 'Har adgang', 'Mangler')}</td><td class="muted">${detail}</td></tr>`;
+  }
+  h += '</table>';
+  if (Object.keys(user).length) {
+    h += `<h3>Forbundet konto</h3><div class="row">${user.avatar_url ? `<img src="${esc(user.avatar_url)}" alt="" width="40" height="40" style="border-radius:50%">` : ''}<div><b>${esc(user.display_name || '')}</b> ${user.username ? `<span class="muted">@${esc(user.username)}</span>` : ''}<br><span class="muted">Følgere ${num(user.follower_count)} · Følger ${num(user.following_count)} · Likes ${num(user.likes_count)} · Videoer ${num(user.video_count)}</span></div></div>`;
+  }
+  if (videos) {
+    h += `<h3>Seneste videoer (${videos.length})</h3><table class="videos"><tr><th>Titel</th><th>Dato</th><th>Visninger</th><th>Likes</th><th>Komm.</th><th>Delinger</th></tr>`;
+    for (const v of videos) h += `<tr><td>${v.share_url ? `<a href="${esc(v.share_url)}" target="_blank" rel="noopener noreferrer">${esc(v.title || v.id)}</a>` : esc(v.title || v.id)}</td><td>${fmt(v.create_time * 1000)}</td><td>${num(v.view_count)}</td><td>${num(v.like_count)}</td><td>${num(v.comment_count)}</td><td>${num(v.share_count)}</td></tr>`;
+    h += '</table>';
+  }
+  $('probes').innerHTML = h;
+}
+function renderDb(r) {
+  if (!r.ok) { $('db').innerHTML = `<span class="pill bad">Fejl</span> ${esc(r.error)}`; return; }
+  let h = `<div class="muted">Forbundet som <code>${esc(r.role)}</code></div><h3>Heartbeat (seneste)</h3><table><tr><th>Tid</th><th>Status</th><th>Detalje</th></tr>`;
+  for (const b of r.heartbeat) h += `<tr><td>${fmt(b.checked_at)}</td><td>${pill(/ok|healthy|success/i.test(b.status), esc(b.status), esc(b.status))}</td><td class="mono muted">${esc(b.detail)}</td></tr>`;
+  h += '</table>';
+  for (const t of r.tenants) {
+    h += `<h3>Tenant ${esc(t.tenant)}</h3><div class="row"><span class="pill ${t.errors24h ? 'bad' : 'ok'}">Fejl 24 t: ${t.errors24h}</span><span class="pill ${t.unreadNotifications ? 'warn' : 'mut'}">Ulæste notifikationer: ${t.unreadNotifications}</span><span class="pill mut">Trend-signaler: ${t.trendSignals}</span></div>`;
+    h += '<table style="margin-top:6px"><tr><th>Job-type</th><th>Status</th><th>Antal</th></tr>' + (t.jobs.map((j) => `<tr><td>${esc(j.job_type)}</td><td>${esc(j.status)}</td><td>${j.n}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Ingen jobs</td></tr>') + '</table>';
+    if (t.connections.length) h += '<table style="margin-top:6px"><tr><th>Brand</th><th>Platform</th><th>Status</th><th>Læse-insights</th><th>Publicere</th></tr>' + t.connections.map((c) => `<tr><td>${esc(c.brand_id)}</td><td>${esc(c.platform)}</td><td>${esc(c.status)}</td><td>${c.can_read_insights ? '✓' : '–'}</td><td>${c.can_publish ? '✓' : '–'}</td></tr>`).join('') + '</table>';
+  }
+  $('db').innerHTML = h;
+}
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const act = b.dataset.act; b.disabled = true;
+  try {
+    if (act === 'client') { const r = await post('/api/tiktok/client-check'); $('o-client').innerHTML = r.ok ? pill(true, 'Gyldige') : `${pill(false, '', 'Fejl')} ${esc(r.error_description || r.error)}`; }
+    if (act === 'start') { const r = await post('/api/tiktok/start'); if (r.ok) { window.open(r.url, '_blank', 'noopener'); $('o-start').innerHTML = `<span class="pill ok">Åbnet</span> <span class="muted">scopes: <code>${esc(r.scope)}</code> · <a href="${esc(r.url)}" target="_blank" rel="noopener">åbn igen</a></span>`; } else $('o-start').innerHTML = `${pill(false, '', 'Fejl')} ${esc(r.error)}`; }
+    if (act === 'finish') { const r = await post('/api/tiktok/finish', { url: $('cb').value }); $('cb').value = ''; $('o-finish').innerHTML = r.ok ? `${pill(true, 'Gemt')} <span class="muted">scopes: <code>${esc(r.granted_scopes)}</code></span>` : `${pill(false, '', 'Fejl')} ${esc(r.error_description || r.error)}`; if (r.ok) renderProbes(await post('/api/tiktok/probes')); }
+    if (act === 'probes') renderProbes(await post('/api/tiktok/probes'));
+    if (act === 'refresh') { const r = await post('/api/tiktok/refresh'); $('o-refresh').innerHTML = r.ok ? pill(true, 'Fornyet') : `${pill(false, '', 'Fejl')} ${esc(r.error_description || r.error)}`; }
+    if (act === 'db') { $('db').textContent = 'Henter…'; renderDb(await post('/api/db')); }
+  } catch (err) { console.error(err); }
+  b.disabled = false; refreshStatus();
+});
+refreshStatus(); setInterval(refreshStatus, 5000);
+post('/api/db').then(renderDb);
+</script>
+</body>
+</html>

@@ -41,4 +41,5 @@ e2e/.tenants.local.json
 e2e/e2e-results.json
 e2e-results.json
 !.env.e2e.example
+!origin/automation-engine/.env.example
 .env.e2e.local

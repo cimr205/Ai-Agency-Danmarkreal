@@ -1,0 +1,743 @@
+{
+  "name": "AAD D - Failure Recovery",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "be3a0eb4-5b55-43cb-932c-53f01e3ab2ff",
+      "name": "Manual test run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare job v4 (2026-11-25): invalid recovery rows skipped; v3 (2026-11-19): tenant validation, deterministic keys, recovery rows from DB\nconst out = [];\nfor (const [idx, item] of $input.all().entries()) {\n  const t = item.json;\n  try {\n  const tenant = typeof t.tenant_id === 'string' ? t.tenant_id.trim() : '';\n  if (!/^tenant_[a-z0-9_]{1,56}$/.test(tenant)) throw new Error('Rejected: missing or invalid tenant_id');\n  let scenario, jobKey, source, period, version;\n  if (t.recovery === true) {\n    // Recovery rows come from the database: tenant_id and job_key are read, never invented\n    if (typeof t.job_key !== 'string' || !t.job_key.startsWith(tenant + ':')) throw new Error('Rejected: recovery job_key does not belong to tenant');\n    jobKey = t.job_key;\n    scenario = (t.payload && t.payload.scenario) || 'ok';\n    source = 'recovery'; period = 'recovery'; version = 'recovery';\n  } else {\n    scenario = t.scenario || 'ok';\n    source = t.source_id ? String(t.source_id).trim() : '';\n    if (!/^[A-Za-z0-9._-]{1,80}$/.test(source)) throw new Error('Rejected: missing or invalid source_id');\n    period = t.period ? String(t.period).trim() : 'once';\n    if (!/^[A-Za-z0-9._-]{1,40}$/.test(period)) throw new Error('Rejected: invalid period');\n    version = t.input_version ? String(t.input_version).trim() : 'v1';\n    if (!/^[A-Za-z0-9._-]{1,20}$/.test(version)) throw new Error('Rejected: invalid input_version');\n    jobKey = [tenant, 'recovery', source, period, version, scenario].join(':');\n  }\n  if (!['ok', 'http500', 'timeout', 'recover'].includes(scenario)) throw new Error('Rejected: invalid scenario');\n  const worker = t.worker_id || ('n8n-exec-' + $execution.id);\n  const ok = 'https://jsonplaceholder.typicode.com/posts/1';\n  const fail500 = 'https://httpbin.org/status/500';\n  const slow = 'https://httpbin.org/delay/6';\n  let urls;\n  if (scenario === 'http500') urls = [fail500, fail500, fail500];\n  else if (scenario === 'timeout') urls = [slow, slow, slow];\n  else if (scenario === 'recover') urls = [fail500, fail500, ok];\n  else urls = [ok, ok, ok];\n  out.push({ json: { tenant_id: tenant, scenario, worker_id: worker, job_key: jobKey, source_id: source, period, input_version: version, url1: urls[0], url2: urls[1], url3: urls[2] }, pairedItem: { item: idx } });\n  } catch (e) {\n    if (t.recovery === true) { console.log('skip recovery row: ' + e.message); continue; }\n    throw e;\n  }\n}\nreturn out;"
+      },
+      "id": "d3e91793-9edd-4158-9bc6-38699a11be27",
+      "name": "Prepare job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "5c4dc2f7-2f41-49e8-b134-ccb10987f855",
+      "name": "Recovery trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO jobs (tenant_id, job_key, job_type, payload, max_attempts) VALUES ($1, $2, 'recovery', $3::jsonb, 3) ON CONFLICT (tenant_id, job_key) DO UPDATE SET job_key = jobs.job_key RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$json.tenant_id, $json.job_key, JSON.stringify({ scenario: $json.scenario })] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "0aaf2756-e331-4529-b1e1-f7e2e2f78b6b",
+      "name": "Create job (idempotent)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        448,
+        96
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH next AS (SELECT id FROM jobs WHERE tenant_id = $2 AND job_key = $3 AND ((status IN ('queued','failed') AND run_after <= now()) OR (status = 'running' AND lease_expires_at < now()))  AND attempt_count < max_attempts FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE jobs j SET status = 'running', lease_owner = $1, lease_expires_at = now() + interval '60 seconds', attempt_count = j.attempt_count + 1, updated_at = now() FROM next WHERE j.id = next.id RETURNING j.id, j.tenant_id, j.job_key, j.attempt_count",
+        "options": {
+          "queryReplacement": "={{ [$('Prepare job').item.json.worker_id, $('Prepare job').item.json.tenant_id, $('Prepare job').item.json.job_key] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "9d4ee1e2-7875-4e70-9ede-399443849603",
+      "name": "Claim job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        672,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Prepare job').item.json.url1 }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $('Prepare job').item.json.job_key }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "29a5f2e8-d4bd-4ad6-8e39-0968635ad4ec",
+      "name": "Attempt 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        192
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (UPDATE jobs SET status = 'completed', result = $5::jsonb, attempt_count = $3::int, completed_at = now(), lease_owner = NULL, lease_expires_at = NULL, updated_at = now() WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $4 AND status = 'running' RETURNING id, tenant_id) INSERT INTO job_attempts (job_id, tenant_id, attempt_no, worker_id, outcome, finished_at) SELECT id, tenant_id, $3::int, $4, 'completed', now() FROM u ON CONFLICT (job_id, attempt_no) DO NOTHING RETURNING job_id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, Number($('Claim job').item.json.attempt_count) + ($('Attempt 3').isExecuted ? 2 : ($('Attempt 2').isExecuted ? 1 : 0)), $('Prepare job').item.json.worker_id, JSON.stringify({ scenario: $('Prepare job').item.json.scenario })] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "0d78e885-bf68-4c08-98e8-aaebf704ca45",
+      "name": "Record completed job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        2464,
+        96
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO job_attempts (job_id, tenant_id, attempt_no, worker_id, outcome, error, finished_at) SELECT $1::bigint, $2, $3::int, $4, 'failed', $5, now() WHERE EXISTS (SELECT 1 FROM jobs WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $4 AND status = 'running') ON CONFLICT (job_id, attempt_no) DO NOTHING RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, Number($('Claim job').item.json.attempt_count), $('Prepare job').item.json.worker_id, String($json.error && $json.error.message || $json.message || 'request failed').slice(0, 300)] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "25c8e49a-c425-4f48-8c84-97ce480ff608",
+      "name": "Log attempt 1 failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        1120,
+        272
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "33bee813-64fe-4ef2-8744-937991ddbaa0",
+      "name": "Backoff 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        272
+      ],
+      "webhookId": "f3434b51-4546-4adc-943c-84096a02c5b9"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Prepare job').item.json.url2 }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $('Prepare job').item.json.job_key }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "d798b8ab-eab7-4d62-b8b8-ef20d42cab0f",
+      "name": "Attempt 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        272
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO job_attempts (job_id, tenant_id, attempt_no, worker_id, outcome, error, finished_at) SELECT $1::bigint, $2, $3::int, $4, 'failed', $5, now() WHERE EXISTS (SELECT 1 FROM jobs WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $4 AND status = 'running') ON CONFLICT (job_id, attempt_no) DO NOTHING RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, Number($('Claim job').item.json.attempt_count) + 1, $('Prepare job').item.json.worker_id, String($json.error && $json.error.message || $json.message || 'request failed').slice(0, 300)] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "9784c9ee-df96-4908-8a19-2fd9a733a9a6",
+      "name": "Log attempt 2 failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        1792,
+        336
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 4
+      },
+      "id": "553ed262-db40-40e9-93b4-13eccd36cb99",
+      "name": "Backoff 4s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        336
+      ],
+      "webhookId": "f9f6caf0-c67a-4720-88c6-266eb96541cd"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Prepare job').item.json.url3 }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $('Prepare job').item.json.job_key }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "fce413fe-6c31-41bc-96c4-7157a81e1947",
+      "name": "Attempt 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        336
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH u AS (UPDATE jobs SET status = 'dead', attempt_count = $3::int, last_error = $5, lease_owner = NULL, lease_expires_at = NULL, updated_at = now() WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $4 AND status = 'running' RETURNING id, tenant_id), a AS (INSERT INTO job_attempts (job_id, tenant_id, attempt_no, worker_id, outcome, error, finished_at) SELECT id, tenant_id, $3::int, $4, 'dead', $5, now() FROM u ON CONFLICT (job_id, attempt_no) DO NOTHING) INSERT INTO notifications (tenant_id, job_id, reason) SELECT tenant_id, id, 'Job ' || $6::text || ' failed after 3 attempts and was dead-lettered: ' || $5 FROM u ON CONFLICT (job_id, reason) DO NOTHING RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, Number($('Claim job').item.json.attempt_count) + 2, $('Prepare job').item.json.worker_id, String($json.error && $json.error.message || $json.message || 'request failed').slice(0, 300), $('Prepare job').item.json.job_key] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "a75b3455-2597-4f57-b318-0282087d121d",
+      "name": "Dead-letter job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        2464,
+        384
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH dead AS (UPDATE jobs SET status = 'dead', last_error = COALESCE(last_error || ' | ', '') || 'recovery: attempts exhausted after lease expiry', lease_owner = NULL, lease_expires_at = NULL, updated_at = now() WHERE attempt_count >= max_attempts AND ((status = 'running' AND lease_expires_at < now()) OR status IN ('failed', 'queued')) RETURNING id, tenant_id), n AS (INSERT INTO notifications (tenant_id, job_id, reason) SELECT tenant_id, id, 'Job ' || id::text || ' dead-lettered by recovery: attempts exhausted' FROM dead ON CONFLICT (job_id, reason) DO NOTHING) SELECT j.tenant_id, j.job_key, j.payload, true AS recovery FROM jobs j JOIN tenants t ON t.id = j.tenant_id WHERE j.job_type = 'recovery' AND j.attempt_count < j.max_attempts AND ((j.status IN ('queued', 'failed') AND j.run_after <= now()) OR (j.status = 'running' AND j.lease_expires_at < now())) ORDER BY j.tenant_id, j.id LIMIT 25",
+        "options": {
+          "queryBatching": "independently"
+        }
+      },
+      "id": "cf6b5737-a508-4b80-83dd-ec9a93f5c2fc",
+      "name": "Find recoverable jobs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        112,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET attempt_count = attempt_count + 1, lease_expires_at = now() + interval '60 seconds', updated_at = now() WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $3 AND status = 'running' AND lease_expires_at > now() AND attempt_count < max_attempts RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, $('Prepare job').item.json.worker_id] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "7c1c8c13-7637-4aec-abb2-672e71e74ea5",
+      "name": "Renew lease before attempt 2",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        1456,
+        272
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE jobs SET attempt_count = attempt_count + 1, lease_expires_at = now() + interval '60 seconds', updated_at = now() WHERE id = $1::bigint AND tenant_id = $2 AND lease_owner = $3 AND status = 'running' AND lease_expires_at > now() AND attempt_count < max_attempts RETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Claim job').item.json.id, $('Claim job').item.json.tenant_id, $('Prepare job').item.json.worker_id] }}",
+          "queryBatching": "independently"
+        }
+      },
+      "id": "3cdc7438-1f19-46b5-97d1-9f57b382562d",
+      "name": "Renew lease before attempt 3",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        2128,
+        336
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8180c38a-b733-4c54-8ace-85a1d95d7bf7",
+              "leftValue": "={{ $json.id !== undefined && $json.id !== null }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "026792c2-f842-4e5c-ae12-bcc6971d655b",
+      "name": "Claimed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5dfc982b-98b6-413b-89b6-146e150926be",
+              "leftValue": "={{ $json.id !== undefined && $json.id !== null }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f685297c-b929-4a65-920b-e99d933ddfde",
+      "name": "Lease held before attempt 2?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "924af65c-82a6-43bd-adfe-9c452baae78a",
+              "leftValue": "={{ $json.id !== undefined && $json.id !== null }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5066906f-568b-43f9-9154-eb4bd1d7fc8f",
+      "name": "Lease held before attempt 3?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id AS tenant_id, 'manual-test' AS source_id, 'm' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISSMS') AS period, 'v1' AS input_version, 'ok' AS scenario FROM tenants ORDER BY (id LIKE 'tenant_test%') DESC, id LIMIT 1",
+        "options": {}
+      },
+      "name": "Manual test input",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        220,
+        448
+      ],
+      "id": "b55e5462-ed58-4796-b3b3-a673ea1a1d96",
+      "credentials": {
+        "postgres": {
+          "id": "0EId4tdlfoIJF4yW",
+          "name": "Railway Postgres - Automation Engine"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual test run": {
+      "main": [
+        [
+          {
+            "node": "Manual test input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare job": {
+      "main": [
+        [
+          {
+            "node": "Create job (idempotent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recovery trigger": {
+      "main": [
+        [
+          {
+            "node": "Find recoverable jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create job (idempotent)": {
+      "main": [
+        [
+          {
+            "node": "Claim job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim job": {
+      "main": [
+        [
+          {
+            "node": "Claimed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attempt 1": {
+      "main": [
+        [
+          {
+            "node": "Record completed job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log attempt 1 failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log attempt 1 failed": {
+      "main": [
+        [
+          {
+            "node": "Backoff 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backoff 2s": {
+      "main": [
+        [
+          {
+            "node": "Renew lease before attempt 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attempt 2": {
+      "main": [
+        [
+          {
+            "node": "Record completed job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log attempt 2 failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log attempt 2 failed": {
+      "main": [
+        [
+          {
+            "node": "Backoff 4s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backoff 4s": {
+      "main": [
+        [
+          {
+            "node": "Renew lease before attempt 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attempt 3": {
+      "main": [
+        [
+          {
+            "node": "Record completed job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Dead-letter job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find recoverable jobs": {
+      "main": [
+        [
+          {
+            "node": "Prepare job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renew lease before attempt 2": {
+      "main": [
+        [
+          {
+            "node": "Lease held before attempt 2?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renew lease before attempt 3": {
+      "main": [
+        [
+          {
+            "node": "Lease held before attempt 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claimed?": {
+      "main": [
+        [
+          {
+            "node": "Attempt 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Lease held before attempt 2?": {
+      "main": [
+        [
+          {
+            "node": "Attempt 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Lease held before attempt 3?": {
+      "main": [
+        [
+          {
+            "node": "Attempt 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Manual test input": {
+      "main": [
+        [
+          {
+            "node": "Prepare job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "ece46234-d1e0-4367-9cae-62db48e2738e",
+  "meta": {
+    "instanceId": "6f12d48a7c6a5d358d1db1914f1266ac62dd8d6eb02b6d29f405d163c0464fd8"
+  },
+  "nodeGroups": [],
+  "id": "LkLmXnfHSXglkM0U",
+  "tags": []
+}
